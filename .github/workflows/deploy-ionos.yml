@@ -32,16 +32,6 @@ jobs:
           PUBLIC_APP_BRAND: ${{ secrets.PUBLIC_APP_BRAND }}
         run: npm run build
 
-      - name: Validate remote path
-        env:
-          REMOTE_PATH: ${{ secrets.IONOS_REMOTE_PATH }}
-        run: |
-          CLEAN_PATH="$(printf '%s' "$REMOTE_PATH" | tr -d '\r\n')"
-          if [ -z "$CLEAN_PATH" ]; then
-            echo "IONOS_REMOTE_PATH secret is missing."
-            exit 1
-          fi
-
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
 
@@ -54,6 +44,10 @@ jobs:
           IONOS_REMOTE_PATH: ${{ secrets.IONOS_REMOTE_PATH }}
         run: |
           REMOTE_PATH="$(printf '%s' "$IONOS_REMOTE_PATH" | tr -d '\r\n')"
+          if [ -z "$REMOTE_PATH" ]; then
+            REMOTE_PATH="/htdocs/"
+          fi
+          echo "Deploy target path: $REMOTE_PATH"
           lftp -u "$IONOS_SFTP_USER","$IONOS_SFTP_PASS" "sftp://$IONOS_SFTP_HOST:$IONOS_SFTP_PORT" <<EOF
           set sftp:auto-confirm yes
           set net:max-retries 2

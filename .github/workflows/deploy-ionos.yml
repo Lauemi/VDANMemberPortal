@@ -14,28 +14,32 @@ jobs:
       - name: Use Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
+          cache: npm
 
       - name: Install
-        run: npm ci
+        run: npm install --no-audit --no-fund
+
+      - name: Ensure Rollup Linux binary
+        run: npm install --no-save --no-audit --no-fund @rollup/rollup-linux-x64-gnu@4.57.1
 
       - name: Build
         env:
           PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+          PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
           PUBLIC_APP_NAME: ${{ secrets.PUBLIC_APP_NAME }}
           PUBLIC_APP_BRAND: ${{ secrets.PUBLIC_APP_BRAND }}
         run: npm run build
 
-      # Upload /dist via SFTP
       - name: Deploy via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.IONOS_SFTP_HOST }}
           username: ${{ secrets.IONOS_SFTP_USER }}
           password: ${{ secrets.IONOS_SFTP_PASS }}
-          port: ${{ secrets.IONOS_SFTP_PORT }}
+          port: ${{ secrets.IONOS_SFTP_PORT || 22 }}
           local_path: "./dist/*"
-          remote_path: ${{ secrets.IONOS_REMOTE_PATH }} # e.g. /YOUR_PATH/
+          remote_path: ${{ secrets.IONOS_REMOTE_PATH }}
           sftp_only: true
-          delete_remote_files: true
+          delete_remote_files: false

@@ -1,0 +1,79 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Fangliste • ${APP.name}`} description="Digitale Fangliste" robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <h1>Fangliste</h1>
+      <p class="small">UI-Vorstufe aktiv: aktuell wird nichts in die Datenbank geschrieben.</p>
+      <p class="small">Hinweis: Für Weißfische aller Art gilt eine Fangbegrenzung von 25 Stück pro Tag.</p>
+
+      <div class="catch-water-overview" id="catchWaterOverview"></div>
+
+      <form id="catchForm" class="grid cols2" style="max-width:900px">
+        <label>
+          <span>Datum</span>
+          <input id="catchDate" type="date" required />
+        </label>
+
+        <label>
+          <span>Gewässer</span>
+          <select id="catchWater" required></select>
+        </label>
+
+        <label>
+          <span>Fischart</span>
+          <select id="catchSpecies" required></select>
+        </label>
+
+        <label>
+          <span>Anzahl</span>
+          <input id="catchQty" type="number" min="1" max="200" value="1" required />
+        </label>
+
+        <label>
+          <span>Länge (cm, optional)</span>
+          <input id="catchLen" type="number" min="0" step="0.1" />
+        </label>
+
+        <label>
+          <span>Gewicht (g, optional)</span>
+          <input id="catchWeight" type="number" min="0" step="1" />
+        </label>
+
+        <label style="grid-column:1/-1">
+          <span>Notiz (optional)</span>
+          <textarea id="catchNote" rows="3" placeholder="z.B. zurückgesetzt, Wetter, Spot..."></textarea>
+        </label>
+
+        <div style="grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="primary" type="submit">Fang (UI) speichern</button>
+          <button type="button" id="catchClearAll">Alle UI-Einträge löschen</button>
+          <span id="catchMsg" class="small" aria-live="polite"></span>
+        </div>
+      </form>
+
+      <hr />
+      <h2>Meine Einträge (nur UI-Vorschau)</h2>
+      <div id="catchList" class="grid"></div>
+    </div>
+  </section>
+
+  <dialog id="catchDialog" class="catch-dialog">
+    <form id="catchDialogForm" method="dialog" class="catch-dialog__form">
+      <h3>Fangdetails</h3>
+      <div id="catchDialogBody" class="catch-dialog__body"></div>
+      <div class="catch-dialog__actions">
+        <button type="button" id="catchEditToggle" class="feed-btn">Bearbeiten</button>
+        <button type="button" id="catchSaveBtn" class="feed-btn" disabled>Speichern</button>
+        <button type="button" id="catchDeleteBtn" class="feed-btn feed-btn--ghost">Löschen</button>
+        <button type="button" id="catchCloseBtn" class="feed-btn feed-btn--ghost">Schließen</button>
+      </div>
+      <p id="catchDialogMsg" class="small" aria-live="polite"></p>
+    </form>
+  </dialog>
+
+  <script src="/js/catchlist.js" defer></script>
+</Site>

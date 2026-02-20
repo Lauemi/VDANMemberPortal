@@ -1,0 +1,40 @@
+---
+import Site from "../layouts/Site.astro";
+import { APP } from "../config/app";
+
+const nextRaw = Astro.url.searchParams.get("next") ?? "/app/";
+const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
+---
+
+<Site title={`Login • ${APP.name}`} description="Login zum Memberbereich." robots="noindex">
+  <section class="card" style="max-width:520px;margin:0 auto;">
+    <div class="card__body">
+      <h1>Login</h1>
+      <p class="small">Email + Passwort (Supabase Auth). Nach Login wirst du in den Mitgliederbereich weitergeleitet.</p>
+
+      <form id="loginForm">
+        <label>
+          <span>Email</span>
+          <input id="loginEmail" name="email" type="email" autocomplete="username" required />
+        </label>
+        <label>
+          <span>Passwort</span>
+          <input id="loginPass" name="password" type="password" autocomplete="current-password" required />
+        </label>
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="primary" type="submit">Einloggen</button>
+          <button type="button" id="logoutBtn">Logout</button>
+          <span id="loginMsg" class="small" aria-live="polite"></span>
+        </div>
+      </form>
+
+      <hr/>
+      <p class="small">Hinweis: Rechte/Policies kommen aus Supabase (RLS). UI ist nur Oberfläche.</p>
+    </div>
+  </section>
+
+  <script define:vars={{ nextTarget }}>
+    window.__APP_AFTER_LOGIN = nextTarget;
+  </script>
+</Site>

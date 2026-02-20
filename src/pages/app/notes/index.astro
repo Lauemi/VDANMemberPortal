@@ -1,0 +1,27 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Notes • ${APP.name}`} description="CRUD Demo." robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <h1>Notes (Demo)</h1>
+      <p class="small">Diese Seite nutzt Supabase via <code>/js/notes-demo.js</code>. RLS: du siehst nur deine eigenen Notes.</p>
+
+      <form id="noteForm" class="grid" style="max-width:620px">
+        <label>
+          <span>Neue Note</span>
+          <textarea id="noteText" rows="3" required placeholder="Kurzer Text..."></textarea>
+        </label>
+        <button class="primary" type="submit">Speichern</button>
+        <span id="noteMsg" class="small" aria-live="polite"></span>
+      </form>
+
+      <hr/>
+      <div id="notesList" class="grid"></div>
+    </div>
+  </section>
+
+  <script src="/js/notes-demo.js" defer></script>
+</Site>

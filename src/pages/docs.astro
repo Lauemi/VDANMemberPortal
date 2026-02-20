@@ -1,0 +1,14 @@
+---
+import Site from "../layouts/Site.astro";
+import { APP } from "../config/app";
+---
+
+<Site title={`Docs • ${APP.name}`} description="Template docs." canonical={Astro.url.href}>
+  <section class="card">
+    <div class="card__body">
+      <h1>Docs</h1>
+      <p>Hier kommen deine statischen Seiten rein (Impressum, Datenschutz, Hilfe, FAQ).</p>
+      <p class="small">Supabase SQL: <code>/docs/supabase/</code></p>
+    </div>
+  </section>
+</Site>

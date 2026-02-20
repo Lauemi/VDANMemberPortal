@@ -1,0 +1,162 @@
+:root{
+  --bg: #0f1115;
+  --panel: #161a22;
+  --text: #e8eaf0;
+  --muted: rgba(232,234,240,.7);
+  --line: rgba(232,234,240,.12);
+  --accent: #4ea1ff;
+  --radius: 14px;
+  --shadow: 0 12px 40px rgba(0,0,0,.45);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background: radial-gradient(1200px 800px at 20% 10%, rgba(78,161,255,.18), transparent 55%),
+              radial-gradient(900px 700px at 90% 25%, rgba(170,120,255,.12), transparent 55%),
+              var(--bg);
+  color:var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  line-height:1.5;
+}
+
+a{color:inherit}
+.container{max-width:1050px;margin:0 auto;padding:0 18px}
+.header{border-bottom:1px solid var(--line);backdrop-filter: blur(10px);position:sticky;top:0;background:rgba(15,17,21,.75);z-index:10}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 0;gap:18px}
+.logo{font-weight:800;text-decoration:none;letter-spacing:.2px}
+.navlinks{display:flex;gap:14px;align-items:center;list-style:none;padding:0;margin:0}
+.navlinks a{opacity:.9;text-decoration:none}
+.navlinks a:hover{opacity:1}
+.badge{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.03)}
+.main{padding:28px 0 60px}
+.card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card__body{padding:18px}
+h1,h2,h3{margin:0 0 12px}
+p{margin:0 0 12px;color:var(--muted)}
+.grid{display:grid;gap:14px}
+@media(min-width:900px){.grid.cols2{grid-template-columns:1fr 1fr}}
+
+input,button,textarea,select{
+  font:inherit;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.03);
+  color:var(--text);
+  padding:10px 12px;
+}
+input:disabled,textarea:disabled,select:disabled{
+  opacity:.78;
+  color:rgba(232,234,240,.85);
+  background:rgba(255,255,255,.02);
+  cursor:not-allowed;
+}
+label{display:grid;gap:6px;margin:10px 0}
+button{cursor:pointer}
+button.primary{background:rgba(78,161,255,.18);border-color:rgba(78,161,255,.35)}
+button.primary:hover{background:rgba(78,161,255,.24)}
+.small{font-size:.92rem}
+hr{border:none;border-top:1px solid var(--line);margin:14px 0}
+.hidden{display:none !important}
+
+.feed-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid rgba(78,161,255,.45);
+  background:rgba(78,161,255,.18);
+  color:var(--text);
+  padding:8px 12px;
+  border-radius:12px;
+}
+.feed-btn--ghost{
+  border-color:var(--line);
+  background:rgba(255,255,255,.03);
+}
+
+.catch-water-overview{
+  display:grid;
+  gap:10px;
+  margin:8px 0 12px;
+}
+.catch-water-group{
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px 12px;
+  background:rgba(255,255,255,.02);
+}
+.catch-water-group h3{
+  margin:0 0 8px;
+  font-size:1rem;
+}
+.catch-water-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.catch-water-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  border:1px solid rgba(78,161,255,.4);
+  background:rgba(78,161,255,.14);
+  border-radius:999px;
+  padding:4px 10px;
+  font-size:.85rem;
+}
+
+.catch-entry-card{
+  width:100%;
+  text-align:left;
+}
+.catch-entry-card .card__body{
+  text-align:left;
+}
+.catch-entry-thumb{
+  display:block;
+  margin:8px 0;
+  width:min(100%, 280px);
+  max-height:170px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  object-fit:cover;
+}
+
+.catch-dialog{
+  width:min(920px, 96vw);
+  max-height:88vh;
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:linear-gradient(180deg, rgba(22,27,37,.98), rgba(16,20,28,.98));
+  color:var(--text);
+  box-shadow:var(--shadow);
+  padding:0;
+}
+.catch-dialog::backdrop{
+  background:rgba(0,0,0,.62);
+}
+.catch-dialog__form{
+  padding:16px;
+}
+.catch-dialog__body{
+  margin-top:8px;
+}
+.catch-dialog__actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+.catch-dialog-photo-wrap{
+  margin-top:10px;
+}
+.catch-dialog-photo{
+  width:min(100%, 560px);
+  max-height:360px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  object-fit:contain;
+  background:rgba(0,0,0,.25);
+}

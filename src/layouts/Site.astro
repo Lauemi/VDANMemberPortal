@@ -1,0 +1,66 @@
+---
+import "../styles/app-shell.css";
+import { APP } from "../config/app";
+
+const {
+  title = APP.name,
+  description = "",
+  robots = "index",
+  canonical = Astro.url.href,
+} = Astro.props as {
+  title?: string;
+  description?: string;
+  robots?: string;
+  canonical?: string;
+};
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
+const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
+
+// Guard member area paths:
+const path = Astro.url.pathname.toLowerCase();
+const needsMemberGuard = path.startsWith("/app/");
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <meta name="robots" content={`${robots},follow`} />
+    <link rel="canonical" href={canonical} />
+    <link rel="stylesheet" href="/css/main.css" />
+    <script define:vars={{ supabaseUrl, supabaseKey }}>
+      // Expose Supabase config to the auth helper (client-side)
+      window.__APP_SUPABASE_URL = supabaseUrl;
+      window.__APP_SUPABASE_KEY = supabaseKey;
+    </script>
+  </head>
+  <body>
+    <header class="header">
+      <div class="container">
+        <nav class="nav" aria-label="Hauptnavigation">
+          <a class="logo" href="/">{APP.brand}</a>
+          <ul class="navlinks">
+            <li><a href="/">Start</a></li>
+            <li><a href="/docs.html/">Docs</a></li>
+            <li data-member-only class="hidden"><a href="/app/">App</a></li>
+            <li data-guest-only><a href="/login/">Login</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="container">
+        <slot />
+      </div>
+    </main>
+
+    <script src="/js/member-auth.js" defer></script>
+    {needsMemberGuard && <script src="/js/member-guard.js" defer></script>}
+    <script src="/js/ui-session.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,41 @@
+html {
+  background-color: #0a101d;
+}
+
+.layout {
+  width: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "menu"
+    "mitte"
+    "footer";
+}
+
+#heading {
+  grid-area: menu;
+}
+
+main {
+  grid-area: mitte;
+  width: 100%;
+}
+
+#middle {
+  width: 100%;
+  padding: 1.25rem 0 1.5rem;
+}
+
+footer {
+  grid-area: footer;
+  width: 100%;
+  padding: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(12, 18, 29, 0.86);
+}
+
+@media (max-width: 1200px) {
+  #middle {
+    padding-top: 1rem;
+  }
+}

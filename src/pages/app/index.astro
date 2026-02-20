@@ -1,0 +1,36 @@
+---
+import Site from "../../layouts/Site.astro";
+import { APP } from "../../config/app";
+---
+
+<Site title={`App • ${APP.name}`} description="Memberbereich." robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <h1>Memberbereich</h1>
+      <p class="small">Wenn du das siehst, bist du eingeloggt (Session im Browser) <em>und</em> Supabase-RLS lässt Daten zu.</p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+        <button type="button" id="logoutBtn">Logout</button>
+        <span id="loginMsg" class="small" aria-live="polite"></span>
+      </div>
+
+      <div class="grid cols2">
+        <div class="card" style="border-color:rgba(78,161,255,.25)">
+          <div class="card__body">
+            <h2>CRUD Demo</h2>
+            <p class="small">Beispiel-Table: <code>app_notes</code> (nur eigene Zeilen sichtbar).</p>
+            <p class="small"><a href="/app/notes/">Zu Notes</a></p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__body">
+            <h2>Fangliste</h2>
+            <p class="small">Digitale Erfassung von Fängen mit Gewässern und Fischarten.</p>
+            <p class="small"><a href="/app/fangliste/">Zur Fangliste</a></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</Site>

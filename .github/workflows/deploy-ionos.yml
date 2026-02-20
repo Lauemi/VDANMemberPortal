@@ -36,23 +36,38 @@ jobs:
         env:
           REMOTE_PATH: ${{ secrets.IONOS_REMOTE_PATH }}
         run: |
-          if [ -z "$REMOTE_PATH" ]; then
+          CLEAN_PATH="$(printf '%s' "$REMOTE_PATH" | tr -d '\r\n')"
+          if [ -z "$CLEAN_PATH" ]; then
             echo "IONOS_REMOTE_PATH secret is missing."
             exit 1
           fi
-          if [ "$REMOTE_PATH" = "/" ]; then
-            echo "IONOS_REMOTE_PATH must not be '/' when delete_remote_files=true."
+          if [ "$CLEAN_PATH" = "/" ]; then
+            echo "IONOS_REMOTE_PATH must not be '/'."
             exit 1
           fi
 
-      - name: Deploy via SFTP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-        with:
-          server: ${{ secrets.IONOS_SFTP_HOST }}
-          username: ${{ secrets.IONOS_SFTP_USER }}
-          password: ${{ secrets.IONOS_SFTP_PASS }}
-          port: ${{ secrets.IONOS_SFTP_PORT || 22 }}
-          local_path: "./dist/*"
-          remote_path: ${{ secrets.IONOS_REMOTE_PATH }}
-          sftp_only: true
-          delete_remote_files: true
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Deploy via SFTP (exclude IONOS logs)
+        env:
+          IONOS_SFTP_HOST: ${{ secrets.IONOS_SFTP_HOST }}
+          IONOS_SFTP_USER: ${{ secrets.IONOS_SFTP_USER }}
+          IONOS_SFTP_PASS: ${{ secrets.IONOS_SFTP_PASS }}
+          IONOS_SFTP_PORT: ${{ secrets.IONOS_SFTP_PORT || 22 }}
+          IONOS_REMOTE_PATH: ${{ secrets.IONOS_REMOTE_PATH }}
+        run: |
+          REMOTE_PATH="$(printf '%s' "$IONOS_REMOTE_PATH" | tr -d '\r\n')"
+          lftp -u "$IONOS_SFTP_USER","$IONOS_SFTP_PASS" "sftp://$IONOS_SFTP_HOST:$IONOS_SFTP_PORT" <<EOF
+          set sftp:auto-confirm yes
+          set net:max-retries 2
+          set net:timeout 20
+          set net:reconnect-interval-base 5
+          mirror -R --delete --verbose=2 \
+            --exclude-glob logs \
+            --exclude-glob logs/** \
+            --exclude-glob .well-known \
+            --exclude-glob .well-known/** \
+            ./dist "$REMOTE_PATH"
+          bye
+          EOF

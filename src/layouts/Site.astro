@@ -42,13 +42,43 @@ const needsMemberGuard = path.startsWith("/app/");
     <header class="header">
       <div class="container">
         <nav class="nav" aria-label="Hauptnavigation">
-          <a class="logo" href="/">{APP.brand}</a>
-          <ul class="navlinks">
-            <li><a href="/">Start</a></li>
-            <li><a href="/docs.html/">Docs</a></li>
-            <li data-member-only class="hidden"><a href="/app/">App</a></li>
-            <li data-guest-only><a href="/login/">Login</a></li>
-          </ul>
+          <a class="logo" href="/" aria-label={APP.name}>
+            <img src="/Bilder/logo300x300.png" alt={APP.name} />
+          </a>
+          <div class="nav-actions">
+            <div class="burger-menu" id="burgerMenu">
+              <button type="button" id="burgerToggle" class="burger-toggle" aria-label="Menü">
+                <span>☰</span>
+              </button>
+              <div id="burgerPopover" class="burger-popover hidden" hidden>
+                <a href="/">Start</a>
+                <a href="/termine.html/">Termine</a>
+                <a href="/vdan-jugend.html/">Jugend</a>
+                <a href="/mitglied-werden.html/">Mitglied werden</a>
+                <a href="/fischereipruefung.html/">Fischereiprüfung</a>
+                <a href="/anglerheim-ottenheim.html/">Anglerheim</a>
+                <a href="/veranstaltungen.html/">Veranstaltungen</a>
+                <a href="/vereinsarbeit.html/">Vereinsarbeit</a>
+                <a href="/downloads.html/">Downloads</a>
+                <a href="/kontakt.html/">Kontakt</a>
+                <a href="/app/arbeitseinsaetze/" data-member-only class="hidden" hidden>Arbeitseinsätze</a>
+                <a href="/app/arbeitseinsaetze/cockpit/" data-manager-only class="hidden" hidden>Arbeitseinsatz Cockpit</a>
+                <a href="/app/termine/cockpit/" data-manager-only class="hidden" hidden>Termine Cockpit</a>
+              </div>
+            </div>
+
+            <div class="account-menu" id="accountMenu">
+            <button type="button" id="accountToggle" class="account-toggle" aria-label="Account">
+              <span class="account-avatar">A</span>
+            </button>
+            <div id="accountPopover" class="account-popover hidden" hidden>
+              <p id="accountLabel" class="small">Nicht eingeloggt</p>
+              <a href="/login/" id="accountLoginLink" class="feed-btn">Login</a>
+              <a href="/app/" id="accountAppLink" class="feed-btn hidden" hidden>Memberportal</a>
+              <button type="button" id="accountLogoutBtn" class="feed-btn feed-btn--ghost hidden" hidden>Logout</button>
+            </div>
+          </div>
+          </div>
         </nav>
       </div>
     </header>
@@ -62,5 +92,7 @@ const needsMemberGuard = path.startsWith("/app/");
     <script src="/js/member-auth.js" defer></script>
     {needsMemberGuard && <script src="/js/member-guard.js" defer></script>}
     <script src="/js/ui-session.js" defer></script>
+    <script src="/js/nav-burger.js" defer></script>
+    <script src="/js/account-menu.js" defer></script>
   </body>
 </html>

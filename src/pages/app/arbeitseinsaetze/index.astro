@@ -1,0 +1,33 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Arbeitseinsaetze • ${APP.name}`} description="Arbeitseinsaetze im Memberbereich" robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <h1>Arbeitseinsätze</h1>
+      <p class="small">Veröffentlichte Einsätze, Anmeldung und Check-in.</p>
+
+      <div class="work-checkin-inline">
+        <label>
+          <span>Check-in Token (vom QR)</span>
+          <input id="workCheckinToken" type="text" placeholder="Token eingeben oder aus QR übernehmen" />
+        </label>
+        <button type="button" id="workCheckinBtn" class="feed-btn">Check-in</button>
+      </div>
+
+      <p id="workMemberMsg" class="small" aria-live="polite"></p>
+      <hr />
+
+      <h2>Kommende Einsätze</h2>
+      <div id="workMemberUpcoming" class="grid"></div>
+
+      <hr />
+      <h2>Meine Einsätze</h2>
+      <div id="workMemberMine" class="grid"></div>
+    </div>
+  </section>
+
+  <script src="/js/work-events-member.js" defer></script>
+</Site>

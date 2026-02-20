@@ -85,8 +85,34 @@
   }
 
   async function listPosts() {
-    const rows = await sb(`/rest/v1/${TABLE}?select=id,title,body,category,created_at,updated_at,${MEDIA_TABLE}(id,sort_order,storage_bucket,storage_path,width,height)&order=created_at.desc`, { method: "GET" });
+    const rows = await sb(`/rest/v1/${TABLE}?select=id,author_id,updated_by,title,body,category,created_at,updated_at,${MEDIA_TABLE}(id,sort_order,storage_bucket,storage_path,width,height)&order=created_at.desc`, { method: "GET" });
     return Array.isArray(rows) ? rows : [];
+  }
+
+  function weekRangeIso() {
+    const now = new Date();
+    const day = (now.getDay() + 6) % 7;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - day);
+    weekStart.setHours(0, 0, 0, 0);
+
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    return { nowIso: now.toISOString(), weekStartIso: weekStart.toISOString(), weekEndIso: weekEnd.toISOString() };
+  }
+
+  async function listWeekCalendarItems() {
+    const { nowIso, weekEndIso } = weekRangeIso();
+    const [terms, works] = await Promise.all([
+      sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`, { method: "GET" }),
+      sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`, { method: "GET" }),
+    ]);
+
+    const t = (Array.isArray(terms) ? terms : []).map((row) => ({ ...row, source: "termin", sourceLabel: "Termin" }));
+    const w = (Array.isArray(works) ? works : []).map((row) => ({ ...row, source: "arbeitseinsatz", sourceLabel: "Arbeitseinsatz" }));
+    return [...t, ...w].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
   }
 
   async function createPost(payload) {
@@ -96,7 +122,7 @@
     const rows = await sb(`/rest/v1/${TABLE}`, {
       method: "POST",
       headers: { Prefer: "return=representation" },
-      body: JSON.stringify([{ ...payload, author_id: uid }]),
+      body: JSON.stringify([{ ...payload, author_id: uid, updated_by: uid }]),
     }, true);
 
     return rows?.[0];
@@ -111,10 +137,11 @@
   }
 
   async function updatePost(id, payload) {
+    const uid = currentUserId();
     const rows = await sb(`/rest/v1/${TABLE}?id=eq.${encodeURIComponent(id)}`, {
       method: "PATCH",
       headers: { Prefer: "return=representation" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, updated_by: uid || null }),
     }, true);
 
     return rows?.[0];
@@ -270,9 +297,37 @@
     list.innerHTML = "";
 
     try {
+      const weekItems = await listWeekCalendarItems().catch(() => []);
+      if (weekItems.length) {
+        const section = document.createElement("article");
+        section.className = "feed-post";
+        section.innerHTML = `
+          <header class="feed-post__head">
+            <h3>Diese Woche: Termine & Arbeitseinsätze</h3>
+            <div class="feed-post__meta">
+              <a class="feed-btn feed-btn--ghost" href="/termine.html/">Alle Termine</a>
+            </div>
+          </header>
+          <div class="feed-calendar-list">
+            ${weekItems.map((row) => `
+              <div class="feed-calendar-item">
+                <span class="feed-chip">${escapeHtml(row.sourceLabel)}</span>
+                <strong>${escapeHtml(row.title)}</strong>
+                <span class="small">${escapeHtml(formatDate(row.starts_at))} - ${escapeHtml(formatDate(row.ends_at))}</span>
+                <span class="small">${escapeHtml(row.location || "Ort offen")}</span>
+              </div>
+            `).join("")}
+          </div>
+        `;
+        list.appendChild(section);
+      }
+
       const posts = await listPosts();
       if (!posts.length) {
-        list.innerHTML = `<article class="feed-post"><h3>Noch keine Beiträge</h3><p class="small">Mit \"Neuer Post\" den ersten Beitrag erstellen.</p></article>`;
+        const empty = document.createElement("article");
+        empty.className = "feed-post";
+        empty.innerHTML = `<h3>Noch keine Beiträge</h3><p class="small">Mit "Neuer Post" den ersten Beitrag erstellen.</p>`;
+        list.appendChild(empty);
         return;
       }
 

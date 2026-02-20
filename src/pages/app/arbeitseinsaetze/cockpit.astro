@@ -1,0 +1,71 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Arbeitseinsatz Cockpit • ${APP.name}`} description="Verwaltung Arbeitseinsaetze" robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <div class="catch-table-toolbar">
+        <h1>Arbeitseinsatz Cockpit</h1>
+        <button type="button" id="workCreateOpenTop" class="catch-add-btn catch-add-btn--top" aria-label="Einsatz erstellen">
+          +
+        </button>
+      </div>
+
+      <p class="small">Nur für Vorstand/Admin. Erstellen, veröffentlichen und Freigaben verwalten.</p>
+      <p id="workCockpitMsg" class="small" aria-live="polite"></p>
+
+      <h2>Aktive Einsätze</h2>
+      <div id="workCockpitEventsActive" class="grid"></div>
+      <hr />
+      <h2>History</h2>
+      <div id="workCockpitEventsHistory" class="grid"></div>
+    </div>
+  </section>
+
+  <div class="catch-fab-stack">
+    <button type="button" id="workCreateOpenFab" class="catch-add-btn catch-add-btn--fab" aria-label="Einsatz erstellen">
+      +
+    </button>
+  </div>
+
+  <dialog id="workCreateDialog" class="catch-dialog">
+    <form id="workCreateForm" class="catch-dialog__form" method="dialog">
+      <h3>Arbeitseinsatz erstellen</h3>
+      <div class="grid cols2">
+        <label>
+          <span>Titel</span>
+          <input id="workTitle" type="text" maxlength="120" required />
+        </label>
+        <label>
+          <span>Ort</span>
+          <input id="workLocation" type="text" maxlength="160" />
+        </label>
+        <label>
+          <span>Start</span>
+          <input id="workStartsAt" type="datetime-local" required />
+        </label>
+        <label>
+          <span>Ende</span>
+          <input id="workEndsAt" type="datetime-local" required />
+        </label>
+        <label>
+          <span>Max. Teilnehmer (optional)</span>
+          <input id="workMax" type="number" min="1" step="1" />
+        </label>
+        <label style="grid-column:1/-1">
+          <span>Beschreibung (optional)</span>
+          <textarea id="workDescription" rows="4"></textarea>
+        </label>
+      </div>
+
+      <div class="catch-dialog__actions">
+        <button type="submit" class="feed-btn">Erstellen</button>
+        <button type="button" id="workCreateClose" class="feed-btn feed-btn--ghost">Schließen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/js/work-events-cockpit.js" defer></script>
+</Site>

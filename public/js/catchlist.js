@@ -47,6 +47,7 @@
 
   let activeDialogEntryId = null;
   let dialogEditMode = false;
+  let createDialog = null;
 
   function setMsg(text = "") {
     const el = document.getElementById("catchMsg");
@@ -102,15 +103,6 @@
     return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "de-DE"));
   }
 
-  function groupedWaters(rows) {
-    return rows.reduce((acc, w) => {
-      const groupKey = w.area_keys.includes(KEY_VG) ? KEY_VG : KEY_R39;
-      if (!acc[groupKey]) acc[groupKey] = [];
-      acc[groupKey].push(w);
-      return acc;
-    }, {});
-  }
-
   function loadEntries() {
     try {
       const raw = localStorage.getItem(STORE_KEY);
@@ -123,30 +115,6 @@
 
   function saveEntries(rows) {
     localStorage.setItem(STORE_KEY, JSON.stringify(rows));
-  }
-
-  function renderWaterOverview() {
-    const root = document.getElementById("catchWaterOverview");
-    if (!root) return;
-
-    const rows = availableWaters();
-    const groups = groupedWaters(rows);
-    const kinds = [KEY_VG, KEY_R39];
-
-    root.innerHTML = kinds
-      .map((kind) => {
-        const items = groups[kind] || [];
-        if (!items.length) return "";
-        return `
-          <div class="catch-water-group">
-            <h3>${escapeHtml(areaLabel(kind))}</h3>
-            <div class="catch-water-chips">
-              ${items.map((w) => `<span class="catch-water-chip">${escapeHtml(w.name)}${w.area_keys.length > 1 ? ' <small>(auch Rheinlos39)</small>' : ""}</span>`).join("")}
-            </div>
-          </div>
-        `;
-      })
-      .join("");
   }
 
   function loadSelects() {
@@ -264,8 +232,7 @@
     table.innerHTML = `
       <div class="catch-table__head" role="row">
         <span>Datum</span>
-        <span>Gewässer</span>
-        <span>Fischart</span>
+        <span>Gewässer / Fischart</span>
         <span>Anzahl</span>
       </div>
     `;
@@ -277,8 +244,10 @@
       el.dataset.entryId = r.id;
       el.innerHTML = `
         <span class="catch-row__date">${escapeHtml(String(r.caught_on))}</span>
-        <span class="catch-row__water">${escapeHtml(r.water_name)}</span>
-        <span class="catch-row__fish">${escapeHtml(r.fish_name)}</span>
+        <span class="catch-row__meta">
+          <strong class="catch-row__water">${escapeHtml(r.water_name)}</strong>
+          <small class="catch-row__fish">${escapeHtml(r.fish_name)}</small>
+        </span>
         <span class="catch-row__qty">${Number(r.quantity)}</span>
       `;
       el.addEventListener("click", () => openDialog(r.id));
@@ -459,19 +428,35 @@
     });
   }
 
+  function openCreateDialog() {
+    if (!createDialog) return;
+    setMsg("");
+    const form = document.getElementById("catchForm");
+    form?.reset();
+    const dateInput = document.getElementById("catchDate");
+    if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+    const qtyInput = document.getElementById("catchQty");
+    if (qtyInput) qtyInput.value = "1";
+    if (!createDialog.open) createDialog.showModal();
+  }
+
+  function closeCreateDialog() {
+    if (createDialog?.open) createDialog.close();
+  }
+
   function init() {
     const form = document.getElementById("catchForm");
     const clearBtn = document.getElementById("catchClearAll");
-    if (!form) return;
+    createDialog = document.getElementById("catchCreateDialog");
+    if (!form || !createDialog) return;
 
-    const today = new Date().toISOString().slice(0, 10);
-    const dateInput = document.getElementById("catchDate");
-    if (dateInput && !dateInput.value) dateInput.value = today;
-
-    renderWaterOverview();
     loadSelects();
     refresh();
     bindDialogActions();
+
+    document.getElementById("openCatchCreateTop")?.addEventListener("click", openCreateDialog);
+    document.getElementById("openCatchCreateFab")?.addEventListener("click", openCreateDialog);
+    document.getElementById("catchCreateCloseBtn")?.addEventListener("click", closeCreateDialog);
 
     form.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -480,8 +465,8 @@
         const rows = loadEntries();
         rows.push(payload);
         saveEntries(rows);
+        closeCreateDialog();
         form.reset();
-        if (dateInput) dateInput.value = today;
         setMsg("UI-Eintrag gespeichert (noch keine DB). ");
         refresh();
       } catch (err) {

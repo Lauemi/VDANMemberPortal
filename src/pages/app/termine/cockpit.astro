@@ -1,0 +1,61 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Termine Cockpit • ${APP.name}`} description="Verwaltung Vereinstermine" robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <div class="catch-table-toolbar">
+        <h1>Termine Cockpit</h1>
+        <button type="button" id="termCreateOpenTop" class="catch-add-btn catch-add-btn--top" aria-label="Termin erstellen">+</button>
+      </div>
+      <p class="small">Nur für Vorstand/Admin. Diese Termine erscheinen gemeinsam mit Arbeitseinsätzen auf der Seite Termine.</p>
+      <p id="termCockpitMsg" class="small" aria-live="polite"></p>
+
+      <h2>Aktive Termine</h2>
+      <div id="termCockpitActive" class="grid"></div>
+      <hr />
+      <h2>History</h2>
+      <div id="termCockpitHistory" class="grid"></div>
+    </div>
+  </section>
+
+  <div class="catch-fab-stack">
+    <button type="button" id="termCreateOpenFab" class="catch-add-btn catch-add-btn--fab" aria-label="Termin erstellen">+</button>
+  </div>
+
+  <dialog id="termCreateDialog" class="catch-dialog">
+    <form id="termCreateForm" class="catch-dialog__form" method="dialog">
+      <h3>Termin erstellen</h3>
+      <div class="grid cols2">
+        <label>
+          <span>Titel</span>
+          <input id="termTitle" type="text" required />
+        </label>
+        <label>
+          <span>Ort</span>
+          <input id="termLocation" type="text" />
+        </label>
+        <label>
+          <span>Start</span>
+          <input id="termStartsAt" type="datetime-local" required />
+        </label>
+        <label>
+          <span>Ende</span>
+          <input id="termEndsAt" type="datetime-local" required />
+        </label>
+        <label style="grid-column:1/-1">
+          <span>Beschreibung</span>
+          <textarea id="termDescription" rows="4"></textarea>
+        </label>
+      </div>
+      <div class="catch-dialog__actions">
+        <button type="submit" class="feed-btn">Erstellen</button>
+        <button type="button" id="termCreateClose" class="feed-btn feed-btn--ghost">Schließen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/js/term-events-cockpit.js" defer></script>
+</Site>

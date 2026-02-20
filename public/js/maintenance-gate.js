@@ -13,7 +13,6 @@
           <input type="password" placeholder="Passwort" autocomplete="off" />
           <button type="submit" class="feed-btn">Öffnen</button>
         </form>
-        <p class="small maintenance-gate__hint">Passwort: VDAN</p>
         <p class="small maintenance-gate__error" aria-live="polite"></p>
       </div>
     `;

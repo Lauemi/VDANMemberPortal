@@ -40,6 +40,6 @@ jobs:
           password: ${{ secrets.IONOS_SFTP_PASS }}
           port: ${{ secrets.IONOS_SFTP_PORT || 22 }}
           local_path: "./dist/*"
-          remote_path: ${{ secrets.IONOS_REMOTE_PATH }}
+          remote_path: ${{ secrets.IONOS_REMOTE_PATH || '/' }}
           sftp_only: true
           delete_remote_files: false

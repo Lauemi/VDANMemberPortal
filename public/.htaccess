@@ -1,0 +1,8 @@
+RewriteEngine On
+
+# Astro pages are deployed as directories like /vdan-jugend.html/
+# Legacy links still point to /vdan-jugend.html (without trailing slash).
+# Redirect those paths so old links continue to work on IONOS Apache.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.+\.html)$ /$1/ [R=301,L]

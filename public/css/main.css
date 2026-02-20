@@ -868,6 +868,50 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   color:#ff9d9d;
 }
 
+.maintenance-gate{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:rgba(6,10,18,.84);
+  backdrop-filter:blur(4px);
+  display:grid;
+  place-items:center;
+  padding:18px;
+}
+
+.maintenance-gate__box{
+  width:min(92vw, 420px);
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:linear-gradient(180deg, rgba(24,31,47,.98), rgba(14,20,32,.98));
+  padding:16px;
+  display:grid;
+  gap:10px;
+}
+
+.maintenance-gate__box h2{
+  margin:0;
+}
+
+.maintenance-gate__form{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+}
+
+.maintenance-gate__form input{
+  min-height:40px;
+}
+
+.maintenance-gate__hint{
+  opacity:.8;
+}
+
+.maintenance-gate__error{
+  color:#ff9d9d;
+  min-height:1.1em;
+}
+
 .catch-fab-stack{
   position:fixed;
   right:16px;

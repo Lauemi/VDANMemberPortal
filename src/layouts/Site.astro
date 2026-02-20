@@ -31,6 +31,7 @@ const needsMemberGuard = path.startsWith("/app/");
     {description && <meta name="description" content={description} />}
     <meta name="robots" content={`${robots},follow`} />
     <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/png" href="/icon.png" />
     <link rel="stylesheet" href="/css/main.css" />
     <script define:vars={{ supabaseUrl, supabaseKey }}>
       // Expose Supabase config to the auth helper (client-side)

@@ -50,16 +50,26 @@
     });
   }
 
+  function setAdminState(isAdmin) {
+    document.querySelectorAll("[data-admin-only]").forEach((el) => {
+      el.classList.toggle("hidden", !isAdmin);
+      el.toggleAttribute("hidden", !isAdmin);
+    });
+  }
+
   async function init(){
     const loggedIn = Boolean(window.VDAN_AUTH?.loadSession?.());
     setNavState(loggedIn);
     if (!loggedIn) {
       setManagerState(false);
+      setAdminState(false);
       return;
     }
     const roles = await loadRoles().catch(() => []);
     const isManager = roles.includes("admin") || roles.includes("vorstand");
+    const isAdmin = roles.includes("admin");
     setManagerState(isManager);
+    setAdminState(isAdmin);
   }
 
   document.addEventListener("DOMContentLoaded", init);

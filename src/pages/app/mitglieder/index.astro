@@ -1,0 +1,26 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Mitgliederverwaltung • ${APP.name}`} description="Admin: Benutzer und Rollen" robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <h1>Mitgliederverwaltung</h1>
+      <p class="small">Nur für Admin. Übersicht aller Benutzer mit Rollen und Mitgliedsnummer.</p>
+      <p id="membersAdminMsg" class="small" aria-live="polite"></p>
+
+      <div class="catch-table">
+        <div class="catch-table__head" style="grid-template-columns:2fr 2fr 1fr 1.3fr">
+          <span>Name / E-Mail</span>
+          <span>User-ID</span>
+          <span>Mitglieds-Nr.</span>
+          <span>Rolle(n)</span>
+        </div>
+        <div id="membersAdminRows" class="grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/members-admin.js" defer></script>
+</Site>

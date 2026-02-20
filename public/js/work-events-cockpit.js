@@ -2,6 +2,7 @@
   const MANAGER_ROLES = new Set(["admin", "vorstand"]);
   let isManager = false;
   let createDialog = null;
+  let featureFlags = { work_qr_enabled: false };
 
   function cfg() {
     return {
@@ -96,7 +97,7 @@
     const inList = ids.map((id) => `"${id}"`).join(",");
     let rows = [];
     try {
-      rows = await sb(`/rest/v1/profiles?select=id,display_name,email&id=in.(${inList})`, { method: "GET" }, true);
+      rows = await sb(`/rest/v1/profiles?select=id,display_name,email,member_no&id=in.(${inList})`, { method: "GET" }, true);
     } catch (err) {
       setMsg("Anzeigenamen konnten nicht geladen werden (Profiles-Policy/Migration prüfen).");
       rows = [];
@@ -104,9 +105,30 @@
     const map = new Map();
     (Array.isArray(rows) ? rows : []).forEach((r) => {
       const label = String(r.display_name || r.email || r.id || "").trim();
-      if (r.id) map.set(r.id, label || r.id);
+      if (r.id) map.set(r.id, { label: label || r.id, memberNo: String(r.member_no || "").trim() });
     });
     return map;
+  }
+
+  async function loadFeatureFlags() {
+    try {
+      const data = await sb("/rest/v1/rpc/portal_bootstrap", {
+        method: "POST",
+        body: JSON.stringify({}),
+      }, true);
+      return data?.flags && typeof data.flags === "object" ? data.flags : {};
+    } catch {
+      try {
+        const rows = await sb("/rest/v1/feature_flags?select=key,enabled", { method: "GET" }, true);
+        const flags = {};
+        (Array.isArray(rows) ? rows : []).forEach((r) => {
+          if (r?.key) flags[r.key] = Boolean(r.enabled);
+        });
+        return flags;
+      } catch {
+        return {};
+      }
+    }
   }
 
   async function createEvent(payload) {
@@ -228,7 +250,8 @@
       ...rows.map((r) => r.updated_by),
       ...rows.map((r) => r.approved_by),
     ]);
-    const displayUser = (id) => profileMap.get(id) || id || "-";
+    const profileOf = (id) => profileMap.get(id) || { label: id || "-", memberNo: "" };
+    const displayUser = (id) => profileOf(id).label;
 
     const isPresent = (r) => r.checkin_at && !r.checkout_at && r.status !== "rejected" && r.status !== "no_show";
     const stateRank = (r) => (isPresent(r) ? 0 : r.checkout_at ? 1 : 2);
@@ -270,6 +293,7 @@
               <strong>${escapeHtml(displayUser(row.auth_uid))}</strong>
               ${approvedMark}
             </div>
+            ${profileOf(row.auth_uid).memberNo ? `<div class="small">Mitgliedsnummer: ${escapeHtml(profileOf(row.auth_uid).memberNo)}</div>` : ""}
             <div class="small">${escapeHtml(statusLabel(row.status))}</div>
           </td>
           <td>${row.checkin_at ? escapeHtml(asLocalDate(row.checkin_at)) : "-"}</td>
@@ -364,13 +388,14 @@
               <button class="feed-btn feed-btn--ghost" type="button" data-archive="${row.id}" ${row.status !== "archived" ? "" : "disabled"}>Archivieren</button>
               <button class="feed-btn feed-btn--ghost" type="button" data-participants="${row.id}">Teilnehmer</button>
             </div>
+            ${featureFlags.work_qr_enabled ? `
             <div class="work-qr-box">
               <img loading="lazy" src="${eventQrUrl(row.public_token)}" alt="QR für Check-in ${escapeHtml(row.title)}" />
               <div class="small">
                 <a href="${eventCheckinUrl(row.public_token)}" target="_blank" rel="noreferrer">Check-in Link öffnen</a><br />
                 Token: <code>${escapeHtml(row.public_token)}</code>
               </div>
-            </div>
+            </div>` : ""}
             <div class="work-participants" id="parts-${row.id}"></div>
           </div>
         `;
@@ -390,6 +415,8 @@
       setMsg("Supabase-Konfiguration fehlt.");
       return;
     }
+
+    featureFlags = { work_qr_enabled: false, ...(await loadFeatureFlags()) };
 
     const roles = await loadRoles().catch(() => []);
     isManager = roles.some((r) => MANAGER_ROLES.has(r));

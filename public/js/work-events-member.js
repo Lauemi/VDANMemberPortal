@@ -1,4 +1,6 @@
 ;(() => {
+  let featureFlags = { work_qr_enabled: false };
+
   function cfg() {
     return {
       url: String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, ""),
@@ -152,6 +154,27 @@
     }, true);
   }
 
+  async function loadFeatureFlags() {
+    try {
+      const data = await sb("/rest/v1/rpc/portal_bootstrap", {
+        method: "POST",
+        body: JSON.stringify({}),
+      }, true);
+      return data?.flags && typeof data.flags === "object" ? data.flags : {};
+    } catch {
+      try {
+        const rows = await sb("/rest/v1/feature_flags?select=key,enabled", { method: "GET" }, true);
+        const flags = {};
+        (Array.isArray(rows) ? rows : []).forEach((r) => {
+          if (r?.key) flags[r.key] = Boolean(r.enabled);
+        });
+        return flags;
+      } catch {
+        return {};
+      }
+    }
+  }
+
   function renderUpcoming(events, mineByEventId) {
     const root = document.getElementById("workMemberUpcoming");
     if (!root) return;
@@ -182,7 +205,9 @@
           <div class="work-actions">
             <button class="feed-btn" type="button" data-register="${evt.id}" data-register-token="${evt.public_token || ""}" ${alreadyStarted ? "disabled" : ""}>${mine ? "Anmelden (Start)" : "Anmelden (Start)"}</button>
             <button class="feed-btn feed-btn--ghost" type="button" data-checkout="${evt.id}" ${mine?.checkin_at && !mine?.checkout_at ? "" : "disabled"}>Gehen (Ende)</button>
-            <button class="feed-btn feed-btn--ghost" type="button" data-checkin="${evt.public_token}" ${canCheckin ? "" : "disabled"}>Check-in</button>
+            ${featureFlags.work_qr_enabled
+              ? `<button class="feed-btn feed-btn--ghost" type="button" data-checkin="${evt.public_token}" ${canCheckin ? "" : "disabled"}>Check-in</button>`
+              : ""}
           </div>
         </div>
       `;
@@ -250,7 +275,16 @@
       return;
     }
 
+    featureFlags = { work_qr_enabled: false, ...(await loadFeatureFlags()) };
+    const checkinBlock = document.getElementById("workCheckinBlock");
+    if (checkinBlock) {
+      const showQr = Boolean(featureFlags.work_qr_enabled);
+      checkinBlock.classList.toggle("hidden", !showQr);
+      checkinBlock.toggleAttribute("hidden", !showQr);
+    }
+
     document.getElementById("workCheckinBtn")?.addEventListener("click", async () => {
+      if (!featureFlags.work_qr_enabled) return;
       const tokenInput = document.getElementById("workCheckinToken");
       const token = String(tokenInput?.value || "").trim();
       if (!token) {
@@ -311,6 +345,7 @@
 
       const checkinToken = target.getAttribute("data-checkin");
       if (checkinToken) {
+        if (!featureFlags.work_qr_enabled) return;
         try {
           setMsg("Check-in läuft...");
           await checkinByToken(checkinToken);

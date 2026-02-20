@@ -32,6 +32,19 @@ jobs:
           PUBLIC_APP_BRAND: ${{ secrets.PUBLIC_APP_BRAND }}
         run: npm run build
 
+      - name: Validate remote path
+        env:
+          REMOTE_PATH: ${{ secrets.IONOS_REMOTE_PATH }}
+        run: |
+          if [ -z "$REMOTE_PATH" ]; then
+            echo "IONOS_REMOTE_PATH secret is missing."
+            exit 1
+          fi
+          if [ "$REMOTE_PATH" = "/" ]; then
+            echo "IONOS_REMOTE_PATH must not be '/' when delete_remote_files=true."
+            exit 1
+          fi
+
       - name: Deploy via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
@@ -40,6 +53,6 @@ jobs:
           password: ${{ secrets.IONOS_SFTP_PASS }}
           port: ${{ secrets.IONOS_SFTP_PORT || 22 }}
           local_path: "./dist/*"
-          remote_path: ${{ secrets.IONOS_REMOTE_PATH || '/' }}
+          remote_path: ${{ secrets.IONOS_REMOTE_PATH }}
           sftp_only: true
           delete_remote_files: true

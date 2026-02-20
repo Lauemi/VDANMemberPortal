@@ -1,0 +1,22 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Gewässerkarte • ${APP.name}`} description="Karte mit Mitglieds-Berechtigungen." robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <h1>Gewässerkarte</h1>
+      <p class="small">Grün = Erlaubt, Rot = Verboten (laut Karte/Profil).</p>
+      <p id="waterMapMsg" class="small" aria-live="polite"></p>
+      <div style="margin:8px 0 10px;">
+        <button id="waterLocateBtn" class="feed-btn" type="button">Mein Standort</button>
+      </div>
+
+      <div id="waterMapCanvas" style="height:480px;border:1px solid var(--line);border-radius:12px;overflow:hidden;"></div>
+      <div id="waterMapList" class="grid" style="margin-top:12px;"></div>
+    </div>
+  </section>
+
+  <script src="/js/member-water-map.js" defer></script>
+</Site>

@@ -15,6 +15,8 @@
   ];
 
   let canManage = false;
+  const forcedCategory = String(window.__VDAN_FEED_CATEGORY || "").trim().toLowerCase() || "";
+  const isForcedCategory = Boolean(forcedCategory);
 
   function cfg() {
     return {
@@ -85,7 +87,8 @@
   }
 
   async function listPosts() {
-    const rows = await sb(`/rest/v1/${TABLE}?select=id,author_id,updated_by,title,body,category,created_at,updated_at,${MEDIA_TABLE}(id,sort_order,storage_bucket,storage_path,width,height)&order=created_at.desc`, { method: "GET" });
+    const categoryFilter = isForcedCategory ? `&category=eq.${encodeURIComponent(forcedCategory)}` : "";
+    const rows = await sb(`/rest/v1/${TABLE}?select=id,author_id,updated_by,title,body,category,created_at,updated_at,${MEDIA_TABLE}(id,sort_order,storage_bucket,storage_path,width,height)${categoryFilter}&order=created_at.desc`, { method: "GET" });
     return Array.isArray(rows) ? rows : [];
   }
 
@@ -241,7 +244,9 @@
     return mediaRows;
   }
 
-  function buildComposer(initial = {}, submitLabel = "Speichern", withMedia = false) {
+  function buildComposer(initial = {}, submitLabel = "Speichern", withMedia = false, fixedCategory = "") {
+    const hasFixedCategory = Boolean(fixedCategory);
+    const normalizedCategory = hasFixedCategory ? fixedCategory : (initial.category || "info");
     const wrap = document.createElement("div");
     wrap.className = "feed-composer";
     wrap.innerHTML = `
@@ -251,9 +256,16 @@
       </label>
       <label>
         <span>Kategorie</span>
-        <select name="category">
-          ${CATEGORY_OPTIONS.map((o) => `<option value="${o.value}" ${initial.category === o.value ? "selected" : ""}>${o.label}</option>`).join("")}
-        </select>
+        ${hasFixedCategory
+          ? `
+            <input type="hidden" name="category" value="${escapeHtml(normalizedCategory)}" />
+            <input type="text" value="${escapeHtml(categoryLabel(normalizedCategory))}" disabled />
+          `
+          : `
+            <select name="category">
+              ${CATEGORY_OPTIONS.map((o) => `<option value="${o.value}" ${normalizedCategory === o.value ? "selected" : ""}>${o.label}</option>`).join("")}
+            </select>
+          `}
       </label>
       <label>
         <span>Text</span>
@@ -297,7 +309,7 @@
     list.innerHTML = "";
 
     try {
-      const weekItems = await listWeekCalendarItems().catch(() => []);
+      const weekItems = isForcedCategory ? [] : await listWeekCalendarItems().catch(() => []);
       if (weekItems.length) {
         const section = document.createElement("article");
         section.className = "feed-post";
@@ -383,7 +395,8 @@
 
     const form = document.createElement("form");
     form.className = "feed-form";
-    form.appendChild(buildComposer({}, "Post veröffentlichen", true));
+    const initial = isForcedCategory ? { category: forcedCategory } : {};
+    form.appendChild(buildComposer(initial, "Post veröffentlichen", true, isForcedCategory ? forcedCategory : ""));
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -423,7 +436,7 @@
 
     const form = document.createElement("form");
     form.className = "feed-form";
-    form.appendChild(buildComposer(post, "Änderungen speichern", false));
+    form.appendChild(buildComposer(post, "Änderungen speichern", false, isForcedCategory ? forcedCategory : ""));
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -453,7 +466,6 @@
     const { url, key } = cfg();
     if (!url || !key) {
       setMessage("Supabase-Konfiguration fehlt.");
-      await refresh();
       return;
     }
 

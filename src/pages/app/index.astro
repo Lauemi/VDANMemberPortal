@@ -10,35 +10,53 @@ import { APP } from "../../config/app";
       <p class="small">Wähle eine App.</p>
 
       <div class="app-grid">
-        <a class="app-tile" href="/app/fangliste/">
-          <span class="app-tile__icon">FL</span>
+        <div class="app-entry">
+          <a class="app-tile" href="/app/fangliste/"><span class="app-tile__icon">FL</span></a>
           <span class="app-tile__title">Fangliste</span>
-          <span class="small">Fänge erfassen</span>
-        </a>
+          <span class="small app-tile__desc">Fänge erfassen</span>
+        </div>
 
-        <a class="app-tile" href="/app/arbeitseinsaetze/">
-          <span class="app-tile__icon">AS</span>
+        <div class="app-entry">
+          <a class="app-tile" href="/app/arbeitseinsaetze/"><span class="app-tile__icon">AS</span></a>
           <span class="app-tile__title">Arbeitseinsätze</span>
-          <span class="small">Anmelden & Check-in</span>
-        </a>
+          <span class="small app-tile__desc">Anmelden & Check-in</span>
+        </div>
 
-        <a class="app-tile hidden" data-manager-only hidden href="/app/arbeitseinsaetze/cockpit/">
-          <span class="app-tile__icon">AC</span>
+        <div class="app-entry">
+          <a class="app-tile" href="/app/ausweis/"><span class="app-tile__icon">ID</span></a>
+          <span class="app-tile__title">Mitgliedsausweis</span>
+          <span class="small app-tile__desc">Name, Nr. & Gültigkeit</span>
+        </div>
+
+        <div class="app-entry">
+          <a class="app-tile" href="/app/gewaesserkarte/"><span class="app-tile__icon">GK</span></a>
+          <span class="app-tile__title">Gewässerkarte</span>
+          <span class="small app-tile__desc">Erlaubt / Verboten</span>
+        </div>
+
+        <div class="app-entry hidden" data-manager-only hidden>
+          <a class="app-tile" href="/app/arbeitseinsaetze/cockpit/"><span class="app-tile__icon">AC</span></a>
           <span class="app-tile__title">AS Cockpit</span>
-          <span class="small">Freigaben & History</span>
-        </a>
+          <span class="small app-tile__desc">Freigaben & History</span>
+        </div>
 
-        <a class="app-tile hidden" data-manager-only hidden href="/app/termine/cockpit/">
-          <span class="app-tile__icon">TC</span>
+        <div class="app-entry hidden" data-manager-only hidden>
+          <a class="app-tile" href="/app/termine/cockpit/"><span class="app-tile__icon">TC</span></a>
           <span class="app-tile__title">Termine Cockpit</span>
-          <span class="small">Termine pflegen</span>
-        </a>
+          <span class="small app-tile__desc">Termine pflegen</span>
+        </div>
 
-        <a class="app-tile hidden" data-admin-only hidden href="/app/mitglieder/">
-          <span class="app-tile__icon">MV</span>
+        <div class="app-entry hidden" data-admin-only hidden>
+          <a class="app-tile" href="/app/mitglieder/"><span class="app-tile__icon">MV</span></a>
           <span class="app-tile__title">Mitglieder</span>
-          <span class="small">Benutzer & Rollen</span>
-        </a>
+          <span class="small app-tile__desc">Benutzer & Rollen</span>
+        </div>
+
+        <div class="app-entry hidden" data-manager-only hidden>
+          <a class="app-tile" href="/app/dokumente/"><span class="app-tile__icon">DV</span></a>
+          <span class="app-tile__title">Dokumente</span>
+          <span class="small app-tile__desc">Downloads pflegen</span>
+        </div>
       </div>
     </div>
   </section>

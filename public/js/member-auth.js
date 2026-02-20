@@ -1,6 +1,7 @@
 ;(() => {
   const SESSION_KEY = "vdan_member_session_v1";
   const EXPIRY_SKEW_MS = 30_000;
+  const MEMBER_EMAIL_DOMAIN = "members.vdan.local";
 
   function cfg() {
     const url = String(window.__APP_SUPABASE_URL || "").trim();
@@ -52,7 +53,19 @@
     return fetch(full, { ...init, headers });
   }
 
-  async function loginWithPassword(email, password) {
+  function memberNoToEmail(rawMemberNo) {
+    const memberNo = String(rawMemberNo || "").trim();
+    if (!memberNo) return "";
+    const safe = memberNo.replace(/[^a-zA-Z0-9._-]/g, "_");
+    return `member_${safe}@${MEMBER_EMAIL_DOMAIN}`.toLowerCase();
+  }
+
+  async function loginWithPassword(identifier, password) {
+    const input = String(identifier || "").trim();
+    const email = input.includes("@") ? input.toLowerCase() : memberNoToEmail(input);
+    if (!email) {
+      throw new Error("Bitte Mitgliedsnummer eingeben.");
+    }
     const res = await sbFetch("/auth/v1/token?grant_type=password", {
       method: "POST",
       body: JSON.stringify({ email, password }),
@@ -69,6 +82,62 @@
     const session = { ...data, expiresAt };
     saveSession(session);
     return session;
+  }
+
+  async function getOwnProfile() {
+    const s = loadSession();
+    const uid = s?.user?.id;
+    if (!uid) return null;
+    const res = await sbFetch(`/rest/v1/profiles?select=id,must_change_password&limit=1&id=eq.${encodeURIComponent(uid)}`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${s.access_token}` },
+    });
+    if (!res.ok) return null;
+    const rows = await res.json().catch(() => []);
+    return Array.isArray(rows) && rows.length ? rows[0] : null;
+  }
+
+  async function clearMustChangePasswordFlag() {
+    const s = loadSession();
+    const uid = s?.user?.id;
+    if (!uid) return;
+    await sbFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(uid)}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${s.access_token}`,
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({
+        must_change_password: false,
+        password_changed_at: new Date().toISOString(),
+      }),
+    });
+  }
+
+  async function updatePassword(newPassword) {
+    const s = loadSession();
+    if (!s?.access_token) throw new Error("Keine aktive Session.");
+    const res = await sbFetch("/auth/v1/user", {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${s.access_token}` },
+      body: JSON.stringify({ password: newPassword }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.msg || err?.error_description || "Passwort konnte nicht geändert werden.");
+    }
+    await clearMustChangePasswordFlag();
+  }
+
+  async function enforcePasswordChangeIfNeeded() {
+    const path = String(window.location.pathname || "");
+    if (!path.startsWith("/app/")) return;
+    if (path.startsWith("/app/passwort-aendern/")) return;
+    const p = await getOwnProfile();
+    if (p?.must_change_password) {
+      const next = encodeURIComponent(path + window.location.search);
+      window.location.replace(`/app/passwort-aendern/?next=${next}`);
+    }
   }
 
   async function logout() {
@@ -92,6 +161,9 @@
     hasConfig,
     loadSession,
     loginWithPassword,
+    getOwnProfile,
+    updatePassword,
+    memberNoToEmail,
     logout,
     SESSION_KEY,
   };
@@ -99,6 +171,7 @@
   // Login page wiring (if present)
   document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("loginForm");
+    const passwordForm = document.getElementById("passwordChangeForm");
     const logoutBtn = document.getElementById("logoutBtn");
     const msg = document.getElementById("loginMsg");
 
@@ -110,27 +183,66 @@
       });
     }
 
-    if (!form) return;
-
     if (!hasConfig()) {
       if (msg) msg.textContent = "Supabase ENV fehlt (PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY).";
       return;
     }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (msg) msg.textContent = "…";
-      const email = String(document.getElementById("loginEmail")?.value || "").trim();
-      const password = String(document.getElementById("loginPass")?.value || "");
-      try {
-        await loginWithPassword(email, password);
-        if (msg) msg.textContent = "Login ok.";
-        document.dispatchEvent(new CustomEvent("vdan:session", { detail: { loggedIn: true } }));
-        const target = String(window.__APP_AFTER_LOGIN || "/app/");
-        window.location.assign(target);
-      } catch (err) {
-        if (msg) msg.textContent = err?.message || "Login fehlgeschlagen";
-      }
-    });
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (msg) msg.textContent = "…";
+        const memberNo = String(
+          document.getElementById("loginMemberNo")?.value ||
+          document.getElementById("loginEmail")?.value ||
+          ""
+        ).trim();
+        const password = String(document.getElementById("loginPass")?.value || "");
+        try {
+          await loginWithPassword(memberNo, password);
+          const profile = await getOwnProfile();
+          if (msg) msg.textContent = "Login ok.";
+          document.dispatchEvent(new CustomEvent("vdan:session", { detail: { loggedIn: true } }));
+          const target = String(window.__APP_AFTER_LOGIN || "/app/");
+          if (profile?.must_change_password) {
+            window.location.assign(`/app/passwort-aendern/?next=${encodeURIComponent(target)}`);
+            return;
+          }
+          window.location.assign(target);
+        } catch (err) {
+          if (msg) msg.textContent = err?.message || "Login fehlgeschlagen";
+        }
+      });
+    }
+
+    if (passwordForm) {
+      const msgEl = document.getElementById("passwordChangeMsg");
+      passwordForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const p1 = String(document.getElementById("newPassword")?.value || "");
+        const p2 = String(document.getElementById("newPasswordRepeat")?.value || "");
+        if (p1.length < 8) {
+          if (msgEl) msgEl.textContent = "Passwort muss mindestens 8 Zeichen haben.";
+          return;
+        }
+        if (p1 !== p2) {
+          if (msgEl) msgEl.textContent = "Passwörter stimmen nicht überein.";
+          return;
+        }
+        try {
+          if (msgEl) msgEl.textContent = "Speichere…";
+          await updatePassword(p1);
+          if (msgEl) msgEl.textContent = "Passwort aktualisiert.";
+          const target = String(window.__APP_AFTER_PASSWORD_CHANGE || "/app/");
+          window.location.assign(target);
+        } catch (err) {
+          if (msgEl) msgEl.textContent = err?.message || "Passwort konnte nicht geändert werden.";
+        }
+      });
+    }
+
+    if (loadSession()) {
+      enforcePasswordChangeIfNeeded().catch(() => {});
+    }
   });
 })();

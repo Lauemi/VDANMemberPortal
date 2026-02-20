@@ -1,0 +1,25 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Mitgliedsausweis • ${APP.name}`} description="Digitaler Mitgliedsausweis" robots="noindex">
+  <section class="card" style="max-width:760px;margin:0 auto;">
+    <div class="card__body">
+      <h1>Mitgliedsausweis</h1>
+      <p id="memberCardMsg" class="small" aria-live="polite"></p>
+
+      <article id="memberCardBox" class="card" style="border-style:dashed;">
+        <div class="card__body">
+          <p class="small">Lade Ausweisdaten…</p>
+        </div>
+      </article>
+      <div style="margin-top:10px;">
+        <a class="feed-btn" href="/app/gewaesserkarte/">Gewässerkarte öffnen</a>
+        <a class="feed-btn feed-btn--ghost hidden" data-manager-only hidden href="/app/ausweis/verifizieren/" style="margin-left:8px;">Prüfseite</a>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/member-card.js" defer></script>
+</Site>

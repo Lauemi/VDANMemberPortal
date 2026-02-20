@@ -10,12 +10,12 @@ const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
   <section class="card" style="max-width:520px;margin:0 auto;">
     <div class="card__body">
       <h1>Login</h1>
-      <p class="small">Email + Passwort (Supabase Auth). Nach Login wirst du in den Mitgliederbereich weitergeleitet.</p>
+      <p class="small">Mitgliedsnummer + Passwort. Beim ersten Login mit Standardpasswort musst du dein Passwort ändern.</p>
 
       <form id="loginForm">
         <label>
-          <span>Email</span>
-          <input id="loginEmail" name="email" type="email" autocomplete="username" required />
+          <span>Mitgliedsnummer</span>
+          <input id="loginMemberNo" name="member_no" type="text" inputmode="numeric" autocomplete="username" required />
         </label>
         <label>
           <span>Passwort</span>
@@ -30,7 +30,7 @@ const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
       </form>
 
       <hr/>
-      <p class="small">Hinweis: Rechte/Policies kommen aus Supabase (RLS). UI ist nur Oberfläche.</p>
+      <p class="small">Hinweis: Demo-User nutzen Mitgliedsnummern ab 9990.</p>
     </div>
   </section>
 

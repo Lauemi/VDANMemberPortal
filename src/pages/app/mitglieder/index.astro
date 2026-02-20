@@ -10,17 +10,94 @@ import { APP } from "../../../config/app";
       <p class="small">Nur für Admin. Übersicht aller Benutzer mit Rollen und Mitgliedsnummer.</p>
       <p id="membersAdminMsg" class="small" aria-live="polite"></p>
 
+      <div style="display:flex;justify-content:flex-end;margin:10px 0 12px 0;">
+        <input
+          id="membersAdminSearch"
+          type="search"
+          placeholder="Suche Name, E-Mail, Mitglieds-Nr."
+          style="max-width:340px;width:100%;"
+        />
+      </div>
+
       <div class="catch-table">
-        <div class="catch-table__head" style="grid-template-columns:2fr 2fr 1fr 1.3fr">
-          <span>Name / E-Mail</span>
-          <span>User-ID</span>
-          <span>Mitglieds-Nr.</span>
-          <span>Rolle(n)</span>
+        <div class="catch-table__head" style="grid-template-columns:2fr 1fr 1.2fr 1.6fr">
+          <div class="members-filter-cell">
+            <button type="button" class="members-filter-toggle" data-filter-toggle="name">Name / E-Mail</button>
+            <div class="members-filter-panel hidden" hidden data-filter-panel="name">
+              <label class="small">Enthält</label>
+              <input id="membersFilterName" type="text" placeholder="Name oder E-Mail" />
+            </div>
+          </div>
+          <div class="members-filter-cell">
+            <button type="button" class="members-filter-toggle" data-filter-toggle="member_no">Mitglieds-Nr.</button>
+            <div class="members-filter-panel hidden" hidden data-filter-panel="member_no">
+              <label class="small">Enthält</label>
+              <input id="membersFilterNo" type="text" placeholder="z. B. 598" />
+            </div>
+          </div>
+          <div class="members-filter-cell">
+            <button type="button" class="members-filter-toggle" data-filter-toggle="role">Rolle</button>
+            <div class="members-filter-panel hidden" hidden data-filter-panel="role">
+              <label class="small">Rolle</label>
+              <select id="membersFilterRole">
+                <option value="all">Alle</option>
+                <option value="member">Mitglied</option>
+                <option value="vorstand">Vorstand</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="members-filter-cell">
+            <button type="button" class="members-filter-toggle" data-filter-toggle="card">Ausweis</button>
+            <div class="members-filter-panel hidden" hidden data-filter-panel="card">
+              <label class="small">Status</label>
+              <select id="membersFilterCard">
+                <option value="all">Alle</option>
+                <option value="valid">Gültig</option>
+                <option value="invalid">Ungültig</option>
+              </select>
+            </div>
+          </div>
         </div>
         <div id="membersAdminRows" class="grid"></div>
       </div>
     </div>
   </section>
+
+  <style>
+    .members-filter-cell {
+      position: relative;
+    }
+    .members-filter-toggle {
+      background: transparent;
+      border: 0;
+      color: inherit;
+      padding: 0;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+    }
+    .members-filter-toggle::after {
+      content: " ▼";
+      font-size: .75em;
+      opacity: .65;
+    }
+    .members-filter-panel {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      z-index: 10;
+      min-width: 220px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(8, 12, 22, .96);
+      backdrop-filter: blur(6px);
+      display: grid;
+      gap: 6px;
+    }
+  </style>
 
   <script src="/js/members-admin.js" defer></script>
 </Site>

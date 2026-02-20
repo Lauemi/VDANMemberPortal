@@ -16,14 +16,14 @@ html {
   grid-area: menu;
 }
 
-main {
+#middle {
   grid-area: mitte;
   width: 100%;
+  padding: 1.25rem 0 1.5rem;
 }
 
-#middle {
+main {
   width: 100%;
-  padding: 1.25rem 0 1.5rem;
 }
 
 footer {

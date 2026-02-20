@@ -1,5 +1,5 @@
 ;(() => {
-  const STORE_KEY = "vdan_catch_ui_entries_v1";
+  const STORE_KEY_PREFIX = "vdan_catch_ui_entries_v1";
   const KEY_VG = "vereins_gemeinschaftsgewaesser";
   const KEY_R39 = "rheinlos39";
 
@@ -48,6 +48,14 @@
   let activeDialogEntryId = null;
   let dialogEditMode = false;
   let createDialog = null;
+
+  function currentUserId() {
+    return window.VDAN_AUTH?.loadSession?.()?.user?.id || "anonymous";
+  }
+
+  function storeKey() {
+    return `${STORE_KEY_PREFIX}:${currentUserId()}`;
+  }
 
   function setMsg(text = "") {
     const el = document.getElementById("catchMsg");
@@ -105,7 +113,7 @@
 
   function loadEntries() {
     try {
-      const raw = localStorage.getItem(STORE_KEY);
+      const raw = localStorage.getItem(storeKey());
       const parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? parsed : [];
     } catch {
@@ -114,7 +122,7 @@
   }
 
   function saveEntries(rows) {
-    localStorage.setItem(STORE_KEY, JSON.stringify(rows));
+    localStorage.setItem(storeKey(), JSON.stringify(rows));
   }
 
   function loadSelects() {

@@ -1,0 +1,32 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Dokumente verwalten • ${APP.name}`} description="Dokumente anlegen, bearbeiten, ausblenden" robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <h1>Dokumente verwalten</h1>
+      <p class="small">Nur für Vorstand/Admin. Dokumente können hier direkt bearbeitet, deaktiviert oder gelöscht werden.</p>
+      <p id="documentsAdminMsg" class="small" aria-live="polite"></p>
+
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin:10px 0 12px 0;flex-wrap:wrap;">
+        <input id="documentsAdminSearch" type="search" placeholder="Suche Titel, Kategorie, Beschreibung" style="max-width:360px;width:100%;" />
+        <button type="button" class="feed-btn" id="documentsAdminAddBtn">Neues Dokument</button>
+      </div>
+
+      <div class="catch-table">
+        <div class="catch-table__head" style="grid-template-columns:1.4fr 1fr 1.3fr .9fr .9fr">
+          <div>Titel / Beschreibung</div>
+          <div>Kategorie</div>
+          <div>Quelle</div>
+          <div>Status</div>
+          <div>Aktionen</div>
+        </div>
+        <div id="documentsAdminRows" class="grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/documents-admin.js" defer></script>
+</Site>

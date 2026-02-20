@@ -1,178 +1,22 @@
-<!DOCTYPE html>
-<html lang="de">
+---
+import Site from "../layouts/Site.astro";
+import { APP } from "../config/app";
+---
 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="menu.css">
-    <link rel="stylesheet" href="layout.css">
-    <link rel="shortcut icon" href="/web/icon.png" type="image/xicon">
-    <title>VDAN-Ottenheim</title>
-</head>
-
-
-<body>
-    <div class="layout">
-        <a href="index.html"><img class="logo" src="./Bilder/logo300x300.png" alt=""></a>
-        <div id="heading">
-
-            <nav>
-                <section class="top-nav">
-
-                    <input id="menu-toggle" type="checkbox" />
-                    <label class='menu-button-container' for="menu-toggle">
-                        <div class="menu-button"></div>
-                    </label>
-                    <ul class="menu">
-                        <li><a href="index.html">Startseite </a></li>
-                        <li><a href="https://vdan-vereisnshop.myspreadshop.de/" target="_blank">Shop </a></li>
-                        <li><a href="termine.html">Termine </a></li>
-                        <li><a href="vdan-jugend.html">Jugend </a></li>
-                        <li><a href="mitglied-werden.html">Mitglied werden </a></li>
-                        <li><a href="fischereipruefung.html">Fischereiprüfung </a></li>
-                        <li><a href="anglerheim-ottenheim.html">Gastronomie </a></li>
-                        <li><a href="veranstaltungen.html">Veranstaltungen</a></li>
-                        <li><a href="vereinsarbeit.html">Vereinsarbeit </a></li>
-                        <li><a href="downloads.html">Dokumente </a></li>
-
-
-
-                                            <li data-guest-only><a href="/login/">Login</a></li>
-                        <li data-member-only class="hidden" hidden><a href="/app/">Mitgliederbereich</a></li>
-
-                    </ul>
-
-                </section>
-            </nav>
-
-            <header>
-
-            </header>
-        </div>
-
-        <div id="middle">
-            <div class="pagehead">
-                <h3> VDAN-Jugend</h3>
-            </div>
-
-            <main>
-                <div id="termine">
-                    <p id="terminliste"></p>
-                    <script>
-                        // Erstellen der Termin-Objekte
-                        const termine = [
-    {
-        datum: '2025-03-08',
-        beschreibung: 'Arbeitseinsatz / Jungangler'
-    },
-    {
-        datum: '2025-03-16',
-        beschreibung: 'Jungangler am Baggerloch'
-    },
-    {
-        datum: '2025-05-04',
-        beschreibung: 'Jungangler Vereinsmeisterschaft'
-    },
-    {
-        datum: '2025-06-01',
-        beschreibung: 'Jungangler Spinnfischen'
-    },
-    {
-        datum: '2025-06-28',
-        beschreibung: 'Jungangler Zanderangeln Vogelsee'
-    },
-    {
-        datum: '2025-07-26',
-        beschreibung: 'Jungangler Ausflug'
-    },
-    {
-        datum: '2025-08-15',
-        beschreibung: 'Zeltlager Jungangler'
-    },
-    {
-        datum: '2025-08-16',
-        beschreibung: 'Zeltlager Jungangler'
-    },
-    {
-        datum: '2025-08-17',
-        beschreibung: 'Zeltlager Jungangler'
-    }
-];
-
-                        // Suchen des <p>-Elements
-                        const pElement = document.getElementById('terminliste');
-
-                        // Durchlaufen der Termin-Objekte und Finden von zukünftigen Terminen
-                        let zukuenftigeTermine = '';
-                        for (let termin of termine) {
-                            const datum = new Date(termin.datum)
-                
-                            if (datum > new Date()) {
-                                const datumText = datum.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric', weekday:"long" });
-                                
-                                zukuenftigeTermine += ` ${datumText}  ${termin.beschreibung}<hr id=trenner><br> `;
-                                
-                            }
-                            
-                        }
-
-
-
-                        // Setzen des Textinhalts des <p>-Elements auf die zukünftigen Termine
-                        pElement.innerHTML = zukuenftigeTermine;
-
-                    </script>
-                   
-                    
-                </div>
-                <div class="section-two">
-                    <h3>Zu allen Terminen treffen wir uns am Anbau/ Anglerheim!</h3>
-                </div>
-
-       
-            </main>
-            <div class="pagefoot">
-                <span></span>
-            </div>
-        </div>
-
-
+<Site title={`VDAN Jugend • ${APP.name}`} description="Jugendbereich mit eigenem Feed">
+  <section class="feed-shell">
+    <div class="feed-toolbar">
+      <div>
+        <h1>VDAN-Jugend</h1>
+        <p class="small">Hier werden nur Beiträge der Kategorie Jugend angezeigt.</p>
+      </div>
+      <button id="feedNewPost" class="feed-btn hidden" type="button" hidden>Neuer Post</button>
     </div>
+    <div id="feedComposerHost"></div>
+    <div id="feedList" class="feed-list"></div>
+    <p id="feedMsg" class="small" aria-live="polite"></p>
+  </section>
 
-
-
-    <footer>
-
-        <ul class="footerleft">
-            <li><a href="kontakt.html">Kontakt</a></li>
-            <li><a href="termine.html">Aktuelles</a></li>
-        </ul>
-        <ul class="footermiddle">
-            <li><a href=" #top">Seitenanfang</a>
-            </li>
-            <li id="copyright">&#169; Michael Lauenroth</li>
-
-
-
-        </ul>
-        <ul class="right">
-            <li><a href="index.html">Startseite </a></li>
-            <li><a href="datenschutz.html">Datenschutz </a></li>
-            <li><a href="impressum.html">Impressum </a></li>
-            <li><a href="downloads.html">Downloads </a></li>
-                        <li data-guest-only><a href="/login/">Login</a></li>
-                <li data-member-only class="hidden" hidden><a href="/app/">Mitgliederbereich</a></li>
-            </ul>
-
-    </footer>
-
-    </div>
-
-  <script src="/js/member-auth.js" defer></script>
-  <script src="/js/ui-session.js" defer></script>
-  <script src="/js/member-entry.js" defer></script>
-</body>
-
-</html>
+  <script>window.__VDAN_FEED_CATEGORY = "jugend";</script>
+  <script src="/js/home-feed.js" defer></script>
+</Site>

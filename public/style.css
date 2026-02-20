@@ -259,6 +259,48 @@ button:hover {
   background: rgba(78, 161, 255, 0.28);
 }
 
+.documents-grid {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+
+.documents-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(12, 20, 33, 0.62);
+  padding: 0.85rem 1rem;
+}
+
+.documents-card h5 {
+  margin: 0 0 0.35rem;
+}
+
+.documents-card p {
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+}
+
+.documents-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(126, 194, 255, 0.45);
+  border-radius: 999px;
+  padding: 0.38rem 0.75rem;
+  background: rgba(78, 161, 255, 0.18);
+  color: #fff;
+}
+
+.documents-link:hover {
+  background: rgba(78, 161, 255, 0.28);
+}
+
+.documents-missing {
+  color: #ffb7b7;
+  font-size: 0.92rem;
+}
+
 #gallery {
   display: grid;
   gap: 1rem;

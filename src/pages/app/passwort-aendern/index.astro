@@ -1,0 +1,37 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+
+const nextRaw = Astro.url.searchParams.get("next") ?? "/app/";
+const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
+---
+
+<Site title={`Passwort ändern • ${APP.name}`} description="Passwortänderung für den Mitgliederbereich." robots="noindex">
+  <section class="card" style="max-width:520px;margin:0 auto;">
+    <div class="card__body">
+      <h1>Passwort ändern</h1>
+      <p class="small">Aus Sicherheitsgründen musst du jetzt ein neues Passwort setzen.</p>
+
+      <form id="passwordChangeForm">
+        <label>
+          <span>Neues Passwort</span>
+          <input id="newPassword" name="new_password" type="password" autocomplete="new-password" minlength="8" required />
+        </label>
+        <label>
+          <span>Neues Passwort wiederholen</span>
+          <input id="newPasswordRepeat" name="new_password_repeat" type="password" autocomplete="new-password" minlength="8" required />
+        </label>
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="primary" type="submit">Passwort speichern</button>
+          <span id="passwordChangeMsg" class="small" aria-live="polite"></span>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <script define:vars={{ nextTarget }}>
+    window.__APP_AFTER_PASSWORD_CHANGE = nextTarget;
+  </script>
+</Site>
+

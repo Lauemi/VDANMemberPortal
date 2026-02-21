@@ -7,7 +7,7 @@ import sitemap from "@astrojs/sitemap";
  * - member area protected by Supabase Auth + RLS
  */
 export default defineConfig({
-  site: "https://example.com", // TODO: set your domain
+  site: "https://www.vdan-ottenheim.com", // TODO: set your domain
   trailingSlash: "always",
   output: "static",
   integrations: [sitemap()],

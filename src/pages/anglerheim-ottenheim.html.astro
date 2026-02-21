@@ -1,139 +1,43 @@
-<!DOCTYPE html>
-<html lang="de">
+---
+import Site from "../layouts/Site.astro";
+import { APP } from "../config/app";
+---
 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/style.css">
-    <link rel="stylesheet" href="/menu.css">
-    <link rel="stylesheet" href="/layout.css">
-    <link rel="stylesheet" href="/carusel.css">
-    <link rel="stylesheet" href="/css/consent-manager.css">
-    <link rel="shortcut icon" href="/icon.png" type="image/xicon">
-    <title>VDAN-Ottenheim</title>
-</head>
+<Site title={`Anglerheim Ottenheim • ${APP.name}`} description="Infos zum Anglerheim Ottenheim und Kartenansicht.">
+  <section class="card">
+    <div class="card__body">
+      <h1>Anglerheim Ottenheim</h1>
+      <p class="small">Die Öffnungszeiten werden direkt über Google Maps gepflegt.</p>
+      <p>
+        <a href="https://maps.google.com/?q=Gastst%C3%A4tte%20Anglerheim%20Ottenheim" target="_blank" rel="noopener noreferrer">
+          Aktuelle Öffnungszeiten in Google Maps ansehen
+        </a>
+      </p>
+    </div>
+  </section>
 
+  <section class="card">
+    <div class="card__body">
+      <h2>Karte</h2>
+      <div class="external-media-lock" data-consent-placeholder>
+        <p class="small">Google Maps wird erst nach Einwilligung zu externen Medien geladen.</p>
+        <button type="button" class="feed-btn feed-btn--ghost" data-open-consent-settings>Datenschutz-Einstellungen</button>
+      </div>
+      <iframe
+        data-consent-category="external_media"
+        data-consent-src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2649.7313505729508!2d7.744252616244681!3d48.384896741881!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4791355a6b6e6c27%3A0xe4d968a9d2c7c224!2sGastst%C3%A4tte%20Anglerheim%20Ottenheim!5e0!3m2!1sde!2sde!4v1673529418648!5m2!1sde!2sde"
+        style="border:0; height: 420px; width: 100%; border-radius: 12px;"
+        allowfullscreen
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+      ></iframe>
+    </div>
+  </section>
 
-<body>
-    <div class="layout">
-        <a href="index.html"><img class="logo" src="./Bilder/logo300x300.png" alt=""></a>
-        <div id="heading">
-
-            <nav>
-                <section class="top-nav">
-
-                    <input id="menu-toggle" type="checkbox" />
-                    <label class='menu-button-container' for="menu-toggle">
-                        <div class="menu-button"></div>
-                    </label>
-                    <ul class="menu">
-                        <li><a href="index.html">Startseite </a></li>
-                        <li><a href="https://vdan-vereisnshop.myspreadshop.de/">Shop </a></li>
-                        <li><a href="termine.html">Termine </a></li>
-                        <li><a href="vdan-jugend.html">Jugend </a></li>
-                        <li><a href="mitglied-werden.html">Mitglied werden </a></li>
-                        <li><a href="fischereipruefung.html">Fischereiprüfung </a></li>
-                        <li><a href="anglerheim-ottenheim.html">Gastronomie </a></li>
-                        <li><a href="downloads.html">Dokumente </a></li>
-
-                                            <li data-guest-only><a href="/login/">Login</a></li>
-                        <li data-member-only class="hidden" hidden><a href="/app/">Mitgliederbereich</a></li>
-
-                    </ul>
-
-                </section>
-            </nav>
-
-            <header>
-
-            </header>
-        </div>
-
-        <div id="middle">
-            <div class="pagehead">
-                <h3>Anglerheim Ottenheim</h3>
-            </div>
-
-
-            <main>
-
-                <div class="section-two">
-                    <h3>Öffnungszeiten</h3>
-                    <br />
-                    <p>Die Öffnungszeiten werden direkt in Google Maps gepflegt.</p>
-                    <p>
-                        <a href="https://maps.google.com/?q=Gastst%C3%A4tte%20Anglerheim%20Ottenheim" target="_blank"
-                            rel="noopener noreferrer">Aktuelle Öffnungszeiten in Google Maps ansehen</a>
-                    </p>
-                </div>
-
-
-
-                <div class="map-container">
-                    <div class="external-media-lock" data-consent-placeholder>
-                        <p class="small">Google Maps wird erst nach Einwilligung zu externen Medien geladen.</p>
-                        <button type="button" class="feed-btn feed-btn--ghost" data-open-consent-settings>Datenschutz-Einstellungen</button>
-                    </div>
-                    <iframe
-                        data-consent-category="external_media"
-                        data-consent-src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2649.7313505729508!2d7.744252616244681!3d48.384896741881!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4791355a6b6e6c27%3A0xe4d968a9d2c7c224!2sGastst%C3%A4tte%20Anglerheim%20Ottenheim!5e0!3m2!1sde!2sde!4v1673529418648!5m2!1sde!2sde"
-                        style="border:0; height: 380px; width: 100%; min-width: 0; margin: auto; text-align: center;"
-                        allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-
-                </div>
-                <div class="section-one-center">
-                    <h3 id="heading-standard-container">Inhaber</h3>
-
-                    <!-- <p> Schmid Hilde </p> -->
-                    <p>Georgenstraße 33</p>
-                    <p>77963 Schwanau</p>
-                    <!-- <p>Tel: </p>
-                    <p>Mobil </p> -->
-                </div>
-
-            </main>
-            <div class="pagefoot">
-                <span></span>
-            </div>
-            </div>
-            
-            
-            </div>
-            
-            
-            
-            <footer>
-            
-                <ul class="footerleft">
-                    <li><a href="kontakt.html">Kontakt</a></li>
-                    <li><a href="termine.html">Aktuelles</a></li>
-                </ul>
-                <ul class="footermiddle">
-                    <li><a href=" #top">Seitenanfang</a>
-                    </li>
-                    <li id="copyright">&#169; Michael Lauenroth</li>
-            
-            
-            
-                </ul>
-                <ul class="right">
-                    <li><a href="index.html">Startseite </a></li>
-                    <li><a href="datenschutz.html">Datenschutz </a></li>
-                    <li><a href="impressum.html">Impressum </a></li>
-                    <li><a href="downloads.html">Downloads </a></li>
-                                <li data-guest-only><a href="/login/">Login</a></li>
-                <li data-member-only class="hidden" hidden><a href="/app/">Mitgliederbereich</a></li>
-            </ul>
-            
-            </footer>
-            
-            </div>
-            
-  <script src="/js/member-auth.js" defer></script>
-  <script src="/js/ui-session.js" defer></script>
-  <script src="/js/member-entry.js" defer></script>
-  <script src="/js/consent-manager.js" defer></script>
-</body>
-            
-            </html>
+  <section class="card">
+    <div class="card__body">
+      <h2>Adresse</h2>
+      <p>Georgenstraße 33<br />77963 Schwanau</p>
+    </div>
+  </section>
+</Site>

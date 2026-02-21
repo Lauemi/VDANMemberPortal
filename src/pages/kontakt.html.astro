@@ -1,147 +1,62 @@
-<!DOCTYPE html>
-<html lang="de">
+---
+import Site from "../layouts/Site.astro";
+import { APP } from "../config/app";
 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/style.css">
-    <link rel="stylesheet" href="/menu.css">
-    <link rel="stylesheet" href="/layout.css">
-    <link rel="stylesheet" href="/carusel.css">
-    <link rel="stylesheet" href="/css/consent-manager.css">
-    <link rel="shortcut icon" href="/icon.png" type="image/xicon">
-    <title>VDAN-Ottenheim</title>
-</head>
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
+---
 
+<Site title={`Kontakt • ${APP.name}`} description="Kontaktformular für den VDAN Ottenheim.">
+  <section class="card">
+    <div class="card__body">
+      <h1>Kontakt</h1>
+      <p class="small">Kontaktanfragen werden erst nach E-Mail-Bestätigung weitergeleitet.</p>
+      <p id="contactFormMsg" class="small" aria-live="polite"></p>
 
-<body>
-    <div class="layout">
-        <a href="index.html"><img class="logo" src="./Bilder/logo300x300.png" alt=""></a>
-        <div id="heading">
+      <form id="contact" class="grid cols2" novalidate>
+        <label>Anrede
+          <select name="salut" id="salut">
+            <option disabled selected value="">Bitte wählen</option>
+            <option>Frau</option>
+            <option>Herr</option>
+          </select>
+        </label>
+        <label>Nachname
+          <input type="text" name="lname" id="lname" required placeholder="Nachname" maxlength="40" />
+        </label>
+        <label>Vorname
+          <input type="text" name="name" id="fname" required placeholder="Vorname" maxlength="40" />
+        </label>
+        <label>E-Mail
+          <input type="email" id="email" name="email" required placeholder="E-Mail" maxlength="50" />
+        </label>
+        <label>Betreff
+          <input type="text" id="subject" name="subject" required placeholder="Betreff" maxlength="120" />
+        </label>
+        <label>Telefon
+          <input type="tel" id="phone" name="phone" placeholder="Telefonnummer" maxlength="20" />
+        </label>
+        <label style="grid-column:1 / -1;">Ihre Nachricht
+          <textarea name="message" id="message" required placeholder="Ihre Nachricht an uns" rows="10" maxlength="2500"></textarea>
+        </label>
+        <input type="text" name="company" id="hpCompany" tabindex="-1" autocomplete="off" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" />
 
-            <nav>
-                <section class="top-nav">
-
-                    <input id="menu-toggle" type="checkbox" />
-                    <label class='menu-button-container' for="menu-toggle">
-                        <div class="menu-button"></div>
-                    </label>
-                    <ul class="menu">
-                        <li><a href="index.html">Startseite </a></li>
-                        <li><a href="https://vdan-vereisnshop.myspreadshop.de/" target="_blank">Shop </a></li>
-                        <li><a href="termine.html">Termine </a></li>
-                        <li><a href="vdan-jugend.html">Jugend </a></li>
-                        <li><a href="mitglied-werden.html">Mitglied werden </a></li>
-                        <li><a href="fischereipruefung.html">Fischereiprüfung </a></li>
-                        <li><a href="anglerheim-ottenheim.html">Gastronomie </a></li>
-                        <li><a href="downloads.html">Dokumente </a></li>
-
-                                            <li data-guest-only><a href="/login/">Login</a></li>
-                        <li data-member-only class="hidden" hidden><a href="/app/">Mitgliederbereich</a></li>
-
-                    </ul>
-
-                </section>
-            </nav>
-
-            <header>
-
-            </header>
+        <div style="grid-column:1 / -1;">
+          {turnstileSiteKey ? (
+            <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-callback="onTurnstileDone"></div>
+          ) : (
+            <p class="small" style="color:#fecaca;">Turnstile Site Key fehlt (`PUBLIC_TURNSTILE_SITE_KEY`).</p>
+          )}
         </div>
 
-        <div id="middle">
-
-
-            <main>
-                <div id="middle">
-                    <form id="contact" action="kontakt.php" method="post">
-                        <div>
-                            <label for="salut">Anrede:<span class="required">*</span></label>
-
-
-                            <select name="salut" id="salut" required>
-                                <option disabled selected value>Anrede</option>
-                                <option>Frau</option>
-                                <option>Herr</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="lname">Nachname:<span class="required">*</span></label>
-                            <input type="text" name="lname" required placeholder="Nachname" maxlength="30">
-                        </div>
-                        <div>
-                            <label for="fname">Vorname:<span class="required">*</span></label>
-                            <input type="text" name="name" required placeholder="Vorname" maxlength="30">
-                        </div>
-                        <div>
-                            <label for="email">E-Mail:<span class="required">*</span></label>
-                            <input type="email" id="email" name="email" required placeholder="Email" maxlength="50">
-                        </div>
-                        <div>
-                            <label for="phone">Telefon:</label>
-                            <input type="tel" id="phone" name="phone" placeholder="Telefonnummer" maxlength="20">
-                        </div>
-                        <div id="text">
-                            <label for="message">Ihre Nachricht:<span class="required">*</span></label>
-                            <textarea name="message" id="message" required placeholder="Ihre Nachricht an uns" cols="50"
-                                rows="12" maxlength="1000"></textarea>
-                        </div>
-                        <div>
-                            <label for="button" </label>
-                                <button type="submit" id="button" name="button">Absenden</button>
-                        </div>
-                    </form>
-
-
-
-
-
-                    <p><span class="required" id="warning">*Pflichtfelder</span></p>
-                </div>
-            </main>
-            <div class="pagefoot">
-                <span></span>
-            </div>
+        <div style="grid-column:1 / -1;display:flex;justify-content:flex-start;">
+          <button type="submit" id="button" name="button" class="feed-btn">Absenden & bestätigen</button>
         </div>
+      </form>
 
-
-
-
-
-
-        <footer>
-
-            <ul class="footerleft">
-                <li><a href="kontakt.html">Kontakt</a></li>
-                <li><a href="termine.html">Aktuelles</a></li>
-            </ul>
-            <ul class="footermiddle">
-                <li><a href=" #top">Seitenanfang</a>
-                </li>
-                <li id="copyright">&#169; Michael Lauenroth</li>
-
-
-
-            </ul>
-            <ul class="right">
-                <li><a href="index.html">Startseite </a></li>
-                <li><a href="datenschutz.html">Datenschutz </a></li>
-                <li><a href="impressum.html">Impressum </a></li>
-                <li><a href="downloads.html">Downloads </a></li>
-                <li><a href="#" data-open-consent-settings>Datenschutz-Einstellungen</a></li>
-                            <li data-guest-only><a href="/login/">Login</a></li>
-                <li data-member-only class="hidden" hidden><a href="/app/">Mitgliederbereich</a></li>
-            </ul>
-
-        </footer>
-
+      <p class="small">* Pflichtfelder. Kein Direktversand per E-Mail aus dem Browser.</p>
     </div>
+  </section>
 
-  <script src="/js/member-auth.js" defer></script>
-  <script src="/js/ui-session.js" defer></script>
-  <script src="/js/member-entry.js" defer></script>
-  <script src="/js/consent-manager.js" defer></script>
-</body>
-
-</html>
+  {turnstileSiteKey && <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
+  <script src="/js/contact-submit.js" defer></script>
+</Site>

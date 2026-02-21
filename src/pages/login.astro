@@ -4,6 +4,7 @@ import { APP } from "../config/app";
 
 const nextRaw = Astro.url.searchParams.get("next") ?? "/app/";
 const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
+const showDemoHint = Boolean(import.meta.env.DEV);
 ---
 
 <Site title={`Login • ${APP.name}`} description="Login zum Memberbereich." robots="noindex">
@@ -24,13 +25,16 @@ const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
 
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="primary" type="submit">Einloggen</button>
-          <button type="button" id="logoutBtn">Logout</button>
           <span id="loginMsg" class="small" aria-live="polite"></span>
         </div>
       </form>
 
-      <hr/>
-      <p class="small">Hinweis: Demo-User nutzen Mitgliedsnummern ab 9990.</p>
+      {showDemoHint && (
+        <>
+          <hr />
+          <p class="small">Hinweis: Demo-User nutzen Mitgliedsnummern ab 9990.</p>
+        </>
+      )}
     </div>
   </section>
 

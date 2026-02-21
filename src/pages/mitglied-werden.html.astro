@@ -1,164 +1,79 @@
-<!DOCTYPE html>
-<html lang="de">
+---
+import Site from "../layouts/Site.astro";
+import { APP } from "../config/app";
+---
 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/style.css">
-    <link rel="stylesheet" href="/menu.css">
-    <link rel="stylesheet" href="/layout.css">
-    <link rel="stylesheet" href="/carusel.css">
-    <link rel="shortcut icon" href="/icon.png" type="image/xicon">
-    <title>VDAN-Ottenheim</title>
-</head>
+<Site title={`Mitglied werden • ${APP.name}`} description="Bewerbung zur Mitgliedschaft beim VDAN Ottenheim">
+  <section class="card">
+    <div class="card__body">
+      <h1>Mitglied werden</h1>
+      <p class="small">Online-Bewerbung für neue Mitglieder. Deine Angaben werden intern geprüft und erst nach Vorstandsbeschluss übernommen.</p>
+      <p id="membershipApplyMsg" class="small" aria-live="polite"></p>
 
+      <form id="membershipApplyForm" class="grid cols2">
+        <label>Vorname
+          <input id="applyFirstName" required autocomplete="given-name" />
+        </label>
+        <label>Nachname
+          <input id="applyLastName" required autocomplete="family-name" />
+        </label>
 
-<body>
-    <div class="layout">
-        <a href="index.html"><img class="logo" src="./Bilder/logo300x300.png" alt=""></a>
-        <div id="heading">
+        <label>Geburtsdatum
+          <input id="applyBirthdate" type="date" required />
+        </label>
+        <label>Angelkarte
+          <select id="applyFishingCardType" required>
+            <option value="">Bitte wählen</option>
+            <option>Innenwasser + Rheinlos</option>
+            <option>Rheinlos Erwachsener</option>
+            <option>Innenwasser Erwachsener</option>
+            <option>Innenwasser + Rheinlos Jugend</option>
+          </select>
+        </label>
 
-            <nav>
-                <section class="top-nav">
+        <label style="grid-column:1 / -1;">Straße + Hausnummer
+          <input id="applyStreet" required autocomplete="street-address" />
+        </label>
+        <label>PLZ
+          <input id="applyZip" required inputmode="numeric" autocomplete="postal-code" />
+        </label>
+        <label>Ort
+          <input id="applyCity" required autocomplete="address-level2" />
+        </label>
 
-                    <input id="menu-toggle" type="checkbox" />
-                    <label class='menu-button-container' for="menu-toggle">
-                        <div class="menu-button"></div>
-                    </label>
-                    <ul class="menu">
-                        <li><a href="index.html">Startseite </a></li>
-                        <li><a href="https://vdan-vereisnshop.myspreadshop.de/" target="_blank">Shop </a></li>
-                        <li><a href="termine.html">Termine </a></li>
-                        <li><a href="vdan-jugend.html">Jugend </a></li>
-                        <li><a href="mitglied-werden.html">Mitglied werden </a></li>
-                        <li><a href="fischereipruefung.html">Fischereiprüfung </a></li>
-                        <li><a href="anglerheim-ottenheim.html">Gastronomie </a></li>
-                        <li><a href="downloads.html">Dokumente </a></li>
+        <label>Ortsansässig
+          <input id="applyIsLocal" type="checkbox" />
+        </label>
+        <label>Wen kennst du im Verein?
+          <input id="applyKnownMember" placeholder="Optional" />
+        </label>
 
-                                            <li data-guest-only><a href="/login/">Login</a></li>
-                        <li data-member-only class="hidden" hidden><a href="/app/">Mitgliederbereich</a></li>
+        <label style="grid-column:1 / -1;">IBAN
+          <input id="applyIban" required autocomplete="off" placeholder="DE..." />
+        </label>
+        <label style="grid-column:1 / -1;">
+          <input id="applySepaApproved" type="checkbox" required />
+          Ich erteile die SEPA-Mandatsfreigabe.
+        </label>
 
-                    </ul>
-
-                </section>
-            </nav>
-
-            <header>
-
-            </header>
+        <div style="grid-column:1 / -1;display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="feed-btn" type="submit">Bewerbung absenden</button>
+          <a class="feed-btn feed-btn--ghost" href="/downloads.html/">Formulare als PDF</a>
         </div>
-
-        <div id="middle">
-            <div class="pagehead">
-                <h3>Wie werde ich Mitglied?</h3>
-            </div>
-            <div class="standard-container">
-                <p>
-                    Wenn Sie Mitglied unseres Vereins werden möchten, füllen Sie bitte den Aufnahmeantrag aus, den
-                    ausgefüllten Antrag senden Sie bitte
-                    zusammen mit einer
-                    Kopie Ihres gültigen Jahresfischereischeines
-                </p>
-                <br>
-
-                <p>
-                    Rolf Bühler <br>
-                    Hintere Str.21 <br>
-                    77963 Schwanau
-                </p>
-                <br>
-                <p>
-                    Oder schicken Sie eine E-Mail mit ihren Daten und ein Bild ihres Jahresfischereischein an <a
-                        href="mailto:vdan.ottenheim@freenet.de" style="color:white">vdan.ottenheim@freenet.de</a>
-                </p>
-            </div>
-            <div class="section-two">
-                <h3>Aufnahme </h3>
-                <p>
-                    Aufnahmeanträge können das ganze Jahr über bis zum 1. November abgegeben werden. Die Einladung
-                    zu einem
-                    Vorstellungsgespräch und Neuaufnahme erfolgen in der Zeit vom 1. November bis zum 15. Januar.
-                </p>
-
-            </div>
-            <div class="section-one-center">
-                <br>
-                <p>Alle Dokumente können im Browser direkt ausgefüllt und zur Unterschrift ausgedruckt werden.</p>
-                <p>Fanglisten sind selbstverständlich händisch zu führen.</p>
-                <h4 id="anchor-Aufnahme">Aufnahmeantrag</h4>
-                <br>
-                <div class="button-container">
-                    <form>
-                        <button class="download" type="submit"
-                            formaction="./Downloads/Aufnahmeantrag.pdf">Aufnahmeantrag</button>
-                    </form>
-                </div>
-                <form>
-                    <object data="./Downloads/Aufnahmeantrag.pdf" type="application/pdf">
-                    </object>
-                    <h4>Aufnahmeantrag Jugend</h4>
-                    <br>
-                    <div class="button-container">
-                        <form>
-                            <button class="download" type="submit"
-                                formaction="./Downloads/Aufnahmeantrag_Jugend.pdf">Aufnahmeantrag_Jugend</button>
-
-                        </form>
-                    </div>
-                    <object data="./Downloads/Aufnahmeantrag_Jugend.pdf" type="application/pdf">
-                    </object>
-                </form>
-            </div>
-            <!-- Erst sichtbar ab 700px vw -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-            <div class="pagefoot">
-                <span></span>
-            </div>
-        </div>
+      </form>
     </div>
+  </section>
 
-
+  <section class="card">
+    <div class="card__body">
+      <h2>Hinweise</h2>
+      <ul class="small">
+        <li>Die Bewerbung wird intern vom Vorstand geprüft.</li>
+        <li>Eine Mitgliedschaft entsteht erst nach Genehmigung.</li>
+        <li>Bankdaten werden verschlüsselt gespeichert.</li>
+      </ul>
     </div>
-    <footer>
+  </section>
 
-        <ul class="footerleft">
-            <li><a href="kontakt.html">Kontakt</a></li>
-            <li><a href="termine.html">Aktuelles</a></li>
-        </ul>
-        <ul class="footermiddle">
-            <li><a href=" #top">Seitenanfang</a></li>
-
-            <li id="copyright">&#169; Michael Lauenroth</li>
-        </ul>
-        <ul class="right">
-            <li><a href="index.html">Startseite </a></li>
-            <li><a href="datenschutz.html">Datenschutz </a></li>
-            <li><a href="impressum.html">Impressum </a></li>
-            <li><a href="downloads.html">Downloads </a></li>
-                        <li data-guest-only><a href="/login/">Login</a></li>
-                <li data-member-only class="hidden" hidden><a href="/app/">Mitgliederbereich</a></li>
-            </ul>
-
-    </footer>
-
-    </div>
-
-  <script src="/js/member-auth.js" defer></script>
-  <script src="/js/ui-session.js" defer></script>
-  <script src="/js/member-entry.js" defer></script>
-</body>
-
-</html>
+  <script src="/js/membership-apply.js" defer></script>
+</Site>

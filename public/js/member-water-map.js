@@ -1,6 +1,7 @@
 ;(() => {
   const LEAFLET_CSS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
   const LEAFLET_JS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+  let consentHandlerBound = false;
 
   function cfg() {
     return {
@@ -36,6 +37,21 @@
   function setMsg(text = "") {
     const el = document.getElementById("waterMapMsg");
     if (el) el.textContent = text;
+  }
+
+  function hasExternalMediaConsent() {
+    return Boolean(window.VDAN_CONSENT?.has?.("external_media"));
+  }
+
+  function renderConsentLockedState() {
+    const root = document.getElementById("waterMapCanvas");
+    if (!root) return;
+    root.innerHTML = `
+      <div class="external-media-lock">
+        <p class="small">Die Gewässerkarte verwendet externe Kartendienste. Bitte in den Datenschutz-Einstellungen freigeben.</p>
+        <button type="button" class="feed-btn feed-btn--ghost" data-open-consent-settings>Datenschutz-Einstellungen</button>
+      </div>
+    `;
   }
 
   function escapeHtml(str) {
@@ -216,6 +232,18 @@
   async function init() {
     if (!userId()) {
       setMsg("Nicht eingeloggt.");
+      return;
+    }
+    if (!hasExternalMediaConsent()) {
+      renderConsentLockedState();
+      setMsg("Externe Karten sind aktuell nicht freigegeben.");
+      if (!consentHandlerBound) {
+        consentHandlerBound = true;
+        document.addEventListener("vdan:consent-changed", () => {
+          if (hasExternalMediaConsent()) init();
+          else renderConsentLockedState();
+        });
+      }
       return;
     }
     try {

@@ -32,6 +32,19 @@
     return rows.map((r) => String(r.role || "").toLowerCase());
   }
 
+  async function loadFlags() {
+    try {
+      const rows = await sb("/rest/v1/feature_flags?select=key,enabled&key=eq.work_qr_enabled", true);
+      const flags = {};
+      (Array.isArray(rows) ? rows : []).forEach((r) => {
+        if (r?.key) flags[r.key] = Boolean(r.enabled);
+      });
+      return flags;
+    } catch {
+      return {};
+    }
+  }
+
   function setNavState(loggedIn){
     document.querySelectorAll("[data-member-only]").forEach((el) => {
       el.classList.toggle("hidden", !loggedIn);
@@ -57,12 +70,20 @@
     });
   }
 
+  function setFeatureState(featureKey, enabled) {
+    document.querySelectorAll(`[data-feature-${featureKey}]`).forEach((el) => {
+      el.classList.toggle("hidden", !enabled);
+      el.toggleAttribute("hidden", !enabled);
+    });
+  }
+
   async function init(){
     const loggedIn = Boolean(window.VDAN_AUTH?.loadSession?.());
     setNavState(loggedIn);
     if (!loggedIn) {
       setManagerState(false);
       setAdminState(false);
+      setFeatureState("work-qr", false);
       return;
     }
     const roles = await loadRoles().catch(() => []);
@@ -70,6 +91,13 @@
     const isAdmin = roles.includes("admin");
     setManagerState(isManager);
     setAdminState(isAdmin);
+
+    if (!isManager) {
+      setFeatureState("work-qr", false);
+      return;
+    }
+    const flags = await loadFlags().catch(() => ({}));
+    setFeatureState("work-qr", Boolean(flags.work_qr_enabled));
   }
 
   document.addEventListener("DOMContentLoaded", init);

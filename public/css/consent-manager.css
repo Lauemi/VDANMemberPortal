@@ -1,0 +1,113 @@
+.consent-banner {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 12000;
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 14px;
+  border: 1px solid rgba(105, 125, 162, 0.45);
+  border-radius: 12px;
+  background: rgba(10, 16, 29, 0.97);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.consent-banner__text {
+  min-width: 0;
+}
+
+.consent-banner__text p {
+  margin: 6px 0 0;
+}
+
+.consent-banner__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.consent-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 12100;
+}
+
+.consent-modal.hidden {
+  display: none;
+}
+
+.consent-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 8, 18, 0.62);
+}
+
+.consent-modal__panel {
+  position: relative;
+  width: min(680px, calc(100vw - 28px));
+  margin: min(8vh, 70px) auto 0;
+  padding: 16px;
+  border: 1px solid rgba(105, 125, 162, 0.5);
+  border-radius: 14px;
+  background: rgba(14, 21, 36, 0.98);
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.5);
+}
+
+.consent-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(105, 125, 162, 0.35);
+  border-radius: 10px;
+}
+
+.consent-item p {
+  margin: 4px 0 0;
+}
+
+.consent-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.external-media-lock {
+  padding: 12px;
+  border: 1px dashed rgba(105, 125, 162, 0.6);
+  border-radius: 10px;
+  background: rgba(20, 30, 50, 0.35);
+}
+
+.external-media-lock p {
+  margin: 0 0 8px;
+}
+
+@media (max-width: 720px) {
+  .consent-banner {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .consent-banner__actions {
+    justify-content: stretch;
+  }
+
+  .consent-banner__actions .feed-btn {
+    width: 100%;
+  }
+}

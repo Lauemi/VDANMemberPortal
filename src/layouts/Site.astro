@@ -33,6 +33,7 @@ const needsMemberGuard = path.startsWith("/app/");
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/png" href="/icon.png" />
     <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href="/css/consent-manager.css" />
     <script define:vars={{ supabaseUrl, supabaseKey }}>
       // Expose Supabase config to the auth helper (client-side)
       window.__APP_SUPABASE_URL = supabaseUrl;
@@ -60,12 +61,15 @@ const needsMemberGuard = path.startsWith("/app/");
                 <a href="/anglerheim-ottenheim.html/">Anglerheim</a>
                 <a href="/downloads.html/">Downloads</a>
                 <a href="/kontakt.html/">Kontakt</a>
+                <a href="/datenschutz.html/">Datenschutz</a>
+                <a href="/impressum.html/">Impressum</a>
                 <a href="/app/arbeitseinsaetze/" data-member-only class="hidden" hidden>Arbeitseinsätze</a>
                 <a href="/app/ausweis/" data-member-only class="hidden" hidden>Mitgliedsausweis</a>
                 <a href="/app/gewaesserkarte/" data-member-only class="hidden" hidden>Gewässerkarte</a>
-                <a href="/app/ausweis/verifizieren/" data-manager-only class="hidden" hidden>Ausweis prüfen</a>
+                <a href="/app/ausweis/verifizieren/" data-manager-only data-feature-work-qr class="hidden" hidden>Ausweis prüfen</a>
                 <a href="/app/arbeitseinsaetze/cockpit/" data-manager-only class="hidden" hidden>Arbeitseinsatz Cockpit</a>
                 <a href="/app/termine/cockpit/" data-manager-only class="hidden" hidden>Termine Cockpit</a>
+                <a href="/app/bewerbungen/" data-manager-only class="hidden" hidden>Bewerbungen</a>
                 <a href="/app/dokumente/" data-manager-only class="hidden" hidden>Dokumente verwalten</a>
                 <a href="/app/mitglieder/" data-admin-only class="hidden" hidden>Mitgliederverwaltung</a>
               </div>
@@ -93,6 +97,19 @@ const needsMemberGuard = path.startsWith("/app/");
       </div>
     </main>
 
+    <footer class="site-footer">
+      <div class="container site-footer__inner">
+        <p class="small">© VDAN Ottenheim</p>
+        <nav class="site-footer__links" aria-label="Rechtliche Links">
+          <a href="/kontakt.html/">Kontakt</a>
+          <a href="/datenschutz.html/">Datenschutz</a>
+          <a href="/impressum.html/">Impressum</a>
+          <a href="#" data-open-consent-settings>Datenschutz-Einstellungen</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script src="/js/consent-manager.js" defer></script>
     <script src="/js/member-auth.js" defer></script>
     {needsMemberGuard && <script src="/js/member-guard.js" defer></script>}
     <script src="/js/ui-session.js" defer></script>

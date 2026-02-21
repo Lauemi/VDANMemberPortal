@@ -229,6 +229,10 @@
     return `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(eventCheckinUrl(token))}`;
   }
 
+  function hasExternalMediaConsent() {
+    return Boolean(window.VDAN_CONSENT?.has?.("external_media"));
+  }
+
   function computeMinutes(checkinAt, checkoutAt) {
     if (!checkinAt || !checkoutAt) return null;
     const start = new Date(checkinAt).getTime();
@@ -388,13 +392,18 @@
               <button class="feed-btn feed-btn--ghost" type="button" data-archive="${row.id}" ${row.status !== "archived" ? "" : "disabled"}>Archivieren</button>
               <button class="feed-btn feed-btn--ghost" type="button" data-participants="${row.id}">Teilnehmer</button>
             </div>
-            ${featureFlags.work_qr_enabled ? `
+            ${featureFlags.work_qr_enabled && hasExternalMediaConsent() ? `
             <div class="work-qr-box">
               <img loading="lazy" src="${eventQrUrl(row.public_token)}" alt="QR für Check-in ${escapeHtml(row.title)}" />
               <div class="small">
                 <a href="${eventCheckinUrl(row.public_token)}" target="_blank" rel="noreferrer">Check-in Link öffnen</a><br />
                 Token: <code>${escapeHtml(row.public_token)}</code>
               </div>
+            </div>` : ""}
+            ${featureFlags.work_qr_enabled && !hasExternalMediaConsent() ? `
+            <div class="external-media-lock">
+              <p class="small">QR-Code wird erst nach Freigabe externer Medien angezeigt.</p>
+              <button type="button" class="feed-btn feed-btn--ghost" data-open-consent-settings>Datenschutz-Einstellungen</button>
             </div>` : ""}
             <div class="work-participants" id="parts-${row.id}"></div>
           </div>
@@ -601,4 +610,8 @@
 
   document.addEventListener("DOMContentLoaded", init);
   document.addEventListener("vdan:session", init);
+  document.addEventListener("vdan:consent-changed", () => {
+    if (!isManager) return;
+    refresh().catch((err) => setMsg(err?.message || "Laden fehlgeschlagen"));
+  });
 })();

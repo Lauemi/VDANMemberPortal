@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/menu.css">
     <link rel="stylesheet" href="/layout.css">
     <link rel="stylesheet" href="/carusel.css">
+    <link rel="stylesheet" href="/css/consent-manager.css">
     <link rel="shortcut icon" href="/icon.png" type="image/xicon">
     <title>VDAN-Ottenheim</title>
 </head>
@@ -70,8 +71,13 @@
 
 
                 <div class="map-container">
+                    <div class="external-media-lock" data-consent-placeholder>
+                        <p class="small">Google Maps wird erst nach Einwilligung zu externen Medien geladen.</p>
+                        <button type="button" class="feed-btn feed-btn--ghost" data-open-consent-settings>Datenschutz-Einstellungen</button>
+                    </div>
                     <iframe
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2649.7313505729508!2d7.744252616244681!3d48.384896741881!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4791355a6b6e6c27%3A0xe4d968a9d2c7c224!2sGastst%C3%A4tte%20Anglerheim%20Ottenheim!5e0!3m2!1sde!2sde!4v1673529418648!5m2!1sde!2sde"
+                        data-consent-category="external_media"
+                        data-consent-src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2649.7313505729508!2d7.744252616244681!3d48.384896741881!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4791355a6b6e6c27%3A0xe4d968a9d2c7c224!2sGastst%C3%A4tte%20Anglerheim%20Ottenheim!5e0!3m2!1sde!2sde!4v1673529418648!5m2!1sde!2sde"
                         style="border:0; height: 380px; width: 100%; min-width: 0; margin: auto; text-align: center;"
                         allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
 
@@ -124,9 +130,10 @@
             
             </div>
             
-              <script src="/js/member-auth.js" defer></script>
+  <script src="/js/member-auth.js" defer></script>
   <script src="/js/ui-session.js" defer></script>
   <script src="/js/member-entry.js" defer></script>
+  <script src="/js/consent-manager.js" defer></script>
 </body>
             
             </html>

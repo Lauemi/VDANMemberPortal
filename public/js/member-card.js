@@ -39,6 +39,10 @@
     return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
+  function hasExternalMediaConsent() {
+    return Boolean(window.VDAN_CONSENT?.has?.("external_media"));
+  }
+
   function asDate(d) {
     if (!d) return "-";
     const t = new Date(d);
@@ -90,6 +94,7 @@
     qrUrl.searchParams.set("card", cardId);
     qrUrl.searchParams.set("key", cardKey);
     const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(qrUrl.toString())}`;
+    const qrAllowed = hasExternalMediaConsent();
     const scope = parseCardScope(profile.fishing_card_type);
     const waterRows = (Array.isArray(waters) ? waters : []).map((w) => {
       const allowed = isAllowed(w.area_kind, scope);
@@ -122,7 +127,14 @@
                 <button type="button" class="feed-btn" data-qr-toggle>Kontrolle</button>
               </div>
               <div class="card-qr-flip__face card-qr-flip__face--back">
-                <img src="${escapeHtml(qrImg)}" width="140" height="140" alt="QR zur Ausweisverifikation" />
+                ${qrAllowed ? `
+                  <img src="${escapeHtml(qrImg)}" width="140" height="140" alt="QR zur Ausweisverifikation" />
+                ` : `
+                  <div class="external-media-lock" style="max-width:220px;">
+                    <p class="small">QR-Anzeige nutzt einen externen Dienst.</p>
+                    <button type="button" class="feed-btn feed-btn--ghost" data-open-consent-settings>Freigabe erteilen</button>
+                  </div>
+                `}
                 <button type="button" class="feed-btn feed-btn--ghost" data-qr-toggle style="margin-top:8px;">Zurück</button>
               </div>
             </div>
@@ -185,4 +197,5 @@
   }
 
   document.addEventListener("DOMContentLoaded", init);
+  document.addEventListener("vdan:consent-changed", init);
 })();

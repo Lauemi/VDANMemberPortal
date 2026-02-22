@@ -34,6 +34,14 @@ import { APP } from "../../../config/app";
     <form id="workCreateForm" class="catch-dialog__form" method="dialog">
       <h3>Arbeitseinsatz erstellen</h3>
       <div class="grid cols2">
+        <label style="grid-column:1/-1">
+          <span>Jugend-Arbeitseinsatz</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="workIsYouth" type="hidden" value="0" />
+            <button type="button" id="workIsYouthToggle" class="feed-btn feed-btn--ghost">Jugend</button>
+            <span class="small">Aktiv = nur Jugend-Kontext</span>
+          </div>
+        </label>
         <label>
           <span>Titel</span>
           <input id="workTitle" type="text" maxlength="120" required />

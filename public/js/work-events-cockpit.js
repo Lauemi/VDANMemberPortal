@@ -209,6 +209,14 @@
   function openCreateDialog() {
     const form = document.getElementById("workCreateForm");
     form?.reset();
+    const youth = document.getElementById("workIsYouth");
+    const youthBtn = document.getElementById("workIsYouthToggle");
+    if (youth) youth.value = "0";
+    if (youthBtn) {
+      youthBtn.style.background = "";
+      youthBtn.style.borderColor = "";
+      youthBtn.style.color = "";
+    }
     const defaults = defaultCreateTimes();
     const starts = document.getElementById("workStartsAt");
     const ends = document.getElementById("workEndsAt");
@@ -441,6 +449,17 @@
     document.getElementById("workCreateOpenTop")?.addEventListener("click", openCreateDialog);
     document.getElementById("workCreateOpenFab")?.addEventListener("click", openCreateDialog);
     document.getElementById("workCreateClose")?.addEventListener("click", closeCreateDialog);
+    document.getElementById("workIsYouthToggle")?.addEventListener("click", () => {
+      const youth = document.getElementById("workIsYouth");
+      const btn = document.getElementById("workIsYouthToggle");
+      if (!youth || !btn) return;
+      const next = String(youth.value) === "1" ? "0" : "1";
+      youth.value = next;
+      const active = next === "1";
+      btn.style.background = active ? "#1f7a3b" : "";
+      btn.style.borderColor = active ? "#1f7a3b" : "";
+      btn.style.color = active ? "#fff" : "";
+    });
 
     document.getElementById("workCreateForm")?.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -458,6 +477,7 @@
           p_starts_at: startsAt,
           p_ends_at: endsAt,
           p_max_participants: Number.isFinite(maxParticipants) ? maxParticipants : null,
+          p_is_youth: String(document.getElementById("workIsYouth")?.value || "0") === "1",
         });
         closeCreateDialog();
         setMsg("Einsatz erstellt.");

@@ -16,8 +16,10 @@
   ];
 
   let canManage = false;
+  let managerProfiles = [];
   const forcedCategory = String(window.__VDAN_FEED_CATEGORY || "").trim().toLowerCase() || "";
   const isForcedCategory = Boolean(forcedCategory);
+  const isYouthFeed = forcedCategory === "jugend";
 
   function cfg() {
     return {
@@ -87,9 +89,37 @@
     return Array.isArray(rows) ? rows.map((r) => String(r.role || "").toLowerCase()) : [];
   }
 
+  async function loadManagerProfiles() {
+    const roleRows = await sb("/rest/v1/user_roles?select=user_id,role&role=in.(admin,vorstand)", { method: "GET" }, true);
+    const ids = [...new Set((Array.isArray(roleRows) ? roleRows : []).map((r) => String(r.user_id || "").trim()).filter(Boolean))];
+    if (!ids.length) return [];
+    const inList = ids.map((id) => `"${id}"`).join(",");
+    const profileRows = await sb(`/rest/v1/profiles?select=id,display_name,email,member_no&id=in.(${inList})&order=display_name.asc`, { method: "GET" }, true);
+    return (Array.isArray(profileRows) ? profileRows : []).map((p) => ({
+      id: p.id,
+      label: String(p.display_name || p.email || p.member_no || p.id || "").trim(),
+    }));
+  }
+
   async function listPosts() {
     const categoryFilter = isForcedCategory ? `&category=eq.${encodeURIComponent(forcedCategory)}` : "";
     const rows = await sb(`/rest/v1/${TABLE}?select=id,author_id,updated_by,title,body,category,created_at,updated_at,${MEDIA_TABLE}(id,sort_order,storage_bucket,storage_path,width,height)${categoryFilter}&order=created_at.desc`, { method: "GET" }, true);
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  async function listUpcomingTerms() {
+    const nowIso = new Date().toISOString();
+    const rows = await sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc&limit=20`, { method: "GET" });
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  function workEventsFeedFilterQuery() {
+    return isYouthFeed ? "&is_youth=is.true" : "&is_youth=is.false";
+  }
+
+  async function listUpcomingWorkEvents() {
+    const nowIso = new Date().toISOString();
+    const rows = await sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}${workEventsFeedFilterQuery()}&order=starts_at.asc&limit=20`, { method: "GET" });
     return Array.isArray(rows) ? rows : [];
   }
 
@@ -111,11 +141,11 @@
     const { nowIso, weekEndIso } = weekRangeIso();
     const [terms, works] = await Promise.all([
       sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`, { method: "GET" }),
-      sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`, { method: "GET" }),
+      sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}${workEventsFeedFilterQuery()}&order=starts_at.asc`, { method: "GET" }),
     ]);
 
     const t = (Array.isArray(terms) ? terms : []).map((row) => ({ ...row, source: "termin", sourceLabel: "Termin" }));
-    const w = (Array.isArray(works) ? works : []).map((row) => ({ ...row, source: "arbeitseinsatz", sourceLabel: "Arbeitseinsatz" }));
+    const w = (Array.isArray(works) ? works : []).map((row) => ({ ...row, source: "arbeitseinsatz", sourceLabel: row.is_youth ? "Arbeitseinsatz Jugend" : "Arbeitseinsatz" }));
     return [...t, ...w].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
   }
 
@@ -130,6 +160,36 @@
     }, true);
 
     return rows?.[0];
+  }
+
+  async function createTermEvent(payload) {
+    return sb("/rest/v1/rpc/term_event_create", { method: "POST", body: JSON.stringify(payload) }, true);
+  }
+
+  async function publishTermEvent(eventId) {
+    return sb("/rest/v1/rpc/term_event_publish", { method: "POST", body: JSON.stringify({ p_event_id: eventId }) }, true);
+  }
+
+  async function createWorkEvent(payload) {
+    return sb("/rest/v1/rpc/work_event_create", { method: "POST", body: JSON.stringify(payload) }, true);
+  }
+
+  async function publishWorkEvent(eventId) {
+    return sb("/rest/v1/rpc/work_event_publish", { method: "POST", body: JSON.stringify({ p_event_id: eventId }) }, true);
+  }
+
+  async function assignWorkEventLead(eventId, leadUserId) {
+    if (!eventId || !leadUserId) return;
+    const uid = currentUserId();
+    await sb("/rest/v1/work_event_leads", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({
+        work_event_id: eventId,
+        user_id: leadUserId,
+        assigned_by: uid || null,
+      }),
+    }, true);
   }
 
   async function createPostMediaRows(rows) {
@@ -160,6 +220,20 @@
   function categoryLabel(value) {
     const hit = CATEGORY_OPTIONS.find((x) => x.value === value);
     return hit ? hit.label : value;
+  }
+
+  function toIsoFromLocalInput(value) {
+    if (!value) return null;
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+
+  function defaultDateTimeLocal(hoursOffset = 24) {
+    const d = new Date();
+    d.setHours(d.getHours() + hoursOffset);
+    d.setMinutes(0, 0, 0);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   function imageToBitmap(file) {
@@ -236,7 +310,7 @@
     return { blob: bestBlob, width: bestWidth, height: bestHeight, bytes: bestBlob.size, mime: bestMime };
   }
 
-  async function uploadMedia(postId, files, startSortOrder = 1) {
+  async function uploadMedia(postId, files, startSortOrder = 1, onProgress = null) {
     if (!files.length) return [];
 
     const uid = currentUserId();
@@ -245,8 +319,24 @@
     const { url, key } = cfg();
     const mediaRows = [];
 
+    const totalSteps = Math.max(1, files.length * 2);
+    let step = 0;
+
     for (let i = 0; i < files.length; i += 1) {
+      if (typeof onProgress === "function") {
+        onProgress({
+          percent: Math.min(95, Math.round((step / totalSteps) * 100)),
+          text: `Bild ${i + 1}/${files.length}: Verarbeitung...`,
+        });
+      }
       const processed = await transcodeImage(files[i]);
+      step += 1;
+      if (typeof onProgress === "function") {
+        onProgress({
+          percent: Math.min(95, Math.round((step / totalSteps) * 100)),
+          text: `Bild ${i + 1}/${files.length}: Upload...`,
+        });
+      }
       const ext = processed.mime === "image/jpeg" ? "jpg" : "webp";
       const path = `posts/${postId}/${Date.now()}-${i + 1}.${ext}`;
       const encodedPath = path.split("/").map((s) => encodeURIComponent(s)).join("/");
@@ -279,6 +369,13 @@
         mime_type: processed.mime,
         created_by: uid,
       });
+      step += 1;
+      if (typeof onProgress === "function") {
+        onProgress({
+          percent: Math.min(98, Math.round((step / totalSteps) * 100)),
+          text: `Bild ${i + 1}/${files.length}: Hochgeladen`,
+        });
+      }
     }
 
     return mediaRows;
@@ -287,6 +384,7 @@
   function buildComposer(initial = {}, submitLabel = "Speichern", withMedia = false, fixedCategory = "") {
     const hasFixedCategory = Boolean(fixedCategory);
     const normalizedCategory = hasFixedCategory ? fixedCategory : (initial.category || "info");
+    const managerOpts = managerProfiles.map((m) => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.label)}</option>`).join("");
     const wrap = document.createElement("div");
     wrap.className = "feed-composer";
     wrap.innerHTML = `
@@ -307,21 +405,149 @@
             </select>
           `}
       </label>
-      <label>
+      <label data-mode="post">
         <span>Text</span>
         <textarea name="body" rows="6" maxlength="10000" required>${escapeHtml(initial.body || "")}</textarea>
       </label>
       ${withMedia ? `
-      <label>
-        <span>Bilder (max. 2, automatisch verkleinert auf WebP <= 400KB)</span>
-        <input type="file" name="media" accept="image/*" multiple />
+      <label class="feed-media-picker" data-mode="post">
+        <span class="feed-media-picker__title">Bilder (max. 2)</span>
+        <span class="feed-media-picker__hint">Tippen zum Auswählen. Bilder werden automatisch verkleinert.</span>
+        <input class="feed-media-picker__input" type="file" name="media" accept="image/*" multiple />
       </label>` : ""}
+      <div data-mode="termin" hidden>
+        <div class="grid cols2">
+          <label>
+            <span>Ort</span>
+            <input type="text" name="term_location" maxlength="160" />
+          </label>
+          <label>
+            <span>Start</span>
+            <input type="datetime-local" name="term_starts_at" value="${defaultDateTimeLocal(24)}" />
+          </label>
+          <label>
+            <span>Ende</span>
+            <input type="datetime-local" name="term_ends_at" value="${defaultDateTimeLocal(26)}" />
+          </label>
+          <label style="grid-column:1/-1">
+            <span>Beschreibung</span>
+            <textarea name="term_description" rows="4"></textarea>
+          </label>
+          <label style="grid-column:1/-1">
+            <input type="checkbox" name="term_publish_now" checked />
+            <span>Direkt veröffentlichen</span>
+          </label>
+        </div>
+      </div>
+      <div data-mode="arbeitseinsatz" hidden>
+        <div class="grid cols2">
+          <label style="grid-column:1/-1">
+            <span>Jugend-Arbeitseinsatz</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="hidden" name="work_is_youth" value="0" />
+              <button type="button" class="feed-btn feed-btn--ghost" data-work-youth-toggle>Jugend</button>
+              <span class="small">Wenn aktiv, erscheint der Einsatz nur im Jugend-Feed.</span>
+            </div>
+          </label>
+          <label>
+            <span>Ort</span>
+            <input type="text" name="work_location" maxlength="160" />
+          </label>
+          <label>
+            <span>Leiter (Admin/Vorstand)</span>
+            <select name="work_lead_user_id">
+              <option value="">Bitte wählen</option>
+              ${managerOpts}
+            </select>
+          </label>
+          <label>
+            <span>Start</span>
+            <input type="datetime-local" name="work_starts_at" value="${defaultDateTimeLocal(24)}" />
+          </label>
+          <label>
+            <span>Ende</span>
+            <input type="datetime-local" name="work_ends_at" value="${defaultDateTimeLocal(27)}" />
+          </label>
+          <label>
+            <span>Max. Teilnehmer (optional)</span>
+            <input type="number" name="work_max_participants" min="1" step="1" />
+          </label>
+          <label style="grid-column:1/-1">
+            <span>Beschreibung</span>
+            <textarea name="work_description" rows="4"></textarea>
+          </label>
+          <label style="grid-column:1/-1">
+            <input type="checkbox" name="work_publish_now" checked />
+            <span>Direkt veröffentlichen</span>
+          </label>
+        </div>
+      </div>
       <div class="feed-composer__actions">
         <button class="feed-btn" type="submit">${submitLabel}</button>
         <button class="feed-btn feed-btn--ghost" type="button" data-cancel>Abbrechen</button>
       </div>
+      <div class="small feed-upload-progress" data-upload-progress-wrap hidden>
+        <progress data-upload-progress value="0" max="100"></progress>
+        <div data-upload-progress-text></div>
+      </div>
     `;
     return wrap;
+  }
+
+  function composerCategory(form) {
+    return String(form.querySelector('[name="category"]')?.value || "info").trim();
+  }
+
+  function syncComposerMode(form) {
+    const cat = composerCategory(form);
+    const isPostMode = !["termin", "arbeitseinsatz"].includes(cat);
+
+    form.querySelectorAll("[data-mode]").forEach((el) => {
+      const mode = String(el.getAttribute("data-mode") || "");
+      const show = (mode === "post" && isPostMode) || mode === cat;
+      el.toggleAttribute("hidden", !show);
+      if (show) el.removeAttribute("hidden");
+      else el.setAttribute("hidden", "");
+    });
+
+    const bodyEl = form.querySelector('[name="body"]');
+    if (bodyEl) {
+      if (isPostMode) bodyEl.setAttribute("required", "");
+      else bodyEl.removeAttribute("required");
+    }
+
+    const leadEl = form.querySelector('[name="work_lead_user_id"]');
+    if (leadEl) {
+      if (cat === "arbeitseinsatz") leadEl.setAttribute("required", "");
+      else leadEl.removeAttribute("required");
+    }
+  }
+
+  function initWorkYouthToggle(form) {
+    const btn = form.querySelector("[data-work-youth-toggle]");
+    const hidden = form.querySelector('[name="work_is_youth"]');
+    if (!btn || !hidden || btn.dataset.bound === "1") return;
+    btn.dataset.bound = "1";
+
+    const paint = () => {
+      const active = String(hidden.value) === "1";
+      btn.style.background = active ? "#1f7a3b" : "";
+      btn.style.borderColor = active ? "#1f7a3b" : "";
+      btn.style.color = active ? "#fff" : "";
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+    };
+
+    btn.addEventListener("click", () => {
+      hidden.value = String(hidden.value) === "1" ? "0" : "1";
+      paint();
+    });
+
+    if (isYouthFeed) {
+      hidden.value = "1";
+      btn.disabled = true;
+    }
+
+    paint();
   }
 
   function payloadFromComposer(form) {
@@ -332,6 +558,44 @@
     if (!title) throw new Error("Überschrift fehlt");
     if (!body) throw new Error("Text fehlt");
     return { title, category, body };
+  }
+
+  function termPayloadFromComposer(form) {
+    const title = String(form.querySelector('[name="title"]')?.value || "").trim();
+    if (!title) throw new Error("Überschrift fehlt");
+    const startsAt = toIsoFromLocalInput(String(form.querySelector('[name="term_starts_at"]')?.value || ""));
+    const endsAt = toIsoFromLocalInput(String(form.querySelector('[name="term_ends_at"]')?.value || ""));
+    if (!startsAt || !endsAt) throw new Error("Start/Ende sind Pflichtfelder.");
+    return {
+      p_title: title,
+      p_description: String(form.querySelector('[name="term_description"]')?.value || "").trim() || null,
+      p_location: String(form.querySelector('[name="term_location"]')?.value || "").trim() || null,
+      p_starts_at: startsAt,
+      p_ends_at: endsAt,
+      publishNow: Boolean(form.querySelector('[name="term_publish_now"]')?.checked),
+    };
+  }
+
+  function workPayloadFromComposer(form) {
+    const title = String(form.querySelector('[name="title"]')?.value || "").trim();
+    if (!title) throw new Error("Überschrift fehlt");
+    const startsAt = toIsoFromLocalInput(String(form.querySelector('[name="work_starts_at"]')?.value || ""));
+    const endsAt = toIsoFromLocalInput(String(form.querySelector('[name="work_ends_at"]')?.value || ""));
+    if (!startsAt || !endsAt) throw new Error("Start/Ende sind Pflichtfelder.");
+    const maxRaw = String(form.querySelector('[name="work_max_participants"]')?.value || "").trim();
+    const leadUserId = String(form.querySelector('[name="work_lead_user_id"]')?.value || "").trim();
+    if (!leadUserId) throw new Error("Bitte einen Leiter auswählen.");
+    return {
+      p_title: title,
+      p_description: String(form.querySelector('[name="work_description"]')?.value || "").trim() || null,
+      p_location: String(form.querySelector('[name="work_location"]')?.value || "").trim() || null,
+      p_starts_at: startsAt,
+      p_ends_at: endsAt,
+      p_max_participants: maxRaw ? Number(maxRaw) : null,
+      p_is_youth: String(form.querySelector('[name="work_is_youth"]')?.value || "0") === "1",
+      leadUserId,
+      publishNow: Boolean(form.querySelector('[name="work_publish_now"]')?.checked),
+    };
   }
 
   function mediaFilesFromComposer(form, maxFiles = MAX_MEDIA_FILES) {
@@ -360,12 +624,94 @@
     if (cancelBtn) cancelBtn.disabled = Boolean(isSaving);
   }
 
+  function setUploadProgress(form, percent = 0, text = "", show = false) {
+    if (!form) return;
+    const wrap = form.querySelector("[data-upload-progress-wrap]");
+    const bar = form.querySelector("[data-upload-progress]");
+    const msg = form.querySelector("[data-upload-progress-text]");
+    if (wrap) {
+      if (show) wrap.removeAttribute("hidden");
+      else wrap.setAttribute("hidden", "");
+    }
+    if (bar) bar.value = Math.max(0, Math.min(100, Number(percent) || 0));
+    if (msg) msg.textContent = String(text || "");
+  }
+
   async function refresh() {
     const list = document.getElementById("feedList");
     if (!list) return;
     list.innerHTML = "";
 
     try {
+      if (!isForcedCategory) {
+        const [terms, works] = await Promise.all([
+          listUpcomingTerms().catch(() => []),
+          listUpcomingWorkEvents().catch(() => []),
+        ]);
+        const merged = [
+          ...(Array.isArray(terms) ? terms : []).map((row) => ({ ...row, sourceLabel: "Termin" })),
+          ...(Array.isArray(works) ? works : []).map((row) => ({ ...row, sourceLabel: row.is_youth ? "Arbeitseinsatz Jugend" : "Arbeitseinsatz" })),
+        ].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+
+        if (merged.length) {
+          const section = document.createElement("article");
+          section.className = "feed-post";
+          section.innerHTML = `
+            <header class="feed-post__head">
+              <h3>Nächste Termine & Arbeitseinsätze</h3>
+              <div class="feed-post__meta">
+                <a class="feed-btn feed-btn--ghost" href="/termine.html/">Alle Termine</a>
+              </div>
+            </header>
+            <div class="feed-upcoming-slider" data-up-slider-wrap>
+              <button type="button" class="feed-upcoming-nav feed-upcoming-nav--prev" data-up-prev aria-label="Vorheriger Eintrag">&#x2039;</button>
+              <div class="feed-upcoming-stage" data-up-slider></div>
+              <button type="button" class="feed-upcoming-nav feed-upcoming-nav--next" data-up-next aria-label="Nächster Eintrag">&#x203A;</button>
+            </div>
+          `;
+
+          const slider = section.querySelector("[data-up-slider]");
+          const prevBtn = section.querySelector("[data-up-prev]");
+          const nextBtn = section.querySelector("[data-up-next]");
+          let idx = 0;
+          let touchStartX = null;
+
+          const renderUpcoming = () => {
+            const row = merged[idx];
+            slider.innerHTML = `
+              <div class="feed-calendar-item feed-calendar-item--upcoming" style="touch-action:pan-y; user-select:none;">
+                <span class="feed-chip">${escapeHtml(row.sourceLabel)} ${idx + 1}/${merged.length}</span>
+                <strong>${escapeHtml(row.title)}</strong>
+                <span class="small">${escapeHtml(formatDate(row.starts_at))} - ${escapeHtml(formatDate(row.ends_at))}</span>
+                <span class="small">${escapeHtml(row.location || "Ort offen")}</span>
+                ${row.description ? `<p class="small">${escapeHtml(row.description)}</p>` : ""}
+              </div>
+            `;
+          };
+
+          const move = (dir) => {
+            idx = (idx + dir + merged.length) % merged.length;
+            renderUpcoming();
+          };
+
+          prevBtn?.addEventListener("click", () => move(-1));
+          nextBtn?.addEventListener("click", () => move(1));
+          slider?.addEventListener("touchstart", (e) => {
+            touchStartX = e.touches?.[0]?.clientX ?? null;
+          }, { passive: true });
+          slider?.addEventListener("touchend", (e) => {
+            if (touchStartX == null) return;
+            const endX = e.changedTouches?.[0]?.clientX ?? touchStartX;
+            const dx = endX - touchStartX;
+            if (Math.abs(dx) >= 30) move(dx < 0 ? 1 : -1);
+            touchStartX = null;
+          }, { passive: true });
+
+          renderUpcoming();
+          list.appendChild(section);
+        }
+      }
+
       const weekItems = isForcedCategory ? [] : await listWeekCalendarItems().catch(() => []);
       if (weekItems.length) {
         const section = document.createElement("article");
@@ -466,40 +812,76 @@
     form.className = "feed-form";
     const initial = isForcedCategory ? { category: forcedCategory } : {};
     form.appendChild(buildComposer(initial, "Post veröffentlichen", true, isForcedCategory ? forcedCategory : ""));
+    syncComposerMode(form);
+    initWorkYouthToggle(form);
+    form.querySelector('[name="category"]')?.addEventListener("change", () => syncComposerMode(form));
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (form.dataset.saving === "1") return;
       setMessage("Speichert...");
       setFormSaving(form, true, "Speichert...");
+      setUploadProgress(form, 5, "Initialisiere...", true);
       try {
-        const payload = payloadFromComposer(form);
-        const files = mediaFilesFromComposer(form);
-
-        const post = await createPost(payload);
-        if (!post?.id) throw new Error("Post konnte nicht erstellt werden");
-
-        let mediaError = null;
-        if (files.length) {
-          try {
-            const mediaRows = await uploadMedia(post.id, files);
-            await createPostMediaRows(mediaRows);
-          } catch (err) {
-            mediaError = err;
-          }
-        }
-
-        host.innerHTML = "";
-        await refresh();
-        if (mediaError) {
-          setMessage(`Beitrag veröffentlicht, aber Bild-Upload fehlgeschlagen: ${mediaError?.message || "Unbekannter Fehler"}`);
+        const category = composerCategory(form);
+        if (category === "termin") {
+          const payload = termPayloadFromComposer(form);
+          const created = await createTermEvent(payload);
+          const eventId = created?.id || (Array.isArray(created) ? created[0]?.id : null);
+          if (payload.publishNow && eventId) await publishTermEvent(eventId);
+          setUploadProgress(form, 100, "Fertig.", true);
+          host.innerHTML = "";
+          await refresh();
+          setMessage(payload.publishNow ? "Termin erstellt und veröffentlicht." : "Termin erstellt.");
+        } else if (category === "arbeitseinsatz") {
+          const payload = workPayloadFromComposer(form);
+          const created = await createWorkEvent(payload);
+          const eventId = created?.id || (Array.isArray(created) ? created[0]?.id : null);
+          if (!eventId) throw new Error("Arbeitseinsatz konnte nicht erstellt werden.");
+          await assignWorkEventLead(eventId, payload.leadUserId);
+          if (payload.publishNow) await publishWorkEvent(eventId);
+          setUploadProgress(form, 100, "Fertig.", true);
+          host.innerHTML = "";
+          await refresh();
+          setMessage(payload.publishNow ? "Arbeitseinsatz erstellt, Leiter zugewiesen und veröffentlicht." : "Arbeitseinsatz erstellt und Leiter zugewiesen.");
         } else {
-          setMessage("Beitrag veröffentlicht.");
+          const payload = payloadFromComposer(form);
+          const files = mediaFilesFromComposer(form);
+
+          const post = await createPost(payload);
+          if (!post?.id) throw new Error("Post konnte nicht erstellt werden");
+
+          let mediaError = null;
+          if (files.length) {
+            try {
+              setUploadProgress(form, 15, "Bilder werden verarbeitet...", true);
+              const mediaRows = await uploadMedia(post.id, files, 1, ({ percent, text }) => {
+                setUploadProgress(form, 15 + Math.round((percent * 0.75)), text, true);
+              });
+              setUploadProgress(form, 92, "Speichere Bild-Metadaten...", true);
+              await createPostMediaRows(mediaRows);
+              setUploadProgress(form, 100, "Upload abgeschlossen.", true);
+            } catch (err) {
+              mediaError = err;
+              setUploadProgress(form, 100, "Bild-Upload fehlgeschlagen.", true);
+            }
+          } else {
+            setUploadProgress(form, 100, "Beitrag gespeichert.", true);
+          }
+
+          host.innerHTML = "";
+          await refresh();
+          if (mediaError) {
+            setMessage(`Beitrag veröffentlicht, aber Bild-Upload fehlgeschlagen: ${mediaError?.message || "Unbekannter Fehler"}`);
+          } else {
+            setMessage("Beitrag veröffentlicht.");
+          }
         }
       } catch (err) {
         setMessage(err?.message || "Speichern fehlgeschlagen");
       } finally {
         setFormSaving(form, false);
+        setTimeout(() => setUploadProgress(form, 0, "", false), 1200);
       }
     });
 
@@ -519,6 +901,8 @@
     const form = document.createElement("form");
     form.className = "feed-form";
     form.appendChild(buildComposer(post, "Änderungen speichern", true, isForcedCategory ? forcedCategory : ""));
+    syncComposerMode(form);
+    form.querySelector('[name="category"]')?.addEventListener("change", () => syncComposerMode(form));
 
     const existingMediaCount = Array.isArray(post.feed_post_media) ? post.feed_post_media.length : 0;
     const remainingSlots = Math.max(0, MAX_MEDIA_FILES - existingMediaCount);
@@ -543,24 +927,35 @@
       if (form.dataset.saving === "1") return;
       setMessage("Aktualisiert...");
       setFormSaving(form, true, "Speichert...");
+      setUploadProgress(form, 5, "Initialisiere...", true);
       try {
+        const category = composerCategory(form);
+        if (["termin", "arbeitseinsatz"].includes(category)) {
+          throw new Error("Termine und Arbeitseinsätze bitte über die jeweilige Fachmaske verwalten.");
+        }
         const payload = payloadFromComposer(form);
         await updatePost(post.id, payload);
+        setUploadProgress(form, 30, "Text gespeichert.", true);
 
         if (remainingSlots > 0) {
           const files = mediaFilesFromComposer(form, remainingSlots);
           if (files.length) {
-            const mediaRows = await uploadMedia(post.id, files, existingMediaCount + 1);
+            const mediaRows = await uploadMedia(post.id, files, existingMediaCount + 1, ({ percent, text }) => {
+              setUploadProgress(form, 30 + Math.round((percent * 0.65)), text, true);
+            });
+            setUploadProgress(form, 95, "Speichere Bild-Metadaten...", true);
             await createPostMediaRows(mediaRows);
           }
         }
 
+        setUploadProgress(form, 100, "Fertig.", true);
         setMessage("Beitrag aktualisiert.");
         await refresh();
       } catch (err) {
         setMessage(err?.message || "Update fehlgeschlagen");
       } finally {
         setFormSaving(form, false);
+        setTimeout(() => setUploadProgress(form, 0, "", false), 1200);
       }
     });
 
@@ -585,8 +980,10 @@
     try {
       const roles = await loadRoles();
       canManage = roles.some((r) => MANAGER_ROLES.has(r));
+      managerProfiles = canManage ? await loadManagerProfiles().catch(() => []) : [];
     } catch {
       canManage = false;
+      managerProfiles = [];
     }
 
     btn.classList.toggle("hidden", !canManage);

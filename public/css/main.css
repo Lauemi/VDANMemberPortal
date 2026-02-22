@@ -265,6 +265,38 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   overflow:hidden;
 }
 
+.feed-form{
+  width:100%;
+}
+
+.feed-composer{
+  display:grid;
+  gap:10px;
+}
+
+.feed-composer > label{
+  margin:0;
+}
+
+.feed-composer textarea{
+  width:100%;
+  resize:vertical;
+}
+
+.feed-composer input,
+.feed-composer select,
+.feed-composer textarea{
+  width:100%;
+  min-width:0;
+}
+
+.feed-composer__actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+
 .feed-post__head{
   display:flex;
   gap:.8rem;
@@ -315,6 +347,74 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   display:grid;
   gap:.65rem;
   grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.feed-media-picker{
+  border:1px dashed rgba(126,194,255,.5);
+  border-radius:12px;
+  padding:10px;
+  background:linear-gradient(180deg, rgba(95,153,220,.12), rgba(255,255,255,.02));
+  cursor:pointer;
+}
+
+.feed-media-picker__title{
+  font-weight:700;
+}
+
+.feed-media-picker__hint{
+  color:var(--muted);
+  font-size:.88rem;
+}
+
+.feed-media-picker__input{
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+  padding:8px;
+  font-size:.95rem;
+}
+
+.feed-media-picker__input::file-selector-button{
+  margin-right:10px;
+  border:1px solid rgba(95,153,220,.56);
+  border-radius:10px;
+  background:linear-gradient(180deg, rgba(95,153,220,.28), rgba(95,153,220,.12));
+  color:var(--text);
+  padding:8px 10px;
+  cursor:pointer;
+}
+
+.feed-media-picker:focus-within{
+  border-color:rgba(95,153,220,.9);
+  box-shadow:0 0 0 2px rgba(95,153,220,.2);
+}
+
+.feed-upload-progress{
+  display:grid;
+  gap:6px;
+  margin-top:2px;
+}
+
+.feed-upload-progress progress{
+  width:100%;
+  height:12px;
+  border:0;
+  border-radius:999px;
+  overflow:hidden;
+}
+
+.feed-upload-progress progress::-webkit-progress-bar{
+  background:rgba(255,255,255,.12);
+}
+
+.feed-upload-progress progress::-webkit-progress-value{
+  background:linear-gradient(90deg, rgba(95,153,220,.7), rgba(126,194,255,.95));
+}
+
+.feed-upload-progress progress::-moz-progress-bar{
+  background:linear-gradient(90deg, rgba(95,153,220,.7), rgba(126,194,255,.95));
 }
 
 .feed-media__item{
@@ -830,6 +930,101 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   background:rgba(255,255,255,.03);
 }
 
+.feed-calendar-item--upcoming{
+  min-height:144px;
+  padding:12px 62px;
+}
+
+.feed-upcoming-slider{
+  position:relative;
+  margin-top:6px;
+}
+
+.feed-upcoming-stage{
+  padding:0;
+}
+
+.feed-upcoming-nav{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:42px;
+  height:42px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.34);
+  background:linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.08));
+  color:#fff;
+  font-size:1.55rem;
+  line-height:1;
+  display:grid;
+  place-items:center;
+  z-index:2;
+  backdrop-filter:blur(4px);
+  box-shadow:0 8px 18px rgba(0,0,0,.25);
+  overflow:hidden;
+}
+
+.feed-upcoming-nav::after{
+  content:"";
+  position:absolute;
+  inset:-20%;
+  background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.35) 50%, transparent 70%);
+  transform:translateX(-120%);
+  animation:feed-nav-shimmer 2.6s linear infinite;
+  pointer-events:none;
+}
+
+.feed-upcoming-nav--prev{
+  left:8px;
+}
+
+.feed-upcoming-nav--next{
+  right:8px;
+}
+
+.feed-upcoming-nav:hover{
+  filter:brightness(1.08);
+}
+
+.feed-upcoming-nav:focus-visible{
+  outline:2px solid rgba(95,153,220,.9);
+  outline-offset:2px;
+}
+
+.feed-upcoming-hint{
+  margin:8px 2px 0;
+  opacity:.85;
+}
+
+@keyframes feed-nav-shimmer{
+  to{
+    transform:translateX(120%);
+  }
+}
+
+@media (max-width: 720px){
+  .feed-calendar-item--upcoming{
+    min-height:170px;
+    padding:16px 70px 18px;
+  }
+
+  .feed-upcoming-nav{
+    width:50px;
+    height:50px;
+    font-size:1.7rem;
+    border-color:rgba(255,255,255,.42);
+    background:linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.1));
+  }
+
+  .feed-upcoming-nav--prev{
+    left:10px;
+  }
+
+  .feed-upcoming-nav--next{
+    right:10px;
+  }
+}
+
 .catch-foot-actions{
   display:flex;
   flex-wrap:wrap;
@@ -1032,6 +1227,16 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 
   .feed-media__img{
     max-height:280px;
+  }
+
+  .feed-media-picker{
+    padding:12px;
+  }
+
+  .feed-media-picker__input::file-selector-button{
+    display:block;
+    width:100%;
+    margin:0 0 8px;
   }
 
   #waterMapCanvas{

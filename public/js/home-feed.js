@@ -411,6 +411,7 @@
               <span class="feed-chip">${escapeHtml(categoryLabel(post.category))}</span>
               <time datetime="${escapeHtml(post.created_at)}">${escapeHtml(formatDate(post.created_at))}</time>
               ${canManage ? '<button class="feed-btn feed-btn--ghost" type="button" data-edit>Bearbeiten</button>' : ""}
+              ${canManage ? '<button class="feed-btn feed-btn--ghost" type="button" data-delete>Löschen</button>' : ""}
             </div>
           </header>
           ${mediaHtml}
@@ -420,6 +421,17 @@
 
         if (canManage) {
           article.querySelector("[data-edit]")?.addEventListener("click", () => mountEditComposer(article, post));
+          article.querySelector("[data-delete]")?.addEventListener("click", async () => {
+            if (!window.confirm("Post wirklich löschen?")) return;
+            setMessage("Löscht...");
+            try {
+              await deletePost(post.id);
+              setMessage("Post gelöscht.");
+              await refresh();
+            } catch (err) {
+              setMessage(err?.message || "Löschen fehlgeschlagen");
+            }
+          });
         }
 
         list.appendChild(article);

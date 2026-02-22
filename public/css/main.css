@@ -297,6 +297,39 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   align-items:center;
 }
 
+.feed-mode-panel{
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px;
+  background:rgba(255,255,255,.02);
+}
+
+.feed-field--full{
+  grid-column:1/-1;
+}
+
+.feed-youth-switch{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.feed-youth-switch .feed-btn{
+  min-width:100px;
+}
+
+.feed-check{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.feed-check input[type="checkbox"]{
+  width:auto;
+  margin:0;
+}
+
 .feed-post__head{
   display:flex;
   gap:.8rem;
@@ -1227,6 +1260,10 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 
   .feed-media__img{
     max-height:280px;
+  }
+
+  .feed-mode-panel{
+    padding:12px;
   }
 
   .feed-media-picker{

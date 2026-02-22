@@ -109,8 +109,18 @@
 
   async function listUpcomingTerms() {
     const nowIso = new Date().toISOString();
-    const rows = await sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc&limit=20`, { method: "GET" });
-    return Array.isArray(rows) ? rows : [];
+    try {
+      const rows = await sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}${termEventsFeedFilterQuery()}&order=starts_at.asc&limit=20`, { method: "GET" });
+      return Array.isArray(rows) ? rows : [];
+    } catch {
+      if (isYouthFeed) return [];
+      const rows = await sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc&limit=20`, { method: "GET" });
+      return (Array.isArray(rows) ? rows : []).map((row) => ({ ...row, is_youth: false }));
+    }
+  }
+
+  function termEventsFeedFilterQuery() {
+    return isYouthFeed ? "&is_youth=is.true" : "&is_youth=is.false";
   }
 
   function workEventsFeedFilterQuery() {
@@ -139,12 +149,18 @@
 
   async function listWeekCalendarItems() {
     const { nowIso, weekEndIso } = weekRangeIso();
-    const [terms, works] = await Promise.all([
-      sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`, { method: "GET" }),
-      sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}${workEventsFeedFilterQuery()}&order=starts_at.asc`, { method: "GET" }),
-    ]);
+    let terms = [];
+    try {
+      terms = await sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}${termEventsFeedFilterQuery()}&order=starts_at.asc`, { method: "GET" });
+    } catch {
+      if (!isYouthFeed) {
+        const legacyTerms = await sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`, { method: "GET" });
+        terms = (Array.isArray(legacyTerms) ? legacyTerms : []).map((row) => ({ ...row, is_youth: false }));
+      }
+    }
+    const works = await sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}${workEventsFeedFilterQuery()}&order=starts_at.asc`, { method: "GET" });
 
-    const t = (Array.isArray(terms) ? terms : []).map((row) => ({ ...row, source: "termin", sourceLabel: "Termin" }));
+    const t = (Array.isArray(terms) ? terms : []).map((row) => ({ ...row, source: "termin", sourceLabel: row.is_youth ? "Termin Jugend" : "Termin" }));
     const w = (Array.isArray(works) ? works : []).map((row) => ({ ...row, source: "arbeitseinsatz", sourceLabel: row.is_youth ? "Arbeitseinsatz Jugend" : "Arbeitseinsatz" }));
     return [...t, ...w].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
   }
@@ -163,7 +179,16 @@
   }
 
   async function createTermEvent(payload) {
-    return sb("/rest/v1/rpc/term_event_create", { method: "POST", body: JSON.stringify(payload) }, true);
+    try {
+      return await sb("/rest/v1/rpc/term_event_create", { method: "POST", body: JSON.stringify(payload) }, true);
+    } catch (err) {
+      if (Object.prototype.hasOwnProperty.call(payload || {}, "p_is_youth")) {
+        const fallback = { ...payload };
+        delete fallback.p_is_youth;
+        return sb("/rest/v1/rpc/term_event_create", { method: "POST", body: JSON.stringify(fallback) }, true);
+      }
+      throw err;
+    }
   }
 
   async function publishTermEvent(eventId) {
@@ -415,8 +440,16 @@
         <span class="feed-media-picker__hint">Tippen zum Auswählen. Bilder werden automatisch verkleinert.</span>
         <input class="feed-media-picker__input" type="file" name="media" accept="image/*" multiple />
       </label>` : ""}
-      <div data-mode="termin" hidden>
+      <div class="feed-mode-panel" data-mode="termin" hidden>
         <div class="grid cols2">
+          <label class="feed-field--full">
+            <span>Jugend-Termin</span>
+            <div class="feed-youth-switch">
+              <input type="hidden" name="term_is_youth" value="0" />
+              <button type="button" class="feed-btn feed-btn--ghost" data-term-youth-toggle>Jugend</button>
+              <span class="small">Wenn aktiv, erscheint der Termin nur im Jugend-Feed.</span>
+            </div>
+          </label>
           <label>
             <span>Ort</span>
             <input type="text" name="term_location" maxlength="160" />
@@ -429,21 +462,21 @@
             <span>Ende</span>
             <input type="datetime-local" name="term_ends_at" value="${defaultDateTimeLocal(26)}" />
           </label>
-          <label style="grid-column:1/-1">
+          <label class="feed-field--full">
             <span>Beschreibung</span>
             <textarea name="term_description" rows="4"></textarea>
           </label>
-          <label style="grid-column:1/-1">
+          <label class="feed-field--full feed-check">
             <input type="checkbox" name="term_publish_now" checked />
             <span>Direkt veröffentlichen</span>
           </label>
         </div>
       </div>
-      <div data-mode="arbeitseinsatz" hidden>
+      <div class="feed-mode-panel" data-mode="arbeitseinsatz" hidden>
         <div class="grid cols2">
-          <label style="grid-column:1/-1">
+          <label class="feed-field--full">
             <span>Jugend-Arbeitseinsatz</span>
-            <div style="display:flex;gap:8px;align-items:center;">
+            <div class="feed-youth-switch">
               <input type="hidden" name="work_is_youth" value="0" />
               <button type="button" class="feed-btn feed-btn--ghost" data-work-youth-toggle>Jugend</button>
               <span class="small">Wenn aktiv, erscheint der Einsatz nur im Jugend-Feed.</span>
@@ -472,11 +505,11 @@
             <span>Max. Teilnehmer (optional)</span>
             <input type="number" name="work_max_participants" min="1" step="1" />
           </label>
-          <label style="grid-column:1/-1">
+          <label class="feed-field--full">
             <span>Beschreibung</span>
             <textarea name="work_description" rows="4"></textarea>
           </label>
-          <label style="grid-column:1/-1">
+          <label class="feed-field--full feed-check">
             <input type="checkbox" name="work_publish_now" checked />
             <span>Direkt veröffentlichen</span>
           </label>
@@ -550,6 +583,33 @@
     paint();
   }
 
+  function initTermYouthToggle(form) {
+    const btn = form.querySelector("[data-term-youth-toggle]");
+    const hidden = form.querySelector('[name="term_is_youth"]');
+    if (!btn || !hidden || btn.dataset.bound === "1") return;
+    btn.dataset.bound = "1";
+
+    const paint = () => {
+      const active = String(hidden.value) === "1";
+      btn.style.background = active ? "#1f7a3b" : "";
+      btn.style.borderColor = active ? "#1f7a3b" : "";
+      btn.style.color = active ? "#fff" : "";
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+    };
+
+    btn.addEventListener("click", () => {
+      hidden.value = String(hidden.value) === "1" ? "0" : "1";
+      paint();
+    });
+
+    if (isYouthFeed) {
+      hidden.value = "1";
+      btn.disabled = true;
+    }
+
+    paint();
+  }
+
   function payloadFromComposer(form) {
     const title = String(form.querySelector('[name="title"]')?.value || "").trim();
     const category = String(form.querySelector('[name="category"]')?.value || "info").trim();
@@ -572,6 +632,7 @@
       p_location: String(form.querySelector('[name="term_location"]')?.value || "").trim() || null,
       p_starts_at: startsAt,
       p_ends_at: endsAt,
+      p_is_youth: String(form.querySelector('[name="term_is_youth"]')?.value || "0") === "1",
       publishNow: Boolean(form.querySelector('[name="term_publish_now"]')?.checked),
     };
   }
@@ -649,7 +710,7 @@
           listUpcomingWorkEvents().catch(() => []),
         ]);
         const merged = [
-          ...(Array.isArray(terms) ? terms : []).map((row) => ({ ...row, sourceLabel: "Termin" })),
+          ...(Array.isArray(terms) ? terms : []).map((row) => ({ ...row, sourceLabel: row.is_youth ? "Termin Jugend" : "Termin" })),
           ...(Array.isArray(works) ? works : []).map((row) => ({ ...row, sourceLabel: row.is_youth ? "Arbeitseinsatz Jugend" : "Arbeitseinsatz" })),
         ].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
 
@@ -814,6 +875,7 @@
     form.appendChild(buildComposer(initial, "Post veröffentlichen", true, isForcedCategory ? forcedCategory : ""));
     syncComposerMode(form);
     initWorkYouthToggle(form);
+    initTermYouthToggle(form);
     form.querySelector('[name="category"]')?.addEventListener("change", () => syncComposerMode(form));
 
     form.addEventListener("submit", async (e) => {
@@ -902,6 +964,8 @@
     form.className = "feed-form";
     form.appendChild(buildComposer(post, "Änderungen speichern", true, isForcedCategory ? forcedCategory : ""));
     syncComposerMode(form);
+    initWorkYouthToggle(form);
+    initTermYouthToggle(form);
     form.querySelector('[name="category"]')?.addEventListener("change", () => syncComposerMode(form));
 
     const existingMediaCount = Array.isArray(post.feed_post_media) ? post.feed_post_media.length : 0;

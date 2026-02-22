@@ -236,7 +236,7 @@
     return { blob: bestBlob, width: bestWidth, height: bestHeight, bytes: bestBlob.size, mime: bestMime };
   }
 
-  async function uploadMedia(postId, files) {
+  async function uploadMedia(postId, files, startSortOrder = 1) {
     if (!files.length) return [];
 
     const uid = currentUserId();
@@ -270,7 +270,7 @@
 
       mediaRows.push({
         post_id: postId,
-        sort_order: i + 1,
+        sort_order: startSortOrder + i,
         storage_bucket: MEDIA_BUCKET,
         storage_path: path,
         photo_bytes: processed.bytes,
@@ -334,11 +334,11 @@
     return { title, category, body };
   }
 
-  function mediaFilesFromComposer(form) {
+  function mediaFilesFromComposer(form, maxFiles = MAX_MEDIA_FILES) {
     const input = form.querySelector('[name="media"]');
     const files = Array.from(input?.files || []);
-    if (files.length > MAX_MEDIA_FILES) {
-      throw new Error("Maximal 2 Bilder pro Post erlaubt.");
+    if (files.length > maxFiles) {
+      throw new Error(`Maximal ${maxFiles} Bilder in diesem Schritt erlaubt.`);
     }
     return files;
   }
@@ -518,7 +518,25 @@
 
     const form = document.createElement("form");
     form.className = "feed-form";
-    form.appendChild(buildComposer(post, "Änderungen speichern", false, isForcedCategory ? forcedCategory : ""));
+    form.appendChild(buildComposer(post, "Änderungen speichern", true, isForcedCategory ? forcedCategory : ""));
+
+    const existingMediaCount = Array.isArray(post.feed_post_media) ? post.feed_post_media.length : 0;
+    const remainingSlots = Math.max(0, MAX_MEDIA_FILES - existingMediaCount);
+    const mediaInput = form.querySelector('[name="media"]');
+    if (mediaInput) {
+      if (remainingSlots === 0) {
+        mediaInput.disabled = true;
+        const note = document.createElement("p");
+        note.className = "small";
+        note.textContent = "Maximal 2 Bilder erreicht. Erst Bilder entfernen, dann neue hinzufügen.";
+        mediaInput.closest("label")?.appendChild(note);
+      } else {
+        const note = document.createElement("p");
+        note.className = "small";
+        note.textContent = `Du kannst noch ${remainingSlots} Bild(er) hinzufügen.`;
+        mediaInput.closest("label")?.appendChild(note);
+      }
+    }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -528,6 +546,15 @@
       try {
         const payload = payloadFromComposer(form);
         await updatePost(post.id, payload);
+
+        if (remainingSlots > 0) {
+          const files = mediaFilesFromComposer(form, remainingSlots);
+          if (files.length) {
+            const mediaRows = await uploadMedia(post.id, files, existingMediaCount + 1);
+            await createPostMediaRows(mediaRows);
+          }
+        }
+
         setMessage("Beitrag aktualisiert.");
         await refresh();
       } catch (err) {

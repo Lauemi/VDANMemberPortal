@@ -8,6 +8,7 @@
   let catches = [];
   let activeTripId = null;
   let createMode = "catch";
+  const LEGACY_CATCH_CLEAR_MARKER = "vdan_catch_cleanup_v1_done";
 
   function cfg() {
     return {
@@ -24,22 +25,32 @@
     return session()?.user?.id || null;
   }
 
-  function imageStoreKey() {
-    return `vdan_trip_images_v1:${uid() || "anon"}`;
-  }
-
-  function loadImageStore() {
+  function clearLegacyLocalCatchDataOnce() {
     try {
-      const raw = localStorage.getItem(imageStoreKey());
-      const parsed = raw ? JSON.parse(raw) : {};
-      return parsed && typeof parsed === "object" ? parsed : {};
-    } catch {
-      return {};
-    }
-  }
+      if (localStorage.getItem(LEGACY_CATCH_CLEAR_MARKER) === "1") return;
 
-  function saveImageStore(map) {
-    localStorage.setItem(imageStoreKey(), JSON.stringify(map || {}));
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const k = localStorage.key(i);
+        if (k) keys.push(k);
+      }
+
+      keys.forEach((k) => {
+        if (
+          k.startsWith("vdan_catchlist_") ||
+          k.startsWith("vdan_fangliste_") ||
+          k.startsWith("vdan_local_catches_") ||
+          k.startsWith("vdan_trip_draft_") ||
+          k.startsWith("vdan_trip_images_v1:")
+        ) {
+          localStorage.removeItem(k);
+        }
+      });
+
+      localStorage.setItem(LEGACY_CATCH_CLEAR_MARKER, "1");
+    } catch {
+      // ignore
+    }
   }
 
   function todayIso() {
@@ -119,6 +130,18 @@
     return `${tripDate || ""}|${waterBodyId || ""}`;
   }
 
+  function catchesByTripId() {
+    const map = new Map();
+    catches.forEach((c) => {
+      const k = String(c.fishing_trip_id || "");
+      if (!k) return;
+      const arr = map.get(k) || [];
+      arr.push(c);
+      map.set(k, arr);
+    });
+    return map;
+  }
+
   function catchesByTripKey() {
     const map = new Map();
     catches.forEach((c) => {
@@ -128,6 +151,12 @@
       map.set(k, arr);
     });
     return map;
+  }
+
+  function catchesForTrip(trip) {
+    const byId = catchesByTripId().get(String(trip?.id || "")) || [];
+    if (byId.length) return byId;
+    return catchesByTripKey().get(tripKey(trip?.trip_date, trip?.water_body_id)) || [];
   }
 
   function catchSummaryForTrip(trip, catchList) {
@@ -228,6 +257,22 @@
     sel.innerHTML = `<option value="">Kein Eintrag</option>` + fishSpecies.map((f) => `<option value="${f.id}">${esc(f.name)}</option>`).join("");
   }
 
+  function fishSpeciesOptionsHtml(selectedId = "") {
+    const selected = String(selectedId || "");
+    return [
+      `<option value="">Bitte wählen</option>`,
+      ...fishSpecies.map((f) => `<option value="${f.id}" ${String(f.id) === selected ? "selected" : ""}>${esc(f.name)}</option>`),
+    ].join("");
+  }
+
+  function waterOptionsHtml(selectedId = "") {
+    const selected = String(selectedId || "");
+    return [
+      `<option value="">Bitte wählen</option>`,
+      ...waters.map((w) => `<option value="${w.id}" ${String(w.id) === selected ? "selected" : ""}>${esc(w.name)}</option>`),
+    ].join("");
+  }
+
   function selectedWaterId() {
     return String(document.getElementById("tripWater")?.value || "").trim();
   }
@@ -285,9 +330,9 @@
     const water_body_id = selectedWaterId();
     if (!user_id || !trip_date || !water_body_id) throw new Error("Bitte Datum und Gewässer wählen.");
 
-    const tripPayload = await sb("/rest/v1/fishing_trips?on_conflict=user_id,trip_date,water_body_id", {
+    const tripPayload = await sb("/rest/v1/fishing_trips", {
       method: "POST",
-      headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+      headers: { Prefer: "return=representation" },
       body: JSON.stringify({ user_id, trip_date, water_body_id, entry_type: "catch" }),
     }, true);
 
@@ -307,6 +352,7 @@
         method: "POST",
         headers: { Prefer: "return=representation" },
         body: JSON.stringify({
+          fishing_trip_id: tripRow?.id || null,
           user_id,
           water_body_id,
           fish_species_id,
@@ -322,9 +368,14 @@
     if (file && tripRow?.id) {
       setCreateMsg("Bild wird komprimiert...");
       const photo = await compressImageToWebp(file);
-      const imageStore = loadImageStore();
-      imageStore[tripRow.id] = photo;
-      saveImageStore(imageStore);
+      await sb(`/rest/v1/fishing_trips?id=eq.${encodeURIComponent(tripRow.id)}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify({
+          photo_data_url: photo.data_url,
+          photo_updated_at: new Date().toISOString(),
+        }),
+      }, true);
     }
   }
 
@@ -334,12 +385,12 @@
 
     const [tripRows, catchRows] = await Promise.all([
       sb(
-        `/rest/v1/fishing_trips?select=id,trip_date,entry_type,created_at,water_body_id,water_bodies(name)&user_id=eq.${encodeURIComponent(user_id)}&order=trip_date.desc,created_at.desc&limit=300`,
+        `/rest/v1/fishing_trips?select=id,trip_date,entry_type,note,created_at,water_body_id,photo_data_url,photo_updated_at,water_bodies(name)&user_id=eq.${encodeURIComponent(user_id)}&order=trip_date.desc,created_at.desc&limit=500`,
         { method: "GET" },
         true
       ),
       sb(
-        `/rest/v1/catch_entries?select=id,caught_on,water_body_id,quantity,length_cm,weight_g,created_at,fish_species(name)&user_id=eq.${encodeURIComponent(user_id)}&order=caught_on.desc,created_at.desc&limit=1000`,
+        `/rest/v1/catch_entries?select=id,fishing_trip_id,caught_on,water_body_id,fish_species_id,quantity,length_cm,weight_g,note,created_at,fish_species(name)&user_id=eq.${encodeURIComponent(user_id)}&order=caught_on.desc,created_at.desc&limit=1000`,
         { method: "GET" },
         true
       ).catch(() => []),
@@ -354,7 +405,6 @@
     if (!root) return;
 
     const onlyNoCatch = Boolean(document.getElementById("tripOnlyNoCatch")?.checked);
-    const catchesMap = catchesByTripKey();
     const rows = onlyNoCatch ? trips.filter((r) => r.entry_type === "no_catch") : trips;
 
     if (!rows.length) {
@@ -370,9 +420,9 @@
           <span>Fang</span>
         </div>
         ${rows.map((trip) => {
-          const list = catchesMap.get(tripKey(trip.trip_date, trip.water_body_id)) || [];
+          const list = catchesForTrip(trip);
           const summary = catchSummaryForTrip(trip, list);
-          const hasPhoto = Boolean(loadImageStore()[trip.id]?.data_url);
+          const hasPhoto = Boolean(trip.photo_data_url);
           return `
             <button type="button" class="fangliste-table__row" data-trip-id="${trip.id}" role="row">
               <span class="fangliste-table__date">${esc(fmtDate(trip.trip_date))}</span>
@@ -468,21 +518,60 @@
     const dlg = document.getElementById("tripDetailDialog");
     if (!body || !dlg) return;
 
-    const list = catchesByTripKey().get(tripKey(trip.trip_date, trip.water_body_id)) || [];
-    const img = loadImageStore()[trip.id]?.data_url || "";
+    const list = catchesForTrip(trip);
+    const img = String(trip.photo_data_url || "").trim();
 
     body.innerHTML = `
       <div class="grid cols2">
-        <p><strong>Datum:</strong><br>${esc(fmtDate(trip.trip_date))}</p>
-        <p><strong>Gewässer:</strong><br>${esc(trip?.water_bodies?.name || "-")}</p>
-        <p><strong>Typ:</strong><br>${esc(trip.entry_type === "no_catch" ? "Kein Fang" : "Fang")}</p>
+        <label>
+          <span>Datum</span>
+          <input id="tripDetailDate" type="date" value="${esc(trip.trip_date || "")}" />
+        </label>
+        <label>
+          <span>Gewässer</span>
+          <select id="tripDetailWater">${waterOptionsHtml(trip.water_body_id)}</select>
+        </label>
+        <label>
+          <span>Typ</span>
+          <select id="tripDetailType">
+            <option value="catch" ${trip.entry_type === "catch" ? "selected" : ""}>Fang</option>
+            <option value="no_catch" ${trip.entry_type === "no_catch" ? "selected" : ""}>Kein Fang</option>
+          </select>
+        </label>
         <p><strong>Angelegt:</strong><br>${esc(fmtTs(trip.created_at))}</p>
       </div>
+      <label>
+        <span>Notiz (optional)</span>
+        <textarea id="tripDetailNote" rows="3">${esc(trip.note || "")}</textarea>
+      </label>
       <hr />
       <h4>Fangdetails</h4>
       ${list.length ? `
         <div class="fangliste-detail-list">
-          ${list.map((c) => `<p class="small"><strong>${esc(c?.fish_species?.name || "Fisch")}</strong> • ${Number(c.quantity || 0)}x • ${c.length_cm ?? "-"} cm • ${c.weight_g ?? "-"} g</p>`).join("")}
+          ${list.map((c) => `
+            <div class="grid cols2" data-catch-edit-row data-catch-id="${c.id}">
+              <label>
+                <span>Fischart</span>
+                <select data-field="fish_species_id">${fishSpeciesOptionsHtml(c.fish_species_id)}</select>
+              </label>
+              <label>
+                <span>Anzahl</span>
+                <input data-field="quantity" type="number" min="1" step="1" value="${Number(c.quantity || 1)}" />
+              </label>
+              <label>
+                <span>Länge (cm)</span>
+                <input data-field="length_cm" type="number" min="0" step="0.1" value="${c.length_cm ?? ""}" />
+              </label>
+              <label>
+                <span>Gewicht (g)</span>
+                <input data-field="weight_g" type="number" min="0" step="1" value="${c.weight_g ?? ""}" />
+              </label>
+              <label class="fangliste-full">
+                <span>Notiz</span>
+                <input data-field="note" type="text" value="${esc(c.note || "")}" />
+              </label>
+            </div>
+          `).join("")}
         </div>
       ` : `<p class="small">Keine Fangdetails vorhanden.</p>`}
       <hr />
@@ -515,12 +604,79 @@
     }
     setDetailMsg("Bild wird komprimiert...");
     const photo = await compressImageToWebp(file);
-    const map = loadImageStore();
-    map[activeTripId] = photo;
-    saveImageStore(map);
+    await sb(`/rest/v1/fishing_trips?id=eq.${encodeURIComponent(activeTripId)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify({
+        photo_data_url: photo.data_url,
+        photo_updated_at: new Date().toISOString(),
+      }),
+    }, true);
     setDetailMsg("Bild gespeichert.");
+    await refreshAll();
     openDetailDialog(activeTripId);
     renderTripsTable();
+  }
+
+  async function saveDetailChanges() {
+    if (!activeTripId) return;
+    const trip = getTripById(activeTripId);
+    if (!trip) throw new Error("Eintrag nicht gefunden.");
+
+    const trip_date = String(document.getElementById("tripDetailDate")?.value || "").trim();
+    const water_body_id = String(document.getElementById("tripDetailWater")?.value || "").trim();
+    const entry_type = String(document.getElementById("tripDetailType")?.value || "catch").trim();
+    const note = String(document.getElementById("tripDetailNote")?.value || "").trim();
+
+    if (!trip_date || !water_body_id) throw new Error("Datum und Gewässer sind Pflicht.");
+    if (!["catch", "no_catch"].includes(entry_type)) throw new Error("Ungültiger Typ.");
+
+    await sb(`/rest/v1/fishing_trips?id=eq.${encodeURIComponent(activeTripId)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify({
+        trip_date,
+        water_body_id,
+        entry_type,
+        note: note || null,
+      }),
+    }, true);
+
+    const rows = [...document.querySelectorAll("[data-catch-edit-row][data-catch-id]")];
+    for (const row of rows) {
+      const catchId = String(row.getAttribute("data-catch-id") || "").trim();
+      if (!catchId) continue;
+
+      const fish_species_id = String(row.querySelector('[data-field="fish_species_id"]')?.value || "").trim();
+      const quantityRaw = String(row.querySelector('[data-field="quantity"]')?.value || "").trim();
+      const lengthRaw = String(row.querySelector('[data-field="length_cm"]')?.value || "").trim();
+      const weightRaw = String(row.querySelector('[data-field="weight_g"]')?.value || "").trim();
+      const catchNote = String(row.querySelector('[data-field="note"]')?.value || "").trim();
+
+      const quantity = Number(quantityRaw || "0");
+      const length_cm = lengthRaw ? Number(lengthRaw) : null;
+      const weight_g = weightRaw ? Number(weightRaw) : null;
+
+      if (!fish_species_id) throw new Error("Fischart darf bei Fangdetails nicht leer sein.");
+      if (!Number.isFinite(quantity) || quantity < 1) throw new Error("Anzahl in Fangdetails ist ungültig.");
+      if (length_cm !== null && (!Number.isFinite(length_cm) || length_cm < 0)) throw new Error("Länge in Fangdetails ist ungültig.");
+      if (weight_g !== null && (!Number.isFinite(weight_g) || weight_g < 0)) throw new Error("Gewicht in Fangdetails ist ungültig.");
+
+      await sb(`/rest/v1/catch_entries?id=eq.${encodeURIComponent(catchId)}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify({
+          fishing_trip_id: activeTripId,
+          caught_on: trip_date,
+          water_body_id,
+          fish_species_id,
+          quantity,
+          length_cm,
+          weight_g,
+          note: catchNote || null,
+        }),
+      }, true);
+    }
   }
 
   async function refreshAll() {
@@ -540,6 +696,7 @@
       return;
     }
 
+    clearLegacyLocalCatchDataOnce();
     await touchUserUsage();
     await Promise.all([loadWaters(), loadFishSpecies()]);
     await refreshAll();
@@ -554,6 +711,17 @@
         await saveDetailImage();
       } catch (err) {
         setDetailMsg(err?.message || "Bild konnte nicht gespeichert werden.");
+      }
+    });
+    document.getElementById("tripDetailSaveChanges")?.addEventListener("click", async () => {
+      try {
+        setDetailMsg("Speichere Änderungen...");
+        await saveDetailChanges();
+        await refreshAll();
+        openDetailDialog(activeTripId);
+        setDetailMsg("Änderungen gespeichert.");
+      } catch (err) {
+        setDetailMsg(err?.message || "Änderungen konnten nicht gespeichert werden.");
       }
     });
 

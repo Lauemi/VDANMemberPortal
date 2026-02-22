@@ -440,6 +440,7 @@
         <span class="feed-media-picker__hint">Tippen zum Auswählen. Bilder werden automatisch verkleinert.</span>
         <input class="feed-media-picker__input" type="file" name="media" accept="image/*" multiple />
       </label>` : ""}
+      ${withMedia ? `<div class="feed-media-preview" data-mode="post" data-media-preview hidden></div>` : ""}
       <div class="feed-mode-panel" data-mode="termin" hidden>
         <div class="grid cols2">
           <label class="feed-field--full">
@@ -668,6 +669,40 @@
     return files;
   }
 
+  function renderComposerMediaPreview(form) {
+    if (!form) return;
+    const input = form.querySelector('[name="media"]');
+    const box = form.querySelector("[data-media-preview]");
+    if (!input || !box) return;
+
+    const oldUrls = Array.isArray(box._previewUrls) ? box._previewUrls : [];
+    oldUrls.forEach((u) => {
+      try { URL.revokeObjectURL(u); } catch { /* noop */ }
+    });
+    box._previewUrls = [];
+
+    const files = Array.from(input.files || []);
+    if (!files.length) {
+      box.innerHTML = "";
+      box.setAttribute("hidden", "");
+      return;
+    }
+
+    box.innerHTML = files.map((file) => {
+      const src = URL.createObjectURL(file);
+      box._previewUrls.push(src);
+      const sizeKb = Math.round((Number(file.size || 0) / 1024) * 10) / 10;
+      return `
+        <figure class="feed-media-preview__item">
+          <img class="feed-media-preview__img" src="${src}" alt="Vorschau ${escapeHtml(file.name)}" />
+          <figcaption class="small">${escapeHtml(file.name)} (${sizeKb} KB)</figcaption>
+        </figure>
+      `;
+    }).join("");
+
+    box.removeAttribute("hidden");
+  }
+
   function setFormSaving(form, isSaving, savingLabel = "Speichern...") {
     if (!form) return;
     if (isSaving) {
@@ -877,6 +912,7 @@
     initWorkYouthToggle(form);
     initTermYouthToggle(form);
     form.querySelector('[name="category"]')?.addEventListener("change", () => syncComposerMode(form));
+    form.querySelector('[name="media"]')?.addEventListener("change", () => renderComposerMediaPreview(form));
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -967,6 +1003,7 @@
     initWorkYouthToggle(form);
     initTermYouthToggle(form);
     form.querySelector('[name="category"]')?.addEventListener("change", () => syncComposerMode(form));
+    form.querySelector('[name="media"]')?.addEventListener("change", () => renderComposerMediaPreview(form));
 
     const existingMediaCount = Array.isArray(post.feed_post_media) ? post.feed_post_media.length : 0;
     const remainingSlots = Math.max(0, MAX_MEDIA_FILES - existingMediaCount);

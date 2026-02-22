@@ -590,6 +590,7 @@
       <label>
         <span>Bild (optional)</span>
         <input id="tripDetailPhoto" type="file" accept="image/*" />
+        <span class="small">Wird mit "Änderungen speichern" übernommen.</span>
       </label>
       <div class="catch-dialog-photo-wrap">
         ${img ? `<img src="${img}" alt="Fangbild" class="catch-dialog-photo" />` : `<p class="small">Kein Bild hinterlegt.</p>`}
@@ -607,13 +608,10 @@
     setDetailMsg("");
   }
 
-  async function saveDetailImage() {
-    if (!activeTripId) return;
+  async function saveDetailImageIfSelected() {
+    if (!activeTripId) return false;
     const file = document.getElementById("tripDetailPhoto")?.files?.[0];
-    if (!file) {
-      setDetailMsg("Bitte ein Bild wählen.");
-      return;
-    }
+    if (!file) return false;
     setDetailMsg("Bild wird komprimiert...");
     const photo = await compressImageToWebp(file);
     await sb(`/rest/v1/fishing_trips?id=eq.${encodeURIComponent(activeTripId)}`, {
@@ -624,10 +622,7 @@
         photo_updated_at: new Date().toISOString(),
       }),
     }, true);
-    setDetailMsg("Bild gespeichert.");
-    await refreshAll();
-    openDetailDialog(activeTripId);
-    renderTripsTable();
+    return true;
   }
 
   async function saveDetailChanges() {
@@ -718,20 +713,14 @@
     document.getElementById("tripOpenCreate")?.addEventListener("click", openCreateDialog);
     document.getElementById("tripCreateClose")?.addEventListener("click", closeCreateDialog);
     document.getElementById("tripDetailClose")?.addEventListener("click", closeDetailDialog);
-    document.getElementById("tripDetailSaveImage")?.addEventListener("click", async () => {
-      try {
-        await saveDetailImage();
-      } catch (err) {
-        setDetailMsg(err?.message || "Bild konnte nicht gespeichert werden.");
-      }
-    });
     document.getElementById("tripDetailSaveChanges")?.addEventListener("click", async () => {
       try {
         setDetailMsg("Speichere Änderungen...");
         await saveDetailChanges();
+        const imageUpdated = await saveDetailImageIfSelected();
         await refreshAll();
         openDetailDialog(activeTripId);
-        setDetailMsg("Änderungen gespeichert.");
+        setDetailMsg(imageUpdated ? "Änderungen und Bild gespeichert." : "Änderungen gespeichert.");
       } catch (err) {
         setDetailMsg(err?.message || "Änderungen konnten nicht gespeichert werden.");
       }

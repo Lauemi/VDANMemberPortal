@@ -32,10 +32,10 @@ jobs:
           PUBLIC_APP_BRAND: ${{ secrets.PUBLIC_APP_BRAND }}
         run: npm run build
 
-      - name: Install rsync + sshpass
-        run: sudo apt-get update && sudo apt-get install -y rsync sshpass
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
 
-      - name: Deploy via rsync checksum (delta upload)
+      - name: Deploy via SFTP (exclude IONOS logs)
         env:
           IONOS_SFTP_HOST: ${{ secrets.IONOS_SFTP_HOST }}
           IONOS_SFTP_USER: ${{ secrets.IONOS_SFTP_USER }}
@@ -48,18 +48,16 @@ jobs:
             REMOTE_PATH="/htdocs/"
           fi
           echo "Deploy target path: $REMOTE_PATH"
-          RSYNC_SSH="ssh -p $IONOS_SFTP_PORT -o StrictHostKeyChecking=no"
-
-          # Ensure remote target exists before sync.
-          sshpass -p "$IONOS_SFTP_PASS" $RSYNC_SSH "$IONOS_SFTP_USER@$IONOS_SFTP_HOST" "mkdir -p '$REMOTE_PATH'"
-
-          # Checksum-based delta deploy: unchanged files (incl. images) are not re-uploaded.
-          sshpass -p "$IONOS_SFTP_PASS" rsync -az --delete --checksum \
-            --itemize-changes --stats \
-            --omit-dir-times --no-perms --no-owner --no-group \
-            --exclude "logs" \
-            --exclude "logs/**" \
-            --exclude ".well-known" \
-            --exclude ".well-known/**" \
-            -e "$RSYNC_SSH" \
-            ./dist/ "$IONOS_SFTP_USER@$IONOS_SFTP_HOST:$REMOTE_PATH/"
+          lftp -u "$IONOS_SFTP_USER","$IONOS_SFTP_PASS" "sftp://$IONOS_SFTP_HOST:$IONOS_SFTP_PORT" <<EOF
+          set sftp:auto-confirm yes
+          set net:max-retries 2
+          set net:timeout 20
+          set net:reconnect-interval-base 5
+          mirror -R --delete --verbose=2 \
+            --exclude-glob logs \
+            --exclude-glob logs/** \
+            --exclude-glob .well-known \
+            --exclude-glob .well-known/** \
+            ./dist "$REMOTE_PATH"
+          bye
+          EOF

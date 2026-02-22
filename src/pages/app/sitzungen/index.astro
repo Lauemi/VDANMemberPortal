@@ -1,0 +1,161 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Sitzungen • ${APP.name}`} description="Sitzungen und Sitzungstasks verwalten" robots="noindex">
+  <section class="card" data-manager-only>
+    <div class="card__body">
+      <h1>Sitzungen & Aufgaben</h1>
+      <p class="small">Vorstand/Admin: Sitzung anlegen, Anwesenheit setzen, Sitzungspunkte pflegen und Tasks zuweisen.</p>
+      <p id="respAdminMsg" class="small" aria-live="polite"></p>
+
+      <h2>Sitzung anlegen</h2>
+      <form id="respSessionCreateForm" class="resp-form-grid">
+        <label>
+          <span>Sitzungsdatum</span>
+          <input id="respSessionDate" type="date" required />
+        </label>
+        <fieldset class="resp-full resp-chip-box">
+          <legend>Vorstand/Admin (Anwesenheit per Tap)</legend>
+          <div id="respManagerChips" class="resp-chip-grid"></div>
+        </fieldset>
+        <div class="resp-full" style="display:flex;justify-content:flex-end;">
+          <button type="submit" class="feed-btn">Sitzung speichern</button>
+        </div>
+      </form>
+
+      <hr />
+      <h2>Sitzungspunkt anlegen</h2>
+      <form id="respAgendaCreateForm" class="resp-form-grid">
+        <label>
+          <span>Sitzung</span>
+          <select id="respAgendaSession" required></select>
+        </label>
+        <label class="resp-full">
+          <span>Sitzungspunkt</span>
+          <input id="respAgendaTitle" type="text" maxlength="180" required placeholder="z. B. Arbeitseinsatz Frühjahrsputz" />
+        </label>
+        <div class="resp-full" style="display:flex;justify-content:flex-end;">
+          <button type="submit" class="feed-btn">Sitzungspunkt hinzufügen</button>
+        </div>
+      </form>
+      <div id="respAgendaRows" class="grid"></div>
+
+      <hr />
+      <h2>Task im Sitzungspunkt anlegen</h2>
+      <form id="respTaskCreateForm" class="resp-form-grid">
+        <label>
+          <span>Sitzung</span>
+          <select id="respTaskSession" required></select>
+        </label>
+        <label>
+          <span>Sitzungspunkt</span>
+          <select id="respTaskAgendaItem" required></select>
+        </label>
+
+        <label class="resp-full">
+          <span>Task-Titel</span>
+          <input id="respTaskTitle" type="text" required maxlength="160" placeholder="Aufgabe aus dem Sitzungspunkt" />
+        </label>
+
+        <label>
+          <span>Status</span>
+          <select id="respTaskStatus">
+            <option value="open">open</option>
+            <option value="done">done</option>
+            <option value="blocked">blocked</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Fällig am</span>
+          <input id="respTaskDueDate" type="date" />
+        </label>
+
+        <label>
+          <span>Status-Notiz</span>
+          <input id="respTaskStatusNote" type="text" maxlength="200" placeholder="z. B. wartet auf Material" />
+        </label>
+
+        <fieldset class="resp-full resp-select-box">
+          <legend>Zuweisung Vorstand/Admin (Multi)</legend>
+          <select id="respTaskManagerAssignees" multiple size="6"></select>
+        </fieldset>
+
+        <fieldset class="resp-full resp-select-box">
+          <legend>Zuweisung Mitglieder (optional, Multi)</legend>
+          <select id="respTaskMemberAssignees" multiple size="6"></select>
+        </fieldset>
+
+        <div class="resp-full" style="display:flex;justify-content:flex-end;">
+          <button type="submit" class="feed-btn">Task anlegen</button>
+        </div>
+      </form>
+
+      <hr />
+      <h2>Alle Sitzungstasks</h2>
+      <div id="respTaskRows" class="grid"></div>
+    </div>
+  </section>
+
+  <dialog id="respTaskDialog" class="catch-dialog">
+    <form id="respTaskDialogForm" class="catch-dialog__form" method="dialog">
+      <h3>Task bearbeiten</h3>
+      <div class="resp-form-grid">
+        <label>
+          <span>Sitzung</span>
+          <select id="respEditSession"></select>
+        </label>
+
+        <label>
+          <span>Sitzungspunkt</span>
+          <select id="respEditAgendaItem"></select>
+        </label>
+
+        <label>
+          <span>Status</span>
+          <select id="respEditStatus">
+            <option value="open">open</option>
+            <option value="done">done</option>
+            <option value="blocked">blocked</option>
+          </select>
+        </label>
+
+        <label class="resp-full">
+          <span>Task-Titel</span>
+          <input id="respEditTitle" type="text" required maxlength="160" />
+        </label>
+
+        <label>
+          <span>Fällig am</span>
+          <input id="respEditDueDate" type="date" />
+        </label>
+
+        <label>
+          <span>Status-Notiz</span>
+          <input id="respEditStatusNote" type="text" maxlength="200" />
+        </label>
+
+        <fieldset class="resp-full resp-select-box">
+          <legend>Vorstand/Admin (Multi)</legend>
+          <select id="respEditManagerAssignees" multiple size="6"></select>
+        </fieldset>
+
+        <fieldset class="resp-full resp-select-box">
+          <legend>Mitglieder (optional, Multi)</legend>
+          <select id="respEditMemberAssignees" multiple size="6"></select>
+        </fieldset>
+      </div>
+
+      <div class="catch-dialog__actions">
+        <button type="button" id="respEditSave" class="feed-btn">Speichern</button>
+        <button type="button" id="respEditDelete" class="feed-btn feed-btn--ghost">Löschen</button>
+        <button type="button" id="respEditClose" class="feed-btn feed-btn--ghost">Schließen</button>
+      </div>
+      <p id="respEditMsg" class="small" aria-live="polite"></p>
+    </form>
+  </dialog>
+
+  <script src="/js/responsibilities.js" defer></script>
+</Site>

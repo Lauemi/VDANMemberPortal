@@ -9,6 +9,9 @@
   let scanReadyAt = 0;
   let lastPayloadSig = "";
   let lastPayloadHits = 0;
+  let jsQrLoader = null;
+  let qrCanvas = null;
+  let qrCtx = null;
 
   function cfg() {
     return {
@@ -35,6 +38,51 @@
     if (!overlay) return;
     overlay.hidden = true;
     overlay.style.display = "none";
+  }
+
+  function isLikelyIos() {
+    const ua = String(navigator.userAgent || "").toLowerCase();
+    return /iphone|ipad|ipod/.test(ua);
+  }
+
+  function ensureQrCanvas() {
+    if (!qrCanvas) {
+      qrCanvas = document.createElement("canvas");
+      qrCtx = qrCanvas.getContext("2d", { willReadFrequently: true });
+    }
+    return qrCtx ? { canvas: qrCanvas, ctx: qrCtx } : null;
+  }
+
+  async function ensureJsQr() {
+    if (typeof window.jsQR === "function") return window.jsQR;
+    if (!jsQrLoader) {
+      jsQrLoader = new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js";
+        s.async = true;
+        s.onload = () => resolve(window.jsQR);
+        s.onerror = () => reject(new Error("jsQR konnte nicht geladen werden."));
+        document.head.appendChild(s);
+      });
+    }
+    const fn = await jsQrLoader;
+    if (typeof fn !== "function") throw new Error("jsQR nicht verfuegbar.");
+    return fn;
+  }
+
+  function readQrByJsQr(video, jsQR) {
+    const surface = ensureQrCanvas();
+    if (!surface) return null;
+    const { canvas, ctx } = surface;
+    const w = Number(video.videoWidth || 0);
+    const h = Number(video.videoHeight || 0);
+    if (!w || !h) return null;
+    canvas.width = w;
+    canvas.height = h;
+    ctx.drawImage(video, 0, 0, w, h);
+    const image = ctx.getImageData(0, 0, w, h);
+    const out = jsQR(image.data, w, h, { inversionAttempts: "dontInvert" });
+    return out?.data ? String(out.data) : null;
   }
 
   function setInlineStatus(text = "", state = "neutral") {
@@ -218,28 +266,35 @@
       setInlineStatus("Kamera-API fehlt", "invalid");
       return;
     }
-    if (!("BarcodeDetector" in window)) {
-      setMsg("QR-Scan im Browser nicht unterstützt. Bitte manuell prüfen.");
-      return;
+    const hasBarcodeDetector = "BarcodeDetector" in window;
+    if (hasBarcodeDetector) {
+      detector = detector || new window.BarcodeDetector({ formats: ["qr_code"] });
+    } else {
+      await ensureJsQr();
     }
-
-    detector = detector || new window.BarcodeDetector({ formats: ["qr_code"] });
     try {
-      scanStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
-      });
+      const constraints = [
+        { video: { facingMode: { exact: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+        { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+        { video: true, audio: false },
+      ];
+      let lastErr = null;
+      for (const c of constraints) {
+        try {
+          scanStream = await navigator.mediaDevices.getUserMedia(c);
+          break;
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+      if (!scanStream) throw lastErr || new Error("Kamera konnte nicht gestartet werden.");
       video.srcObject = scanStream;
       video.muted = true;
       video.setAttribute("muted", "");
       video.setAttribute("autoplay", "");
       video.setAttribute("playsinline", "");
       await video.play();
-      setMsg("Scanner aktiv…");
+      setMsg(hasBarcodeDetector ? "Scanner aktiv…" : "Scanner aktiv (iOS-Fallback)...");
       setInlineStatus("Bereit für Scan", "neutral");
       scanReadyAt = Date.now() + 2000;
       lastPayloadSig = "";
@@ -247,8 +302,13 @@
 
       scanTimer = window.setInterval(async () => {
         if (!video.videoWidth || !video.videoHeight) return;
-        const codes = await detector.detect(video).catch(() => []);
-        const val = codes?.[0]?.rawValue;
+        let val = null;
+        if (detector) {
+          const codes = await detector.detect(video).catch(() => []);
+          val = codes?.[0]?.rawValue || null;
+        } else if (typeof window.jsQR === "function") {
+          val = readQrByJsQr(video, window.jsQR);
+        }
         if (!val) return;
         if (Date.now() < scanReadyAt) return;
         const parsed = parseQrPayload(val);

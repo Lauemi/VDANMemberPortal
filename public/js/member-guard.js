@@ -5,7 +5,7 @@
     "/app/bewerbungen/",
     "/app/arbeitseinsaetze/cockpit/",
     "/app/termine/cockpit/",
-    "/app/zustaendigkeiten/",
+    "/app/sitzungen/",
     "/app/ausweis/verifizieren/",
   ];
 

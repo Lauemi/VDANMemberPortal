@@ -12,6 +12,7 @@
     { value: "termin", label: "Termin" },
     { value: "jugend", label: "Jugend" },
     { value: "arbeitseinsatz", label: "Arbeitseinsatz" },
+    { value: "nur_mitglieder", label: "Nur Mitglieder" },
   ];
 
   let canManage = false;
@@ -88,7 +89,7 @@
 
   async function listPosts() {
     const categoryFilter = isForcedCategory ? `&category=eq.${encodeURIComponent(forcedCategory)}` : "";
-    const rows = await sb(`/rest/v1/${TABLE}?select=id,author_id,updated_by,title,body,category,created_at,updated_at,${MEDIA_TABLE}(id,sort_order,storage_bucket,storage_path,width,height)${categoryFilter}&order=created_at.desc`, { method: "GET" });
+    const rows = await sb(`/rest/v1/${TABLE}?select=id,author_id,updated_by,title,body,category,created_at,updated_at,${MEDIA_TABLE}(id,sort_order,storage_bucket,storage_path,width,height)${categoryFilter}&order=created_at.desc`, { method: "GET" }, true);
     return Array.isArray(rows) ? rows : [];
   }
 

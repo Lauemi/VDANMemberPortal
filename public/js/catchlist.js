@@ -9,6 +9,7 @@
   let activeTripId = null;
   let createMode = "catch";
   const LEGACY_CATCH_CLEAR_MARKER = "vdan_catch_cleanup_v1_done";
+  const TOUCH_RPC_DISABLED_KEY = "vdan_rpc_touch_user_disabled_v1";
 
   function cfg() {
     return {
@@ -221,12 +222,23 @@
 
   async function touchUserUsage() {
     try {
+      if (localStorage.getItem(TOUCH_RPC_DISABLED_KEY) === "1") return;
+    } catch {
+      // ignore
+    }
+    try {
       await sb("/rest/v1/rpc/rpc_touch_user", {
         method: "POST",
         body: JSON.stringify({}),
       }, true);
-    } catch {
-      // optional
+    } catch (err) {
+      if (String(err?.message || "").includes("(404)")) {
+        try {
+          localStorage.setItem(TOUCH_RPC_DISABLED_KEY, "1");
+        } catch {
+          // ignore
+        }
+      }
     }
   }
 

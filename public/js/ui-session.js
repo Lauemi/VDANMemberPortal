@@ -1,5 +1,6 @@
 ;(() => {
   let touchTimer = null;
+  const TOUCH_RPC_DISABLED_KEY = "vdan_rpc_touch_user_disabled_v1";
 
   function cfg() {
     return {
@@ -10,6 +11,22 @@
 
   function session() {
     return window.VDAN_AUTH?.loadSession?.() || null;
+  }
+
+  function isTouchRpcDisabled() {
+    try {
+      return localStorage.getItem(TOUCH_RPC_DISABLED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  }
+
+  function disableTouchRpc() {
+    try {
+      localStorage.setItem(TOUCH_RPC_DISABLED_KEY, "1");
+    } catch {
+      // ignore
+    }
   }
 
   async function sb(path, withAuth = false, method = "GET", body = null) {
@@ -52,8 +69,32 @@
   }
 
   async function touchUserPresence() {
-    if (!session()?.access_token) return;
-    await sb("/rest/v1/rpc/rpc_touch_user", true, "POST", {}).catch(() => []);
+    const s = session();
+    if (!s?.access_token || isTouchRpcDisabled()) return;
+    const { url, key } = cfg();
+    if (!url || !key) return;
+
+    const headers = new Headers();
+    headers.set("apikey", key);
+    headers.set("Authorization", `Bearer ${s.access_token}`);
+    headers.set("Content-Type", "application/json");
+
+    try {
+      const res = await fetch(`${url}/rest/v1/rpc/rpc_touch_user`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({}),
+      });
+      if (res.status === 404) {
+        disableTouchRpc();
+        if (touchTimer) {
+          clearInterval(touchTimer);
+          touchTimer = null;
+        }
+      }
+    } catch {
+      // ignore transient network errors
+    }
   }
 
   function startPresenceTicker() {

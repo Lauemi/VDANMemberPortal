@@ -151,6 +151,12 @@
     return rows?.[0];
   }
 
+  async function deletePost(id) {
+    await sb(`/rest/v1/${TABLE}?id=eq.${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    }, true);
+  }
+
   function categoryLabel(value) {
     const hit = CATEGORY_OPTIONS.find((x) => x.value === value);
     return hit ? hit.label : value;
@@ -170,32 +176,49 @@
 
   async function transcodeImage(file) {
     const bitmap = await imageToBitmap(file);
-    const originalW = bitmap.width;
-    const originalH = bitmap.height;
-    const scale = Math.min(1, MAX_LONG_EDGE / Math.max(originalW, originalH));
-    const width = Math.max(1, Math.round(originalW * scale));
-    const height = Math.max(1, Math.round(originalH * scale));
-
+    let width = Math.max(1, Math.round(bitmap.width * Math.min(1, MAX_LONG_EDGE / Math.max(bitmap.width, bitmap.height))));
+    let height = Math.max(1, Math.round(bitmap.height * Math.min(1, MAX_LONG_EDGE / Math.max(bitmap.width, bitmap.height))));
     const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
     const ctx = canvas.getContext("2d", { alpha: false });
-    ctx.drawImage(bitmap, 0, 0, width, height);
 
-    let quality = 0.9;
-    let blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+    let bestBlob = null;
+    let bestWidth = width;
+    let bestHeight = height;
 
-    while (blob && blob.size > MAX_FILE_BYTES && quality > 0.42) {
-      quality -= 0.08;
-      blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+    for (let pass = 0; pass < 5; pass += 1) {
+      canvas.width = width;
+      canvas.height = height;
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(bitmap, 0, 0, width, height);
+
+      let quality = 0.9;
+      let blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+
+      while (blob && blob.size > MAX_FILE_BYTES && quality > 0.35) {
+        quality -= 0.07;
+        blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+      }
+
+      if (blob && (!bestBlob || blob.size < bestBlob.size)) {
+        bestBlob = blob;
+        bestWidth = width;
+        bestHeight = height;
+      }
+
+      if (blob && blob.size <= MAX_FILE_BYTES) {
+        return { blob, width, height, bytes: blob.size, mime: "image/webp" };
+      }
+
+      width = Math.max(640, Math.round(width * 0.82));
+      height = Math.max(360, Math.round(height * 0.82));
     }
 
-    if (!blob) throw new Error("Bildverarbeitung fehlgeschlagen");
-    if (blob.size > MAX_FILE_BYTES) {
-      throw new Error(`Bild ${file.name} ist trotz Komprimierung größer als 400 KB.`);
+    if (!bestBlob) throw new Error("Bildverarbeitung fehlgeschlagen");
+    if (bestBlob.size > MAX_FILE_BYTES) {
+      throw new Error(`Bild ${file.name} ist zu groß. Bitte enger zuschneiden.`);
     }
 
-    return { blob, width, height, bytes: blob.size, mime: "image/webp" };
+    return { blob: bestBlob, width: bestWidth, height: bestHeight, bytes: bestBlob.size, mime: "image/webp" };
   }
 
   async function uploadMedia(postId, files) {
@@ -304,6 +327,23 @@
     return files;
   }
 
+  function setFormSaving(form, isSaving, savingLabel = "Speichern...") {
+    if (!form) return;
+    if (isSaving) {
+      form.dataset.saving = "1";
+    } else {
+      delete form.dataset.saving;
+    }
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const cancelBtn = form.querySelector("[data-cancel]");
+    if (submitBtn) {
+      if (!submitBtn.dataset.defaultLabel) submitBtn.dataset.defaultLabel = submitBtn.textContent || "Speichern";
+      submitBtn.disabled = Boolean(isSaving);
+      submitBtn.textContent = isSaving ? savingLabel : submitBtn.dataset.defaultLabel;
+    }
+    if (cancelBtn) cancelBtn.disabled = Boolean(isSaving);
+  }
+
   async function refresh() {
     const list = document.getElementById("feedList");
     if (!list) return;
@@ -401,13 +441,17 @@
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (form.dataset.saving === "1") return;
       setMessage("Speichert...");
+      setFormSaving(form, true, "Speichert...");
+      let createdPostId = null;
       try {
         const payload = payloadFromComposer(form);
         const files = mediaFilesFromComposer(form);
 
         const post = await createPost(payload);
         if (!post?.id) throw new Error("Post konnte nicht erstellt werden");
+        createdPostId = post.id;
 
         if (files.length) {
           const mediaRows = await uploadMedia(post.id, files);
@@ -418,7 +462,16 @@
         setMessage("Beitrag veröffentlicht.");
         await refresh();
       } catch (err) {
+        if (createdPostId) {
+          try {
+            await deletePost(createdPostId);
+          } catch {
+            // ignore cleanup failure, original error stays primary
+          }
+        }
         setMessage(err?.message || "Speichern fehlgeschlagen");
+      } finally {
+        setFormSaving(form, false);
       }
     });
 
@@ -441,7 +494,9 @@
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (form.dataset.saving === "1") return;
       setMessage("Aktualisiert...");
+      setFormSaving(form, true, "Speichert...");
       try {
         const payload = payloadFromComposer(form);
         await updatePost(post.id, payload);
@@ -449,6 +504,8 @@
         await refresh();
       } catch (err) {
         setMessage(err?.message || "Update fehlgeschlagen");
+      } finally {
+        setFormSaving(form, false);
       }
     });
 

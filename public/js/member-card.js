@@ -50,6 +50,13 @@
     return t.toLocaleDateString("de-DE");
   }
 
+  function asDateTime(d) {
+    if (!d) return "-";
+    const t = new Date(d);
+    if (Number.isNaN(t.getTime())) return String(d);
+    return t.toLocaleString("de-DE");
+  }
+
   function isManagerRole(roles) {
     const list = Array.isArray(roles) ? roles.map((r) => String(r || "").toLowerCase()) : [];
     return list.includes("admin") || list.includes("vorstand");
@@ -90,6 +97,8 @@
       : "Aktuell ungültig";
     const cardId = String(profile.member_card_id || "-");
     const cardKey = String(profile.member_card_key || "-");
+    const checkedAt = profile.member_card_checked_at;
+    const checkedBy = String(profile.member_card_checked_by_label || "").trim();
     const qrUrl = new URL("/app/ausweis/verifizieren/", window.location.origin);
     qrUrl.searchParams.set("card", cardId);
     qrUrl.searchParams.set("key", cardKey);
@@ -120,6 +129,7 @@
             <div class="small">Karte: <strong>${escapeHtml(profile.fishing_card_type || "-")}</strong></div>
             <div class="small">Status: <strong>${isValid ? "Gültig" : "Ungültig"}</strong></div>
             <div class="small">${escapeHtml(validityText)}</div>
+            <div class="small">Kontrolliert am: <strong>${escapeHtml(asDateTime(checkedAt))}</strong>${checkedBy ? ` · durch <strong>${escapeHtml(checkedBy)}</strong>` : ""}</div>
           </div>
           <div class="card-qr-flip" data-qr-flip>
             <div class="card-qr-flip__inner">
@@ -174,7 +184,7 @@
     try {
       setMsg("Lade Ausweis…");
       const [rows, waters, roles] = await Promise.all([
-        sb(`/rest/v1/profiles?select=display_name,member_no,fishing_card_type,member_card_valid,member_card_valid_from,member_card_valid_until,member_card_id,member_card_key&id=eq.${encodeURIComponent(userId())}&limit=1`, { method: "GET" }, true),
+        sb(`/rest/v1/profiles?select=display_name,member_no,fishing_card_type,member_card_valid,member_card_valid_from,member_card_valid_until,member_card_id,member_card_key,member_card_checked_at,member_card_checked_by_label&id=eq.${encodeURIComponent(userId())}&limit=1`, { method: "GET" }, true),
         listWaters(),
         loadRoles(),
       ]);

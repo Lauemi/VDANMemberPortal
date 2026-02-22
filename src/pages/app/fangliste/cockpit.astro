@@ -1,0 +1,22 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Fangliste Cockpit • ${APP.name}`} description="Admin: Gesamtübersicht Fangstatistik" robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <h1>Fangliste Cockpit</h1>
+      <p class="small">Nur für Admin. Gesamtübersicht über alle Mitglieder.</p>
+      <p id="catchCockpitMsg" class="small" aria-live="polite"></p>
+
+      <div style="display:flex;justify-content:flex-end;margin:8px 0 12px 0;">
+        <input id="catchCockpitSearch" type="search" placeholder="Suche Name, E-Mail, Mitglieds-Nr." style="max-width:340px;width:100%;" />
+      </div>
+
+      <div id="catchCockpitTable"></div>
+    </div>
+  </section>
+
+  <script src="/js/catchlist-cockpit.js" defer></script>
+</Site>

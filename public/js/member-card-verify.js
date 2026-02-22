@@ -4,6 +4,11 @@
   let scanStream = null;
   let detector = null;
   let currentVerified = null;
+  let verdictTimer = null;
+  let restartingAfterVerdict = false;
+  let scanReadyAt = 0;
+  let lastPayloadSig = "";
+  let lastPayloadHits = 0;
 
   function cfg() {
     return {
@@ -23,6 +28,59 @@
   function setMsg(text = "") {
     const el = document.getElementById("memberCardVerifyMsg");
     if (el) el.textContent = text;
+  }
+
+  function forceHideVerdict() {
+    const overlay = document.getElementById("scanVerdictOverlay");
+    if (!overlay) return;
+    overlay.hidden = true;
+    overlay.style.display = "none";
+  }
+
+  function setInlineStatus(text = "", state = "neutral") {
+    const el = document.getElementById("scanInlineStatus");
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove("is-valid", "is-invalid");
+    if (state === "valid") el.classList.add("is-valid");
+    if (state === "invalid") el.classList.add("is-invalid");
+  }
+
+  function showScanVerdict(valid, payload = null) {
+    const overlay = document.getElementById("scanVerdictOverlay");
+    const icon = document.getElementById("scanVerdictIcon");
+    const title = document.getElementById("scanVerdictTitle");
+    const meta = document.getElementById("scanVerdictMeta");
+    if (!overlay || !icon || !title || !meta) return;
+
+    if (verdictTimer) {
+      clearTimeout(verdictTimer);
+      verdictTimer = null;
+    }
+
+    const isValid = Boolean(valid);
+    overlay.style.display = "";
+    overlay.classList.toggle("is-invalid", !isValid);
+    icon.textContent = isValid ? "✓" : "✕";
+    title.textContent = isValid ? "GÜLTIG" : "UNGÜLTIG";
+    meta.textContent = payload?.display_name
+      ? `${String(payload.display_name)}${payload?.member_no ? ` · ${String(payload.member_no)}` : ""}`
+      : (isValid ? "Ausweis verifiziert" : "Ausweis nicht gültig");
+    overlay.hidden = false;
+    setInlineStatus(isValid ? "Gültig" : "Ungültig", isValid ? "valid" : "invalid");
+
+    verdictTimer = window.setTimeout(() => {
+      forceHideVerdict();
+      verdictTimer = null;
+      if (!restartingAfterVerdict) {
+        restartingAfterVerdict = true;
+        startScanner()
+          .catch(() => {})
+          .finally(() => {
+            restartingAfterVerdict = false;
+          });
+      }
+    }, 10000);
   }
 
   function escapeHtml(str) {
@@ -49,13 +107,27 @@
     return Array.isArray(rows) ? rows.map((r) => String(r.role || "").toLowerCase()) : [];
   }
 
+  function renderController(profile) {
+    const nameEl = document.getElementById("verifyControllerName");
+    const idEl = document.getElementById("verifyControllerId");
+    if (!nameEl || !idEl) return;
+    const displayName = String(profile?.display_name || "").trim() || String(session()?.user?.email || "").trim() || "Kontrolleur";
+    const controlId = String(profile?.member_no || "").trim() || `UID-${String(uid() || "").slice(0, 8)}`;
+    nameEl.textContent = displayName;
+    idEl.textContent = controlId;
+  }
+
+  async function loadControllerProfile() {
+    if (!uid()) return null;
+    const rows = await sb(`/rest/v1/profiles?select=display_name,member_no&id=eq.${encodeURIComponent(uid())}&limit=1`, { method: "GET" }, true);
+    return Array.isArray(rows) ? (rows[0] || null) : null;
+  }
+
   function renderResult(payload) {
     const root = document.getElementById("cardVerifyResult");
     if (!root) return;
     if (!payload || payload.ok !== true) {
       currentVerified = null;
-      const rotateBtn = document.getElementById("cardRotateBtn");
-      if (rotateBtn) rotateBtn.disabled = true;
       root.innerHTML = `
         <div class="card__body">
           <h3>Nicht gültig</h3>
@@ -67,8 +139,6 @@
 
     const valid = Boolean(payload.valid);
     currentVerified = payload;
-    const rotateBtn = document.getElementById("cardRotateBtn");
-    if (rotateBtn) rotateBtn.disabled = false;
     root.style.borderColor = valid ? "rgba(56,184,98,.52)" : "rgba(196,64,64,.52)";
     root.innerHTML = `
       <div class="card__body">
@@ -107,41 +177,16 @@
         body: JSON.stringify({ p_card_id: card, p_key: key }),
       }, true);
       renderResult(result);
+      if (result?.ok) {
+        showScanVerdict(Boolean(result?.valid), result);
+      } else {
+        showScanVerdict(false, result);
+      }
       setMsg(result?.ok ? "" : "Ausweis nicht gefunden.");
     } catch (err) {
       setMsg(err?.message || "Prüfung fehlgeschlagen.");
       renderResult({ ok: false });
-    }
-  }
-
-  async function rotateKey() {
-    if (!currentVerified?.ok) {
-      setMsg("Erst Ausweis verifizieren.");
-      return;
-    }
-    const cardId = String(currentVerified.member_card_id || "").trim();
-    const keyInput = document.getElementById("cardVerifyKey");
-    const oldKey = String(keyInput?.value || "").trim();
-    if (!cardId || !oldKey) {
-      setMsg("Ausweis-ID/Schlüssel fehlen.");
-      return;
-    }
-    if (!window.confirm("Schlüssel jetzt rotieren? Der alte QR/Schlüssel wird sofort ungültig.")) return;
-    setMsg("Schlüssel wird rotiert…");
-    try {
-      const out = await sb("/rest/v1/rpc/member_card_rotate_key", {
-        method: "POST",
-        body: JSON.stringify({ p_card_id: cardId, p_key: oldKey }),
-      }, true);
-      if (!out?.ok) {
-        setMsg("Rotation fehlgeschlagen.");
-        return;
-      }
-      if (keyInput) keyInput.value = String(out.member_card_key || "");
-      setMsg("Schlüssel rotiert. Bitte neuen QR/Schlüssel verwenden.");
-      await verify(cardId, String(out.member_card_key || ""));
-    } catch (err) {
-      setMsg(err?.message || "Rotation fehlgeschlagen.");
+      showScanVerdict(false, null);
     }
   }
 
@@ -161,6 +206,7 @@
   async function startScanner() {
     const video = document.getElementById("cardVerifyVideo");
     if (!video) return;
+    forceHideVerdict();
     stopScanner();
     if (!("BarcodeDetector" in window)) {
       setMsg("QR-Scan im Browser nicht unterstützt. Bitte manuell prüfen.");
@@ -173,36 +219,41 @@
       video.srcObject = scanStream;
       await video.play();
       setMsg("Scanner aktiv…");
+      setInlineStatus("Bereit für Scan", "neutral");
+      scanReadyAt = Date.now() + 2000;
+      lastPayloadSig = "";
+      lastPayloadHits = 0;
 
       scanTimer = window.setInterval(async () => {
         if (!video.videoWidth || !video.videoHeight) return;
         const codes = await detector.detect(video).catch(() => []);
         const val = codes?.[0]?.rawValue;
         if (!val) return;
+        if (Date.now() < scanReadyAt) return;
         const parsed = parseQrPayload(val);
         if (!parsed) return;
+        const sig = `${parsed.card}::${parsed.key}`;
+        if (sig !== lastPayloadSig) {
+          lastPayloadSig = sig;
+          lastPayloadHits = 1;
+          return;
+        }
+        lastPayloadHits += 1;
+        if (lastPayloadHits < 2) return;
         stopScanner();
-        const idEl = document.getElementById("cardVerifyId");
-        const keyEl = document.getElementById("cardVerifyKey");
-        if (idEl) idEl.value = parsed.card;
-        if (keyEl) keyEl.value = parsed.key;
+        lastPayloadSig = "";
+        lastPayloadHits = 0;
         await verify(parsed.card, parsed.key);
       }, 450);
     } catch (err) {
       setMsg(err?.message || "Kamera konnte nicht gestartet werden.");
+      setInlineStatus("Scanner nicht verfügbar", "invalid");
     }
   }
 
   function bindUi() {
-    document.getElementById("cardVerifyBtn")?.addEventListener("click", async () => {
-      const card = String(document.getElementById("cardVerifyId")?.value || "").trim();
-      const key = String(document.getElementById("cardVerifyKey")?.value || "").trim();
-      await verify(card, key);
-    });
-
     document.getElementById("cardVerifyScanStart")?.addEventListener("click", startScanner);
     document.getElementById("cardVerifyScanStop")?.addEventListener("click", stopScanner);
-    document.getElementById("cardRotateBtn")?.addEventListener("click", rotateKey);
   }
 
   async function init() {
@@ -218,17 +269,15 @@
       return;
     }
 
+    const profile = await loadControllerProfile().catch(() => null);
+    renderController(profile);
     bindUi();
-    const q = new URLSearchParams(window.location.search);
-    const card = String(q.get("card") || "").trim();
-    const mkey = String(q.get("key") || "").trim();
-    if (card && mkey) {
-      const idEl = document.getElementById("cardVerifyId");
-      const keyEl = document.getElementById("cardVerifyKey");
-      if (idEl) idEl.value = card;
-      if (keyEl) keyEl.value = mkey;
-      await verify(card, mkey);
+    forceHideVerdict();
+    if (window.location.search) {
+      window.history.replaceState({}, "", window.location.pathname);
     }
+    // Open scanner directly for quick gate workflow.
+    await startScanner();
   }
 
   document.addEventListener("DOMContentLoaded", init);

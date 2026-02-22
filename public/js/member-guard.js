@@ -1,10 +1,11 @@
 ;(() => {
-  const ADMIN_PATHS = ["/app/mitglieder/"];
+  const ADMIN_PATHS = ["/app/mitglieder/", "/app/fangliste/cockpit/"];
   const MANAGER_PATHS = [
     "/app/dokumente/",
     "/app/bewerbungen/",
     "/app/arbeitseinsaetze/cockpit/",
     "/app/termine/cockpit/",
+    "/app/zustaendigkeiten/",
     "/app/ausweis/verifizieren/",
   ];
 
@@ -49,18 +50,6 @@
     return Array.isArray(rows) ? rows.map((r) => String(r.role || "").toLowerCase()) : [];
   }
 
-  async function loadFlags() {
-    try {
-      const data = await sb("/rest/v1/rpc/portal_bootstrap", {
-        method: "POST",
-        body: JSON.stringify({}),
-      }, true);
-      return data?.flags && typeof data.flags === "object" ? data.flags : {};
-    } catch {
-      return {};
-    }
-  }
-
   function forbid() {
     window.location.replace("/app/?forbidden=1");
   }
@@ -93,12 +82,6 @@
         return;
       }
 
-      if (path.startsWith("/app/ausweis/verifizieren/")) {
-        const flags = await loadFlags().catch(() => ({}));
-        if (!Boolean(flags.work_qr_enabled)) {
-          window.location.replace("/app/ausweis/?qr=off");
-        }
-      }
     };
 
     run().catch(() => {

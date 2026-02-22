@@ -1,176 +1,142 @@
 ;(() => {
-  const STORE_KEY_PREFIX = "vdan_catch_ui_entries_v1";
-  const KEY_VG = "vereins_gemeinschaftsgewaesser";
-  const KEY_R39 = "rheinlos39";
-
   const MAX_IMAGE_BYTES = 350 * 1024;
   const MAX_LONG_EDGE = 1280;
 
-  // UI-only master data preview. Angelweiher intentionally exists in both keys.
-  const WATER_BODIES = [
-    { id: "vgw-1", name: "Vogel-Baggersee", area_kind: KEY_VG },
-    { id: "vgw-2", name: "Rhein", area_kind: KEY_VG },
-    { id: "vgw-3", name: "Druckwasser-Kanal", area_kind: KEY_VG },
-    { id: "vgw-4", name: "Schutterentlastungskanal", area_kind: KEY_VG },
-    { id: "vgw-5", name: "Absatzbecken", area_kind: KEY_VG },
-    { id: "vgw-6", name: "Angelweiher", area_kind: KEY_VG },
-    { id: "vgw-7", name: "Altes Baggerloch", area_kind: KEY_VG },
-    { id: "vgw-8", name: "Eisweiher", area_kind: KEY_VG },
-    { id: "vgw-9", name: "Elzkanal", area_kind: KEY_VG },
-    { id: "vgw-10", name: "Kehl", area_kind: KEY_VG },
-    { id: "vgw-11", name: "Krottenloch", area_kind: KEY_VG },
-    { id: "vgw-12", name: "Mühlbach", area_kind: KEY_VG },
-    { id: "vgw-13", name: "Oberer und Unterer Holzplatz", area_kind: KEY_VG },
-    { id: "vgw-14", name: "Sandkehl", area_kind: KEY_VG },
-    { id: "vgw-15", name: "Unterer Bann", area_kind: KEY_VG },
-    { id: "r39-angelweiher", name: "Angelweiher", area_kind: KEY_R39 },
-  ];
+  let waters = [];
+  let fishSpecies = [];
+  let trips = [];
+  let catches = [];
+  let activeTripId = null;
+  let createMode = "catch";
 
-  const FISH_SPECIES = [
-    { id: "aal", name: "Aal" },
-    { id: "barsch", name: "Barsch" },
-    { id: "brasse", name: "Brasse" },
-    { id: "hecht", name: "Hecht" },
-    { id: "karpfen", name: "Karpfen" },
-    { id: "rotauge", name: "Rotauge" },
-    { id: "schleie", name: "Schleie" },
-    { id: "wels", name: "Wels" },
-    { id: "zander", name: "Zander" },
-  ];
-
-  const AREA_LABEL = {
-    [KEY_VG]: "Vereins/Gemeinschaftsgewässer",
-    [KEY_R39]: "Rheinlos 39",
-  };
-
-  const ACTIVE_AREA_KEYS = [KEY_VG, KEY_R39];
-
-  let activeDialogEntryId = null;
-  let dialogEditMode = false;
-  let createDialog = null;
-
-  function currentUserId() {
-    return window.VDAN_AUTH?.loadSession?.()?.user?.id || "anonymous";
+  function cfg() {
+    return {
+      url: String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, ""),
+      key: String(window.__APP_SUPABASE_KEY || "").trim(),
+    };
   }
 
-  function storeKey() {
-    return `${STORE_KEY_PREFIX}:${currentUserId()}`;
+  function session() {
+    return window.VDAN_AUTH?.loadSession?.() || null;
   }
 
-  function setMsg(text = "") {
-    const el = document.getElementById("catchMsg");
-    if (el) el.textContent = text;
+  function uid() {
+    return session()?.user?.id || null;
   }
 
-  function setDialogMsg(text = "") {
-    const el = document.getElementById("catchDialogMsg");
-    if (el) el.textContent = text;
+  function imageStoreKey() {
+    return `vdan_trip_images_v1:${uid() || "anon"}`;
   }
 
-  function escapeHtml(str) {
+  function loadImageStore() {
+    try {
+      const raw = localStorage.getItem(imageStoreKey());
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveImageStore(map) {
+    localStorage.setItem(imageStoreKey(), JSON.stringify(map || {}));
+  }
+
+  function todayIso() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function esc(str) {
     return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
-  function areaLabel(kind) {
-    return AREA_LABEL[kind] || kind;
+  function setMsg(text = "") {
+    const el = document.getElementById("tripMsg");
+    if (el) el.textContent = text;
   }
 
-  function combinedAreaLabel(keys) {
-    const sorted = [...new Set(keys)].sort();
-    if (sorted.includes(KEY_VG) && sorted.includes(KEY_R39)) return "V/G + Rheinlos39";
-    return sorted.map(areaLabel).join(" + ");
+  function setStatsMsg(text = "") {
+    const el = document.getElementById("tripStatsMsg");
+    if (el) el.textContent = text;
   }
 
-  function normalizeName(name) {
-    return String(name).trim().toLocaleLowerCase("de-DE");
+  function setCreateMsg(text = "") {
+    const el = document.getElementById("tripCreateMsg");
+    if (el) el.textContent = text;
   }
 
-  function availableWaters() {
-    const allowed = WATER_BODIES.filter((w) => ACTIVE_AREA_KEYS.includes(w.area_kind));
+  function setDetailMsg(text = "") {
+    const el = document.getElementById("tripDetailMsg");
+    if (el) el.textContent = text;
+  }
+
+  function fmtDate(value) {
+    if (!value) return "-";
+    const d = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return String(value);
+    return d.toLocaleDateString("de-DE");
+  }
+
+  function fmtTs(value) {
+    if (!value) return "-";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    return d.toLocaleString("de-DE");
+  }
+
+  function sbHeaders(withAuth = false, extraHeaders = {}) {
+    const { key } = cfg();
+    const headers = new Headers(extraHeaders);
+    headers.set("apikey", key);
+    if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+    if (withAuth && session()?.access_token) {
+      headers.set("Authorization", `Bearer ${session().access_token}`);
+    }
+    return headers;
+  }
+
+  async function sb(path, init = {}, withAuth = false) {
+    const { url, key } = cfg();
+    if (!url || !key) throw new Error("Supabase-Konfiguration fehlt.");
+    const res = await fetch(`${url}${path}`, {
+      ...init,
+      headers: sbHeaders(withAuth, init.headers || {}),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+    }
+    return res.json().catch(() => ({}));
+  }
+
+  function parseReturnRow(payload) {
+    if (Array.isArray(payload)) return payload[0] || null;
+    if (payload && typeof payload === "object") return payload;
+    return null;
+  }
+
+  function tripKey(tripDate, waterBodyId) {
+    return `${tripDate || ""}|${waterBodyId || ""}`;
+  }
+
+  function catchesByTripKey() {
     const map = new Map();
-
-    for (const w of allowed) {
-      const key = normalizeName(w.name);
-      const hit = map.get(key);
-      if (!hit) {
-        map.set(key, {
-          id: w.id,
-          name: w.name,
-          area_kind: w.area_kind,
-          area_keys: [w.area_kind],
-        });
-      } else {
-        hit.area_keys.push(w.area_kind);
-        if (w.area_kind === KEY_VG) {
-          hit.id = w.id;
-          hit.area_kind = KEY_VG;
-        }
-      }
-    }
-
-    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "de-DE"));
+    catches.forEach((c) => {
+      const k = tripKey(c.caught_on, c.water_body_id);
+      const arr = map.get(k) || [];
+      arr.push(c);
+      map.set(k, arr);
+    });
+    return map;
   }
 
-  function loadEntries() {
-    try {
-      const raw = localStorage.getItem(storeKey());
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function saveEntries(rows) {
-    localStorage.setItem(storeKey(), JSON.stringify(rows));
-  }
-
-  function loadSelects() {
-    const waterSel = document.getElementById("catchWater");
-    const speciesSel = document.getElementById("catchSpecies");
-    if (!waterSel || !speciesSel) return;
-
-    const rows = availableWaters();
-
-    waterSel.innerHTML = `<option value="">Bitte wählen</option>` +
-      rows.map((w) => `<option value="${w.id}">${escapeHtml(w.name)}</option>`).join("");
-
-    speciesSel.innerHTML = `<option value="">Bitte wählen</option>` +
-      FISH_SPECIES.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join("");
-  }
-
-  function readPayload() {
-    const caught_on = String(document.getElementById("catchDate")?.value || "").trim();
-    const water_body_id = String(document.getElementById("catchWater")?.value || "").trim();
-    const fish_species_id = String(document.getElementById("catchSpecies")?.value || "").trim();
-    const quantity = Number(document.getElementById("catchQty")?.value || 0);
-    const length_raw = String(document.getElementById("catchLen")?.value || "").trim();
-    const weight_raw = String(document.getElementById("catchWeight")?.value || "").trim();
-    const note = String(document.getElementById("catchNote")?.value || "").trim();
-
-    if (!caught_on || !water_body_id || !fish_species_id || !Number.isFinite(quantity) || quantity < 1) {
-      throw new Error("Bitte Datum, Gewässer, Fischart und Anzahl ausfüllen.");
-    }
-
-    const water = availableWaters().find((w) => w.id === water_body_id);
-    const fish = FISH_SPECIES.find((f) => f.id === fish_species_id);
-
-    return {
-      id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
-      caught_on,
-      water_body_id,
-      water_name: water?.name || "-",
-      area_kind: water?.area_kind || "-",
-      area_keys: water?.area_keys || [],
-      fish_species_id,
-      fish_name: fish?.name || "-",
-      quantity,
-      length_cm: length_raw ? Number(length_raw) : null,
-      weight_g: weight_raw ? Number(weight_raw) : null,
-      note: note || null,
-      photo: null,
-      created_at: new Date().toISOString(),
-    };
+  function catchSummaryForTrip(trip, catchList) {
+    if (!catchList.length) return trip.entry_type === "no_catch" ? "Kein Fang" : "Fang";
+    const qty = catchList.reduce((sum, c) => sum + Number(c.quantity || 0), 0);
+    const names = [...new Set(catchList.map((c) => c?.fish_species?.name).filter(Boolean))];
+    if (!names.length) return `${qty} Fang`;
+    if (names.length === 1) return `${qty}x ${names[0]}`;
+    return `${qty} Fänge (${names.slice(0, 2).join(", ")}${names.length > 2 ? ", ..." : ""})`;
   }
 
   async function fileToImageBitmap(file) {
@@ -214,9 +180,8 @@
     if (!blob) throw new Error("Bildverarbeitung fehlgeschlagen");
     if (blob.size > MAX_IMAGE_BYTES) throw new Error("Bild ist zu groß. Bitte anderes Bild wählen.");
 
-    const dataUrl = await blobToDataUrl(blob);
     return {
-      data_url: dataUrl,
+      data_url: await blobToDataUrl(blob),
       bytes: blob.size,
       width,
       height,
@@ -225,269 +190,403 @@
     };
   }
 
-  function renderEntries(rows) {
-    const root = document.getElementById("catchList");
+  async function touchUserUsage() {
+    try {
+      await sb("/rest/v1/rpc/rpc_touch_user", {
+        method: "POST",
+        body: JSON.stringify({}),
+      }, true);
+    } catch {
+      // optional
+    }
+  }
+
+  async function loadWaters() {
+    const rows = await sb("/rest/v1/water_bodies?select=id,name,area_kind,is_active&is_active=eq.true&order=name.asc", { method: "GET" }, true);
+    waters = Array.isArray(rows) ? rows : [];
+    renderWaterOptions();
+  }
+
+  async function loadFishSpecies() {
+    const rows = await sb("/rest/v1/fish_species?select=id,name,is_active&is_active=eq.true&order=name.asc", { method: "GET" }, true);
+    fishSpecies = Array.isArray(rows) ? rows : [];
+    renderFishSpeciesOptions();
+  }
+
+  function renderWaterOptions() {
+    const sel = document.getElementById("tripWater");
+    const q = String(document.getElementById("tripWaterSearch")?.value || "").trim().toLowerCase();
+    if (!sel) return;
+
+    const filtered = waters.filter((w) => String(w.name || "").toLowerCase().includes(q));
+    sel.innerHTML = `<option value="">Bitte wählen</option>` + filtered.map((w) => `<option value="${w.id}">${esc(w.name)}</option>`).join("");
+  }
+
+  function renderFishSpeciesOptions() {
+    const sel = document.getElementById("tripFishSpecies");
+    if (!sel) return;
+    sel.innerHTML = `<option value="">Kein Eintrag</option>` + fishSpecies.map((f) => `<option value="${f.id}">${esc(f.name)}</option>`).join("");
+  }
+
+  function selectedWaterId() {
+    return String(document.getElementById("tripWater")?.value || "").trim();
+  }
+
+  function selectedDate() {
+    return String(document.getElementById("tripDate")?.value || "").trim();
+  }
+
+  function selectedFishSpeciesId() {
+    return String(document.getElementById("tripFishSpecies")?.value || "").trim();
+  }
+
+  function selectedQty() {
+    const raw = String(document.getElementById("tripQty")?.value || "").trim();
+    if (!raw) return 1;
+    const v = Number(raw);
+    return Number.isFinite(v) ? v : NaN;
+  }
+
+  function selectedLengthCm() {
+    const raw = String(document.getElementById("tripLength")?.value || "").trim();
+    if (!raw) return null;
+    const v = Number(raw);
+    return Number.isFinite(v) ? v : NaN;
+  }
+
+  function selectedWeightG() {
+    const raw = String(document.getElementById("tripWeight")?.value || "").trim();
+    if (!raw) return null;
+    const v = Number(raw);
+    return Number.isFinite(v) ? v : NaN;
+  }
+
+  async function saveNoCatch() {
+    const p_trip_date = selectedDate();
+    const p_water_body_id = selectedWaterId();
+    if (!p_trip_date || !p_water_body_id) throw new Error("Bitte Datum und Gewässer wählen.");
+
+    try {
+      return await sb("/rest/v1/rpc/catch_trip_quick_no_catch", {
+        method: "POST",
+        body: JSON.stringify({ p_trip_date, p_water_body_id, p_note: null }),
+      }, true);
+    } catch {
+      return sb("/rest/v1/rpc/rpc_quick_no_catch", {
+        method: "POST",
+        body: JSON.stringify({ trip_date: p_trip_date, water_id: p_water_body_id }),
+      }, true);
+    }
+  }
+
+  async function saveCatchEntry() {
+    const user_id = uid();
+    const trip_date = selectedDate();
+    const water_body_id = selectedWaterId();
+    if (!user_id || !trip_date || !water_body_id) throw new Error("Bitte Datum und Gewässer wählen.");
+
+    const tripPayload = await sb("/rest/v1/fishing_trips?on_conflict=user_id,trip_date,water_body_id", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+      body: JSON.stringify({ user_id, trip_date, water_body_id, entry_type: "catch" }),
+    }, true);
+
+    const tripRow = parseReturnRow(tripPayload);
+    const fish_species_id = selectedFishSpeciesId();
+
+    if (fish_species_id) {
+      const quantity = selectedQty();
+      const length_cm = selectedLengthCm();
+      const weight_g = selectedWeightG();
+
+      if (!Number.isFinite(quantity) || quantity < 1) throw new Error("Anzahl muss mindestens 1 sein.");
+      if (length_cm !== null && (!Number.isFinite(length_cm) || length_cm < 0)) throw new Error("Länge ist ungültig.");
+      if (weight_g !== null && (!Number.isFinite(weight_g) || weight_g < 0)) throw new Error("Gewicht ist ungültig.");
+
+      await sb("/rest/v1/catch_entries", {
+        method: "POST",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify({
+          user_id,
+          water_body_id,
+          fish_species_id,
+          caught_on: trip_date,
+          quantity,
+          length_cm,
+          weight_g,
+        }),
+      }, true);
+    }
+
+    const file = document.getElementById("tripCreatePhoto")?.files?.[0];
+    if (file && tripRow?.id) {
+      setCreateMsg("Bild wird komprimiert...");
+      const photo = await compressImageToWebp(file);
+      const imageStore = loadImageStore();
+      imageStore[tripRow.id] = photo;
+      saveImageStore(imageStore);
+    }
+  }
+
+  async function loadTripsAndCatches() {
+    const user_id = uid();
+    if (!user_id) return;
+
+    const [tripRows, catchRows] = await Promise.all([
+      sb(
+        `/rest/v1/fishing_trips?select=id,trip_date,entry_type,created_at,water_body_id,water_bodies(name)&user_id=eq.${encodeURIComponent(user_id)}&order=trip_date.desc,created_at.desc&limit=300`,
+        { method: "GET" },
+        true
+      ),
+      sb(
+        `/rest/v1/catch_entries?select=id,caught_on,water_body_id,quantity,length_cm,weight_g,created_at,fish_species(name)&user_id=eq.${encodeURIComponent(user_id)}&order=caught_on.desc,created_at.desc&limit=1000`,
+        { method: "GET" },
+        true
+      ).catch(() => []),
+    ]);
+
+    trips = Array.isArray(tripRows) ? tripRows : [];
+    catches = Array.isArray(catchRows) ? catchRows : [];
+  }
+
+  function renderTripsTable() {
+    const root = document.getElementById("tripList");
     if (!root) return;
-    root.innerHTML = "";
+
+    const onlyNoCatch = Boolean(document.getElementById("tripOnlyNoCatch")?.checked);
+    const catchesMap = catchesByTripKey();
+    const rows = onlyNoCatch ? trips.filter((r) => r.entry_type === "no_catch") : trips;
 
     if (!rows.length) {
-      root.innerHTML = `<p class="small">Noch keine UI-Einträge vorhanden.</p>`;
+      root.innerHTML = `<p class="small">Noch keine Angeltage vorhanden.</p>`;
       return;
     }
 
-    const table = document.createElement("div");
-    table.className = "catch-table";
-    table.innerHTML = `
-      <div class="catch-table__head" role="row">
-        <span>Datum</span>
-        <span>Gewässer / Fischart</span>
-        <span>Anzahl</span>
-      </div>
-    `;
-
-    rows.forEach((r) => {
-      const el = document.createElement("button");
-      el.type = "button";
-      el.className = "catch-row";
-      el.dataset.entryId = r.id;
-      el.innerHTML = `
-        <span class="catch-row__date">${escapeHtml(String(r.caught_on))}</span>
-        <span class="catch-row__meta">
-          <strong class="catch-row__water">${escapeHtml(r.water_name)}</strong>
-          <small class="catch-row__fish">${escapeHtml(r.fish_name)}</small>
-        </span>
-        <span class="catch-row__qty">${Number(r.quantity)}</span>
-      `;
-      el.addEventListener("click", () => openDialog(r.id));
-      table.appendChild(el);
-    });
-
-    root.appendChild(table);
-  }
-
-  function renderDialogBody(entry) {
-    const body = document.getElementById("catchDialogBody");
-    if (!body) return;
-
-    const waterOptions = availableWaters()
-      .map((w) => `<option value="${w.id}" ${w.id === entry.water_body_id ? "selected" : ""}>${escapeHtml(w.name)}</option>`)
-      .join("");
-
-    const fishOptions = FISH_SPECIES
-      .map((f) => `<option value="${f.id}" ${f.id === entry.fish_species_id ? "selected" : ""}>${escapeHtml(f.name)}</option>`)
-      .join("");
-
-    body.innerHTML = `
-      <div class="grid cols2">
-        <label>
-          <span>Datum</span>
-          <input id="dlgDate" type="date" value="${escapeHtml(String(entry.caught_on))}" disabled />
-        </label>
-        <label>
+    root.innerHTML = `
+      <div class="fangliste-table" role="table" aria-label="Meine Angeltage">
+        <div class="fangliste-table__head" role="row">
+          <span>Tag</span>
           <span>Gewässer</span>
-          <select id="dlgWater" disabled>${waterOptions}</select>
-        </label>
-        <label>
-          <span>Fischart</span>
-          <select id="dlgSpecies" disabled>${fishOptions}</select>
-        </label>
-        <label>
-          <span>Anzahl</span>
-          <input id="dlgQty" type="number" min="1" max="200" value="${Number(entry.quantity)}" disabled />
-        </label>
-        <label>
-          <span>Länge (cm)</span>
-          <input id="dlgLen" type="number" min="0" step="0.1" value="${entry.length_cm ?? ""}" disabled />
-        </label>
-        <label>
-          <span>Gewicht (g)</span>
-          <input id="dlgWeight" type="number" min="0" step="1" value="${entry.weight_g ?? ""}" disabled />
-        </label>
-        <label style="grid-column:1/-1">
-          <span>Notiz</span>
-          <textarea id="dlgNote" rows="3" disabled>${escapeHtml(entry.note || "")}</textarea>
-        </label>
-        <label style="grid-column:1/-1">
-          <span>Bild (WebP, automatisch komprimiert, max ~350 KB)</span>
-          <input id="dlgPhoto" type="file" accept="image/*" disabled />
-        </label>
-      </div>
-      <div class="catch-dialog-photo-wrap">
-        ${entry.photo?.data_url ? `<img id="dlgPhotoPreview" class="catch-dialog-photo" src="${entry.photo.data_url}" alt="Fangbild" />` : `<p id="dlgPhotoPreview" class="small">Kein Bild hinterlegt.</p>`}
+          <span>Fang</span>
+        </div>
+        ${rows.map((trip) => {
+          const list = catchesMap.get(tripKey(trip.trip_date, trip.water_body_id)) || [];
+          const summary = catchSummaryForTrip(trip, list);
+          const hasPhoto = Boolean(loadImageStore()[trip.id]?.data_url);
+          return `
+            <button type="button" class="fangliste-table__row" data-trip-id="${trip.id}" role="row">
+              <span class="fangliste-table__date">${esc(fmtDate(trip.trip_date))}</span>
+              <span class="fangliste-table__water">${esc(trip?.water_bodies?.name || "-")}</span>
+              <span class="fangliste-table__catch">${esc(summary)}${hasPhoto ? " • Bild" : ""}</span>
+            </button>
+          `;
+        }).join("")}
       </div>
     `;
   }
 
-  function setDialogEditable(editable) {
-    dialogEditMode = editable;
-    const ids = ["dlgDate", "dlgWater", "dlgSpecies", "dlgQty", "dlgLen", "dlgWeight", "dlgNote", "dlgPhoto"];
-    ids.forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.disabled = !editable;
-    });
+  async function loadOwnStats() {
+    const root = document.getElementById("tripStatsBox");
+    if (!root) return;
 
-    const saveBtn = document.getElementById("catchSaveBtn");
-    if (saveBtn) saveBtn.disabled = !editable;
-
-    const editBtn = document.getElementById("catchEditToggle");
-    if (editBtn) editBtn.textContent = editable ? "Ansicht" : "Bearbeiten";
-  }
-
-  function readDialogPayload(prev) {
-    const waterId = String(document.getElementById("dlgWater")?.value || "").trim();
-    const fishId = String(document.getElementById("dlgSpecies")?.value || "").trim();
-    const water = availableWaters().find((w) => w.id === waterId);
-    const fish = FISH_SPECIES.find((f) => f.id === fishId);
-
-    return {
-      ...prev,
-      caught_on: String(document.getElementById("dlgDate")?.value || prev.caught_on),
-      water_body_id: waterId || prev.water_body_id,
-      water_name: water?.name || prev.water_name,
-      area_kind: water?.area_kind || prev.area_kind,
-      area_keys: water?.area_keys || prev.area_keys,
-      fish_species_id: fishId || prev.fish_species_id,
-      fish_name: fish?.name || prev.fish_name,
-      quantity: Number(document.getElementById("dlgQty")?.value || prev.quantity),
-      length_cm: String(document.getElementById("dlgLen")?.value || "").trim() ? Number(document.getElementById("dlgLen").value) : null,
-      weight_g: String(document.getElementById("dlgWeight")?.value || "").trim() ? Number(document.getElementById("dlgWeight").value) : null,
-      note: String(document.getElementById("dlgNote")?.value || "").trim() || null,
-    };
-  }
-
-  function openDialog(entryId) {
-    const dialog = document.getElementById("catchDialog");
-    if (!dialog) return;
-
-    const entry = loadEntries().find((r) => r.id === entryId);
-    if (!entry) return;
-
-    activeDialogEntryId = entryId;
-    renderDialogBody(entry);
-    setDialogEditable(false);
-    setDialogMsg("");
-
-    if (!dialog.open) dialog.showModal();
-  }
-
-  function closeDialog() {
-    const dialog = document.getElementById("catchDialog");
-    if (dialog?.open) dialog.close();
-    activeDialogEntryId = null;
-    setDialogMsg("");
-  }
-
-  async function saveDialog() {
-    if (!activeDialogEntryId) return;
-    const rows = loadEntries();
-    const idx = rows.findIndex((r) => r.id === activeDialogEntryId);
-    if (idx < 0) return;
-
-    let next = readDialogPayload(rows[idx]);
-    const fileInput = document.getElementById("dlgPhoto");
-    const file = fileInput?.files?.[0];
-
-    if (file) {
-      setDialogMsg("Bild wird komprimiert...");
-      const photo = await compressImageToWebp(file);
-      next = { ...next, photo };
-    }
-
-    rows[idx] = next;
-    saveEntries(rows);
-    setDialogMsg("Eintrag aktualisiert.");
-    refresh();
-    openDialog(activeDialogEntryId);
-    setDialogEditable(false);
-  }
-
-  function deleteDialogEntry() {
-    if (!activeDialogEntryId) return;
-    const rows = loadEntries().filter((r) => r.id !== activeDialogEntryId);
-    saveEntries(rows);
-    refresh();
-    closeDialog();
-    setMsg("Eintrag gelöscht.");
-  }
-
-  function refresh() {
-    const rows = loadEntries().sort((a, b) => String(b.caught_on).localeCompare(String(a.caught_on)));
-    renderEntries(rows);
-  }
-
-  function bindDialogActions() {
-    document.getElementById("catchCloseBtn")?.addEventListener("click", closeDialog);
-
-    document.getElementById("catchEditToggle")?.addEventListener("click", () => {
-      setDialogEditable(!dialogEditMode);
-      setDialogMsg("");
-    });
-
-    document.getElementById("catchSaveBtn")?.addEventListener("click", async () => {
-      try {
-        await saveDialog();
-      } catch (err) {
-        setDialogMsg(err?.message || "Speichern fehlgeschlagen");
+    try {
+      const user_id = uid();
+      if (!user_id) {
+        root.innerHTML = "";
+        return;
       }
-    });
 
-    document.getElementById("catchDeleteBtn")?.addEventListener("click", () => {
-      deleteDialogEntry();
+      const tripsTotal = trips.length;
+      const noCatchDays = trips.filter((r) => r.entry_type === "no_catch").length;
+      const catchesTotal = catches.reduce((sum, r) => sum + Number(r.quantity || 0), 0);
+
+      const lastTripAt = trips[0]?.created_at || null;
+      const lastCatchAt = catches[0]?.created_at || null;
+      const lastEntryAt = [lastTripAt, lastCatchAt].filter(Boolean).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || null;
+
+      root.innerHTML = `
+        <article class="fangliste-item">
+          <div class="fangliste-item__body">
+            <strong>Angeltage: ${tripsTotal}</strong>
+            <p class="small">Kein Fang: ${noCatchDays}</p>
+            <p class="small">Fänge gesamt: ${catchesTotal}</p>
+            <p class="small">Letzter Eintrag: ${esc(fmtTs(lastEntryAt))}</p>
+          </div>
+        </article>
+      `;
+    } catch (err) {
+      setStatsMsg(err?.message || "Stats konnten nicht geladen werden.");
+      root.innerHTML = "";
+    }
+  }
+
+  function setCreateMode(mode) {
+    createMode = mode === "no_catch" ? "no_catch" : "catch";
+    const isNoCatch = createMode === "no_catch";
+    const title = document.getElementById("tripCreateTitle");
+    const submit = document.getElementById("tripCreateSubmit");
+    if (title) title.textContent = isNoCatch ? "Kein Fang erfassen" : "Eintrag erfassen";
+    if (submit) submit.textContent = isNoCatch ? "Kein Fang speichern" : "Speichern";
+    document.querySelectorAll(".fangliste-catch-only").forEach((el) => {
+      el.classList.toggle("hidden", isNoCatch);
+      el.toggleAttribute("hidden", isNoCatch);
     });
   }
 
-  function openCreateDialog() {
-    if (!createDialog) return;
-    setMsg("");
-    const form = document.getElementById("catchForm");
-    form?.reset();
-    const dateInput = document.getElementById("catchDate");
-    if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
-    const qtyInput = document.getElementById("catchQty");
-    if (qtyInput) qtyInput.value = "1";
-    if (!createDialog.open) createDialog.showModal();
+  function openCreateDialog(mode = "catch") {
+    const dlg = document.getElementById("tripCreateDialog");
+    const form = document.getElementById("tripCreateForm");
+    if (!dlg || !form) return;
+    setCreateMode(mode);
+    form.reset();
+    const d = document.getElementById("tripDate");
+    if (d) d.value = todayIso();
+    const qty = document.getElementById("tripQty");
+    if (qty) qty.value = "1";
+    setCreateMsg("");
+    renderWaterOptions();
+    renderFishSpeciesOptions();
+    if (!dlg.open) dlg.showModal();
   }
 
   function closeCreateDialog() {
-    if (createDialog?.open) createDialog.close();
+    const dlg = document.getElementById("tripCreateDialog");
+    if (dlg?.open) dlg.close();
+    setCreateMsg("");
   }
 
-  function init() {
-    const form = document.getElementById("catchForm");
-    const clearBtn = document.getElementById("catchClearAll");
-    createDialog = document.getElementById("catchCreateDialog");
-    if (!form || !createDialog) return;
+  function getTripById(id) {
+    return trips.find((t) => String(t.id) === String(id)) || null;
+  }
 
-    loadSelects();
-    refresh();
-    bindDialogActions();
+  function openDetailDialog(tripId) {
+    const trip = getTripById(tripId);
+    if (!trip) return;
+    activeTripId = trip.id;
 
-    document.getElementById("openCatchCreateTop")?.addEventListener("click", openCreateDialog);
-    document.getElementById("openCatchCreateFab")?.addEventListener("click", openCreateDialog);
-    document.getElementById("catchCreateCloseBtn")?.addEventListener("click", closeCreateDialog);
+    const body = document.getElementById("tripDetailBody");
+    const dlg = document.getElementById("tripDetailDialog");
+    if (!body || !dlg) return;
 
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
+    const list = catchesByTripKey().get(tripKey(trip.trip_date, trip.water_body_id)) || [];
+    const img = loadImageStore()[trip.id]?.data_url || "";
+
+    body.innerHTML = `
+      <div class="grid cols2">
+        <p><strong>Datum:</strong><br>${esc(fmtDate(trip.trip_date))}</p>
+        <p><strong>Gewässer:</strong><br>${esc(trip?.water_bodies?.name || "-")}</p>
+        <p><strong>Typ:</strong><br>${esc(trip.entry_type === "no_catch" ? "Kein Fang" : "Fang")}</p>
+        <p><strong>Angelegt:</strong><br>${esc(fmtTs(trip.created_at))}</p>
+      </div>
+      <hr />
+      <h4>Fangdetails</h4>
+      ${list.length ? `
+        <div class="fangliste-detail-list">
+          ${list.map((c) => `<p class="small"><strong>${esc(c?.fish_species?.name || "Fisch")}</strong> • ${Number(c.quantity || 0)}x • ${c.length_cm ?? "-"} cm • ${c.weight_g ?? "-"} g</p>`).join("")}
+        </div>
+      ` : `<p class="small">Keine Fangdetails vorhanden.</p>`}
+      <hr />
+      <label>
+        <span>Bild (optional)</span>
+        <input id="tripDetailPhoto" type="file" accept="image/*" />
+      </label>
+      <div class="catch-dialog-photo-wrap">
+        ${img ? `<img src="${img}" alt="Fangbild" class="catch-dialog-photo" />` : `<p class="small">Kein Bild hinterlegt.</p>`}
+      </div>
+    `;
+
+    setDetailMsg("");
+    if (!dlg.open) dlg.showModal();
+  }
+
+  function closeDetailDialog() {
+    const dlg = document.getElementById("tripDetailDialog");
+    if (dlg?.open) dlg.close();
+    activeTripId = null;
+    setDetailMsg("");
+  }
+
+  async function saveDetailImage() {
+    if (!activeTripId) return;
+    const file = document.getElementById("tripDetailPhoto")?.files?.[0];
+    if (!file) {
+      setDetailMsg("Bitte ein Bild wählen.");
+      return;
+    }
+    setDetailMsg("Bild wird komprimiert...");
+    const photo = await compressImageToWebp(file);
+    const map = loadImageStore();
+    map[activeTripId] = photo;
+    saveImageStore(map);
+    setDetailMsg("Bild gespeichert.");
+    openDetailDialog(activeTripId);
+    renderTripsTable();
+  }
+
+  async function refreshAll() {
+    await loadTripsAndCatches();
+    renderTripsTable();
+    await loadOwnStats();
+  }
+
+  async function init() {
+    const { url, key } = cfg();
+    if (!url || !key) {
+      setMsg("Supabase-Konfiguration fehlt.");
+      return;
+    }
+    if (!uid()) {
+      setMsg("Bitte einloggen.");
+      return;
+    }
+
+    await touchUserUsage();
+    await Promise.all([loadWaters(), loadFishSpecies()]);
+    await refreshAll();
+
+    document.getElementById("tripOnlyNoCatch")?.addEventListener("change", renderTripsTable);
+
+    document.getElementById("tripOpenCreate")?.addEventListener("click", openCreateDialog);
+    document.getElementById("tripCreateClose")?.addEventListener("click", closeCreateDialog);
+    document.getElementById("tripDetailClose")?.addEventListener("click", closeDetailDialog);
+    document.getElementById("tripDetailSaveImage")?.addEventListener("click", async () => {
       try {
-        const payload = readPayload();
-        const rows = loadEntries();
-        rows.push(payload);
-        saveEntries(rows);
-        closeCreateDialog();
-        form.reset();
-        setMsg("UI-Eintrag gespeichert (noch keine DB). ");
-        refresh();
+        await saveDetailImage();
       } catch (err) {
-        setMsg(err?.message || "Speichern fehlgeschlagen");
+        setDetailMsg(err?.message || "Bild konnte nicht gespeichert werden.");
       }
     });
 
-    clearBtn?.addEventListener("click", () => {
-      saveEntries([]);
-      setMsg("Alle UI-Einträge gelöscht.");
-      refresh();
+    document.getElementById("tripWaterSearch")?.addEventListener("input", renderWaterOptions);
+
+    document.getElementById("tripQuickNoCatch")?.addEventListener("click", () => openCreateDialog("no_catch"));
+
+    document.getElementById("tripCreateForm")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        setCreateMsg("Speichere...");
+        if (createMode === "no_catch") {
+          await saveNoCatch();
+        } else {
+          await saveCatchEntry();
+        }
+        closeCreateDialog();
+        await refreshAll();
+        setMsg(createMode === "no_catch" ? "Kein Fang gespeichert." : "Angeltag gespeichert.");
+      } catch (err) {
+        setCreateMsg(err?.message || "Speichern fehlgeschlagen.");
+      }
+    });
+
+    document.getElementById("tripList")?.addEventListener("click", (e) => {
+      const btn = e.target?.closest?.("[data-trip-id]");
+      if (!btn) return;
+      const id = btn.getAttribute("data-trip-id");
+      if (id) openDetailDialog(id);
     });
   }
 
-  document.addEventListener("DOMContentLoaded", init);
+  document.addEventListener("DOMContentLoaded", () => {
+    init().catch((err) => setMsg(err?.message || "Initialisierung fehlgeschlagen."));
+  });
 })();

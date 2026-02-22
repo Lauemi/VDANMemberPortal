@@ -1,4 +1,6 @@
 ;(() => {
+  let touchTimer = null;
+
   function cfg() {
     return {
       url: String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, ""),
@@ -10,7 +12,7 @@
     return window.VDAN_AUTH?.loadSession?.() || null;
   }
 
-  async function sb(path, withAuth = false) {
+  async function sb(path, withAuth = false, method = "GET", body = null) {
     const { url, key } = cfg();
     if (!url || !key) return [];
     const headers = new Headers();
@@ -19,7 +21,11 @@
     if (withAuth && session()?.access_token) {
       headers.set("Authorization", `Bearer ${session().access_token}`);
     }
-    const res = await fetch(`${url}${path}`, { method: "GET", headers });
+    const res = await fetch(`${url}${path}`, {
+      method,
+      headers,
+      body: body == null ? undefined : JSON.stringify(body),
+    });
     if (!res.ok) return [];
     const data = await res.json().catch(() => []);
     return Array.isArray(data) ? data : [];
@@ -43,6 +49,23 @@
     } catch {
       return {};
     }
+  }
+
+  async function touchUserPresence() {
+    if (!session()?.access_token) return;
+    await sb("/rest/v1/rpc/rpc_touch_user", true, "POST", {}).catch(() => []);
+  }
+
+  function startPresenceTicker() {
+    if (touchTimer) {
+      clearInterval(touchTimer);
+      touchTimer = null;
+    }
+    if (!session()?.access_token) return;
+    touchUserPresence().catch(() => {});
+    touchTimer = setInterval(() => {
+      if (!document.hidden) touchUserPresence().catch(() => {});
+    }, 60 * 1000);
   }
 
   function setNavState(loggedIn){
@@ -81,11 +104,16 @@
     const loggedIn = Boolean(window.VDAN_AUTH?.loadSession?.());
     setNavState(loggedIn);
     if (!loggedIn) {
+      if (touchTimer) {
+        clearInterval(touchTimer);
+        touchTimer = null;
+      }
       setManagerState(false);
       setAdminState(false);
       setFeatureState("work-qr", false);
       return;
     }
+    startPresenceTicker();
     const roles = await loadRoles().catch(() => []);
     const isManager = roles.includes("admin") || roles.includes("vorstand");
     const isAdmin = roles.includes("admin");
@@ -102,4 +130,7 @@
 
   document.addEventListener("DOMContentLoaded", init);
   document.addEventListener("vdan:session", init);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) touchUserPresence().catch(() => {});
+  });
 })();

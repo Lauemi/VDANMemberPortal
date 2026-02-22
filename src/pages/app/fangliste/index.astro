@@ -5,104 +5,103 @@ import { APP } from "../../../config/app";
 
 <Site title={`Fangliste • ${APP.name}`} description="Digitale Fangliste" robots="noindex">
   <section class="card">
-    <div class="card__body catch-page">
-      <h1>Fangliste</h1>
-      <p class="small">UI-Vorstufe aktiv: aktuell wird nichts in die Datenbank geschrieben.</p>
-      <p class="small">Hinweis: Für Weißfische aller Art gilt eine Fangbegrenzung von 25 Stück pro Tag.</p>
+    <div class="card__body">
+      <h1>Fangliste / Angeltage</h1>
+      <p class="small">Klicke auf eine Zeile für Details. Bilder können im Dialog hinterlegt werden.</p>
 
-      <div class="catch-table-toolbar">
-        <h2>Meine Einträge (nur UI-Vorschau)</h2>
-        <button
-          type="button"
-          id="openCatchCreateTop"
-          class="catch-add-btn catch-add-btn--top"
-          aria-label="Neuen Fang erfassen"
-        >
-          +
-        </button>
+      <div class="fangliste-actions">
+        <button type="button" id="tripOpenCreate" class="feed-btn feed-btn--ghost">Eintrag erfassen</button>
+        <button type="button" id="tripQuickNoCatch" class="feed-btn">Kein Fang</button>
       </div>
 
-      <div id="catchList" class="grid catch-list-wrap"></div>
-      <div class="catch-foot-actions">
-        <button type="button" id="catchClearAll">Alle UI-Einträge löschen</button>
-        <span id="catchMsg" class="small" aria-live="polite"></span>
-      </div>
+      <p id="tripMsg" class="small" aria-live="polite"></p>
     </div>
   </section>
 
-  <div class="catch-fab-stack">
-    <a href="/app/" class="catch-add-btn catch-home-btn" aria-label="Zum Mitgliederportal">
-      ⌂
-    </a>
-    <button
-      type="button"
-      id="openCatchCreateFab"
-      class="catch-add-btn catch-add-btn--fab"
-      aria-label="Neuen Fang erfassen"
-    >
-      +
-    </button>
-  </div>
+  <section class="card">
+    <div class="card__body">
+      <h2>Meine Angeltage</h2>
 
-  <dialog id="catchCreateDialog" class="catch-dialog">
-    <form id="catchForm" class="catch-dialog__form" method="dialog">
-      <h3>Fang erfassen</h3>
+      <label class="fangliste-filter">
+        <input id="tripOnlyNoCatch" type="checkbox" /> Nur Kein Fang
+      </label>
 
-      <div class="grid cols2">
+      <div id="tripList" class="fangliste-list" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__body">
+      <h2>Meine Stats</h2>
+      <p class="small">Deine Angeltage, Kein-Fang-Tage, Gesamtfänge und letzter Eintrag.</p>
+      <p id="tripStatsMsg" class="small" aria-live="polite"></p>
+      <div id="tripStatsBox" class="fangliste-list"></div>
+    </div>
+  </section>
+
+  <dialog id="tripCreateDialog" class="catch-dialog">
+    <form id="tripCreateForm" class="catch-dialog__form" method="dialog">
+      <h3 id="tripCreateTitle">Eintrag erfassen</h3>
+
+      <div class="fangliste-form-grid">
         <label>
           <span>Datum</span>
-          <input id="catchDate" type="date" required />
+          <input id="tripDate" type="date" required />
         </label>
 
         <label>
+          <span>Gewässer suchen</span>
+          <input id="tripWaterSearch" type="search" placeholder="Gewässer filtern..." />
+        </label>
+
+        <label class="fangliste-full">
           <span>Gewässer</span>
-          <select id="catchWater" required></select>
+          <select id="tripWater" required></select>
         </label>
 
-        <label>
-          <span>Fischart</span>
-          <select id="catchSpecies" required></select>
+        <label class="fangliste-catch-only">
+          <span>Fischart (optional)</span>
+          <select id="tripFishSpecies"></select>
         </label>
 
-        <label>
-          <span>Anzahl</span>
-          <input id="catchQty" type="number" min="1" max="200" value="1" required />
+        <label class="fangliste-catch-only">
+          <span>Anzahl (optional, Standard 1)</span>
+          <input id="tripQty" type="number" min="1" step="1" value="1" />
         </label>
 
-        <label>
-          <span>Länge (cm, optional)</span>
-          <input id="catchLen" type="number" min="0" step="0.1" />
+        <label class="fangliste-catch-only">
+          <span>Länge in cm (optional)</span>
+          <input id="tripLength" type="number" min="0" step="0.1" />
         </label>
 
-        <label>
-          <span>Gewicht (g, optional)</span>
-          <input id="catchWeight" type="number" min="0" step="1" />
+        <label class="fangliste-catch-only">
+          <span>Gewicht in g (optional)</span>
+          <input id="tripWeight" type="number" min="0" step="1" />
         </label>
 
-        <label style="grid-column:1/-1">
-          <span>Notiz (optional)</span>
-          <textarea id="catchNote" rows="3" placeholder="z.B. zurückgesetzt, Wetter, Spot..."></textarea>
+        <label class="fangliste-full">
+          <span>Bild (optional)</span>
+          <input id="tripCreatePhoto" type="file" accept="image/*" />
         </label>
       </div>
 
       <div class="catch-dialog__actions">
-        <button class="feed-btn" type="submit">Speichern</button>
-        <button type="button" id="catchCreateCloseBtn" class="feed-btn feed-btn--ghost">Schließen</button>
+        <button type="submit" id="tripCreateSubmit" class="feed-btn">Speichern</button>
+        <button type="button" id="tripCreateClose" class="feed-btn feed-btn--ghost">Schließen</button>
       </div>
+      <p id="tripCreateMsg" class="small" aria-live="polite"></p>
     </form>
   </dialog>
 
-  <dialog id="catchDialog" class="catch-dialog">
-    <form id="catchDialogForm" method="dialog" class="catch-dialog__form">
-      <h3>Fangdetails</h3>
-      <div id="catchDialogBody" class="catch-dialog__body"></div>
+  <dialog id="tripDetailDialog" class="catch-dialog">
+    <form id="tripDetailForm" class="catch-dialog__form" method="dialog">
+      <h3>Eintragsdetails</h3>
+      <div id="tripDetailBody" class="catch-dialog__body"></div>
       <div class="catch-dialog__actions">
-        <button type="button" id="catchEditToggle" class="feed-btn">Bearbeiten</button>
-        <button type="button" id="catchSaveBtn" class="feed-btn" disabled>Speichern</button>
-        <button type="button" id="catchDeleteBtn" class="feed-btn feed-btn--ghost">Löschen</button>
-        <button type="button" id="catchCloseBtn" class="feed-btn feed-btn--ghost">Schließen</button>
+        <button type="button" id="tripDetailSaveImage" class="feed-btn">Bild speichern</button>
+        <button type="button" id="tripDetailClose" class="feed-btn feed-btn--ghost">Schließen</button>
       </div>
-      <p id="catchDialogMsg" class="small" aria-live="polite"></p>
+      <p id="tripDetailMsg" class="small" aria-live="polite"></p>
     </form>
   </dialog>
 

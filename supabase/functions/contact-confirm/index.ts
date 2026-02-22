@@ -1,4 +1,4 @@
-import { cors, json, sbFetch, sha256Hex } from "../_shared/contact-utils.ts";
+import { cors, sbFetch, sendContactForwardMail, sha256Hex } from "../_shared/contact-utils.ts";
 
 Deno.serve(async (req) => {
   const headers = cors(req);
@@ -12,9 +12,17 @@ Deno.serve(async (req) => {
     const tokenHash = await sha256Hex(token);
 
     const rows = await sbFetch(
-      `/rest/v1/contact_requests?select=id,status,confirm_expires_at&confirm_token_hash=eq.${encodeURIComponent(tokenHash)}&limit=1`,
+      `/rest/v1/contact_requests?select=id,status,confirm_expires_at,name,email,subject,message&confirm_token_hash=eq.${encodeURIComponent(tokenHash)}&limit=1`,
       { method: "GET" },
-    ) as Array<{ id: string; status: string; confirm_expires_at: string | null }>;
+    ) as Array<{
+      id: string;
+      status: string;
+      confirm_expires_at: string | null;
+      name: string | null;
+      email: string | null;
+      subject: string | null;
+      message: string | null;
+    }>;
 
     const row = Array.isArray(rows) ? rows[0] : null;
     if (!row) return new Response("Ungültiger Bestätigungslink.", { status: 400, headers: { ...headers, "Content-Type": "text/plain; charset=utf-8" } });
@@ -43,6 +51,37 @@ Deno.serve(async (req) => {
       }),
     });
 
+    const notifyTo = (Deno.env.get("CONTACT_NOTIFY_EMAIL") || "m.lauenroth@lauemi.de").trim().toLowerCase();
+    const forward = await sendContactForwardMail({
+      to: notifyTo,
+      requesterName: String(row.name || "").trim() || "Unbekannt",
+      requesterEmail: String(row.email || "").trim() || "unknown@example.invalid",
+      subject: String(row.subject || "").trim() || "(ohne Betreff)",
+      message: String(row.message || "").trim() || "",
+      requestId: row.id,
+    });
+
+    if (!forward.ok) {
+      await sbFetch(`/rest/v1/contact_requests?id=eq.${encodeURIComponent(row.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          status: "rejected",
+          rejection_reason: forward.reason,
+        }),
+      });
+      return new Response("Bestätigt, aber Weiterleitung per E-Mail fehlgeschlagen.", {
+        status: 500,
+        headers: { ...headers, "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
+
+    await sbFetch(`/rest/v1/contact_requests?id=eq.${encodeURIComponent(row.id)}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        status: "sent",
+      }),
+    });
+
     const notifyWebhook = Deno.env.get("CONTACT_NOTIFY_WEBHOOK");
     if (notifyWebhook) {
       await fetch(notifyWebhook, {
@@ -60,4 +99,3 @@ Deno.serve(async (req) => {
     return new Response("Bestätigung fehlgeschlagen.", { status: 500, headers: { ...headers, "Content-Type": "text/plain; charset=utf-8" } });
   }
 });
-

@@ -174,6 +174,10 @@
     });
   }
 
+  async function canvasToBlob(canvas, mime, quality) {
+    return new Promise((resolve) => canvas.toBlob(resolve, mime, quality));
+  }
+
   async function transcodeImage(file) {
     const bitmap = await imageToBitmap(file);
     let width = Math.max(1, Math.round(bitmap.width * Math.min(1, MAX_LONG_EDGE / Math.max(bitmap.width, bitmap.height))));
@@ -184,6 +188,7 @@
     let bestBlob = null;
     let bestWidth = width;
     let bestHeight = height;
+    let bestMime = "image/webp";
 
     for (let pass = 0; pass < 5; pass += 1) {
       canvas.width = width;
@@ -192,21 +197,31 @@
       ctx.drawImage(bitmap, 0, 0, width, height);
 
       let quality = 0.9;
-      let blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+      let mime = "image/webp";
+      let blob = await canvasToBlob(canvas, mime, quality);
+      if (!blob) {
+        mime = "image/jpeg";
+        blob = await canvasToBlob(canvas, mime, quality);
+      }
 
       while (blob && blob.size > MAX_FILE_BYTES && quality > 0.35) {
         quality -= 0.07;
-        blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+        blob = await canvasToBlob(canvas, mime, quality);
+        if (!blob && mime === "image/webp") {
+          mime = "image/jpeg";
+          blob = await canvasToBlob(canvas, mime, quality);
+        }
       }
 
       if (blob && (!bestBlob || blob.size < bestBlob.size)) {
         bestBlob = blob;
         bestWidth = width;
         bestHeight = height;
+        bestMime = mime;
       }
 
       if (blob && blob.size <= MAX_FILE_BYTES) {
-        return { blob, width, height, bytes: blob.size, mime: "image/webp" };
+        return { blob, width, height, bytes: blob.size, mime };
       }
 
       width = Math.max(640, Math.round(width * 0.82));
@@ -218,7 +233,7 @@
       throw new Error(`Bild ${file.name} ist zu groß. Bitte enger zuschneiden.`);
     }
 
-    return { blob: bestBlob, width: bestWidth, height: bestHeight, bytes: bestBlob.size, mime: "image/webp" };
+    return { blob: bestBlob, width: bestWidth, height: bestHeight, bytes: bestBlob.size, mime: bestMime };
   }
 
   async function uploadMedia(postId, files) {
@@ -232,7 +247,8 @@
 
     for (let i = 0; i < files.length; i += 1) {
       const processed = await transcodeImage(files[i]);
-      const path = `posts/${postId}/${Date.now()}-${i + 1}.webp`;
+      const ext = processed.mime === "image/jpeg" ? "jpg" : "webp";
+      const path = `posts/${postId}/${Date.now()}-${i + 1}.${ext}`;
       const encodedPath = path.split("/").map((s) => encodeURIComponent(s)).join("/");
 
       const headers = new Headers();
@@ -456,31 +472,31 @@
       if (form.dataset.saving === "1") return;
       setMessage("Speichert...");
       setFormSaving(form, true, "Speichert...");
-      let createdPostId = null;
       try {
         const payload = payloadFromComposer(form);
         const files = mediaFilesFromComposer(form);
 
         const post = await createPost(payload);
         if (!post?.id) throw new Error("Post konnte nicht erstellt werden");
-        createdPostId = post.id;
 
+        let mediaError = null;
         if (files.length) {
-          const mediaRows = await uploadMedia(post.id, files);
-          await createPostMediaRows(mediaRows);
+          try {
+            const mediaRows = await uploadMedia(post.id, files);
+            await createPostMediaRows(mediaRows);
+          } catch (err) {
+            mediaError = err;
+          }
         }
 
         host.innerHTML = "";
-        setMessage("Beitrag veröffentlicht.");
         await refresh();
-      } catch (err) {
-        if (createdPostId) {
-          try {
-            await deletePost(createdPostId);
-          } catch {
-            // ignore cleanup failure, original error stays primary
-          }
+        if (mediaError) {
+          setMessage(`Beitrag veröffentlicht, aber Bild-Upload fehlgeschlagen: ${mediaError?.message || "Unbekannter Fehler"}`);
+        } else {
+          setMessage("Beitrag veröffentlicht.");
         }
+      } catch (err) {
         setMessage(err?.message || "Speichern fehlgeschlagen");
       } finally {
         setFormSaving(form, false);

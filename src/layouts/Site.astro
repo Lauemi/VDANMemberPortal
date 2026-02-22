@@ -19,7 +19,8 @@ const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 // Guard member area paths:
 const path = Astro.url.pathname.toLowerCase();
-const needsMemberGuard = path.startsWith("/app/");
+const isScannerPath = path.startsWith("/app/ausweis/verifizieren/");
+const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
 ---
 
 <!doctype html>

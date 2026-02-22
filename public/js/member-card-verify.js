@@ -208,6 +208,16 @@
     if (!video) return;
     forceHideVerdict();
     stopScanner();
+    if (!window.isSecureContext) {
+      setMsg("Kamera nur in sicherem Kontext (HTTPS) verfuegbar.");
+      setInlineStatus("HTTPS erforderlich", "invalid");
+      return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setMsg("Browser unterstuetzt keine Kamera-API (getUserMedia).");
+      setInlineStatus("Kamera-API fehlt", "invalid");
+      return;
+    }
     if (!("BarcodeDetector" in window)) {
       setMsg("QR-Scan im Browser nicht unterstützt. Bitte manuell prüfen.");
       return;
@@ -215,8 +225,19 @@
 
     detector = detector || new window.BarcodeDetector({ formats: ["qr_code"] });
     try {
-      scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+      scanStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
       video.srcObject = scanStream;
+      video.muted = true;
+      video.setAttribute("muted", "");
+      video.setAttribute("autoplay", "");
+      video.setAttribute("playsinline", "");
       await video.play();
       setMsg("Scanner aktiv…");
       setInlineStatus("Bereit für Scan", "neutral");
@@ -246,7 +267,14 @@
         await verify(parsed.card, parsed.key);
       }, 450);
     } catch (err) {
-      setMsg(err?.message || "Kamera konnte nicht gestartet werden.");
+      const reason = String(err?.message || "");
+      if (reason.toLowerCase().includes("permission") || reason.toLowerCase().includes("notallowed")) {
+        setMsg("Kein Kamerazugriff. Browser-Berechtigung fuer Kamera erlauben.");
+      } else if (reason.toLowerCase().includes("notfound")) {
+        setMsg("Keine Kamera gefunden.");
+      } else {
+        setMsg(reason || "Kamera konnte nicht gestartet werden.");
+      }
       setInlineStatus("Scanner nicht verfügbar", "invalid");
     }
   }

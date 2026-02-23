@@ -295,9 +295,15 @@
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  function imageToBitmap(file) {
+  async function imageToBitmap(file) {
+    // iOS Safari can expose createImageBitmap but still fail for some camera formats.
+    // Fall back to Image decoding when createImageBitmap rejects.
     if (window.createImageBitmap) {
-      return window.createImageBitmap(file);
+      try {
+        return await window.createImageBitmap(file);
+      } catch {
+        // fallback below
+      }
     }
     return new Promise((resolve, reject) => {
       const img = new Image();

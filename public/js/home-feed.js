@@ -69,6 +69,40 @@
     if (el) el.textContent = text;
   }
 
+  function ensureImageDialog() {
+    let dlg = document.getElementById("feedImageDialog");
+    if (dlg) return dlg;
+    dlg = document.createElement("dialog");
+    dlg.id = "feedImageDialog";
+    dlg.className = "feed-image-dialog";
+    dlg.innerHTML = `
+      <form method="dialog" class="feed-image-dialog__inner">
+        <button type="submit" class="feed-image-dialog__close" aria-label="Schließen">×</button>
+        <img id="feedImageDialogImg" class="feed-image-dialog__img" alt="Beitragsbild groß" />
+      </form>
+    `;
+    dlg.addEventListener("click", (e) => {
+      const rect = dlg.getBoundingClientRect();
+      const inDialog =
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom;
+      if (!inDialog) dlg.close();
+    });
+    document.body.appendChild(dlg);
+    return dlg;
+  }
+
+  function openImageDialog(src, alt = "Beitragsbild groß") {
+    const dlg = ensureImageDialog();
+    const img = document.getElementById("feedImageDialogImg");
+    if (!img) return;
+    img.src = String(src || "");
+    img.alt = String(alt || "Beitragsbild groß");
+    if (!dlg.open) dlg.showModal();
+  }
+
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
@@ -335,14 +369,14 @@
     return { blob: bestBlob, width: bestWidth, height: bestHeight, bytes: bestBlob.size, mime: bestMime };
   }
 
-  async function uploadMedia(postId, files, startSortOrder = 1, onProgress = null) {
+  async function uploadMediaFiles(files, onProgress = null, pathPrefix = "pending") {
     if (!files.length) return [];
 
     const uid = currentUserId();
     if (!uid) throw new Error("Nicht eingeloggt");
 
     const { url, key } = cfg();
-    const mediaRows = [];
+    const uploads = [];
 
     const totalSteps = Math.max(1, files.length * 2);
     let step = 0;
@@ -363,7 +397,7 @@
         });
       }
       const ext = processed.mime === "image/jpeg" ? "jpg" : "webp";
-      const path = `posts/${postId}/${Date.now()}-${i + 1}.${ext}`;
+      const path = `posts/${pathPrefix}/${Date.now()}-${i + 1}.${ext}`;
       const encodedPath = path.split("/").map((s) => encodeURIComponent(s)).join("/");
 
       const headers = new Headers();
@@ -383,16 +417,13 @@
         throw new Error(err?.message || `Storage Upload fehlgeschlagen (${res.status})`);
       }
 
-      mediaRows.push({
-        post_id: postId,
-        sort_order: startSortOrder + i,
+      uploads.push({
         storage_bucket: MEDIA_BUCKET,
         storage_path: path,
         photo_bytes: processed.bytes,
         width: processed.width,
         height: processed.height,
         mime_type: processed.mime,
-        created_by: uid,
       });
       step += 1;
       if (typeof onProgress === "function") {
@@ -403,7 +434,31 @@
       }
     }
 
-    return mediaRows;
+    return uploads;
+  }
+
+  async function deleteUploadedMedia(items = []) {
+    if (!Array.isArray(items) || !items.length) return;
+    const { url, key } = cfg();
+    const token = session()?.access_token;
+    if (!url || !key || !token) return;
+
+    await Promise.all(items.map(async (m) => {
+      const path = String(m?.storage_path || "").trim();
+      if (!path) return;
+      const encodedPath = path.split("/").map((s) => encodeURIComponent(s)).join("/");
+      try {
+        await fetch(`${url}/storage/v1/object/${MEDIA_BUCKET}/${encodedPath}`, {
+          method: "DELETE",
+          headers: {
+            apikey: key,
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } catch {
+        // best effort cleanup
+      }
+    }));
   }
 
   function buildComposer(initial = {}, submitLabel = "Speichern", withMedia = false, fixedCategory = "") {
@@ -669,38 +724,65 @@
     return files;
   }
 
-  function renderComposerMediaPreview(form) {
-    if (!form) return;
-    const input = form.querySelector('[name="media"]');
-    const box = form.querySelector("[data-media-preview]");
-    if (!input || !box) return;
-
-    const oldUrls = Array.isArray(box._previewUrls) ? box._previewUrls : [];
-    oldUrls.forEach((u) => {
-      try { URL.revokeObjectURL(u); } catch { /* noop */ }
-    });
-    box._previewUrls = [];
-
-    const files = Array.from(input.files || []);
-    if (!files.length) {
+  function renderUploadedMediaPreview(form, items = []) {
+    const box = form?.querySelector("[data-media-preview]");
+    if (!box) return;
+    if (!Array.isArray(items) || !items.length) {
       box.innerHTML = "";
       box.setAttribute("hidden", "");
       return;
     }
-
-    box.innerHTML = files.map((file) => {
-      const src = URL.createObjectURL(file);
-      box._previewUrls.push(src);
-      const sizeKb = Math.round((Number(file.size || 0) / 1024) * 10) / 10;
+    box.innerHTML = items.map((m, i) => {
+      const src = storagePublicUrl(m.storage_bucket || MEDIA_BUCKET, m.storage_path);
+      const sizeKb = Math.round((Number(m.photo_bytes || 0) / 1024) * 10) / 10;
       return `
         <figure class="feed-media-preview__item">
-          <img class="feed-media-preview__img" src="${src}" alt="Vorschau ${escapeHtml(file.name)}" />
-          <figcaption class="small">${escapeHtml(file.name)} (${sizeKb} KB)</figcaption>
+          <img class="feed-media-preview__img" src="${src}" alt="Upload Vorschau ${i + 1}" />
+          <figcaption class="small">Upload fertig (${sizeKb} KB)</figcaption>
         </figure>
       `;
     }).join("");
-
     box.removeAttribute("hidden");
+  }
+
+  function clearPreparedMedia(form) {
+    form._preparedMedia = [];
+    renderUploadedMediaPreview(form, []);
+  }
+
+  async function handleComposerMediaSelection(form, maxFiles, prefix) {
+    const input = form.querySelector('[name="media"]');
+    if (!input) return;
+
+    form.dataset.uploading = "1";
+    try {
+      const files = Array.from(input.files || []);
+      const oldPrepared = Array.isArray(form._preparedMedia) ? form._preparedMedia : [];
+      if (!files.length) {
+        await deleteUploadedMedia(oldPrepared);
+        clearPreparedMedia(form);
+        return;
+      }
+
+      if (files.length > maxFiles) {
+        input.value = "";
+        throw new Error(`Maximal ${maxFiles} Bilder erlaubt.`);
+      }
+
+      setFormSaving(form, true, "Upload läuft...");
+      setUploadProgress(form, 5, "Bilder werden hochgeladen...", true);
+      await deleteUploadedMedia(oldPrepared);
+      clearPreparedMedia(form);
+      const uploaded = await uploadMediaFiles(files, ({ percent, text }) => {
+        setUploadProgress(form, percent, text, true);
+      }, prefix);
+      form._preparedMedia = uploaded;
+      renderUploadedMediaPreview(form, uploaded);
+      setUploadProgress(form, 100, "Upload abgeschlossen.", true);
+      setFormSaving(form, false);
+    } finally {
+      delete form.dataset.uploading;
+    }
   }
 
   function setFormSaving(form, isSaving, savingLabel = "Speichern...") {
@@ -864,10 +946,10 @@
         article.dataset.id = post.id;
         article.innerHTML = `
           <header class="feed-post__head">
-            <h3>${escapeHtml(post.title)}</h3>
+            <time class="feed-post__time" datetime="${escapeHtml(post.created_at)}">${escapeHtml(formatDate(post.created_at))}</time>
+            <h3 class="feed-post__title">${escapeHtml(post.title)}</h3>
             <div class="feed-post__meta">
               <span class="feed-chip">${escapeHtml(categoryLabel(post.category))}</span>
-              <time datetime="${escapeHtml(post.created_at)}">${escapeHtml(formatDate(post.created_at))}</time>
               ${canManage ? '<button class="feed-btn feed-btn--ghost" type="button" data-edit>Bearbeiten</button>' : ""}
               ${canManage ? '<button class="feed-btn feed-btn--ghost" type="button" data-delete>Löschen</button>' : ""}
             </div>
@@ -892,6 +974,10 @@
           });
         }
 
+        article.querySelectorAll(".feed-media__img").forEach((imgEl) => {
+          imgEl.addEventListener("click", () => openImageDialog(imgEl.src, imgEl.alt || "Beitragsbild groß"));
+        });
+
         list.appendChild(article);
       });
     } catch (err) {
@@ -912,7 +998,21 @@
     initWorkYouthToggle(form);
     initTermYouthToggle(form);
     form.querySelector('[name="category"]')?.addEventListener("change", () => syncComposerMode(form));
-    form.querySelector('[name="media"]')?.addEventListener("change", () => renderComposerMediaPreview(form));
+    form._preparedMedia = [];
+    form.querySelector('[name="media"]')?.addEventListener("change", async () => {
+      try {
+        const prefix = `pending-${currentUserId() || "anon"}-${Date.now()}`;
+        await handleComposerMediaSelection(form, MAX_MEDIA_FILES, prefix);
+      } catch (err) {
+        delete form.dataset.uploading;
+        clearPreparedMedia(form);
+        const input = form.querySelector('[name="media"]');
+        if (input) input.value = "";
+        setUploadProgress(form, 0, "", false);
+        setFormSaving(form, false);
+        setMessage(err?.message || "Bild-Upload fehlgeschlagen");
+      }
+    });
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -922,6 +1022,7 @@
       setUploadProgress(form, 5, "Initialisiere...", true);
       try {
         const category = composerCategory(form);
+        if (form.dataset.uploading === "1") throw new Error("Bitte warten, bis der Bild-Upload abgeschlossen ist.");
         if (category === "termin") {
           const payload = termPayloadFromComposer(form);
           const created = await createTermEvent(payload);
@@ -945,45 +1046,44 @@
         } else {
           const payload = payloadFromComposer(form);
           const files = mediaFilesFromComposer(form);
+          const prepared = Array.isArray(form._preparedMedia) ? form._preparedMedia : [];
+          if (files.length && !prepared.length) throw new Error("Bitte warten, bis der Bild-Upload abgeschlossen ist.");
 
           const post = await createPost(payload);
           if (!post?.id) throw new Error("Post konnte nicht erstellt werden");
 
-          let mediaError = null;
-          if (files.length) {
-            try {
-              setUploadProgress(form, 15, "Bilder werden verarbeitet...", true);
-              const mediaRows = await uploadMedia(post.id, files, 1, ({ percent, text }) => {
-                setUploadProgress(form, 15 + Math.round((percent * 0.75)), text, true);
-              });
-              setUploadProgress(form, 92, "Speichere Bild-Metadaten...", true);
-              await createPostMediaRows(mediaRows);
-              setUploadProgress(form, 100, "Upload abgeschlossen.", true);
-            } catch (err) {
-              mediaError = err;
-              setUploadProgress(form, 100, "Bild-Upload fehlgeschlagen.", true);
-            }
+          if (prepared.length) {
+            setUploadProgress(form, 92, "Speichere Bild-Metadaten...", true);
+            const uid = currentUserId();
+            const mediaRows = prepared.map((m, i) => ({
+              ...m,
+              post_id: post.id,
+              sort_order: i + 1,
+              created_by: uid || post.author_id || post.updated_by,
+            }));
+            await createPostMediaRows(mediaRows);
+            setUploadProgress(form, 100, "Beitrag und Bilder gespeichert.", true);
           } else {
             setUploadProgress(form, 100, "Beitrag gespeichert.", true);
           }
 
+          clearPreparedMedia(form);
           host.innerHTML = "";
           await refresh();
-          if (mediaError) {
-            setMessage(`Beitrag veröffentlicht, aber Bild-Upload fehlgeschlagen: ${mediaError?.message || "Unbekannter Fehler"}`);
-          } else {
-            setMessage("Beitrag veröffentlicht.");
-          }
+          setMessage("Beitrag veröffentlicht.");
         }
       } catch (err) {
         setMessage(err?.message || "Speichern fehlgeschlagen");
       } finally {
+        delete form.dataset.uploading;
         setFormSaving(form, false);
         setTimeout(() => setUploadProgress(form, 0, "", false), 1200);
       }
     });
 
     form.querySelector("[data-cancel]")?.addEventListener("click", () => {
+      deleteUploadedMedia(form._preparedMedia || []);
+      clearPreparedMedia(form);
       host.innerHTML = "";
       setMessage("");
     });
@@ -1003,7 +1103,7 @@
     initWorkYouthToggle(form);
     initTermYouthToggle(form);
     form.querySelector('[name="category"]')?.addEventListener("change", () => syncComposerMode(form));
-    form.querySelector('[name="media"]')?.addEventListener("change", () => renderComposerMediaPreview(form));
+    form._preparedMedia = [];
 
     const existingMediaCount = Array.isArray(post.feed_post_media) ? post.feed_post_media.length : 0;
     const remainingSlots = Math.max(0, MAX_MEDIA_FILES - existingMediaCount);
@@ -1020,6 +1120,20 @@
         note.className = "small";
         note.textContent = `Du kannst noch ${remainingSlots} Bild(er) hinzufügen.`;
         mediaInput.closest("label")?.appendChild(note);
+        mediaInput.addEventListener("change", async () => {
+          try {
+            const prefix = `pending-edit-${post.id}-${Date.now()}`;
+            await handleComposerMediaSelection(form, remainingSlots, prefix);
+          } catch (err) {
+            delete form.dataset.uploading;
+            clearPreparedMedia(form);
+            const input = form.querySelector('[name="media"]');
+            if (input) input.value = "";
+            setUploadProgress(form, 0, "", false);
+            setFormSaving(form, false);
+            setMessage(err?.message || "Bild-Upload fehlgeschlagen");
+          }
+        });
       }
     }
 
@@ -1031,6 +1145,7 @@
       setUploadProgress(form, 5, "Initialisiere...", true);
       try {
         const category = composerCategory(form);
+        if (form.dataset.uploading === "1") throw new Error("Bitte warten, bis der Bild-Upload abgeschlossen ist.");
         if (["termin", "arbeitseinsatz"].includes(category)) {
           throw new Error("Termine und Arbeitseinsätze bitte über die jeweilige Fachmaske verwalten.");
         }
@@ -1040,27 +1155,37 @@
 
         if (remainingSlots > 0) {
           const files = mediaFilesFromComposer(form, remainingSlots);
-          if (files.length) {
-            const mediaRows = await uploadMedia(post.id, files, existingMediaCount + 1, ({ percent, text }) => {
-              setUploadProgress(form, 30 + Math.round((percent * 0.65)), text, true);
-            });
+          const prepared = Array.isArray(form._preparedMedia) ? form._preparedMedia : [];
+          if (files.length && !prepared.length) throw new Error("Bitte warten, bis der Bild-Upload abgeschlossen ist.");
+          if (prepared.length) {
             setUploadProgress(form, 95, "Speichere Bild-Metadaten...", true);
+            const uid = currentUserId();
+            const mediaRows = prepared.map((m, i) => ({
+              ...m,
+              post_id: post.id,
+              sort_order: existingMediaCount + i + 1,
+              created_by: uid || post.author_id || post.updated_by,
+            }));
             await createPostMediaRows(mediaRows);
           }
         }
 
         setUploadProgress(form, 100, "Fertig.", true);
+        clearPreparedMedia(form);
         setMessage("Beitrag aktualisiert.");
         await refresh();
       } catch (err) {
         setMessage(err?.message || "Update fehlgeschlagen");
       } finally {
+        delete form.dataset.uploading;
         setFormSaving(form, false);
         setTimeout(() => setUploadProgress(form, 0, "", false), 1200);
       }
     });
 
     form.querySelector("[data-cancel]")?.addEventListener("click", () => {
+      deleteUploadedMedia(form._preparedMedia || []);
+      clearPreparedMedia(form);
       slot.innerHTML = "";
       setMessage("");
     });

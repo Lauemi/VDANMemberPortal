@@ -84,6 +84,7 @@ const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
                 <a href="/app/dokumente/" data-manager-only class="hidden" hidden>Dokumente verwalten</a>
                 <a href="/app/mitglieder/" data-admin-only class="hidden" hidden>Mitgliederverwaltung</a>
                 <a href="/app/fangliste/cockpit/" data-admin-only class="hidden" hidden>Fangliste Cockpit</a>
+                <a href="/app/einstellungen/" data-member-only class="hidden" hidden>Einstellungen</a>
               </div>
             </div>
 
@@ -95,6 +96,7 @@ const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
               <p id="accountLabel" class="small">Nicht eingeloggt</p>
               <a href="/login/" id="accountLoginLink" class="feed-btn">Login</a>
               <a href="/app/" id="accountAppLink" class="feed-btn hidden" hidden>Memberportal</a>
+              <a href="/app/einstellungen/" id="accountSettingsLink" class="feed-btn feed-btn--ghost hidden" hidden>Einstellungen</a>
               <button type="button" id="accountLogoutBtn" class="feed-btn feed-btn--ghost hidden" hidden>Logout</button>
             </div>
           </div>

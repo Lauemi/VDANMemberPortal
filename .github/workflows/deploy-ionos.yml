@@ -36,7 +36,7 @@ jobs:
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      - name: Deploy via SFTP (assets first, html last)
+      - name: Deploy via SFTP (single-pass full sync)
         env:
           IONOS_SFTP_HOST: ${{ secrets.IONOS_SFTP_HOST }}
           IONOS_SFTP_USER: ${{ secrets.IONOS_SFTP_USER }}
@@ -54,25 +54,12 @@ jobs:
           set net:max-retries 2
           set net:timeout 20
           set net:reconnect-interval-base 5
-          # 1) Upload non-HTML files first to avoid broken references during rollout.
-          # Do NOT delete here, otherwise nested index.html pages can disappear briefly.
-          mirror -R --verbose=2 \
-            --exclude-glob logs \
-            --exclude-glob logs/** \
-            --exclude-glob .well-known \
-            --exclude-glob .well-known/** \
-            --exclude-glob *.html \
-            ./dist "$REMOTE_PATH"
-          # 2) Upload HTML last (including nested app/**/index.html) and delete stale files.
+          # Single-pass sync avoids missing nested HTML routes (e.g. /app/einstellungen/).
           mirror -R --delete --verbose=2 \
             --exclude-glob logs \
             --exclude-glob logs/** \
             --exclude-glob .well-known \
             --exclude-glob .well-known/** \
-            --include-glob */ \
-            --include-glob **/*.html \
-            --include-glob *.html \
-            --exclude-glob * \
             ./dist "$REMOTE_PATH"
           bye
           EOF

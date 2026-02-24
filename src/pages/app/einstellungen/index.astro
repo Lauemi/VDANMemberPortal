@@ -8,6 +8,39 @@ import { APP } from "../../../config/app";
     <div class="card__body">
       <h1>Einstellungen</h1>
       <p class="small">Zentraler Bereich für App-Update, Benachrichtigungen und Kontooptionen.</p>
+      <p id="settingsMsg" class="small" aria-live="polite"></p>
     </div>
   </section>
+
+  <section class="card">
+    <div class="card__body">
+      <h2>Benachrichtigungen</h2>
+      <form id="settingsNotifyForm" class="resp-form-grid">
+        <label class="resp-full">
+          <span>
+            <input id="setNotifyPosts" type="checkbox" checked />
+            Neue Posts
+          </span>
+        </label>
+        <label class="resp-full">
+          <span>
+            <input id="setNotifyEvents" type="checkbox" checked />
+            Neue Termine
+          </span>
+        </label>
+        <label class="resp-full">
+          <span>
+            <input id="setNotifyWorkEvents" type="checkbox" checked />
+            Neue Arbeitseinsätze
+          </span>
+        </label>
+        <div class="resp-full" style="display:flex;justify-content:flex-end;">
+          <button type="submit" class="feed-btn">Speichern</button>
+        </div>
+      </form>
+      <p class="small">Wenn die Datenbank-Migration noch nicht aktiv ist, werden Werte lokal gespeichert.</p>
+    </div>
+  </section>
+
+  <script src="/js/app-settings.js" defer></script>
 </Site>

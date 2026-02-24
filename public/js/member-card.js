@@ -30,6 +30,58 @@
     return res.json().catch(() => ({}));
   }
 
+  async function fetchOfflineVerifyToken() {
+    const { url, key } = cfg();
+    const token = session()?.access_token;
+    if (!url || !key || !token) return null;
+    const res = await fetch(`${url}/functions/v1/member-card-offline-token`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) return null;
+    const out = await res.json().catch(() => null);
+    if (!out?.ok || !out?.token) return null;
+    return {
+      token: String(out.token),
+      exp: Number(out.exp || 0) || 0,
+    };
+  }
+
+  function offlineTokenCacheKey() {
+    return `vdan_member_card_offline_token_v1:${userId() || "anon"}`;
+  }
+
+  async function loadCachedOfflineToken() {
+    const key = offlineTokenCacheKey();
+    const row = await window.VDAN_OFFLINE_STORE?.getJSON?.(key);
+    if (!row || typeof row !== "object") return null;
+    const exp = Number(row.exp || 0);
+    const now = Math.floor(Date.now() / 1000);
+    if (!exp || exp <= now + 60) return null;
+    const token = String(row.token || "").trim();
+    return token ? { token, exp } : null;
+  }
+
+  async function saveCachedOfflineToken(value) {
+    const key = offlineTokenCacheKey();
+    await window.VDAN_OFFLINE_STORE?.setJSON?.(key, value);
+  }
+
+  async function getOfflineVerifyToken() {
+    const cached = await loadCachedOfflineToken();
+    if (cached) return cached.token;
+    if (!navigator.onLine) return null;
+    const fresh = await fetchOfflineVerifyToken();
+    if (!fresh?.token) return null;
+    await saveCachedOfflineToken(fresh);
+    return fresh.token;
+  }
+
   function setMsg(text = "") {
     const el = document.getElementById("memberCardMsg");
     if (el) el.textContent = text;
@@ -86,7 +138,7 @@
     return Array.isArray(rows) ? rows : [];
   }
 
-  function renderCard(profile, waters) {
+  async function renderCard(profile, waters) {
     const box = document.getElementById("memberCardBox");
     if (!box) return;
     const isValid = Boolean(profile.member_card_valid);
@@ -102,6 +154,8 @@
     const qrUrl = new URL("/app/ausweis/verifizieren/", window.location.origin);
     qrUrl.searchParams.set("card", cardId);
     qrUrl.searchParams.set("key", cardKey);
+    const offlineToken = await getOfflineVerifyToken().catch(() => null);
+    if (offlineToken) qrUrl.searchParams.set("ot", offlineToken);
     const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(qrUrl.toString())}`;
     const qrAllowed = hasExternalMediaConsent();
     const scope = parseCardScope(profile.fishing_card_type);
@@ -193,7 +247,7 @@
         setMsg("Kein Profil gefunden.");
         return;
       }
-      renderCard(p, waters);
+      await renderCard(p, waters);
       const verifyLink = document.querySelector('[data-manager-only]');
       if (verifyLink) {
         const show = isManagerRole(roles);

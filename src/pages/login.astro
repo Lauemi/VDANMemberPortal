@@ -13,7 +13,7 @@ const showDemoHint = Boolean(import.meta.env.DEV);
       <h1>Login</h1>
       <p class="small">Mitgliedsnummer + Passwort. Beim ersten Login mit Standardpasswort musst du dein Passwort ändern.</p>
 
-      <form id="loginForm">
+      <form id="loginForm" data-next-target={nextTarget}>
         <label>
           <span>Mitgliedsnummer</span>
           <input id="loginMemberNo" name="member_no" type="text" inputmode="numeric" autocomplete="username" required />
@@ -38,7 +38,4 @@ const showDemoHint = Boolean(import.meta.env.DEV);
     </div>
   </section>
 
-  <script define:vars={{ nextTarget }}>
-    window.__APP_AFTER_LOGIN = nextTarget;
-  </script>
 </Site>

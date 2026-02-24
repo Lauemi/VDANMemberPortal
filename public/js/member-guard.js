@@ -31,6 +31,13 @@
     return MANAGER_PATHS.some((x) => path.startsWith(x));
   }
 
+  function allowOfflineWithoutSession(path) {
+    if (path.startsWith("/app/fangliste/") && !path.startsWith("/app/fangliste/cockpit/")) return true;
+    if (path.startsWith("/app/arbeitseinsaetze/")) return true;
+    if (path.startsWith("/app/zustaendigkeiten/")) return true;
+    return false;
+  }
+
   async function sb(path, init = {}, withAuth = false) {
     const { url, key } = cfg();
     const headers = new Headers(init.headers || {});
@@ -59,8 +66,14 @@
       const { VDAN_AUTH } = window;
       if (!VDAN_AUTH?.loadSession) return;
       const path = currentPath();
-      const session = VDAN_AUTH.loadSession();
+      let session = VDAN_AUTH.loadSession();
+      if (!session && navigator.onLine && VDAN_AUTH.refreshSession) {
+        session = await VDAN_AUTH.refreshSession().catch(() => null);
+      }
       if (!session) {
+        if (!navigator.onLine && allowOfflineWithoutSession(path)) {
+          return;
+        }
         const next = encodeURIComponent(window.location.pathname + window.location.search);
         window.location.replace(`/login/?next=${next}`);
         return;

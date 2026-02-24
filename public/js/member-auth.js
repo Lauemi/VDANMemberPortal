@@ -25,15 +25,19 @@
     return (expiresAt - EXPIRY_SKEW_MS) > nowMs() && Boolean(session.access_token);
   }
 
-  function loadSession() {
+  function loadStoredSession() {
     try {
       const raw = localStorage.getItem(SESSION_KEY);
       if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      return isValidSession(parsed) ? parsed : null;
+      return JSON.parse(raw);
     } catch {
       return null;
     }
+  }
+
+  function loadSession() {
+    const parsed = loadStoredSession();
+    return isValidSession(parsed) ? parsed : null;
   }
 
   function saveSession(payload) {
@@ -60,6 +64,14 @@
     return `member_${safe}@${MEMBER_EMAIL_DOMAIN}`.toLowerCase();
   }
 
+  function pageTarget(defaultTarget = "/app/") {
+    const loginForm = document.getElementById("loginForm");
+    const pwForm = document.getElementById("passwordChangeForm");
+    const direct = String(loginForm?.dataset?.nextTarget || pwForm?.dataset?.nextTarget || "").trim();
+    if (direct.startsWith("/")) return direct;
+    return defaultTarget;
+  }
+
   async function loginWithPassword(identifier, password) {
     const input = String(identifier || "").trim();
     const email = input.includes("@") ? input.toLowerCase() : memberNoToEmail(input);
@@ -82,6 +94,33 @@
     const session = { ...data, expiresAt };
     saveSession(session);
     return session;
+  }
+
+  async function refreshSession() {
+    const stored = loadStoredSession();
+    const refreshToken = String(stored?.refresh_token || "").trim();
+    if (!refreshToken) return null;
+
+    const res = await sbFetch("/auth/v1/token?grant_type=refresh_token", {
+      method: "POST",
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+
+    if (!res.ok) {
+      clearSession();
+      return null;
+    }
+
+    const data = await res.json().catch(() => ({}));
+    const expiresAt = nowMs() + (Number(data.expires_in || 0) * 1000);
+    const session = {
+      ...stored,
+      ...data,
+      user: data?.user || stored?.user || null,
+      expiresAt,
+    };
+    saveSession(session);
+    return isValidSession(session) ? session : null;
   }
 
   async function getOwnProfile() {
@@ -141,8 +180,12 @@
   }
 
   async function logout() {
-    const session = loadSession();
-    if (!session) return;
+    const session = loadSession() || loadStoredSession();
+    if (!session) {
+      clearSession();
+      return;
+    }
+    const userId = String(session?.user?.id || "").trim();
 
     try {
       await sbFetch("/auth/v1/logout", {
@@ -152,6 +195,11 @@
     } catch {
       // ignore
     } finally {
+      try {
+        await window.VDAN_OFFLINE_STORE?.clearUserData?.(userId);
+      } catch {
+        // ignore
+      }
       clearSession();
     }
   }
@@ -160,6 +208,7 @@
   window.VDAN_AUTH = {
     hasConfig,
     loadSession,
+    refreshSession,
     loginWithPassword,
     getOwnProfile,
     updatePassword,
@@ -203,7 +252,7 @@
           const profile = await getOwnProfile();
           if (msg) msg.textContent = "Login ok.";
           document.dispatchEvent(new CustomEvent("vdan:session", { detail: { loggedIn: true } }));
-          const target = String(window.__APP_AFTER_LOGIN || "/app/");
+          const target = pageTarget("/app/");
           if (profile?.must_change_password) {
             window.location.assign(`/app/passwort-aendern/?next=${encodeURIComponent(target)}`);
             return;
@@ -233,7 +282,7 @@
           if (msgEl) msgEl.textContent = "Speichere…";
           await updatePassword(p1);
           if (msgEl) msgEl.textContent = "Passwort aktualisiert.";
-          const target = String(window.__APP_AFTER_PASSWORD_CHANGE || "/app/");
+          const target = pageTarget("/app/");
           window.location.assign(target);
         } catch (err) {
           if (msgEl) msgEl.textContent = err?.message || "Passwort konnte nicht geändert werden.";

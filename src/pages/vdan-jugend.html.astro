@@ -4,7 +4,7 @@ import { APP } from "../config/app";
 ---
 
 <Site title={`VDAN Jugend • ${APP.name}`} description="Jugendbereich mit eigenem Feed">
-  <section class="feed-shell">
+  <section class="feed-shell" data-feed-category="jugend">
     <div class="feed-toolbar">
       <div>
         <h1>VDAN-Jugend</h1>
@@ -17,6 +17,5 @@ import { APP } from "../config/app";
     <p id="feedMsg" class="small" aria-live="polite"></p>
   </section>
 
-  <script>window.__VDAN_FEED_CATEGORY = "jugend";</script>
   <script src="/js/home-feed.js" defer></script>
 </Site>

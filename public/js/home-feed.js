@@ -1,4 +1,5 @@
 ;(() => {
+  const OFFLINE_NS = "home_feed";
   const TABLE = "feed_posts";
   const MEDIA_TABLE = "feed_post_media";
   const MEDIA_BUCKET = "feed-media";
@@ -17,7 +18,8 @@
 
   let canManage = false;
   let managerProfiles = [];
-  const forcedCategory = String(window.__VDAN_FEED_CATEGORY || "").trim().toLowerCase() || "";
+  let pendingPosts = [];
+  const forcedCategory = String(document.querySelector("[data-feed-category]")?.getAttribute("data-feed-category") || "").trim().toLowerCase() || "";
   const isForcedCategory = Boolean(forcedCategory);
   const isYouthFeed = forcedCategory === "jugend";
 
@@ -50,9 +52,86 @@
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      const e = new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      e.status = res.status;
+      throw e;
     }
     return res.json().catch(() => ({}));
+  }
+
+  function queueAction(type, payload) {
+    return window.VDAN_OFFLINE_SYNC?.enqueue?.(OFFLINE_NS, { type, payload });
+  }
+
+  async function loadPendingPosts() {
+    const rows = await window.VDAN_OFFLINE_SYNC?.cacheGet?.(OFFLINE_NS, "pending_posts", []);
+    pendingPosts = Array.isArray(rows) ? rows : [];
+  }
+
+  async function savePendingPosts() {
+    await window.VDAN_OFFLINE_SYNC?.cacheSet?.(OFFLINE_NS, "pending_posts", pendingPosts);
+  }
+
+  function addPendingPost(payload) {
+    const uid = currentUserId();
+    const localId = `local:post:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
+    pendingPosts.unshift({
+      id: localId,
+      author_id: uid,
+      updated_by: uid,
+      title: payload.title,
+      body: payload.body,
+      category: payload.category,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      _offline_pending: true,
+      feed_post_media: Array.isArray(payload.media_previews)
+        ? payload.media_previews.map((m, i) => ({
+            id: `local:media:${i + 1}`,
+            sort_order: i + 1,
+            storage_bucket: "",
+            storage_path: "",
+            width: m.width || null,
+            height: m.height || null,
+            data_url: m.data_url || "",
+          }))
+        : [],
+    });
+    savePendingPosts().catch(() => {});
+    return localId;
+  }
+
+  function dataUrlToBlob(dataUrl) {
+    const [head, b64] = String(dataUrl || "").split(",");
+    const mime = /data:([^;]+);base64/i.exec(head || "")?.[1] || "application/octet-stream";
+    const bytes = atob(b64 || "");
+    const arr = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i += 1) arr[i] = bytes.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
+
+  function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("Konnte Bild nicht lesen"));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function buildOfflineMediaPayload(files) {
+    const out = [];
+    for (let i = 0; i < files.length; i += 1) {
+      const processed = await transcodeImage(files[i]);
+      out.push({
+        data_url: await blobToDataUrl(processed.blob),
+        width: processed.width,
+        height: processed.height,
+        bytes: processed.bytes,
+        mime: processed.mime,
+      });
+    }
+    return out;
   }
 
   function storagePublicUrl(bucket, path) {
@@ -137,8 +216,17 @@
 
   async function listPosts() {
     const categoryFilter = isForcedCategory ? `&category=eq.${encodeURIComponent(forcedCategory)}` : "";
-    const rows = await sb(`/rest/v1/${TABLE}?select=id,author_id,updated_by,title,body,category,created_at,updated_at,${MEDIA_TABLE}(id,sort_order,storage_bucket,storage_path,width,height)${categoryFilter}&order=created_at.desc`, { method: "GET" }, true);
-    return Array.isArray(rows) ? rows : [];
+    const cacheKey = `posts:${isForcedCategory ? forcedCategory : "all"}`;
+    try {
+      const rows = await sb(`/rest/v1/${TABLE}?select=id,author_id,updated_by,title,body,category,created_at,updated_at,${MEDIA_TABLE}(id,sort_order,storage_bucket,storage_path,width,height)${categoryFilter}&order=created_at.desc`, { method: "GET" }, true);
+      const list = Array.isArray(rows) ? rows : [];
+      await window.VDAN_OFFLINE_SYNC?.cacheSet?.(OFFLINE_NS, cacheKey, list);
+      return [...pendingPosts, ...list];
+    } catch (err) {
+      const cached = await window.VDAN_OFFLINE_SYNC?.cacheGet?.(OFFLINE_NS, cacheKey, []);
+      const list = Array.isArray(cached) ? cached : [];
+      return [...pendingPosts, ...list];
+    }
   }
 
   async function listUpcomingTerms() {
@@ -274,6 +362,94 @@
     await sb(`/rest/v1/${TABLE}?id=eq.${encodeURIComponent(id)}`, {
       method: "DELETE",
     }, true);
+  }
+
+  async function uploadOfflineMediaFromQueue(items = [], pathPrefix = "queued") {
+    if (!Array.isArray(items) || !items.length) return [];
+    const uid = currentUserId();
+    if (!uid) throw new Error("Nicht eingeloggt");
+    const { url, key } = cfg();
+    const token = session()?.access_token;
+    if (!token) throw new Error("Keine Session");
+
+    const uploads = [];
+    for (let i = 0; i < items.length; i += 1) {
+      const it = items[i];
+      const blob = dataUrlToBlob(it.data_url);
+      const ext = String(it.mime || "").includes("jpeg") ? "jpg" : "webp";
+      const path = `posts/${pathPrefix}/${Date.now()}-${i + 1}.${ext}`;
+      const encodedPath = path.split("/").map((s) => encodeURIComponent(s)).join("/");
+      const res = await fetch(`${url}/storage/v1/object/${MEDIA_BUCKET}/${encodedPath}`, {
+        method: "POST",
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": blob.type || "image/webp",
+          "x-upsert": "false",
+        },
+        body: blob,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.message || `Storage Upload fehlgeschlagen (${res.status})`);
+      }
+      uploads.push({
+        storage_bucket: MEDIA_BUCKET,
+        storage_path: path,
+        photo_bytes: Number(it.bytes || blob.size || 0),
+        width: it.width || null,
+        height: it.height || null,
+        mime_type: it.mime || blob.type || "image/webp",
+      });
+    }
+    return uploads;
+  }
+
+  async function flushOfflineQueue() {
+    if (!window.VDAN_OFFLINE_SYNC?.flush) return;
+    await window.VDAN_OFFLINE_SYNC.flush(OFFLINE_NS, async (op) => {
+      const p = op?.payload || {};
+      if (op?.type === "create_term_event") {
+        const created = await createTermEvent(p);
+        const eventId = created?.id || (Array.isArray(created) ? created[0]?.id : null);
+        if (p.publishNow && eventId) await publishTermEvent(eventId);
+        return;
+      }
+      if (op?.type === "create_work_event") {
+        const created = await createWorkEvent(p);
+        const eventId = created?.id || (Array.isArray(created) ? created[0]?.id : null);
+        if (!eventId) throw new Error("Arbeitseinsatz konnte nicht erstellt werden.");
+        if (p.leadUserId) await assignWorkEventLead(eventId, p.leadUserId);
+        if (p.publishNow) await publishWorkEvent(eventId);
+        return;
+      }
+      if (op?.type === "create_post") {
+        const post = await createPost(p.payload || {});
+        const media = Array.isArray(p.media) ? p.media : [];
+        if (post?.id && media.length) {
+          const uploaded = await uploadOfflineMediaFromQueue(media, `queued-${currentUserId() || "anon"}`);
+          const uid = currentUserId();
+          await createPostMediaRows(uploaded.map((m, i) => ({
+            ...m,
+            post_id: post.id,
+            sort_order: i + 1,
+            created_by: uid || post.author_id || post.updated_by,
+          })));
+        }
+        if (p.local_id) {
+          pendingPosts = pendingPosts.filter((x) => String(x.id) !== String(p.local_id));
+          await savePendingPosts();
+        }
+        return;
+      }
+      if (op?.type === "update_post") {
+        await updatePost(p.id, p.payload || {});
+        return;
+      }
+      if (op?.type === "delete_post") {
+        await deletePost(p.id);
+      }
+    });
   }
 
   function categoryLabel(value) {
@@ -739,7 +915,7 @@
       return;
     }
     box.innerHTML = items.map((m, i) => {
-      const src = storagePublicUrl(m.storage_bucket || MEDIA_BUCKET, m.storage_path);
+      const src = m.data_url || storagePublicUrl(m.storage_bucket || MEDIA_BUCKET, m.storage_path);
       const sizeKb = Math.round((Number(m.photo_bytes || 0) / 1024) * 10) / 10;
       return `
         <figure class="feed-media-preview__item">
@@ -753,6 +929,7 @@
 
   function clearPreparedMedia(form) {
     form._preparedMedia = [];
+    form._preparedMediaOffline = [];
     renderUploadedMediaPreview(form, []);
   }
 
@@ -773,6 +950,15 @@
       if (files.length > maxFiles) {
         input.value = "";
         throw new Error(`Maximal ${maxFiles} Bilder erlaubt.`);
+      }
+
+       if (!navigator.onLine) {
+        await deleteUploadedMedia(oldPrepared);
+        clearPreparedMedia(form);
+        form._preparedMediaOffline = files;
+        setUploadProgress(form, 100, "Offline: Bilder lokal vorgemerkt.", true);
+        setFormSaving(form, false);
+        return;
       }
 
       setFormSaving(form, true, "Upload läuft...");
@@ -940,7 +1126,7 @@
             <div class="feed-media feed-media--inline">
               ${media.map((m) => `
                 <figure class="feed-media__item">
-                  <img class="feed-media__img" loading="lazy" src="${storagePublicUrl(m.storage_bucket, m.storage_path)}" alt="Beitragsbild" />
+                  <img class="feed-media__img" loading="lazy" src="${m.data_url || storagePublicUrl(m.storage_bucket, m.storage_path)}" alt="Beitragsbild" />
                 </figure>
               `).join("")}
             </div>
@@ -975,6 +1161,14 @@
               setMessage("Post gelöscht.");
               await refresh();
             } catch (err) {
+              if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+                await queueAction("delete_post", { id: post.id });
+                pendingPosts = pendingPosts.filter((p) => String(p.id) !== String(post.id));
+                await savePendingPosts();
+                setMessage("Offline gespeichert. Löschung wird bei Empfang übertragen.");
+                await refresh();
+                return;
+              }
               setMessage(err?.message || "Löschen fehlgeschlagen");
             }
           });
@@ -1031,52 +1225,98 @@
         if (form.dataset.uploading === "1") throw new Error("Bitte warten, bis der Bild-Upload abgeschlossen ist.");
         if (category === "termin") {
           const payload = termPayloadFromComposer(form);
-          const created = await createTermEvent(payload);
-          const eventId = created?.id || (Array.isArray(created) ? created[0]?.id : null);
-          if (payload.publishNow && eventId) await publishTermEvent(eventId);
-          setUploadProgress(form, 100, "Fertig.", true);
-          host.innerHTML = "";
-          await refresh();
-          setMessage(payload.publishNow ? "Termin erstellt und veröffentlicht." : "Termin erstellt.");
+          try {
+            const created = await createTermEvent(payload);
+            const eventId = created?.id || (Array.isArray(created) ? created[0]?.id : null);
+            if (payload.publishNow && eventId) await publishTermEvent(eventId);
+            setUploadProgress(form, 100, "Fertig.", true);
+            host.innerHTML = "";
+            await refresh();
+            setMessage(payload.publishNow ? "Termin erstellt und veröffentlicht." : "Termin erstellt.");
+          } catch (err) {
+            if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+              await queueAction("create_term_event", payload);
+              setUploadProgress(form, 100, "Offline gespeichert.", true);
+              host.innerHTML = "";
+              setMessage("Termin offline gespeichert. Veröffentlichung/Sync folgt bei Empfang.");
+              return;
+            }
+            throw err;
+          }
         } else if (category === "arbeitseinsatz") {
           const payload = workPayloadFromComposer(form);
-          const created = await createWorkEvent(payload);
-          const eventId = created?.id || (Array.isArray(created) ? created[0]?.id : null);
-          if (!eventId) throw new Error("Arbeitseinsatz konnte nicht erstellt werden.");
-          await assignWorkEventLead(eventId, payload.leadUserId);
-          if (payload.publishNow) await publishWorkEvent(eventId);
-          setUploadProgress(form, 100, "Fertig.", true);
-          host.innerHTML = "";
-          await refresh();
-          setMessage(payload.publishNow ? "Arbeitseinsatz erstellt, Leiter zugewiesen und veröffentlicht." : "Arbeitseinsatz erstellt und Leiter zugewiesen.");
+          try {
+            const created = await createWorkEvent(payload);
+            const eventId = created?.id || (Array.isArray(created) ? created[0]?.id : null);
+            if (!eventId) throw new Error("Arbeitseinsatz konnte nicht erstellt werden.");
+            await assignWorkEventLead(eventId, payload.leadUserId);
+            if (payload.publishNow) await publishWorkEvent(eventId);
+            setUploadProgress(form, 100, "Fertig.", true);
+            host.innerHTML = "";
+            await refresh();
+            setMessage(payload.publishNow ? "Arbeitseinsatz erstellt, Leiter zugewiesen und veröffentlicht." : "Arbeitseinsatz erstellt und Leiter zugewiesen.");
+          } catch (err) {
+            if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+              await queueAction("create_work_event", payload);
+              setUploadProgress(form, 100, "Offline gespeichert.", true);
+              host.innerHTML = "";
+              setMessage("Arbeitseinsatz offline gespeichert. Sync folgt bei Empfang.");
+              return;
+            }
+            throw err;
+          }
         } else {
           const payload = payloadFromComposer(form);
           const files = mediaFilesFromComposer(form);
           const prepared = Array.isArray(form._preparedMedia) ? form._preparedMedia : [];
-          if (files.length && !prepared.length) throw new Error("Bitte warten, bis der Bild-Upload abgeschlossen ist.");
+          const offlineFiles = Array.isArray(form._preparedMediaOffline) ? form._preparedMediaOffline : [];
 
-          const post = await createPost(payload);
-          if (!post?.id) throw new Error("Post konnte nicht erstellt werden");
+          try {
+            if (files.length && !prepared.length && navigator.onLine) throw new Error("Bitte warten, bis der Bild-Upload abgeschlossen ist.");
 
-          if (prepared.length) {
-            setUploadProgress(form, 92, "Speichere Bild-Metadaten...", true);
-            const uid = currentUserId();
-            const mediaRows = prepared.map((m, i) => ({
-              ...m,
-              post_id: post.id,
-              sort_order: i + 1,
-              created_by: uid || post.author_id || post.updated_by,
-            }));
-            await createPostMediaRows(mediaRows);
-            setUploadProgress(form, 100, "Beitrag und Bilder gespeichert.", true);
-          } else {
-            setUploadProgress(form, 100, "Beitrag gespeichert.", true);
+            const post = await createPost(payload);
+            if (!post?.id) throw new Error("Post konnte nicht erstellt werden");
+
+            if (prepared.length) {
+              setUploadProgress(form, 92, "Speichere Bild-Metadaten...", true);
+              const uid = currentUserId();
+              const mediaRows = prepared.map((m, i) => ({
+                ...m,
+                post_id: post.id,
+                sort_order: i + 1,
+                created_by: uid || post.author_id || post.updated_by,
+              }));
+              await createPostMediaRows(mediaRows);
+              setUploadProgress(form, 100, "Beitrag und Bilder gespeichert.", true);
+            } else {
+              setUploadProgress(form, 100, "Beitrag gespeichert.", true);
+            }
+
+            clearPreparedMedia(form);
+            host.innerHTML = "";
+            await refresh();
+            setMessage("Beitrag veröffentlicht.");
+          } catch (err) {
+            if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+              const offlineMedia = offlineFiles.length ? await buildOfflineMediaPayload(offlineFiles) : [];
+              const localId = addPendingPost({
+                ...payload,
+                media_previews: offlineMedia,
+              });
+              await queueAction("create_post", {
+                local_id: localId,
+                payload,
+                media: offlineMedia,
+              });
+              setUploadProgress(form, 100, "Offline gespeichert.", true);
+              clearPreparedMedia(form);
+              host.innerHTML = "";
+              await refresh();
+              setMessage("Beitrag offline gespeichert. Wird bei Empfang veröffentlicht.");
+              return;
+            }
+            throw err;
           }
-
-          clearPreparedMedia(form);
-          host.innerHTML = "";
-          await refresh();
-          setMessage("Beitrag veröffentlicht.");
         }
       } catch (err) {
         setMessage(err?.message || "Speichern fehlgeschlagen");
@@ -1181,6 +1421,16 @@
         setMessage("Beitrag aktualisiert.");
         await refresh();
       } catch (err) {
+        if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+          const payload = payloadFromComposer(form);
+          await queueAction("update_post", { id: post.id, payload });
+          const idx = pendingPosts.findIndex((p) => String(p.id) === String(post.id));
+          if (idx >= 0) pendingPosts[idx] = { ...pendingPosts[idx], ...payload, updated_at: new Date().toISOString() };
+          await savePendingPosts();
+          setMessage("Offline gespeichert. Änderung wird bei Empfang übertragen.");
+          await refresh();
+          return;
+        }
         setMessage(err?.message || "Update fehlgeschlagen");
       } finally {
         delete form.dataset.uploading;
@@ -1210,6 +1460,8 @@
     }
 
     try {
+      await loadPendingPosts();
+      await flushOfflineQueue().catch(() => {});
       const roles = await loadRoles();
       canManage = roles.some((r) => MANAGER_ROLES.has(r));
       managerProfiles = canManage ? await loadManagerProfiles().catch(() => []) : [];
@@ -1230,4 +1482,7 @@
 
   document.addEventListener("DOMContentLoaded", init);
   document.addEventListener("vdan:session", init);
+  window.addEventListener("online", () => {
+    flushOfflineQueue().then(() => refresh()).catch(() => {});
+  });
 })();

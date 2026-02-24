@@ -1,5 +1,6 @@
 ;(() => {
   const MANAGER_ROLES = new Set(["admin", "vorstand"]);
+  const OFFLINE_NS = "term_cockpit";
   let createDialog = null;
   let isManager = false;
 
@@ -24,9 +25,27 @@
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.message || err?.hint || `Request failed (${res.status})`);
+      const e = new Error(err?.message || err?.hint || `Request failed (${res.status})`);
+      e.status = res.status;
+      throw e;
     }
     return res.json().catch(() => ({}));
+  }
+
+  async function sbGetCached(cacheKey, path, withAuth = false, fallback = []) {
+    try {
+      const out = await sb(path, { method: "GET" }, withAuth);
+      await window.VDAN_OFFLINE_SYNC?.cacheSet?.(OFFLINE_NS, cacheKey, out);
+      return out;
+    } catch (err) {
+      const cached = await window.VDAN_OFFLINE_SYNC?.cacheGet?.(OFFLINE_NS, cacheKey, fallback);
+      if (cached !== null && cached !== undefined) return cached;
+      throw err;
+    }
+  }
+
+  async function queueAction(type, payload) {
+    await window.VDAN_OFFLINE_SYNC?.enqueue?.(OFFLINE_NS, { type, payload });
   }
 
   function setMsg(text = "") {
@@ -51,20 +70,68 @@
   }
 
   async function listEvents() {
-    const rows = await sb("/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,created_at&order=starts_at.desc", { method: "GET" }, true);
+    const rows = await sbGetCached(
+      "events",
+      "/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,created_at&order=starts_at.desc",
+      true,
+      []
+    );
     return Array.isArray(rows) ? rows : [];
   }
 
   async function createEvent(payload) {
-    return sb("/rest/v1/rpc/term_event_create", { method: "POST", body: JSON.stringify(payload) }, true);
+    try {
+      return await sb("/rest/v1/rpc/term_event_create", { method: "POST", body: JSON.stringify(payload) }, true);
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueAction("create_event", payload);
+        return { queued: true };
+      }
+      throw err;
+    }
   }
 
   async function publishEvent(id) {
-    return sb("/rest/v1/rpc/term_event_publish", { method: "POST", body: JSON.stringify({ p_event_id: id }) }, true);
+    try {
+      return await sb("/rest/v1/rpc/term_event_publish", { method: "POST", body: JSON.stringify({ p_event_id: id }) }, true);
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueAction("publish_event", { p_event_id: id });
+        return { queued: true };
+      }
+      throw err;
+    }
   }
 
   async function patchStatus(id, status) {
-    await sb(`/rest/v1/club_events?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ status }) }, true);
+    try {
+      await sb(`/rest/v1/club_events?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ status }) }, true);
+      return { queued: false };
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueAction("patch_status", { id, status });
+        return { queued: true };
+      }
+      throw err;
+    }
+  }
+
+  async function flushOfflineQueue() {
+    if (!window.VDAN_OFFLINE_SYNC?.flush) return;
+    await window.VDAN_OFFLINE_SYNC.flush(OFFLINE_NS, async (op) => {
+      const p = op?.payload || {};
+      if (op?.type === "create_event") {
+        await sb("/rest/v1/rpc/term_event_create", { method: "POST", body: JSON.stringify(p) }, true);
+        return;
+      }
+      if (op?.type === "publish_event") {
+        await sb("/rest/v1/rpc/term_event_publish", { method: "POST", body: JSON.stringify(p) }, true);
+        return;
+      }
+      if (op?.type === "patch_status") {
+        await sb(`/rest/v1/club_events?id=eq.${encodeURIComponent(p.id || "")}`, { method: "PATCH", body: JSON.stringify({ status: p.status }) }, true);
+      }
+    });
   }
 
   function render(rows) {
@@ -149,7 +216,7 @@
       e.preventDefault();
       try {
         setMsg("Termin wird erstellt...");
-        await createEvent({
+        const out = await createEvent({
           p_title: String(document.getElementById("termTitle")?.value || "").trim(),
           p_description: String(document.getElementById("termDescription")?.value || "").trim() || null,
           p_location: String(document.getElementById("termLocation")?.value || "").trim() || null,
@@ -157,7 +224,7 @@
           p_ends_at: toIso(String(document.getElementById("termEndsAt")?.value || "")),
         });
         closeDialog();
-        setMsg("Termin erstellt.");
+        setMsg(out?.queued ? "Offline gespeichert. Termin wird bei Empfang übertragen." : "Termin erstellt.");
         await refresh();
       } catch (err) {
         setMsg(err?.message || "Erstellen fehlgeschlagen");
@@ -171,9 +238,18 @@
       const cancelId = t.getAttribute("data-cancel");
       const archiveId = t.getAttribute("data-archive");
       try {
-        if (publishId) await publishEvent(publishId);
-        if (cancelId) await patchStatus(cancelId, "cancelled");
-        if (archiveId) await patchStatus(archiveId, "archived");
+        if (publishId) {
+          const out = await publishEvent(publishId);
+          setMsg(out?.queued ? "Offline gespeichert. Veröffentlichung folgt bei Empfang." : "Termin veröffentlicht.");
+        }
+        if (cancelId) {
+          const out = await patchStatus(cancelId, "cancelled");
+          setMsg(out?.queued ? "Offline gespeichert. Absage folgt bei Empfang." : "Termin abgesagt.");
+        }
+        if (archiveId) {
+          const out = await patchStatus(archiveId, "archived");
+          setMsg(out?.queued ? "Offline gespeichert. Archivierung folgt bei Empfang." : "Termin archiviert.");
+        }
         await refresh();
       } catch (err) {
         setMsg(err?.message || "Aktion fehlgeschlagen");
@@ -186,16 +262,21 @@
       const archiveId = t.getAttribute("data-archive");
       if (!archiveId) return;
       try {
-        await patchStatus(archiveId, "archived");
+        const out = await patchStatus(archiveId, "archived");
+        setMsg(out?.queued ? "Offline gespeichert. Archivierung folgt bei Empfang." : "Termin archiviert.");
         await refresh();
       } catch (err) {
         setMsg(err?.message || "Aktion fehlgeschlagen");
       }
     });
 
+    await flushOfflineQueue().catch(() => {});
     await refresh();
   }
 
   document.addEventListener("DOMContentLoaded", init);
   document.addEventListener("vdan:session", init);
+  window.addEventListener("online", () => {
+    flushOfflineQueue().then(() => refresh()).catch(() => {});
+  });
 })();

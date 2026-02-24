@@ -1,5 +1,6 @@
 ;(() => {
   const MANAGER_ROLES = new Set(["admin", "vorstand"]);
+  const OFFLINE_NS = "work_cockpit";
   let isManager = false;
   let createDialog = null;
   let featureFlags = { work_qr_enabled: false };
@@ -31,9 +32,27 @@
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      const e = new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      e.status = res.status;
+      throw e;
     }
     return res.json().catch(() => ({}));
+  }
+
+  async function sbGetCached(cacheKey, path, withAuth = false, fallback = []) {
+    try {
+      const out = await sb(path, { method: "GET" }, withAuth);
+      await window.VDAN_OFFLINE_SYNC?.cacheSet?.(OFFLINE_NS, cacheKey, out);
+      return out;
+    } catch (err) {
+      const cached = await window.VDAN_OFFLINE_SYNC?.cacheGet?.(OFFLINE_NS, cacheKey, fallback);
+      if (cached !== null && cached !== undefined) return cached;
+      throw err;
+    }
+  }
+
+  async function queueAction(type, payload) {
+    await window.VDAN_OFFLINE_SYNC?.enqueue?.(OFFLINE_NS, { type, payload });
   }
 
   function escapeHtml(str) {
@@ -74,19 +93,21 @@
   }
 
   async function listEvents() {
-    const rows = await sb(
+    const rows = await sbGetCached(
+      "events",
       "/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,max_participants,status,public_token,created_at&order=starts_at.desc",
-      { method: "GET" },
-      true
+      true,
+      []
     );
     return Array.isArray(rows) ? rows : [];
   }
 
   async function listParticipations(eventId) {
-    const rows = await sb(
+    const rows = await sbGetCached(
+      `parts:${eventId}`,
       `/rest/v1/work_participations?select=id,event_id,auth_uid,status,minutes_reported,minutes_approved,checkin_at,checkout_at,note_member,note_admin,updated_by,approved_by,approved_at,created_at&event_id=eq.${encodeURIComponent(eventId)}&order=created_at.desc`,
-      { method: "GET" },
-      true
+      true,
+      []
     );
     return Array.isArray(rows) ? rows : [];
   }
@@ -124,64 +145,144 @@
         (Array.isArray(rows) ? rows : []).forEach((r) => {
           if (r?.key) flags[r.key] = Boolean(r.enabled);
         });
+        await window.VDAN_OFFLINE_SYNC?.cacheSet?.(OFFLINE_NS, "flags", flags);
         return flags;
       } catch {
-        return {};
+        return await window.VDAN_OFFLINE_SYNC?.cacheGet?.(OFFLINE_NS, "flags", {}) || {};
       }
     }
   }
 
+  async function flushOfflineQueue() {
+    if (!window.VDAN_OFFLINE_SYNC?.flush) return;
+    await window.VDAN_OFFLINE_SYNC.flush(OFFLINE_NS, async (op) => {
+      const p = op?.payload || {};
+      if (op?.type === "create_event") {
+        await sb("/rest/v1/rpc/work_event_create", { method: "POST", body: JSON.stringify(p) }, true);
+        return;
+      }
+      if (op?.type === "publish_event") {
+        await sb("/rest/v1/rpc/work_event_publish", { method: "POST", body: JSON.stringify(p) }, true);
+        return;
+      }
+      if (op?.type === "patch_event_status") {
+        await sb(`/rest/v1/work_events?id=eq.${encodeURIComponent(p.eventId || "")}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: p.status }),
+        }, true);
+        return;
+      }
+      if (op?.type === "approve_participation") {
+        await sb("/rest/v1/rpc/work_approve", { method: "POST", body: JSON.stringify(p) }, true);
+        return;
+      }
+      if (op?.type === "reject_participation") {
+        await sb("/rest/v1/rpc/work_reject", { method: "POST", body: JSON.stringify(p) }, true);
+        return;
+      }
+      if (op?.type === "admin_update_participation") {
+        await sb("/rest/v1/rpc/work_participation_admin_update", { method: "POST", body: JSON.stringify(p) }, true);
+      }
+    });
+  }
+
   async function createEvent(payload) {
-    return sb("/rest/v1/rpc/work_event_create", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }, true);
+    try {
+      return await sb("/rest/v1/rpc/work_event_create", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }, true);
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueAction("create_event", payload);
+        return { queued: true };
+      }
+      throw err;
+    }
   }
 
   async function publishEvent(eventId) {
-    return sb("/rest/v1/rpc/work_event_publish", {
-      method: "POST",
-      body: JSON.stringify({ p_event_id: eventId }),
-    }, true);
+    try {
+      return await sb("/rest/v1/rpc/work_event_publish", {
+        method: "POST",
+        body: JSON.stringify({ p_event_id: eventId }),
+      }, true);
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueAction("publish_event", { p_event_id: eventId });
+        return { queued: true };
+      }
+      throw err;
+    }
   }
 
   async function patchEventStatus(eventId, status) {
-    await sb(`/rest/v1/work_events?id=eq.${encodeURIComponent(eventId)}`, {
-      method: "PATCH",
-      body: JSON.stringify({ status }),
-    }, true);
+    try {
+      await sb(`/rest/v1/work_events?id=eq.${encodeURIComponent(eventId)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      }, true);
+      return { queued: false };
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueAction("patch_event_status", { eventId, status });
+        return { queued: true };
+      }
+      throw err;
+    }
   }
 
   async function approveParticipation(id, minutesApproved) {
-    return sb("/rest/v1/rpc/work_approve", {
-      method: "POST",
-      body: JSON.stringify({
-        p_participation_id: id,
-        p_minutes_approved: Number.isFinite(minutesApproved) ? minutesApproved : 0,
-      }),
-    }, true);
+    const payload = {
+      p_participation_id: id,
+      p_minutes_approved: Number.isFinite(minutesApproved) ? minutesApproved : 0,
+    };
+    try {
+      return await sb("/rest/v1/rpc/work_approve", { method: "POST", body: JSON.stringify(payload) }, true);
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueAction("approve_participation", payload);
+        return { queued: true };
+      }
+      throw err;
+    }
   }
 
   async function rejectParticipation(id, noteAdmin) {
-    return sb("/rest/v1/rpc/work_reject", {
-      method: "POST",
-      body: JSON.stringify({
-        p_participation_id: id,
-        p_note_admin: noteAdmin || null,
-      }),
-    }, true);
+    const payload = {
+      p_participation_id: id,
+      p_note_admin: noteAdmin || null,
+    };
+    try {
+      return await sb("/rest/v1/rpc/work_reject", { method: "POST", body: JSON.stringify(payload) }, true);
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueAction("reject_participation", payload);
+        return { queued: true };
+      }
+      throw err;
+    }
   }
 
   async function adminUpdateParticipationTime(id, checkinAt, checkoutAt, noteAdmin) {
-    return sb("/rest/v1/rpc/work_participation_admin_update", {
-      method: "POST",
-      body: JSON.stringify({
-        p_participation_id: id,
-        p_checkin_at: checkinAt || null,
-        p_checkout_at: checkoutAt || null,
-        p_note_admin: noteAdmin || null,
-      }),
-    }, true);
+    const payload = {
+      p_participation_id: id,
+      p_checkin_at: checkinAt || null,
+      p_checkout_at: checkoutAt || null,
+      p_note_admin: noteAdmin || null,
+    };
+    try {
+      return await sb("/rest/v1/rpc/work_participation_admin_update", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }, true);
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueAction("admin_update_participation", payload);
+        return { queued: true };
+      }
+      throw err;
+    }
   }
 
   function toIsoFromLocalInput(value) {
@@ -470,7 +571,7 @@
         const maxRaw = String(document.getElementById("workMax")?.value || "").trim();
         const maxParticipants = maxRaw ? Number(maxRaw) : null;
 
-        await createEvent({
+        const out = await createEvent({
           p_title: String(document.getElementById("workTitle")?.value || "").trim(),
           p_description: String(document.getElementById("workDescription")?.value || "").trim() || null,
           p_location: String(document.getElementById("workLocation")?.value || "").trim() || null,
@@ -480,7 +581,7 @@
           p_is_youth: String(document.getElementById("workIsYouth")?.value || "0") === "1",
         });
         closeCreateDialog();
-        setMsg("Einsatz erstellt.");
+        setMsg(out?.queued ? "Offline gespeichert. Einsatz wird bei Empfang übertragen." : "Einsatz erstellt.");
         await refresh();
       } catch (err) {
         setMsg(err?.message || "Erstellen fehlgeschlagen");
@@ -495,8 +596,8 @@
       if (publishId) {
         try {
           setMsg("Veröffentlichung läuft...");
-          await publishEvent(publishId);
-          setMsg("Einsatz veröffentlicht.");
+          const out = await publishEvent(publishId);
+          setMsg(out?.queued ? "Offline gespeichert. Veröffentlichung folgt bei Empfang." : "Einsatz veröffentlicht.");
           await refresh();
         } catch (err) {
           setMsg(err?.message || "Veröffentlichen fehlgeschlagen");
@@ -508,8 +609,8 @@
       if (cancelId) {
         try {
           setMsg("Absage wird gespeichert...");
-          await patchEventStatus(cancelId, "cancelled");
-          setMsg("Einsatz abgesagt.");
+          const out = await patchEventStatus(cancelId, "cancelled");
+          setMsg(out?.queued ? "Offline gespeichert. Absage folgt bei Empfang." : "Einsatz abgesagt.");
           await refresh();
         } catch (err) {
           setMsg(err?.message || "Absage fehlgeschlagen");
@@ -521,8 +622,8 @@
       if (archiveId) {
         try {
           setMsg("Archiviert...");
-          await patchEventStatus(archiveId, "archived");
-          setMsg("Einsatz archiviert.");
+          const out = await patchEventStatus(archiveId, "archived");
+          setMsg(out?.queued ? "Offline gespeichert. Archivierung folgt bei Empfang." : "Einsatz archiviert.");
           await refresh();
         } catch (err) {
           setMsg(err?.message || "Archivieren fehlgeschlagen");
@@ -554,8 +655,8 @@
         const minutes = Number(minutesEl?.value || 0);
         try {
           setMsg("Freigabe läuft...");
-          await approveParticipation(approveId, minutes);
-          setMsg("Teilnahme freigegeben.");
+          const out = await approveParticipation(approveId, minutes);
+          setMsg(out?.queued ? "Offline gespeichert. Freigabe folgt bei Empfang." : "Teilnahme freigegeben.");
           await refresh();
         } catch (err) {
           setMsg(err?.message || "Freigabe fehlgeschlagen");
@@ -568,8 +669,8 @@
         const note = window.prompt("Grund für Ablehnung (optional):", "") || "";
         try {
           setMsg("Ablehnung läuft...");
-          await rejectParticipation(rejectId, note.trim());
-          setMsg("Teilnahme abgelehnt.");
+          const out = await rejectParticipation(rejectId, note.trim());
+          setMsg(out?.queued ? "Offline gespeichert. Ablehnung folgt bei Empfang." : "Teilnahme abgelehnt.");
           await refresh();
         } catch (err) {
           setMsg(err?.message || "Ablehnung fehlgeschlagen");
@@ -588,8 +689,8 @@
         };
         try {
           setMsg("Zeitkorrektur wird gespeichert...");
-          await adminUpdateParticipationTime(saveTimeId, toIso(inVal), toIso(outVal), null);
-          setMsg("Zeitkorrektur gespeichert.");
+          const out = await adminUpdateParticipationTime(saveTimeId, toIso(inVal), toIso(outVal), null);
+          setMsg(out?.queued ? "Offline gespeichert. Zeitkorrektur folgt bei Empfang." : "Zeitkorrektur gespeichert.");
           await refresh();
         } catch (err) {
           setMsg(err?.message || "Zeitkorrektur fehlgeschlagen");
@@ -625,11 +726,15 @@
     document.getElementById("workCockpitEventsActive")?.addEventListener("input", onEditInput);
     document.getElementById("workCockpitEventsHistory")?.addEventListener("input", onEditInput);
 
+    await flushOfflineQueue().catch(() => {});
     await refresh().catch((err) => setMsg(err?.message || "Laden fehlgeschlagen"));
   }
 
   document.addEventListener("DOMContentLoaded", init);
   document.addEventListener("vdan:session", init);
+  window.addEventListener("online", () => {
+    flushOfflineQueue().then(() => refresh()).catch(() => {});
+  });
   document.addEventListener("vdan:consent-changed", () => {
     if (!isManager) return;
     refresh().catch((err) => setMsg(err?.message || "Laden fehlgeschlagen"));

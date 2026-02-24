@@ -12,6 +12,7 @@
   let jsQrLoader = null;
   let qrCanvas = null;
   let qrCtx = null;
+  let verifyKeyPromise = null;
 
   function cfg() {
     return {
@@ -151,8 +152,16 @@
 
   async function loadRoles() {
     if (!uid()) return [];
-    const rows = await sb(`/rest/v1/user_roles?select=role&user_id=eq.${encodeURIComponent(uid())}`, { method: "GET" }, true);
-    return Array.isArray(rows) ? rows.map((r) => String(r.role || "").toLowerCase()) : [];
+    const cacheKey = `scanner_roles_v1:${uid()}`;
+    try {
+      const rows = await sb(`/rest/v1/user_roles?select=role&user_id=eq.${encodeURIComponent(uid())}`, { method: "GET" }, true);
+      const roles = Array.isArray(rows) ? rows.map((r) => String(r.role || "").toLowerCase()) : [];
+      await window.VDAN_OFFLINE_STORE?.setJSON?.(cacheKey, roles);
+      return roles;
+    } catch {
+      const cached = await window.VDAN_OFFLINE_STORE?.getJSON?.(cacheKey);
+      return Array.isArray(cached) ? cached.map((r) => String(r || "").toLowerCase()) : [];
+    }
   }
 
   function renderController(profile) {
@@ -208,12 +217,120 @@
       const url = new URL(txt);
       const card = String(url.searchParams.get("card") || "").trim();
       const key = String(url.searchParams.get("key") || "").trim();
-      if (card && key) return { card, key };
+      const ot = String(url.searchParams.get("ot") || "").trim();
+      if (card && key) return { card, key, ot: ot || null };
+      if (ot) return { card: "", key: "", ot };
     } catch {}
     return null;
   }
 
-  async function verify(card, key) {
+  function base64UrlToBytes(input) {
+    const padded = String(input || "").replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(String(input || "").length / 4) * 4, "=");
+    const raw = atob(padded);
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i += 1) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+
+  function pemToSpkiBytes(pem) {
+    const clean = String(pem || "")
+      .replace(/-----BEGIN PUBLIC KEY-----/g, "")
+      .replace(/-----END PUBLIC KEY-----/g, "")
+      .replace(/\s+/g, "");
+    return base64UrlToBytes(clean.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, ""));
+  }
+
+  async function getVerifyKey() {
+    const pem = String(window.__APP_MEMBER_CARD_VERIFY_PUBKEY || "").trim();
+    if (!pem) return null;
+    if (!verifyKeyPromise) {
+      verifyKeyPromise = crypto.subtle.importKey(
+        "spki",
+        pemToSpkiBytes(pem),
+        { name: "ECDSA", namedCurve: "P-256" },
+        false,
+        ["verify"],
+      ).catch(() => null);
+    }
+    return await verifyKeyPromise;
+  }
+
+  function decodeJwtPart(part) {
+    const raw = new TextDecoder().decode(base64UrlToBytes(part));
+    return JSON.parse(raw);
+  }
+
+  function isoDateOnlyToMs(value, endOfDay = false) {
+    if (!value) return null;
+    const tail = endOfDay ? "T23:59:59.999Z" : "T00:00:00.000Z";
+    const ms = new Date(`${value}${tail}`).getTime();
+    return Number.isFinite(ms) ? ms : null;
+  }
+
+  async function verifyOfflineToken(token) {
+    const parts = String(token || "").split(".");
+    if (parts.length !== 3) throw new Error("Tokenformat ungültig.");
+    const [h, p, s] = parts;
+    const header = decodeJwtPart(h);
+    const payload = decodeJwtPart(p);
+    if (String(header?.alg || "") !== "ES256") throw new Error("Token-Algorithmus ungültig.");
+    if (String(payload?.aud || "") !== "member-card-offline-verify") throw new Error("Token-Audience ungültig.");
+    const exp = Number(payload?.exp || 0);
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (!exp || exp <= nowSec) throw new Error("Token abgelaufen.");
+
+    const key = await getVerifyKey();
+    if (!key) throw new Error("Offline-Verifikationsschlüssel fehlt.");
+    const ok = await crypto.subtle.verify(
+      { name: "ECDSA", hash: "SHA-256" },
+      key,
+      base64UrlToBytes(s),
+      new TextEncoder().encode(`${h}.${p}`),
+    );
+    if (!ok) throw new Error("Token-Signatur ungültig.");
+
+    const validFromMs = isoDateOnlyToMs(payload?.member_card_valid_from, false);
+    const validUntilMs = isoDateOnlyToMs(payload?.member_card_valid_until, true);
+    const nowMs = Date.now();
+    const inValidity = (!validFromMs || nowMs >= validFromMs) && (!validUntilMs || nowMs <= validUntilMs);
+    const valid = Boolean(payload?.member_card_valid) && inValidity;
+    return {
+      ok: true,
+      valid,
+      display_name: payload?.display_name || "-",
+      member_no: payload?.member_no || "-",
+      member_card_id: payload?.card_id || "-",
+      fishing_card_type: payload?.fishing_card_type || "-",
+      role: payload?.role || "member",
+      member_card_valid_from: payload?.member_card_valid_from || null,
+      member_card_valid_until: payload?.member_card_valid_until || null,
+      source: "offline_token",
+    };
+  }
+
+  async function verify(card, key, offlineToken = null) {
+    if (!navigator.onLine) {
+      if (!offlineToken) {
+        setMsg("Offline: keine verifizierbaren Tokendaten im QR.");
+        setInlineStatus("Offline: keine Verifikation", "invalid");
+        renderResult({ ok: false });
+        showScanVerdict(false, null);
+        return;
+      }
+      try {
+        const result = await verifyOfflineToken(offlineToken);
+        renderResult(result);
+        showScanVerdict(Boolean(result?.valid), result);
+        setMsg(result.valid ? "Offline verifiziert." : "Offline geprüft: ungültig.");
+      } catch (err) {
+        setMsg(err?.message || "Offline-Verifikation fehlgeschlagen.");
+        setInlineStatus("Offline: ungültig", "invalid");
+        renderResult({ ok: false });
+        showScanVerdict(false, null);
+      }
+      return;
+    }
+
     if (!card || !key) {
       setMsg("Ausweis-ID und Schlüssel sind erforderlich.");
       return;
@@ -324,7 +441,7 @@
         stopScanner();
         lastPayloadSig = "";
         lastPayloadHits = 0;
-        await verify(parsed.card, parsed.key);
+        await verify(parsed.card, parsed.key, parsed.ot || null);
       }, 450);
     } catch (err) {
       const reason = String(err?.message || "");

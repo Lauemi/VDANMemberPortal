@@ -12,7 +12,7 @@ const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
       <h1>Passwort ändern</h1>
       <p class="small">Aus Sicherheitsgründen musst du jetzt ein neues Passwort setzen.</p>
 
-      <form id="passwordChangeForm">
+      <form id="passwordChangeForm" data-next-target={nextTarget}>
         <label>
           <span>Neues Passwort</span>
           <input id="newPassword" name="new_password" type="password" autocomplete="new-password" minlength="8" required />
@@ -30,8 +30,4 @@ const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
     </div>
   </section>
 
-  <script define:vars={{ nextTarget }}>
-    window.__APP_AFTER_PASSWORD_CHANGE = nextTarget;
-  </script>
 </Site>
-

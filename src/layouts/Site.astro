@@ -16,6 +16,7 @@ const {
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
 const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
+const memberCardVerifyPubKey = import.meta.env.PUBLIC_MEMBER_CARD_VERIFY_PUBKEY ?? "";
 
 // Guard member area paths:
 const path = Astro.url.pathname.toLowerCase();
@@ -32,18 +33,22 @@ const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
     {description && <meta name="description" content={description} />}
     <meta name="robots" content={`${robots},follow`} />
     <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#0b1220" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content={APP.brand} />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="stylesheet" href="/css/main.css" />
     <link rel="stylesheet" href="/css/consent-manager.css" />
-    <script define:vars={{ supabaseUrl, supabaseKey }}>
-      // Expose Supabase config to the auth helper (client-side)
-      window.__APP_SUPABASE_URL = supabaseUrl;
-      window.__APP_SUPABASE_KEY = supabaseKey;
-    </script>
   </head>
-  <body>
+  <body
+    data-supabase-url={supabaseUrl}
+    data-supabase-key={supabaseKey}
+    data-member-card-verify-pubkey={memberCardVerifyPubKey}
+  >
     <header class="header">
       <div class="container">
         <nav class="nav" aria-label="Hauptnavigation">
@@ -51,6 +56,7 @@ const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
             <img src="/Bilder/logo300x300.png" alt={APP.name} />
           </a>
           <div class="nav-actions">
+            <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
             <div class="burger-menu" id="burgerMenu">
               <button type="button" id="burgerToggle" class="burger-toggle" aria-label="Menü">
                 <span>☰</span>
@@ -115,12 +121,16 @@ const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
       </div>
     </footer>
 
+    <script src="/js/app-env.js" defer></script>
+    <script src="/js/offline-data-store.js" defer></script>
+    <script src="/js/offline-sync.js" defer></script>
     <script src="/js/consent-manager.js" defer></script>
     <script src="/js/member-auth.js" defer></script>
     {needsMemberGuard && <script src="/js/member-guard.js" defer></script>}
     <script src="/js/ui-session.js" defer></script>
     <script src="/js/nav-burger.js" defer></script>
     <script src="/js/account-menu.js" defer></script>
+    <script src="/js/pwa-register.js" defer></script>
     <!-- <script src="/js/maintenance-gate.js" defer></script> -->
   </body>
 </html>

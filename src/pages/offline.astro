@@ -1,0 +1,18 @@
+---
+import Site from "../layouts/Site.astro";
+import { APP } from "../config/app";
+---
+
+<Site title={`Offline • ${APP.name}`} description="Offline-Hinweis für die VDAN App.">
+  <section class="card" style="max-width:680px;margin:0 auto;">
+    <div class="card__body">
+      <h1>Du bist gerade offline</h1>
+      <p>Die App-Hülle ist verfügbar. Für Login, Synchronisierung und Live-Daten wird wieder Empfang benötigt.</p>
+      <p class="small">Sicherheitsmodus: Auth/API-Antworten werden nicht offline gecacht.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a class="feed-btn" href="/app/">Zum Memberportal</a>
+        <a class="feed-btn feed-btn--ghost" href="/">Zur Startseite</a>
+      </div>
+    </div>
+  </section>
+</Site>

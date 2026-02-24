@@ -1,4 +1,6 @@
 ;(() => {
+  const OFFLINE_NS = "my_responsibilities";
+  const OFFLINE_LIST_KEY = "list";
   let activeTaskId = null;
   let meetingTasks = [];
 
@@ -22,9 +24,19 @@
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      const e = new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      e.status = res.status;
+      throw e;
     }
     return res.json().catch(() => []);
+  }
+
+  async function loadCachedResponsibilities() {
+    return await window.VDAN_OFFLINE_SYNC?.cacheGet?.(OFFLINE_NS, OFFLINE_LIST_KEY, []) || [];
+  }
+
+  async function saveCachedResponsibilities(rows) {
+    await window.VDAN_OFFLINE_SYNC?.cacheSet?.(OFFLINE_NS, OFFLINE_LIST_KEY, Array.isArray(rows) ? rows : []);
   }
 
   function esc(str) {
@@ -56,8 +68,48 @@
   }
 
   async function loadResponsibilities() {
-    const rows = await sb("/rest/v1/v_my_responsibilities?select=responsibility_type,source_id,title,status,due_date,status_note,starts_at,ends_at,location,created_at,updated_at&order=due_date.asc.nullslast,starts_at.asc.nullslast,created_at.desc", { method: "GET" }, true);
-    return Array.isArray(rows) ? rows : [];
+    const path = "/rest/v1/v_my_responsibilities?select=responsibility_type,source_id,title,status,due_date,status_note,starts_at,ends_at,location,created_at,updated_at&order=due_date.asc.nullslast,starts_at.asc.nullslast,created_at.desc";
+    try {
+      const rows = await sb(path, { method: "GET" }, true);
+      const list = Array.isArray(rows) ? rows : [];
+      await saveCachedResponsibilities(list);
+      return list;
+    } catch (err) {
+      const cached = await loadCachedResponsibilities();
+      if (cached.length) return cached;
+      throw err;
+    }
+  }
+
+  function applyTaskPatchLocal(taskId, patch) {
+    const id = String(taskId || "");
+    const now = new Date().toISOString();
+    meetingTasks = (meetingTasks || []).map((t) =>
+      String(t.source_id) === id
+        ? { ...t, ...patch, updated_at: now, _offline_pending: true }
+        : t
+    );
+    renderMeetingTasks(meetingTasks);
+  }
+
+  async function queueTaskPatch(taskId, patch) {
+    await window.VDAN_OFFLINE_SYNC?.enqueue?.(OFFLINE_NS, {
+      type: "meeting_task_patch",
+      task_id: String(taskId || ""),
+      patch,
+    });
+  }
+
+  async function flushOfflineQueue() {
+    if (!window.VDAN_OFFLINE_SYNC?.flush) return;
+    await window.VDAN_OFFLINE_SYNC.flush(OFFLINE_NS, async (op) => {
+      if (op?.type !== "meeting_task_patch") return;
+      await sb(`/rest/v1/meeting_tasks?id=eq.${encodeURIComponent(op.task_id)}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify(op.patch || {}),
+      }, true);
+    });
   }
 
   function renderMeetingTasks(rows) {
@@ -145,17 +197,28 @@
       if (!activeTaskId) return;
       try {
         setEditMsg("Speichere...");
+        const patch = {
+          status: String(document.getElementById("myRespEditStatus")?.value || "open"),
+          status_note: String(document.getElementById("myRespEditNote")?.value || "").trim() || null,
+        };
         await sb(`/rest/v1/meeting_tasks?id=eq.${encodeURIComponent(activeTaskId)}`, {
           method: "PATCH",
           headers: { Prefer: "return=minimal" },
-          body: JSON.stringify({
-            status: String(document.getElementById("myRespEditStatus")?.value || "open"),
-            status_note: String(document.getElementById("myRespEditNote")?.value || "").trim() || null,
-          }),
+          body: JSON.stringify(patch),
         }, true);
         await refresh();
         setEditMsg("Gespeichert.");
       } catch (err) {
+        if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+          const patch = {
+            status: String(document.getElementById("myRespEditStatus")?.value || "open"),
+            status_note: String(document.getElementById("myRespEditNote")?.value || "").trim() || null,
+          };
+          applyTaskPatchLocal(activeTaskId, patch);
+          await queueTaskPatch(activeTaskId, patch);
+          setEditMsg("Offline gespeichert. Wird bei Empfang synchronisiert.");
+          return;
+        }
         setEditMsg(err?.message || "Speichern fehlgeschlagen.");
       }
     });
@@ -174,6 +237,7 @@
 
     try {
       bind();
+      await flushOfflineQueue().catch(() => {});
       await refresh();
     } catch (err) {
       setMsg(err?.message || "Konnte Zuständigkeiten nicht laden.");
@@ -182,4 +246,7 @@
 
   document.addEventListener("DOMContentLoaded", init);
   document.addEventListener("vdan:session", init);
+  window.addEventListener("online", () => {
+    flushOfflineQueue().then(() => refresh()).catch(() => {});
+  });
 })();

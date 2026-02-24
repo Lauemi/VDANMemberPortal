@@ -1,6 +1,7 @@
 ;(() => {
   const MAX_IMAGE_BYTES = 350 * 1024;
   const MAX_LONG_EDGE = 1280;
+  const OFFLINE_SCHEMA_VERSION = 1;
 
   let waters = [];
   let fishSpecies = [];
@@ -8,8 +9,15 @@
   let catches = [];
   let activeTripId = null;
   let createMode = "catch";
+  let syncInProgress = false;
+  let queueMem = [];
+  let conflictsMem = [];
+  let cacheMem = null;
   const LEGACY_CATCH_CLEAR_MARKER = "vdan_catch_cleanup_v1_done";
   const TOUCH_RPC_DISABLED_KEY = "vdan_rpc_touch_user_disabled_v1";
+  const OFFLINE_QUEUE_KEY_PREFIX = "vdan_trip_sync_queue_v1:";
+  const OFFLINE_CACHE_KEY_PREFIX = "vdan_trip_cache_v1:";
+  const OFFLINE_CONFLICT_KEY_PREFIX = "vdan_trip_sync_conflicts_v1:";
 
   function cfg() {
     return {
@@ -23,7 +31,197 @@
   }
 
   function uid() {
-    return session()?.user?.id || null;
+    const live = session()?.user?.id;
+    if (live) return live;
+    try {
+      const raw = localStorage.getItem("vdan_member_session_v1");
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      const fallback = String(parsed?.user?.id || "").trim();
+      return fallback || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function queueKey() {
+    return `${OFFLINE_QUEUE_KEY_PREFIX}${uid() || "anon"}`;
+  }
+
+  function cacheKey() {
+    return `${OFFLINE_CACHE_KEY_PREFIX}${uid() || "anon"}`;
+  }
+
+  function conflictKey() {
+    return `${OFFLINE_CONFLICT_KEY_PREFIX}${uid() || "anon"}`;
+  }
+
+  function nowIso() {
+    return new Date().toISOString();
+  }
+
+  function isLocalId(id) {
+    return String(id || "").startsWith("local:");
+  }
+
+  function localId(prefix = "item") {
+    return `local:${prefix}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  function isNetworkError(err) {
+    const msg = String(err?.message || err || "").toLowerCase();
+    return msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("load failed");
+  }
+
+  function isConflictError(err) {
+    if (!err) return false;
+    if (isNetworkError(err)) return false;
+    const status = Number(err.status || 0);
+    if (status >= 400 && status < 500) return true;
+    const msg = String(err?.message || "").toLowerCase();
+    return msg.includes("violates") || msg.includes("constraint") || msg.includes("limit");
+  }
+
+  function readJsonSafe(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      return JSON.parse(raw);
+    } catch {
+      return fallback;
+    }
+  }
+
+  function writeJsonSafe(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  function loadQueue() {
+    return Array.isArray(queueMem) ? queueMem : [];
+  }
+
+  function saveQueue(items) {
+    queueMem = Array.isArray(items) ? items : [];
+    persistQueue().catch(() => {});
+  }
+
+  function enqueue(action) {
+    const items = loadQueue();
+    const next = {
+      id: localId("queue"),
+      created_at: nowIso(),
+      attempts: 0,
+      ...action,
+    };
+    items.push(next);
+    saveQueue(items);
+    return next;
+  }
+
+  function pendingCount() {
+    return loadQueue().length;
+  }
+
+  function loadConflicts() {
+    return Array.isArray(conflictsMem) ? conflictsMem : [];
+  }
+
+  function saveConflicts(items) {
+    conflictsMem = Array.isArray(items) ? items : [];
+    persistConflicts().catch(() => {});
+  }
+
+  function conflictCount() {
+    return loadConflicts().length;
+  }
+
+  function pushConflict(item, err) {
+    const conflicts = loadConflicts();
+    conflicts.push({
+      ...item,
+      conflict_at: nowIso(),
+      conflict_reason: String(err?.message || "sync_conflict"),
+      conflict_status: Number(err?.status || 0) || null,
+    });
+    saveConflicts(conflicts);
+  }
+
+  function updatePendingHint() {
+    const n = pendingCount();
+    const c = conflictCount();
+    if (n > 0 && c > 0) {
+      setMsg(`${n} Eintrag${n === 1 ? "" : "e"} wartet auf Sync, ${c} Konflikt${c === 1 ? "" : "e"} prüfen.`);
+      return;
+    }
+    if (n > 0) {
+      setMsg(`${n} Eintrag${n === 1 ? "" : "e"} wartet auf Synchronisierung.`);
+      return;
+    }
+    if (c > 0) {
+      setMsg(`${c} Konflikt${c === 1 ? "" : "e"} in Offline-Sync. Einträge sind mit ⚠ markiert.`);
+    }
+  }
+
+  function loadOfflineCache() {
+    const cached = cacheMem;
+    if (!cached || cached.schema !== OFFLINE_SCHEMA_VERSION) return;
+    waters = Array.isArray(cached.waters) ? cached.waters : waters;
+    fishSpecies = Array.isArray(cached.fishSpecies) ? cached.fishSpecies : fishSpecies;
+    trips = Array.isArray(cached.trips) ? cached.trips : trips;
+    catches = Array.isArray(cached.catches) ? cached.catches : catches;
+  }
+
+  function saveOfflineCache() {
+    cacheMem = {
+      schema: OFFLINE_SCHEMA_VERSION,
+      updated_at: nowIso(),
+      waters,
+      fishSpecies,
+      trips,
+      catches,
+    };
+    persistCache().catch(() => {});
+  }
+
+  async function getPersistentJson(key, fallback) {
+    const val = await window.VDAN_OFFLINE_STORE?.getJSON?.(key);
+    if (val !== null && val !== undefined) return val;
+    return readJsonSafe(key, fallback);
+  }
+
+  async function setPersistentJson(key, value) {
+    if (window.VDAN_OFFLINE_STORE?.setJSON) {
+      await window.VDAN_OFFLINE_STORE.setJSON(key, value);
+      return;
+    }
+    writeJsonSafe(key, value);
+  }
+
+  async function persistQueue() {
+    await setPersistentJson(queueKey(), queueMem);
+  }
+
+  async function persistConflicts() {
+    await setPersistentJson(conflictKey(), conflictsMem);
+  }
+
+  async function persistCache() {
+    await setPersistentJson(cacheKey(), cacheMem);
+  }
+
+  async function hydratePersistentState() {
+    const [q, c, cache] = await Promise.all([
+      getPersistentJson(queueKey(), []),
+      getPersistentJson(conflictKey(), []),
+      getPersistentJson(cacheKey(), null),
+    ]);
+    queueMem = Array.isArray(q) ? q : [];
+    conflictsMem = Array.isArray(c) ? c : [];
+    cacheMem = cache && typeof cache === "object" ? cache : null;
   }
 
   function clearLegacyLocalCatchDataOnce() {
@@ -116,7 +314,9 @@
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      const e = new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      e.status = res.status;
+      throw e;
     }
     return res.json().catch(() => ({}));
   }
@@ -243,14 +443,24 @@
   }
 
   async function loadWaters() {
-    const rows = await sb("/rest/v1/water_bodies?select=id,name,area_kind,is_active&is_active=eq.true&order=name.asc", { method: "GET" }, true);
-    waters = Array.isArray(rows) ? rows : [];
+    try {
+      const rows = await sb("/rest/v1/water_bodies?select=id,name,area_kind,is_active&is_active=eq.true&order=name.asc", { method: "GET" }, true);
+      waters = Array.isArray(rows) ? rows : [];
+      saveOfflineCache();
+    } catch (err) {
+      if (!waters.length) throw err;
+    }
     renderWaterOptions();
   }
 
   async function loadFishSpecies() {
-    const rows = await sb("/rest/v1/fish_species?select=id,name,is_active&is_active=eq.true&order=name.asc", { method: "GET" }, true);
-    fishSpecies = Array.isArray(rows) ? rows : [];
+    try {
+      const rows = await sb("/rest/v1/fish_species?select=id,name,is_active&is_active=eq.true&order=name.asc", { method: "GET" }, true);
+      fishSpecies = Array.isArray(rows) ? rows : [];
+      saveOfflineCache();
+    } catch (err) {
+      if (!fishSpecies.length) throw err;
+    }
     renderFishSpeciesOptions();
   }
 
@@ -318,15 +528,108 @@
     return Number.isFinite(v) ? v : NaN;
   }
 
-  async function saveNoCatch() {
-    const p_trip_date = selectedDate();
-    const p_water_body_id = selectedWaterId();
+  function selectedNoCatchPayload() {
+    return {
+      p_trip_date: selectedDate(),
+      p_water_body_id: selectedWaterId(),
+      p_note: null,
+    };
+  }
+
+  function selectedCatchPayload(photoDataUrl = null) {
+    return {
+      user_id: uid(),
+      trip_date: selectedDate(),
+      water_body_id: selectedWaterId(),
+      fish_species_id: selectedFishSpeciesId() || null,
+      quantity: selectedQty(),
+      length_cm: selectedLengthCm(),
+      weight_g: selectedWeightG(),
+      photo_data_url: photoDataUrl || null,
+    };
+  }
+
+  function validateCatchPayload(payload) {
+    if (!payload?.user_id || !payload?.trip_date || !payload?.water_body_id) {
+      throw new Error("Bitte Datum und Gewässer wählen.");
+    }
+    if (!payload.fish_species_id) return;
+    if (!Number.isFinite(payload.quantity) || payload.quantity < 1) throw new Error("Anzahl muss mindestens 1 sein.");
+    if (payload.length_cm !== null && (!Number.isFinite(payload.length_cm) || payload.length_cm < 0)) throw new Error("Länge ist ungültig.");
+    if (payload.weight_g !== null && (!Number.isFinite(payload.weight_g) || payload.weight_g < 0)) throw new Error("Gewicht ist ungültig.");
+  }
+
+  function waterNameById(id) {
+    const w = waters.find((x) => String(x.id) === String(id));
+    return String(w?.name || "-");
+  }
+
+  function fishNameById(id) {
+    const f = fishSpecies.find((x) => String(x.id) === String(id));
+    return String(f?.name || "-");
+  }
+
+  function addLocalNoCatch(payload, queueId) {
+    const localTripId = `local:queued:${queueId}`;
+    if (trips.some((t) => String(t.id) === localTripId)) return;
+    trips.unshift({
+      id: localTripId,
+      trip_date: payload.p_trip_date,
+      entry_type: "no_catch",
+      note: payload.p_note || null,
+      created_at: nowIso(),
+      water_body_id: payload.p_water_body_id,
+      water_bodies: { name: waterNameById(payload.p_water_body_id) },
+      photo_data_url: null,
+      pending_sync: true,
+    });
+    saveOfflineCache();
+  }
+
+  function addLocalCatch(payload, queueId) {
+    const localTripId = `local:queued:${queueId}`;
+    if (trips.some((t) => String(t.id) === localTripId)) return;
+    trips.unshift({
+      id: localTripId,
+      trip_date: payload.trip_date,
+      entry_type: "catch",
+      note: null,
+      created_at: nowIso(),
+      water_body_id: payload.water_body_id,
+      water_bodies: { name: waterNameById(payload.water_body_id) },
+      photo_data_url: payload.photo_data_url || null,
+      pending_sync: true,
+    });
+
+    if (payload.fish_species_id) {
+        catches.unshift({
+        id: `local:queued:catch:${queueId}`,
+        fishing_trip_id: localTripId,
+        caught_on: payload.trip_date,
+        water_body_id: payload.water_body_id,
+        fish_species_id: payload.fish_species_id,
+        quantity: payload.quantity,
+        length_cm: payload.length_cm,
+        weight_g: payload.weight_g,
+        note: null,
+        created_at: nowIso(),
+        fish_species: { name: fishNameById(payload.fish_species_id) },
+        pending_sync: true,
+      });
+    }
+
+    saveOfflineCache();
+  }
+
+  async function saveNoCatchOnline(payload) {
+    const p_trip_date = payload.p_trip_date;
+    const p_water_body_id = payload.p_water_body_id;
     if (!p_trip_date || !p_water_body_id) throw new Error("Bitte Datum und Gewässer wählen.");
 
     try {
       return await sb("/rest/v1/rpc/catch_trip_quick_no_catch", {
         method: "POST",
-        body: JSON.stringify({ p_trip_date, p_water_body_id, p_note: null }),
+        body: JSON.stringify({ p_trip_date, p_water_body_id, p_note: payload.p_note || null }),
       }, true);
     } catch {
       return sb("/rest/v1/rpc/rpc_quick_no_catch", {
@@ -336,10 +639,11 @@
     }
   }
 
-  async function saveCatchEntry() {
-    const user_id = uid();
-    const trip_date = selectedDate();
-    const water_body_id = selectedWaterId();
+  async function saveCatchOnline(payload) {
+    validateCatchPayload(payload);
+    const user_id = payload.user_id;
+    const trip_date = payload.trip_date;
+    const water_body_id = payload.water_body_id;
     if (!user_id || !trip_date || !water_body_id) throw new Error("Bitte Datum und Gewässer wählen.");
 
     const tripPayload = await sb("/rest/v1/fishing_trips", {
@@ -349,12 +653,12 @@
     }, true);
 
     const tripRow = parseReturnRow(tripPayload);
-    const fish_species_id = selectedFishSpeciesId();
+    const fish_species_id = payload.fish_species_id;
 
     if (fish_species_id) {
-      const quantity = selectedQty();
-      const length_cm = selectedLengthCm();
-      const weight_g = selectedWeightG();
+      const quantity = payload.quantity;
+      const length_cm = payload.length_cm;
+      const weight_g = payload.weight_g;
 
       if (!Number.isFinite(quantity) || quantity < 1) throw new Error("Anzahl muss mindestens 1 sein.");
       if (length_cm !== null && (!Number.isFinite(length_cm) || length_cm < 0)) throw new Error("Länge ist ungültig.");
@@ -376,40 +680,246 @@
       }, true);
     }
 
-    const file = document.getElementById("tripCreatePhoto")?.files?.[0];
-    if (file && tripRow?.id) {
-      setCreateMsg("Bild wird komprimiert...");
-      const photo = await compressImageToWebp(file);
+    if (payload.photo_data_url && tripRow?.id) {
       await sb(`/rest/v1/fishing_trips?id=eq.${encodeURIComponent(tripRow.id)}`, {
         method: "PATCH",
         headers: { Prefer: "return=representation" },
         body: JSON.stringify({
-          photo_data_url: photo.data_url,
+          photo_data_url: payload.photo_data_url,
           photo_updated_at: new Date().toISOString(),
         }),
       }, true);
     }
   }
 
+  async function queueNoCatchOffline(payload) {
+    const entry = enqueue({ type: "create_no_catch", payload });
+    addLocalNoCatch(payload, entry.id);
+    renderTripsTable();
+    await loadOwnStats();
+    updatePendingHint();
+  }
+
+  async function queueCatchOffline(payload) {
+    const entry = enqueue({ type: "create_catch", payload });
+    addLocalCatch(payload, entry.id);
+    renderTripsTable();
+    await loadOwnStats();
+    updatePendingHint();
+  }
+
+  async function processQueueItem(item) {
+    if (!item?.type) return { ok: true };
+    try {
+      if (item.type === "create_no_catch") {
+        await saveNoCatchOnline(item.payload || {});
+        return { ok: true };
+      }
+      if (item.type === "create_catch") {
+        await saveCatchOnline(item.payload || {});
+        return { ok: true };
+      }
+      return { ok: true };
+    } catch (err) {
+      if (isNetworkError(err)) return { ok: false, retry: true, err };
+      if (isConflictError(err)) return { ok: false, conflict: true, err };
+      return { ok: false, retry: true, err };
+    }
+  }
+
+  async function syncPendingQueue() {
+    if (syncInProgress) return;
+    if (!navigator.onLine) return;
+    if (!uid()) return;
+    if (!session()?.access_token) {
+      const refreshed = await window.VDAN_AUTH?.refreshSession?.().catch(() => null);
+      if (refreshed?.access_token) {
+        // refreshed successfully; continue with sync
+      } else {
+        if (loadQueue().length > 0) {
+          setMsg("Offline-Einträge gespeichert. Für Synchronisierung bitte erneut einloggen.");
+        }
+        updatePendingHint();
+        return;
+      }
+    }
+
+    const queue = loadQueue();
+    if (!queue.length) return;
+
+    syncInProgress = true;
+    setMsg(`Synchronisiere ${queue.length} Offline-Eintrag${queue.length === 1 ? "" : "e"}...`);
+
+    const remaining = [];
+    for (let i = 0; i < queue.length; i += 1) {
+      const item = queue[i];
+      const result = await processQueueItem(item);
+      if (result.ok) continue;
+
+      if (result.conflict) {
+        pushConflict(item, result.err);
+        continue;
+      }
+
+      if (result.retry) {
+        const retried = { ...item, attempts: Number(item.attempts || 0) + 1 };
+        remaining.push(retried);
+        const tail = queue.slice(i + 1);
+        saveQueue([...remaining, ...tail]);
+        syncInProgress = false;
+        updatePendingHint();
+        return;
+      }
+    }
+
+    saveQueue(remaining);
+    syncInProgress = false;
+    await refreshAll();
+    if (!remaining.length && conflictCount() === 0) setMsg("Offline-Einträge synchronisiert.");
+    else updatePendingHint();
+  }
+
+  function applyPendingQueueToState() {
+    const queue = loadQueue();
+    if (!queue.length) return;
+    queue.forEach((item) => {
+      const p = item?.payload || {};
+      if (item.type === "create_no_catch") {
+        const localTripId = `local:queued:${item.id}`;
+        const exists = trips.some((t) => String(t.id) === localTripId);
+        if (exists) return;
+        trips.unshift({
+          id: localTripId,
+          trip_date: p.p_trip_date,
+          entry_type: "no_catch",
+          note: p.p_note || null,
+          created_at: item.created_at || nowIso(),
+          water_body_id: p.p_water_body_id,
+          water_bodies: { name: waterNameById(p.p_water_body_id) },
+          photo_data_url: null,
+          pending_sync: true,
+        });
+      } else if (item.type === "create_catch") {
+        const localTripId = `local:queued:${item.id}`;
+        const exists = trips.some((t) => String(t.id) === localTripId);
+        if (exists) return;
+        trips.unshift({
+          id: localTripId,
+          trip_date: p.trip_date,
+          entry_type: "catch",
+          note: null,
+          created_at: item.created_at || nowIso(),
+          water_body_id: p.water_body_id,
+          water_bodies: { name: waterNameById(p.water_body_id) },
+          photo_data_url: p.photo_data_url || null,
+          pending_sync: true,
+        });
+        if (p.fish_species_id) {
+          catches.unshift({
+            id: `local:queued:catch:${item.id}`,
+            fishing_trip_id: localTripId,
+            caught_on: p.trip_date,
+            water_body_id: p.water_body_id,
+            fish_species_id: p.fish_species_id,
+            quantity: p.quantity,
+            length_cm: p.length_cm,
+            weight_g: p.weight_g,
+            note: null,
+            created_at: item.created_at || nowIso(),
+            fish_species: { name: fishNameById(p.fish_species_id) },
+            pending_sync: true,
+          });
+        }
+      }
+    });
+  }
+
+  function applyConflictStackToState() {
+    const conflicts = loadConflicts();
+    if (!conflicts.length) return;
+    conflicts.forEach((item) => {
+      const p = item?.payload || {};
+      const reason = String(item?.conflict_reason || "Konflikt");
+      if (item.type === "create_no_catch") {
+        const localTripId = `local:conflict:${item.id}`;
+        const exists = trips.some((t) => String(t.id) === localTripId);
+        if (exists) return;
+        trips.unshift({
+          id: localTripId,
+          trip_date: p.p_trip_date,
+          entry_type: "no_catch",
+          note: p.p_note || null,
+          created_at: item.created_at || nowIso(),
+          water_body_id: p.p_water_body_id,
+          water_bodies: { name: waterNameById(p.p_water_body_id) },
+          photo_data_url: null,
+          conflict_sync: true,
+          conflict_reason: reason,
+        });
+      } else if (item.type === "create_catch") {
+        const localTripId = `local:conflict:${item.id}`;
+        const exists = trips.some((t) => String(t.id) === localTripId);
+        if (exists) return;
+        trips.unshift({
+          id: localTripId,
+          trip_date: p.trip_date,
+          entry_type: "catch",
+          note: null,
+          created_at: item.created_at || nowIso(),
+          water_body_id: p.water_body_id,
+          water_bodies: { name: waterNameById(p.water_body_id) },
+          photo_data_url: p.photo_data_url || null,
+          conflict_sync: true,
+          conflict_reason: reason,
+        });
+        if (p.fish_species_id) {
+          catches.unshift({
+            id: `local:conflict:catch:${item.id}`,
+            fishing_trip_id: localTripId,
+            caught_on: p.trip_date,
+            water_body_id: p.water_body_id,
+            fish_species_id: p.fish_species_id,
+            quantity: p.quantity,
+            length_cm: p.length_cm,
+            weight_g: p.weight_g,
+            note: null,
+            created_at: item.created_at || nowIso(),
+            fish_species: { name: fishNameById(p.fish_species_id) },
+            conflict_sync: true,
+          });
+        }
+      }
+    });
+  }
+
   async function loadTripsAndCatches() {
     const user_id = uid();
     if (!user_id) return;
 
-    const [tripRows, catchRows] = await Promise.all([
-      sb(
-        `/rest/v1/fishing_trips?select=id,trip_date,entry_type,note,created_at,water_body_id,photo_data_url,photo_updated_at,water_bodies(name)&user_id=eq.${encodeURIComponent(user_id)}&order=trip_date.desc,created_at.desc&limit=500`,
-        { method: "GET" },
-        true
-      ),
-      sb(
-        `/rest/v1/catch_entries?select=id,fishing_trip_id,caught_on,water_body_id,fish_species_id,quantity,length_cm,weight_g,note,created_at,fish_species(name)&user_id=eq.${encodeURIComponent(user_id)}&order=caught_on.desc,created_at.desc&limit=1000`,
-        { method: "GET" },
-        true
-      ).catch(() => []),
-    ]);
+    try {
+      const [tripRows, catchRows] = await Promise.all([
+        sb(
+          `/rest/v1/fishing_trips?select=id,trip_date,entry_type,note,created_at,water_body_id,photo_data_url,photo_updated_at,water_bodies(name)&user_id=eq.${encodeURIComponent(user_id)}&order=trip_date.desc,created_at.desc&limit=500`,
+          { method: "GET" },
+          true
+        ),
+        sb(
+          `/rest/v1/catch_entries?select=id,fishing_trip_id,caught_on,water_body_id,fish_species_id,quantity,length_cm,weight_g,note,created_at,fish_species(name)&user_id=eq.${encodeURIComponent(user_id)}&order=caught_on.desc,created_at.desc&limit=1000`,
+          { method: "GET" },
+          true
+        ).catch(() => []),
+      ]);
 
-    trips = Array.isArray(tripRows) ? tripRows : [];
-    catches = Array.isArray(catchRows) ? catchRows : [];
+      trips = Array.isArray(tripRows) ? tripRows : [];
+      catches = Array.isArray(catchRows) ? catchRows : [];
+      saveOfflineCache();
+    } catch (err) {
+      if (!trips.length) loadOfflineCache();
+      if (!trips.length && !catches.length) throw err;
+    }
+
+    applyPendingQueueToState();
+    applyConflictStackToState();
   }
 
   function renderTripsTable() {
@@ -435,11 +945,14 @@
           const list = catchesForTrip(trip);
           const summary = catchSummaryForTrip(trip, list);
           const hasPhoto = Boolean(trip.photo_data_url);
+          const pending = Boolean(trip.pending_sync);
+          const conflict = Boolean(trip.conflict_sync);
+          const statePrefix = conflict ? "⚠ " : (pending ? "⏳ " : "");
           return `
             <button type="button" class="fangliste-table__row" data-trip-id="${trip.id}" role="row">
               <span class="fangliste-table__date">${esc(fmtDate(trip.trip_date))}</span>
               <span class="fangliste-table__water">${esc(trip?.water_bodies?.name || "-")}</span>
-              <span class="fangliste-table__catch">${esc(summary)}${hasPhoto ? " • Bild" : ""}</span>
+              <span class="fangliste-table__catch">${statePrefix}${esc(summary)}${hasPhoto ? " • Bild" : ""}</span>
             </button>
           `;
         }).join("")}
@@ -597,7 +1110,13 @@
       </div>
     `;
 
-    setDetailMsg("");
+    if (isLocalId(trip.id) && trip.conflict_sync) {
+      setDetailMsg(`Konflikt bei Sync: ${trip.conflict_reason || "Bitte später neu erfassen."}`);
+    } else if (isLocalId(trip.id)) {
+      setDetailMsg("Dieser Eintrag wird noch synchronisiert. Änderungen danach möglich.");
+    } else {
+      setDetailMsg("");
+    }
     if (!dlg.open) dlg.showModal();
   }
 
@@ -610,6 +1129,7 @@
 
   async function saveDetailImageIfSelected() {
     if (!activeTripId) return false;
+    if (isLocalId(activeTripId)) throw new Error("Bitte erst Synchronisierung abwarten.");
     const file = document.getElementById("tripDetailPhoto")?.files?.[0];
     if (!file) return false;
     setDetailMsg("Bild wird komprimiert...");
@@ -627,6 +1147,7 @@
 
   async function saveDetailChanges() {
     if (!activeTripId) return;
+    if (isLocalId(activeTripId)) throw new Error("Bitte erst Synchronisierung abwarten.");
     const trip = getTripById(activeTripId);
     if (!trip) throw new Error("Eintrag nicht gefunden.");
 
@@ -690,6 +1211,7 @@
     await loadTripsAndCatches();
     renderTripsTable();
     await loadOwnStats();
+    saveOfflineCache();
   }
 
   async function init() {
@@ -703,10 +1225,19 @@
       return;
     }
 
+    await hydratePersistentState();
+    loadOfflineCache();
+    renderWaterOptions();
+    renderFishSpeciesOptions();
+    renderTripsTable();
+    await loadOwnStats();
+
     clearLegacyLocalCatchDataOnce();
-    await touchUserUsage();
+    await touchUserUsage().catch(() => {});
     await Promise.all([loadWaters(), loadFishSpecies()]);
-    await refreshAll();
+    await refreshAll().catch(() => {});
+    await syncPendingQueue().catch(() => {});
+    updatePendingHint();
 
     document.getElementById("tripOnlyNoCatch")?.addEventListener("change", renderTripsTable);
 
@@ -734,14 +1265,50 @@
       e.preventDefault();
       try {
         setCreateMsg("Speichere...");
+        let queued = false;
         if (createMode === "no_catch") {
-          await saveNoCatch();
+          const payload = selectedNoCatchPayload();
+          try {
+            await saveNoCatchOnline(payload);
+          } catch (err) {
+            if (!navigator.onLine || isNetworkError(err)) {
+              await queueNoCatchOffline(payload);
+              queued = true;
+            } else {
+              throw err;
+            }
+          }
         } else {
-          await saveCatchEntry();
+          const file = document.getElementById("tripCreatePhoto")?.files?.[0];
+          let photoDataUrl = null;
+          if (file) {
+            setCreateMsg("Bild wird komprimiert...");
+            const photo = await compressImageToWebp(file);
+            photoDataUrl = photo.data_url;
+          }
+
+          const payload = selectedCatchPayload(photoDataUrl);
+          try {
+            await saveCatchOnline(payload);
+          } catch (err) {
+            if (!navigator.onLine || isNetworkError(err)) {
+              await queueCatchOffline(payload);
+              queued = true;
+            } else {
+              throw err;
+            }
+          }
         }
         closeCreateDialog();
-        await refreshAll();
-        setMsg(createMode === "no_catch" ? "Kein Fang gespeichert." : "Angeltag gespeichert.");
+        if (!queued) {
+          await refreshAll();
+          setMsg(createMode === "no_catch" ? "Kein Fang gespeichert." : "Angeltag gespeichert.");
+          await syncPendingQueue().catch(() => {});
+        } else {
+          setMsg(createMode === "no_catch"
+            ? "Kein Fang offline gespeichert. Wird bei Empfang übertragen."
+            : "Angeltag offline gespeichert. Wird bei Empfang übertragen.");
+        }
       } catch (err) {
         setCreateMsg(err?.message || "Speichern fehlgeschlagen.");
       }
@@ -752,6 +1319,10 @@
       if (!btn) return;
       const id = btn.getAttribute("data-trip-id");
       if (id) openDetailDialog(id);
+    });
+
+    window.addEventListener("online", () => {
+      syncPendingQueue().catch(() => {});
     });
   }
 

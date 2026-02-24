@@ -25,7 +25,7 @@
     const settingsLink = document.getElementById("accountSettingsLink");
     const logoutBtn = document.getElementById("accountLogoutBtn");
     const avatar = root?.querySelector(".account-avatar");
-    if (!root || !toggle || !popover || !label || !loginLink || !appLink || !settingsLink || !logoutBtn || !avatar) return;
+    if (!root || !toggle || !popover || !label || !loginLink || !appLink || !logoutBtn || !avatar) return;
 
     const render = () => {
       const s = session();
@@ -35,7 +35,7 @@
       avatar.textContent = String(name).charAt(0).toUpperCase();
       setHidden(loginLink, loggedIn);
       setHidden(appLink, !loggedIn);
-      setHidden(settingsLink, !loggedIn);
+      if (settingsLink) setHidden(settingsLink, !loggedIn);
       setHidden(logoutBtn, !loggedIn);
     };
 

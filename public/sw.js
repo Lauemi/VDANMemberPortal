@@ -1,4 +1,4 @@
-const SW_VERSION = "v1.0.0";
+const SW_VERSION = "v1.0.1";
 const STATIC_CACHE = `vdan-static-${SW_VERSION}`;
 const PAGE_CACHE = `vdan-pages-${SW_VERSION}`;
 
@@ -31,6 +31,7 @@ const PRECACHE_URLS = [
   "/js/member-card.js",
   "/js/member-card-verify.js",
   "/js/pwa-register.js",
+  "/js/runtime-guard.js",
   "/icon-192.png",
   "/icon-512.png",
   "/apple-touch-icon.png"
@@ -85,6 +86,12 @@ self.addEventListener("activate", (event) => {
     );
     await self.clients.claim();
   })());
+});
+
+self.addEventListener("message", (event) => {
+  if (event?.data === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 async function networkFirstPage(request) {

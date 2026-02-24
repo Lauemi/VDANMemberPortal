@@ -18,10 +18,19 @@
     const label = document.getElementById("accountLabel");
     const loginLink = document.getElementById("accountLoginLink");
     const appLink = document.getElementById("accountAppLink");
-    const settingsLink = document.getElementById("accountSettingsLink");
+    let settingsLink = document.getElementById("accountSettingsLink");
     const logoutBtn = document.getElementById("accountLogoutBtn");
     const avatar = root?.querySelector(".account-avatar");
     if (!root || !toggle || !popover || !label || !loginLink || !appLink || !logoutBtn || !avatar) return;
+    if (!settingsLink) {
+      settingsLink = document.createElement("a");
+      settingsLink.id = "accountSettingsLink";
+      settingsLink.className = "feed-btn feed-btn--ghost hidden";
+      settingsLink.setAttribute("hidden", "");
+      settingsLink.href = "/app/einstellungen/";
+      settingsLink.textContent = "Einstellungen";
+      if (logoutBtn.parentNode === popover) popover.insertBefore(settingsLink, logoutBtn);
+    }
 
     const readSession = async () => {
       const auth = window.VDAN_AUTH;

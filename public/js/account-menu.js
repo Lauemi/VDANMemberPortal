@@ -47,7 +47,13 @@
     const close = () => setHidden(popover, true);
     const open = () => setHidden(popover, false);
 
-    toggle.addEventListener("click", () => {
+    toggle.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const s = await readSession().catch(() => null);
+      if (!s) {
+        window.location.assign("/login/");
+        return;
+      }
       if (popover.hasAttribute("hidden")) open();
       else close();
     });

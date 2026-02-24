@@ -899,6 +899,23 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   width:100%;
 }
 
+#respTaskTable{
+  min-width:0;
+  background:rgba(148, 156, 170, .18);
+}
+
+#respTaskTable tbody tr{
+  background:rgba(232, 206, 116, .28);
+}
+
+#respTaskTable tbody tr:nth-child(even){
+  background:rgba(232, 206, 116, .22);
+}
+
+#respTaskTable tbody tr:hover{
+  background:rgba(232, 206, 116, .36);
+}
+
 .work-part-actions{
   display:flex;
   flex-wrap:wrap;

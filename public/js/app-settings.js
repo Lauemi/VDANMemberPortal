@@ -123,6 +123,37 @@
         else setMsg(err?.message || "Speichern fehlgeschlagen.");
       }
     });
+
+    const versionEl = document.getElementById("settingsAppVersion");
+    if (versionEl) versionEl.textContent = String(document.body?.dataset?.appVersion || "unbekannt");
+
+    document.getElementById("settingsReloadBtn")?.addEventListener("click", () => {
+      window.location.reload();
+    });
+
+    document.getElementById("settingsCheckUpdateBtn")?.addEventListener("click", async () => {
+      try {
+        if (!("serviceWorker" in navigator)) {
+          setMsg("Service Worker nicht verfügbar.");
+          return;
+        }
+        const reg = await navigator.serviceWorker.getRegistration("/");
+        if (!reg) {
+          setMsg("Keine SW-Registrierung gefunden.");
+          return;
+        }
+        setMsg("Prüfe Update...");
+        await reg.update();
+        if (reg.waiting) {
+          reg.waiting.postMessage("SKIP_WAITING");
+          setMsg("Update bereit. Seite lädt neu.");
+          return;
+        }
+        setMsg("Kein neues Update gefunden.");
+      } catch (err) {
+        setMsg(err?.message || "Updateprüfung fehlgeschlagen.");
+      }
+    });
   }
 
   document.addEventListener("DOMContentLoaded", init);

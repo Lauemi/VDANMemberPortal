@@ -17,6 +17,7 @@ const {
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
 const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
 const memberCardVerifyPubKey = import.meta.env.PUBLIC_MEMBER_CARD_VERIFY_PUBKEY ?? "";
+const appVersion = import.meta.env.PUBLIC_APP_VERSION ?? "dev-local";
 
 // Guard member area paths:
 const path = Astro.url.pathname.toLowerCase();
@@ -48,6 +49,7 @@ const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
     data-supabase-url={supabaseUrl}
     data-supabase-key={supabaseKey}
     data-member-card-verify-pubkey={memberCardVerifyPubKey}
+    data-app-version={appVersion}
   >
     <header class="header">
       <div class="container">

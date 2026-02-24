@@ -14,6 +14,37 @@
     return session()?.user?.id || null;
   }
 
+  const OFFLINE_TOKEN_401_BACKOFF_MS = 6 * 60 * 60 * 1000;
+
+  function offlineTokenFailKey() {
+    return `vdan_member_card_offline_token_fail_until_v1:${userId() || "anon"}`;
+  }
+
+  function setOfflineTokenFailBackoff() {
+    try {
+      sessionStorage.setItem(offlineTokenFailKey(), String(Date.now() + OFFLINE_TOKEN_401_BACKOFF_MS));
+    } catch {
+      // ignore
+    }
+  }
+
+  function hasOfflineTokenFailBackoff() {
+    try {
+      const until = Number(sessionStorage.getItem(offlineTokenFailKey()) || "0");
+      return Number.isFinite(until) && until > Date.now();
+    } catch {
+      return false;
+    }
+  }
+
+  function clearOfflineTokenFailBackoff() {
+    try {
+      sessionStorage.removeItem(offlineTokenFailKey());
+    } catch {
+      // ignore
+    }
+  }
+
   async function sb(path, init = {}, withAuth = false) {
     const { url, key } = cfg();
     const headers = new Headers(init.headers || {});
@@ -56,9 +87,14 @@
       if (!refreshed?.access_token) return null;
       res = await requestWith(refreshed.access_token);
     }
+    if (res.status === 401) {
+      setOfflineTokenFailBackoff();
+      return null;
+    }
     if (!res.ok) return null;
     const out = await res.json().catch(() => null);
     if (!out?.ok || !out?.token) return null;
+    clearOfflineTokenFailBackoff();
     return {
       token: String(out.token),
       exp: Number(out.exp || 0) || 0,
@@ -88,6 +124,7 @@
   async function getOfflineVerifyToken() {
     const cached = await loadCachedOfflineToken();
     if (cached) return cached.token;
+    if (hasOfflineTokenFailBackoff()) return null;
     if (!navigator.onLine) return null;
     const fresh = await fetchOfflineVerifyToken();
     if (!fresh?.token) return null;

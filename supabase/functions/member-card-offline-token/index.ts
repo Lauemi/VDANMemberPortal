@@ -42,13 +42,13 @@ function parsePkcs8Pem(pem: string) {
   return out.buffer;
 }
 
-async function getAuthUser(req: Request, supabaseUrl: string, anonKey: string) {
+async function getAuthUser(req: Request, supabaseUrl: string, serviceKey: string) {
   const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
   if (!authHeader) return null;
   const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
     method: "GET",
     headers: {
-      apikey: anonKey,
+      apikey: serviceKey,
       Authorization: authHeader,
     },
   });
@@ -80,15 +80,15 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("PUBLIC_SUPABASE_ANON_KEY") || "";
-    if (!supabaseUrl || !anonKey) {
-      return new Response(JSON.stringify({ ok: false, error: "missing_supabase_public_env" }), {
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    if (!supabaseUrl || !serviceKey) {
+      return new Response(JSON.stringify({ ok: false, error: "missing_supabase_service_env" }), {
         status: 500,
         headers: { ...headers, "Content-Type": "application/json" },
       });
     }
 
-    const user = await getAuthUser(req, supabaseUrl, anonKey);
+    const user = await getAuthUser(req, supabaseUrl, serviceKey);
     if (!user?.id) {
       return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), {
         status: 401,
@@ -172,4 +172,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-

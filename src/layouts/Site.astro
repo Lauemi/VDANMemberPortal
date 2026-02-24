@@ -32,7 +32,9 @@ const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
     {description && <meta name="description" content={description} />}
     <meta name="robots" content={`${robots},follow`} />
     <link rel="canonical" href={canonical} />
-    <link rel="icon" type="image/png" href="/icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="stylesheet" href="/css/main.css" />
     <link rel="stylesheet" href="/css/consent-manager.css" />
     <script define:vars={{ supabaseUrl, supabaseKey }}>

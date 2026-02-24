@@ -168,6 +168,24 @@
     await clearMustChangePasswordFlag();
   }
 
+  async function requestPasswordReset(identifier, redirectTo = "") {
+    const input = String(identifier || "").trim();
+    const email = input.includes("@") ? input.toLowerCase() : memberNoToEmail(input);
+    if (!email) throw new Error("Bitte Mitgliedsnummer oder E-Mail eingeben.");
+    const body = { email };
+    const rt = String(redirectTo || "").trim();
+    if (rt) body.redirect_to = rt;
+    const res = await sbFetch("/auth/v1/recover", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.msg || err?.error_description || "Reset konnte nicht angefordert werden.");
+    }
+    return true;
+  }
+
   async function enforcePasswordChangeIfNeeded() {
     const path = String(window.location.pathname || "");
     if (!path.startsWith("/app/")) return;
@@ -212,6 +230,7 @@
     loginWithPassword,
     getOwnProfile,
     updatePassword,
+    requestPasswordReset,
     memberNoToEmail,
     logout,
     SESSION_KEY,

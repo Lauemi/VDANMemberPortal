@@ -5,6 +5,7 @@ import { APP } from "../config/app";
 const nextRaw = Astro.url.searchParams.get("next") ?? "/app/";
 const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
 const showDemoHint = Boolean(import.meta.env.DEV);
+const enablePasswordReset = String(import.meta.env.PUBLIC_ENABLE_PASSWORD_RESET || "").toLowerCase() === "true";
 ---
 
 <Site title={`Login • ${APP.name}`} description="Login zum Memberbereich." robots="noindex">
@@ -28,6 +29,12 @@ const showDemoHint = Boolean(import.meta.env.DEV);
           <span id="loginMsg" class="small" aria-live="polite"></span>
         </div>
       </form>
+
+      <p class="small" style="margin-top:10px;">
+        {enablePasswordReset
+          ? <a href="/passwort-vergessen/">Passwort vergessen?</a>
+          : "Passwort vergessen ist vorbereitet, aber aktuell noch deaktiviert."}
+      </p>
 
       {showDemoHint && (
         <>

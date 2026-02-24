@@ -159,12 +159,16 @@
     const ids = [...new Set((Array.isArray(eventIds) ? eventIds : []).filter(Boolean))];
     if (!ids.length) return new Map();
     const inList = ids.map((id) => `"${id}"`).join(",");
-    const rows = await sb(`/rest/v1/work_event_leads?select=event_id,user_id&event_id=in.(${inList})`, { method: "GET" }, true).catch(() => []);
+    let rows = await sb(`/rest/v1/work_event_leads?select=work_event_id,user_id&work_event_id=in.(${inList})`, { method: "GET" }, true).catch(() => null);
+    if (!Array.isArray(rows)) {
+      rows = await sb(`/rest/v1/work_event_leads?select=event_id,user_id&event_id=in.(${inList})`, { method: "GET" }, true).catch(() => []);
+    }
     const map = new Map();
     (Array.isArray(rows) ? rows : []).forEach((r) => {
-      if (!r?.event_id || !r?.user_id) return;
-      if (!map.has(r.event_id)) map.set(r.event_id, []);
-      map.get(r.event_id).push(String(r.user_id));
+      const eid = String(r?.work_event_id || r?.event_id || "").trim();
+      if (!eid || !r?.user_id) return;
+      if (!map.has(eid)) map.set(eid, []);
+      map.get(eid).push(String(r.user_id));
     });
     return map;
   }
@@ -347,12 +351,28 @@
 
   async function saveEventLead(eventId, userId, fromQueue = false) {
     try {
-      await sb(`/rest/v1/work_event_leads?event_id=eq.${encodeURIComponent(eventId)}`, { method: "DELETE" }, true);
+      let deleted = false;
+      try {
+        await sb(`/rest/v1/work_event_leads?work_event_id=eq.${encodeURIComponent(eventId)}`, { method: "DELETE" }, true);
+        deleted = true;
+      } catch {
+        // fallback for legacy schema
+      }
+      if (!deleted) {
+        await sb(`/rest/v1/work_event_leads?event_id=eq.${encodeURIComponent(eventId)}`, { method: "DELETE" }, true);
+      }
       if (userId) {
-        await sb("/rest/v1/work_event_leads", {
-          method: "POST",
-          body: JSON.stringify([{ event_id: eventId, user_id: userId }]),
-        }, true);
+        try {
+          await sb("/rest/v1/work_event_leads", {
+            method: "POST",
+            body: JSON.stringify([{ work_event_id: eventId, user_id: userId }]),
+          }, true);
+        } catch {
+          await sb("/rest/v1/work_event_leads", {
+            method: "POST",
+            body: JSON.stringify([{ event_id: eventId, user_id: userId }]),
+          }, true);
+        }
       }
       return { queued: false };
     } catch (err) {

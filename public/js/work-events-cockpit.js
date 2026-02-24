@@ -159,9 +159,16 @@
     const ids = [...new Set((Array.isArray(eventIds) ? eventIds : []).filter(Boolean))];
     if (!ids.length) return new Map();
     const inList = ids.map((id) => `"${id}"`).join(",");
-    let rows = await sb(`/rest/v1/work_event_leads?select=work_event_id,user_id&work_event_id=in.(${inList})`, { method: "GET" }, true).catch(() => null);
-    if (!Array.isArray(rows)) {
-      rows = await sb(`/rest/v1/work_event_leads?select=event_id,user_id&event_id=in.(${inList})`, { method: "GET" }, true).catch(() => []);
+    let rows = [];
+    try {
+      rows = await sb(`/rest/v1/work_event_leads?select=work_event_id,user_id&work_event_id=in.(${inList})`, { method: "GET" }, true);
+    } catch (err) {
+      const msg = String(err?.message || "").toLowerCase();
+      if (msg.includes("work_event_id") && msg.includes("does not exist")) {
+        rows = await sb(`/rest/v1/work_event_leads?select=event_id,user_id&event_id=in.(${inList})`, { method: "GET" }, true).catch(() => []);
+      } else {
+        rows = [];
+      }
     }
     const map = new Map();
     (Array.isArray(rows) ? rows : []).forEach((r) => {
@@ -355,8 +362,11 @@
       try {
         await sb(`/rest/v1/work_event_leads?work_event_id=eq.${encodeURIComponent(eventId)}`, { method: "DELETE" }, true);
         deleted = true;
-      } catch {
-        // fallback for legacy schema
+      } catch (err) {
+        const msg = String(err?.message || "").toLowerCase();
+        if (!(msg.includes("work_event_id") && msg.includes("does not exist"))) {
+          throw err;
+        }
       }
       if (!deleted) {
         await sb(`/rest/v1/work_event_leads?event_id=eq.${encodeURIComponent(eventId)}`, { method: "DELETE" }, true);
@@ -367,11 +377,16 @@
             method: "POST",
             body: JSON.stringify([{ work_event_id: eventId, user_id: userId }]),
           }, true);
-        } catch {
-          await sb("/rest/v1/work_event_leads", {
-            method: "POST",
-            body: JSON.stringify([{ event_id: eventId, user_id: userId }]),
-          }, true);
+        } catch (err) {
+          const msg = String(err?.message || "").toLowerCase();
+          if (msg.includes("work_event_id") && msg.includes("does not exist")) {
+            await sb("/rest/v1/work_event_leads", {
+              method: "POST",
+              body: JSON.stringify([{ event_id: eventId, user_id: userId }]),
+            }, true);
+          } else {
+            throw err;
+          }
         }
       }
       return { queued: false };

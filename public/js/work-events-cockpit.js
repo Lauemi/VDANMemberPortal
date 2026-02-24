@@ -704,6 +704,7 @@
       .map((m) => {
         const p = byUid.get(m.id) || null;
         const present = Boolean(p && p.status !== "rejected" && p.status !== "no_show");
+        const activeStyle = present ? "background:#1f7a3b;border-color:#1f7a3b;color:#fff;" : "";
         const searchable = `${m.name} ${m.memberNo}`.toLowerCase();
         return `
           <tr data-member-row="${eventId}" data-search="${escapeHtml(searchable)}">
@@ -711,6 +712,7 @@
               <button
                 type="button"
                 class="feed-btn ${present ? "" : "feed-btn--ghost"}"
+                style="${activeStyle}"
                 data-toggle-presence="1"
                 data-event-id="${eventId}"
                 data-user-id="${m.id}"
@@ -726,6 +728,7 @@
               <button
                 type="button"
                 class="feed-btn ${present ? "" : "feed-btn--ghost"}"
+                style="${activeStyle}"
                 data-toggle-presence="1"
                 data-event-id="${eventId}"
                 data-user-id="${m.id}"
@@ -744,6 +747,10 @@
     const defaultFrom = toLocalInput(eventMeta.startsAt || "");
     const defaultTo = toLocalInput(eventMeta.endsAt || "");
     const leadSelected = String(eventMeta.leadId || "");
+    const presentCount = (Array.isArray(members) ? members : []).filter((m) => {
+      const p = byUid.get(m.id) || null;
+      return Boolean(p && p.status !== "rejected" && p.status !== "no_show");
+    }).length;
     const leadOptions = (Array.isArray(members) ? members : [])
       .map((m) => `<option value="${escapeHtml(m.id)}" ${leadSelected === m.id ? "selected" : ""}>${escapeHtml(m.name)}${m.memberNo ? ` (${escapeHtml(m.memberNo)})` : ""}</option>`)
       .join("");
@@ -788,14 +795,17 @@
               <button type="button" class="feed-btn" data-save-addendum="${eventId}">Nachtrag speichern</button>
             </div>
           </div>
-          <div class="work-part-table-wrap">
-            <table class="work-part-table">
-              <thead>
-                <tr><th>Name</th><th>Nr.</th><th>Anwesenheit</th></tr>
-              </thead>
-              <tbody>${memberRows || `<tr><td colspan="3" class="small">Keine Mitglieder gefunden.</td></tr>`}</tbody>
-            </table>
-          </div>
+          <details>
+            <summary style="cursor:pointer;font-weight:600;">Mitgliederliste aufklappen (${presentCount}/${(Array.isArray(members) ? members : []).length} aktiv)</summary>
+            <div class="work-part-table-wrap" style="margin-top:8px;">
+              <table class="work-part-table">
+                <thead>
+                  <tr><th>Name</th><th>Nr.</th><th>Anwesenheit</th></tr>
+                </thead>
+                <tbody>${memberRows || `<tr><td colspan="3" class="small">Keine Mitglieder gefunden.</td></tr>`}</tbody>
+              </table>
+            </div>
+          </details>
         </div>
       </div>
       <div class="work-part-table-wrap">

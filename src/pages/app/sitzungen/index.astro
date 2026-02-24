@@ -95,7 +95,20 @@ import { APP } from "../../../config/app";
 
       <hr />
       <h2>Alle Sitzungstasks</h2>
-      <div id="respTaskRows" class="grid"></div>
+      <div class="work-part-table-wrap">
+        <table class="work-part-table" id="respTaskTable">
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Status</th>
+              <th>Fällig</th>
+              <th>Zuständig</th>
+            </tr>
+          </thead>
+          <tbody id="respTaskRows"></tbody>
+        </table>
+      </div>
+      <p id="respTaskEmpty" class="small hidden" hidden>Noch keine Sitzungstasks vorhanden.</p>
     </div>
   </section>
 

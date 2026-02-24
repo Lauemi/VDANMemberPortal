@@ -229,11 +229,20 @@
 
   function renderTaskRows() {
     const root = document.getElementById("respTaskRows");
+    const empty = document.getElementById("respTaskEmpty");
     if (!root) return;
 
     if (!meetingTasks.length) {
-      root.innerHTML = `<p class="small">Noch keine Sitzungstasks vorhanden.</p>`;
+      root.innerHTML = "";
+      if (empty) {
+        empty.classList.remove("hidden");
+        empty.removeAttribute("hidden");
+      }
       return;
+    }
+    if (empty) {
+      empty.classList.add("hidden");
+      empty.setAttribute("hidden", "");
     }
 
     const sessionMap = new Map(sessions.map((s) => [String(s.id), s]));
@@ -246,16 +255,16 @@
       const sess = sessionMap.get(String(t.meeting_session_id || ""));
       const ag = agendaMap.get(String(t.agenda_item_id || ""));
       return `
-        <button type="button" class="catch-row resp-task-row" data-task-id="${t.id}" style="grid-template-columns:2fr 1fr 1fr;">
-          <span>
-            <strong>${esc(t.title)}</strong>
-            <small class="small">${ag ? `TOP ${ag.item_no}: ${ag.title}` : "Kein Sitzungspunkt"}</small>
-            <small class="small">Sitzung: ${esc(sess ? fmtDate(sess.meeting_date) : "-")}</small>
-            <small class="small">Zuständig: ${esc(assigned.length ? assigned.join(", ") : "-")}</small>
-          </span>
-          <span>${esc(t.status || "open")}</span>
-          <span>${esc(fmtDate(t.due_date))}</span>
-        </button>
+        <tr data-task-id="${t.id}" style="cursor:pointer;">
+          <td>
+            <strong>${esc(t.title)}</strong><br />
+            <span class="small">${ag ? `TOP ${ag.item_no}: ${esc(ag.title)}` : "Kein Sitzungspunkt"}</span><br />
+            <span class="small">Sitzung: ${esc(sess ? fmtDate(sess.meeting_date) : "-")}</span>
+          </td>
+          <td>${esc(t.status || "open")}</td>
+          <td>${esc(fmtDate(t.due_date))}</td>
+          <td class="small">${esc(assigned.length ? assigned.join(", ") : "-")}</td>
+        </tr>
       `;
     }).join("");
   }
@@ -557,7 +566,7 @@
     });
 
     document.getElementById("respTaskRows")?.addEventListener("click", (e) => {
-      const row = e.target?.closest?.("[data-task-id]");
+      const row = e.target?.closest?.("tr[data-task-id]");
       if (!row) return;
       const id = row.getAttribute("data-task-id");
       if (id) openEditDialog(id);

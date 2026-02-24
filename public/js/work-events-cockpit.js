@@ -4,6 +4,7 @@
   let isManager = false;
   let createDialog = null;
   let featureFlags = { work_qr_enabled: false };
+  let memberDirectory = [];
 
   function cfg() {
     return {
@@ -112,6 +113,38 @@
     return Array.isArray(rows) ? rows : [];
   }
 
+  async function listMembersLite() {
+    if (Array.isArray(memberDirectory) && memberDirectory.length) return memberDirectory;
+    const rows = await sbGetCached(
+      "members_lite",
+      "/rest/v1/profiles?select=id,display_name,member_no&order=display_name.asc.nullslast,member_no.asc.nullslast",
+      true,
+      []
+    );
+    memberDirectory = (Array.isArray(rows) ? rows : [])
+      .filter((r) => r?.id)
+      .map((r) => ({
+        id: String(r.id),
+        name: String(r.display_name || "").trim() || "Unbenannt",
+        memberNo: String(r.member_no || "").trim(),
+      }));
+    return memberDirectory;
+  }
+
+  async function loadLeadMap(eventIds) {
+    const ids = [...new Set((Array.isArray(eventIds) ? eventIds : []).filter(Boolean))];
+    if (!ids.length) return new Map();
+    const inList = ids.map((id) => `"${id}"`).join(",");
+    const rows = await sb(`/rest/v1/work_event_leads?select=event_id,user_id&event_id=in.(${inList})`, { method: "GET" }, true).catch(() => []);
+    const map = new Map();
+    (Array.isArray(rows) ? rows : []).forEach((r) => {
+      if (!r?.event_id || !r?.user_id) return;
+      if (!map.has(r.event_id)) map.set(r.event_id, []);
+      map.get(r.event_id).push(String(r.user_id));
+    });
+    return map;
+  }
+
   async function loadProfileMap(userIds) {
     const ids = [...new Set(userIds.filter(Boolean))];
     if (!ids.length) return new Map();
@@ -172,6 +205,19 @@
         }, true);
         return;
       }
+      if (op?.type === "patch_event_details") {
+        await sb(`/rest/v1/work_events?id=eq.${encodeURIComponent(p.eventId || "")}`, {
+          method: "PATCH",
+          body: JSON.stringify(p.payload || {}),
+        }, true);
+        return;
+      }
+      if (op?.type === "delete_event") {
+        await sb(`/rest/v1/work_events?id=eq.${encodeURIComponent(p.eventId || "")}`, {
+          method: "DELETE",
+        }, true);
+        return;
+      }
       if (op?.type === "approve_participation") {
         await sb("/rest/v1/rpc/work_approve", { method: "POST", body: JSON.stringify(p) }, true);
         return;
@@ -182,8 +228,116 @@
       }
       if (op?.type === "admin_update_participation") {
         await sb("/rest/v1/rpc/work_participation_admin_update", { method: "POST", body: JSON.stringify(p) }, true);
+        return;
+      }
+      if (op?.type === "manual_set_presence") {
+        await applyManualPresence(
+          p.eventId,
+          p.userId,
+          Boolean(p.present),
+          p.participationId || null,
+          p.currentStatus || null,
+          true
+        );
+        return;
+      }
+      if (op?.type === "manual_addendum") {
+        await applyManualAddendum(
+          p.eventId,
+          p.userId,
+          p.fromIso || null,
+          p.toIso || null,
+          true
+        );
+        return;
+      }
+      if (op?.type === "assign_event_lead") {
+        await saveEventLead(p.eventId, p.userId || "", true);
+        return;
       }
     });
+  }
+
+  async function applyManualPresence(eventId, userId, present, participationId = null, currentStatus = null, fromQueue = false) {
+    const nowIso = new Date().toISOString();
+    try {
+      if (present) {
+        await sb("/rest/v1/work_participations?on_conflict=event_id,auth_uid", {
+          method: "POST",
+          headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+          body: JSON.stringify([{
+            event_id: eventId,
+            auth_uid: userId,
+            status: "checked_in",
+            checkin_at: nowIso,
+            checkout_at: null,
+            note_admin: "Manuell anwesend gesetzt (Cockpit).",
+          }]),
+        }, true);
+        return { queued: false };
+      }
+
+      if (!participationId) return { queued: false };
+      const fallbackStatus = currentStatus === "approved" ? "approved" : "submitted";
+      await sb(`/rest/v1/work_participations?id=eq.${encodeURIComponent(participationId)}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          checkout_at: nowIso,
+          status: fallbackStatus,
+          note_admin: "Manuell abgewählt (Cockpit).",
+        }),
+      }, true);
+      return { queued: false };
+    } catch (err) {
+      if (!fromQueue && (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err))) {
+        await queueAction("manual_set_presence", { eventId, userId, present, participationId, currentStatus });
+        return { queued: true };
+      }
+      throw err;
+    }
+  }
+
+  async function applyManualAddendum(eventId, userId, fromIso, toIso, fromQueue = false) {
+    try {
+      await sb("/rest/v1/work_participations?on_conflict=event_id,auth_uid", {
+        method: "POST",
+        headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+        body: JSON.stringify([{
+          event_id: eventId,
+          auth_uid: userId,
+          status: "submitted",
+          checkin_at: fromIso || null,
+          checkout_at: toIso || null,
+          note_admin: "Nachtrag durch Vorstand/Admin.",
+        }]),
+      }, true);
+      return { queued: false };
+    } catch (err) {
+      if (!fromQueue && (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err))) {
+        await queueAction("manual_addendum", { eventId, userId, fromIso, toIso });
+        return { queued: true };
+      }
+      throw err;
+    }
+  }
+
+  async function saveEventLead(eventId, userId, fromQueue = false) {
+    try {
+      await sb(`/rest/v1/work_event_leads?event_id=eq.${encodeURIComponent(eventId)}`, { method: "DELETE" }, true);
+      if (userId) {
+        await sb("/rest/v1/work_event_leads", {
+          method: "POST",
+          body: JSON.stringify([{ event_id: eventId, user_id: userId }]),
+        }, true);
+      }
+      return { queued: false };
+    } catch (err) {
+      if (!fromQueue && (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err))) {
+        await queueAction("assign_event_lead", { eventId, userId });
+        return { queued: true };
+      }
+      throw err;
+    }
   }
 
   async function createEvent(payload) {
@@ -226,6 +380,35 @@
     } catch (err) {
       if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
         await queueAction("patch_event_status", { eventId, status });
+        return { queued: true };
+      }
+      throw err;
+    }
+  }
+
+  async function patchEventDetails(eventId, payload) {
+    try {
+      await sb(`/rest/v1/work_events?id=eq.${encodeURIComponent(eventId)}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }, true);
+      return { queued: false };
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueAction("patch_event_details", { eventId, payload });
+        return { queued: true };
+      }
+      throw err;
+    }
+  }
+
+  async function deleteEvent(eventId) {
+    try {
+      await sb(`/rest/v1/work_events?id=eq.${encodeURIComponent(eventId)}`, { method: "DELETE" }, true);
+      return { queued: false };
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueAction("delete_event", { eventId });
         return { queued: true };
       }
       throw err;
@@ -350,13 +533,17 @@
     return Math.floor((end - start) / 60000);
   }
 
-  async function renderParticipations(eventId, host) {
+  function toLocalInput(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  async function renderParticipations(eventId, host, eventMeta = {}) {
     host.innerHTML = `<p class="small">Lädt Teilnehmer…</p>`;
-    const rows = await listParticipations(eventId);
-    if (!rows.length) {
-      host.innerHTML = `<p class="small">Noch keine Teilnahmen.</p>`;
-      return;
-    }
+    const [rows, members] = await Promise.all([listParticipations(eventId), listMembersLite()]);
 
     const profileMap = await loadProfileMap([
       ...rows.map((r) => r.auth_uid),
@@ -379,14 +566,6 @@
     const open = sortedRows.filter((r) => isPresent(r)).length;
     const gone = sortedRows.filter((r) => r.checkout_at).length;
     const pending = rows.filter((r) => r.status === "submitted" || r.status === "checked_in" || r.status === "registered").length;
-
-    const toLocalInput = (iso) => {
-      if (!iso) return "";
-      const d = new Date(iso);
-      if (Number.isNaN(d.getTime())) return "";
-      const pad = (n) => String(n).padStart(2, "0");
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    };
 
     const tableRows = sortedRows
       .map((row) => {
@@ -414,6 +593,9 @@
           <td><strong data-min-computed="${row.id}">${minutesLabel}</strong></td>
           <td>
             <div class="work-part-actions">
+              <label class="small">Freigabe-Minuten
+                <input type="number" min="0" step="1" value="${minutesVal}" data-min="${row.id}" style="max-width:110px;" />
+              </label>
               <button class="feed-btn feed-btn--ghost" type="button" data-edit-toggle="${row.id}">Bearbeiten</button>
               <button class="feed-btn feed-btn--ghost hidden" type="button" data-save-time="${row.id}">Speichern</button>
               <button class="feed-btn" type="button" data-approve="${row.id}">Freigeben</button>
@@ -438,11 +620,92 @@
       })
       .join("");
 
+    const byUid = new Map();
+    rows.forEach((r) => {
+      if (r?.auth_uid) byUid.set(String(r.auth_uid), r);
+    });
+    const memberRows = (Array.isArray(members) ? members : [])
+      .map((m) => {
+        const p = byUid.get(m.id) || null;
+        const present = Boolean(p?.checkin_at && !p?.checkout_at && p?.status !== "rejected" && p?.status !== "no_show");
+        const searchable = `${m.name} ${m.memberNo}`.toLowerCase();
+        return `
+          <tr data-member-row="${eventId}" data-search="${escapeHtml(searchable)}">
+            <td><strong>${escapeHtml(m.name)}</strong></td>
+            <td>${escapeHtml(m.memberNo || "-")}</td>
+            <td>
+              <button
+                type="button"
+                class="feed-btn ${present ? "" : "feed-btn--ghost"}"
+                data-toggle-presence="1"
+                data-event-id="${eventId}"
+                data-user-id="${m.id}"
+                data-present="${present ? "1" : "0"}"
+                data-part-id="${escapeHtml(String(p?.id || ""))}"
+                data-part-status="${escapeHtml(String(p?.status || ""))}"
+              >${present ? "Anwesend" : "Nicht da"}</button>
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    const defaultFrom = toLocalInput(eventMeta.startsAt || "");
+    const defaultTo = toLocalInput(eventMeta.endsAt || "");
+    const leadSelected = String(eventMeta.leadId || "");
+    const leadOptions = (Array.isArray(members) ? members : [])
+      .map((m) => `<option value="${escapeHtml(m.id)}" ${leadSelected === m.id ? "selected" : ""}>${escapeHtml(m.name)}${m.memberNo ? ` (${escapeHtml(m.memberNo)})` : ""}</option>`)
+      .join("");
+
     host.innerHTML = `
       <div class="work-part-summary">
         <span class="feed-chip">Da: ${open}</span>
         <span class="feed-chip">Gegangen: ${gone}</span>
         <span class="feed-chip">Zu prüfen: ${pending}</span>
+      </div>
+      <div class="card" style="margin:10px 0;">
+        <div class="card__body" style="display:grid;gap:8px;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <input type="search" class="feed-input" style="min-width:220px;flex:1;" placeholder="Mitglied suchen (Name/Nr.)" data-member-search="${eventId}" />
+            <button type="button" class="feed-btn feed-btn--ghost" data-open-addendum="${eventId}">Nachtrag</button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <label class="small">Zuständigkeit
+              <select data-lead-select="${eventId}">
+                <option value="">Kein Leiter</option>
+                ${leadOptions}
+              </select>
+            </label>
+            <button type="button" class="feed-btn feed-btn--ghost" data-save-lead="${eventId}">Leiter speichern</button>
+          </div>
+          <div class="hidden" data-addendum-panel="${eventId}">
+            <div style="display:grid;gap:8px;grid-template-columns:1fr 1fr;">
+              <label class="small" style="grid-column:1/-1;">Mitglied
+                <select data-addendum-user="${eventId}">
+                  <option value="">Bitte wählen</option>
+                  ${leadOptions}
+                </select>
+              </label>
+              <label class="small">Von
+                <input type="datetime-local" value="${escapeHtml(defaultFrom)}" data-addendum-from="${eventId}" />
+              </label>
+              <label class="small">Bis
+                <input type="datetime-local" value="${escapeHtml(defaultTo)}" data-addendum-to="${eventId}" />
+              </label>
+            </div>
+            <div style="margin-top:8px;">
+              <button type="button" class="feed-btn" data-save-addendum="${eventId}">Nachtrag speichern</button>
+            </div>
+          </div>
+          <div class="work-part-table-wrap">
+            <table class="work-part-table">
+              <thead>
+                <tr><th>Name</th><th>Nr.</th><th>Anwesenheit</th></tr>
+              </thead>
+              <tbody>${memberRows || `<tr><td colspan="3" class="small">Keine Mitglieder gefunden.</td></tr>`}</tbody>
+            </table>
+          </div>
+        </div>
       </div>
       <div class="work-part-table-wrap">
         <table class="work-part-table">
@@ -480,6 +743,9 @@
     const now = Date.now();
     const activeRows = rows.filter((r) => new Date(r.ends_at).getTime() >= now && r.status !== "archived");
     const historyRows = rows.filter((r) => new Date(r.ends_at).getTime() < now || r.status === "archived");
+    const leadsByEvent = await loadLeadMap(rows.map((r) => r.id)).catch(() => new Map());
+    const leadUserIds = [...new Set([].concat(...[...leadsByEvent.values()]))];
+    const leadProfileMap = await loadProfileMap(leadUserIds);
 
     const renderInto = (list, root) => {
       if (!list.length) {
@@ -489,17 +755,35 @@
       list.forEach((row) => {
         const item = document.createElement("article");
         item.className = "card work-card";
+        const leadIds = leadsByEvent.get(row.id) || [];
+        const leadId = leadIds[0] || "";
+        const leadName = leadId ? (leadProfileMap.get(leadId)?.label || leadId) : "";
         item.innerHTML = `
           <div class="card__body">
             <h3>${escapeHtml(row.title)}</h3>
             <p class="small">${escapeHtml(asLocalDate(row.starts_at))} - ${escapeHtml(asLocalDate(row.ends_at))}</p>
             <p class="small">${escapeHtml(row.location || "Ort offen")} | Status: <strong>${escapeHtml(statusLabel(row.status))}</strong></p>
+            ${leadName ? `<p class="small">Zuständig: <strong>${escapeHtml(leadName)}</strong></p>` : `<p class="small">Zuständig: <em>nicht gesetzt</em></p>`}
             ${row.description ? `<p class="small">${escapeHtml(row.description)}</p>` : ""}
             <div class="work-actions">
               <button class="feed-btn" type="button" data-publish="${row.id}" ${row.status === "draft" ? "" : "disabled"}>Veröffentlichen</button>
               <button class="feed-btn feed-btn--ghost" type="button" data-cancel="${row.id}" ${row.status === "published" ? "" : "disabled"}>Absagen</button>
               <button class="feed-btn feed-btn--ghost" type="button" data-archive="${row.id}" ${row.status !== "archived" ? "" : "disabled"}>Archivieren</button>
-              <button class="feed-btn feed-btn--ghost" type="button" data-participants="${row.id}">Teilnehmer</button>
+              <button class="feed-btn feed-btn--ghost" type="button" data-edit-event-toggle="${row.id}">Bearbeiten</button>
+              <button class="feed-btn feed-btn--ghost" type="button" data-delete-event="${row.id}">Löschen</button>
+              <button class="feed-btn feed-btn--ghost" type="button" data-participants="${row.id}" data-event-title="${escapeHtml(row.title)}" data-event-start="${escapeHtml(String(row.starts_at || ""))}" data-event-end="${escapeHtml(String(row.ends_at || ""))}" data-event-lead="${escapeHtml(leadId)}">Teilnehmer</button>
+            </div>
+            <div class="hidden" data-edit-event-panel="${row.id}">
+              <div class="grid cols2">
+                <label><span>Titel</span><input type="text" maxlength="120" value="${escapeHtml(row.title || "")}" data-edit-event-title="${row.id}" /></label>
+                <label><span>Ort</span><input type="text" maxlength="160" value="${escapeHtml(row.location || "")}" data-edit-event-location="${row.id}" /></label>
+                <label><span>Start</span><input type="datetime-local" value="${escapeHtml(toLocalInput(row.starts_at))}" data-edit-event-start="${row.id}" /></label>
+                <label><span>Ende</span><input type="datetime-local" value="${escapeHtml(toLocalInput(row.ends_at))}" data-edit-event-end="${row.id}" /></label>
+                <label style="grid-column:1/-1"><span>Beschreibung</span><textarea rows="2" data-edit-event-description="${row.id}">${escapeHtml(row.description || "")}</textarea></label>
+              </div>
+              <div style="margin-top:8px;">
+                <button class="feed-btn" type="button" data-save-event-edit="${row.id}">Änderungen speichern</button>
+              </div>
             </div>
             ${featureFlags.work_qr_enabled && hasExternalMediaConsent() ? `
             <div class="work-qr-box">
@@ -631,6 +915,50 @@
         return;
       }
 
+      const editEventToggleId = target.getAttribute("data-edit-event-toggle");
+      if (editEventToggleId) {
+        document.querySelector(`[data-edit-event-panel="${editEventToggleId}"]`)?.classList.toggle("hidden");
+        return;
+      }
+
+      const saveEventEditId = target.getAttribute("data-save-event-edit");
+      if (saveEventEditId) {
+        const payload = {
+          title: String(document.querySelector(`[data-edit-event-title="${saveEventEditId}"]`)?.value || "").trim(),
+          location: String(document.querySelector(`[data-edit-event-location="${saveEventEditId}"]`)?.value || "").trim() || null,
+          starts_at: toIsoFromLocalInput(String(document.querySelector(`[data-edit-event-start="${saveEventEditId}"]`)?.value || "").trim()),
+          ends_at: toIsoFromLocalInput(String(document.querySelector(`[data-edit-event-end="${saveEventEditId}"]`)?.value || "").trim()),
+          description: String(document.querySelector(`[data-edit-event-description="${saveEventEditId}"]`)?.value || "").trim() || null,
+        };
+        if (!payload.title || !payload.starts_at || !payload.ends_at) {
+          setMsg("Bitte Titel/Start/Ende vollständig ausfüllen.");
+          return;
+        }
+        try {
+          setMsg("Änderung wird gespeichert...");
+          const out = await patchEventDetails(saveEventEditId, payload);
+          setMsg(out?.queued ? "Offline gespeichert. Änderung folgt bei Empfang." : "Einsatz aktualisiert.");
+          await refresh();
+        } catch (err) {
+          setMsg(err?.message || "Aktualisierung fehlgeschlagen");
+        }
+        return;
+      }
+
+      const deleteEventId = target.getAttribute("data-delete-event");
+      if (deleteEventId) {
+        if (!window.confirm("Arbeitseinsatz wirklich löschen?")) return;
+        try {
+          setMsg("Löschung wird gespeichert...");
+          const out = await deleteEvent(deleteEventId);
+          setMsg(out?.queued ? "Offline gespeichert. Löschung folgt bei Empfang." : "Einsatz gelöscht.");
+          await refresh();
+        } catch (err) {
+          setMsg(err?.message || "Löschen fehlgeschlagen");
+        }
+        return;
+      }
+
       const participantsId = target.getAttribute("data-participants");
       if (participantsId) {
         const host = document.getElementById(`parts-${participantsId}`);
@@ -642,9 +970,87 @@
         }
         host.dataset.open = "1";
         try {
-          await renderParticipations(participantsId, host);
+          await renderParticipations(participantsId, host, {
+            title: target.getAttribute("data-event-title") || "",
+            startsAt: target.getAttribute("data-event-start") || "",
+            endsAt: target.getAttribute("data-event-end") || "",
+            leadId: target.getAttribute("data-event-lead") || "",
+          });
         } catch (err) {
           host.innerHTML = `<p class="small">${escapeHtml(err?.message || "Teilnehmer konnten nicht geladen werden")}</p>`;
+        }
+        return;
+      }
+
+      const togglePresence = target.getAttribute("data-toggle-presence");
+      if (togglePresence) {
+        const eventId = String(target.getAttribute("data-event-id") || "");
+        const userId = String(target.getAttribute("data-user-id") || "");
+        const wasPresent = String(target.getAttribute("data-present") || "0") === "1";
+        const partId = String(target.getAttribute("data-part-id") || "").trim() || null;
+        const partStatus = String(target.getAttribute("data-part-status") || "").trim() || null;
+        if (!eventId || !userId) return;
+        try {
+          setMsg(wasPresent ? "Setze auf abwesend..." : "Setze auf anwesend...");
+          const out = await applyManualPresence(eventId, userId, !wasPresent, partId, partStatus, false);
+          setMsg(out?.queued ? "Offline gespeichert. Anwesenheit wird bei Empfang synchronisiert." : "Anwesenheit aktualisiert.");
+          const host = document.getElementById(`parts-${eventId}`);
+          if (host?.dataset.open === "1") {
+            await renderParticipations(eventId, host, {
+              startsAt: target.getAttribute("data-event-start") || "",
+              endsAt: target.getAttribute("data-event-end") || "",
+            });
+          }
+        } catch (err) {
+          setMsg(err?.message || "Anwesenheit konnte nicht gesetzt werden.");
+        }
+        return;
+      }
+
+      const openAddendum = target.getAttribute("data-open-addendum");
+      if (openAddendum) {
+        const panel = document.querySelector(`[data-addendum-panel="${openAddendum}"]`);
+        panel?.classList.toggle("hidden");
+        return;
+      }
+
+      const saveAddendum = target.getAttribute("data-save-addendum");
+      if (saveAddendum) {
+        const userId = String(document.querySelector(`[data-addendum-user="${saveAddendum}"]`)?.value || "").trim();
+        const fromRaw = String(document.querySelector(`[data-addendum-from="${saveAddendum}"]`)?.value || "").trim();
+        const toRaw = String(document.querySelector(`[data-addendum-to="${saveAddendum}"]`)?.value || "").trim();
+        if (!userId) {
+          setMsg("Bitte Mitglied für Nachtrag wählen.");
+          return;
+        }
+        const fromIso = toIsoFromLocalInput(fromRaw);
+        const toIso = toIsoFromLocalInput(toRaw);
+        if (!fromIso || !toIso) {
+          setMsg("Bitte gültige Von-/Bis-Zeit für Nachtrag setzen.");
+          return;
+        }
+        try {
+          setMsg("Nachtrag wird gespeichert...");
+          const out = await applyManualAddendum(saveAddendum, userId, fromIso, toIso, false);
+          setMsg(out?.queued ? "Offline gespeichert. Nachtrag folgt bei Empfang." : "Nachtrag gespeichert.");
+          const host = document.getElementById(`parts-${saveAddendum}`);
+          if (host?.dataset.open === "1") await renderParticipations(saveAddendum, host);
+        } catch (err) {
+          setMsg(err?.message || "Nachtrag fehlgeschlagen.");
+        }
+        return;
+      }
+
+      const saveLead = target.getAttribute("data-save-lead");
+      if (saveLead) {
+        const userId = String(document.querySelector(`[data-lead-select="${saveLead}"]`)?.value || "").trim();
+        try {
+          setMsg("Zuständigkeit wird gespeichert...");
+          const out = await saveEventLead(saveLead, userId, false);
+          setMsg(out?.queued ? "Offline gespeichert. Zuständigkeit folgt bei Empfang." : "Zuständigkeit gespeichert.");
+          await refresh();
+        } catch (err) {
+          setMsg(err?.message || "Zuständigkeit konnte nicht gespeichert werden.");
         }
         return;
       }
@@ -712,6 +1118,15 @@
     const onEditInput = (e) => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
+      const searchEventId = target.getAttribute("data-member-search");
+      if (searchEventId) {
+        const q = String(target.value || "").toLowerCase().trim();
+        document.querySelectorAll(`[data-member-row="${searchEventId}"]`).forEach((row) => {
+          const hay = String(row.getAttribute("data-search") || "").toLowerCase();
+          row.classList.toggle("hidden", Boolean(q) && !hay.includes(q));
+        });
+        return;
+      }
       const rowId = target.getAttribute("data-edit-in") || target.getAttribute("data-edit-out");
       if (!rowId) return;
       const inVal = String(document.querySelector(`[data-edit-in="${rowId}"]`)?.value || "").trim();

@@ -62,6 +62,19 @@
     return Number.isNaN(d.getTime()) ? iso : d.toLocaleString("de-DE");
   }
 
+  function toIso(local) {
+    const d = new Date(local);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+
+  function toLocalInput(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
   async function loadRoles() {
     const uid = session()?.user?.id;
     if (!uid) return [];
@@ -116,6 +129,32 @@
     }
   }
 
+  async function patchEvent(id, payload) {
+    try {
+      await sb(`/rest/v1/club_events?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(payload) }, true);
+      return { queued: false };
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueAction("patch_event", { id, payload });
+        return { queued: true };
+      }
+      throw err;
+    }
+  }
+
+  async function deleteEvent(id) {
+    try {
+      await sb(`/rest/v1/club_events?id=eq.${encodeURIComponent(id)}`, { method: "DELETE" }, true);
+      return { queued: false };
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueAction("delete_event", { id });
+        return { queued: true };
+      }
+      throw err;
+    }
+  }
+
   async function flushOfflineQueue() {
     if (!window.VDAN_OFFLINE_SYNC?.flush) return;
     await window.VDAN_OFFLINE_SYNC.flush(OFFLINE_NS, async (op) => {
@@ -130,8 +169,44 @@
       }
       if (op?.type === "patch_status") {
         await sb(`/rest/v1/club_events?id=eq.${encodeURIComponent(p.id || "")}`, { method: "PATCH", body: JSON.stringify({ status: p.status }) }, true);
+        return;
+      }
+      if (op?.type === "patch_event") {
+        await sb(`/rest/v1/club_events?id=eq.${encodeURIComponent(p.id || "")}`, { method: "PATCH", body: JSON.stringify(p.payload || {}) }, true);
+        return;
+      }
+      if (op?.type === "delete_event") {
+        await sb(`/rest/v1/club_events?id=eq.${encodeURIComponent(p.id || "")}`, { method: "DELETE" }, true);
       }
     });
+  }
+
+  function eventCardHtml(row) {
+    return `
+      <div class="card__body">
+        <h3>${escapeHtml(row.title)}</h3>
+        <p class="small">${escapeHtml(fmt(row.starts_at))} - ${escapeHtml(fmt(row.ends_at))}</p>
+        <p class="small">${escapeHtml(row.location || "Ort offen")} | Status: ${escapeHtml(row.status)}</p>
+        ${row.description ? `<p class="small">${escapeHtml(row.description)}</p>` : ""}
+        <div class="work-actions">
+          <button class="feed-btn" type="button" data-publish="${row.id}" ${row.status === "draft" ? "" : "disabled"}>Publish</button>
+          <button class="feed-btn feed-btn--ghost" type="button" data-cancel="${row.id}" ${row.status === "published" ? "" : "disabled"}>Cancel</button>
+          <button class="feed-btn feed-btn--ghost" type="button" data-archive="${row.id}" ${row.status !== "archived" ? "" : "disabled"}>Archive</button>
+          <button class="feed-btn feed-btn--ghost" type="button" data-edit-toggle="${row.id}">Bearbeiten</button>
+          <button class="feed-btn feed-btn--ghost" type="button" data-delete-event="${row.id}">Löschen</button>
+        </div>
+        <div class="hidden" data-edit-panel="${row.id}">
+          <div class="grid cols2">
+            <label><span>Titel</span><input type="text" maxlength="160" value="${escapeHtml(row.title || "")}" data-edit-title="${row.id}" /></label>
+            <label><span>Ort</span><input type="text" maxlength="180" value="${escapeHtml(row.location || "")}" data-edit-location="${row.id}" /></label>
+            <label><span>Start</span><input type="datetime-local" value="${escapeHtml(toLocalInput(row.starts_at))}" data-edit-start="${row.id}" /></label>
+            <label><span>Ende</span><input type="datetime-local" value="${escapeHtml(toLocalInput(row.ends_at))}" data-edit-end="${row.id}" /></label>
+            <label style="grid-column:1/-1"><span>Beschreibung</span><textarea rows="2" data-edit-description="${row.id}">${escapeHtml(row.description || "")}</textarea></label>
+          </div>
+          <div style="margin-top:8px;"><button class="feed-btn" type="button" data-save-edit="${row.id}">Änderungen speichern</button></div>
+        </div>
+      </div>
+    `;
   }
 
   function render(rows) {
@@ -152,30 +227,13 @@
       list.forEach((row) => {
         const item = document.createElement("article");
         item.className = "card term-card";
-        item.innerHTML = `
-          <div class="card__body">
-            <h3>${escapeHtml(row.title)}</h3>
-            <p class="small">${escapeHtml(fmt(row.starts_at))} - ${escapeHtml(fmt(row.ends_at))}</p>
-            <p class="small">${escapeHtml(row.location || "Ort offen")} | Status: ${escapeHtml(row.status)}</p>
-            ${row.description ? `<p class="small">${escapeHtml(row.description)}</p>` : ""}
-            <div class="work-actions">
-              <button class="feed-btn" type="button" data-publish="${row.id}" ${row.status === "draft" ? "" : "disabled"}>Publish</button>
-              <button class="feed-btn feed-btn--ghost" type="button" data-cancel="${row.id}" ${row.status === "published" ? "" : "disabled"}>Cancel</button>
-              <button class="feed-btn feed-btn--ghost" type="button" data-archive="${row.id}" ${row.status !== "archived" ? "" : "disabled"}>Archive</button>
-            </div>
-          </div>
-        `;
+        item.innerHTML = eventCardHtml(row);
         root.appendChild(item);
       });
     };
 
     renderList(active, activeRoot);
     renderList(history, historyRoot);
-  }
-
-  function toIso(local) {
-    const d = new Date(local);
-    return Number.isNaN(d.getTime()) ? null : d.toISOString();
   }
 
   function openDialog() {
@@ -190,6 +248,62 @@
   async function refresh() {
     const rows = await listEvents();
     render(rows);
+  }
+
+  async function handleCardAction(target) {
+    const publishId = target.getAttribute("data-publish");
+    const cancelId = target.getAttribute("data-cancel");
+    const archiveId = target.getAttribute("data-archive");
+    const editToggleId = target.getAttribute("data-edit-toggle");
+    const saveEditId = target.getAttribute("data-save-edit");
+    const deleteId = target.getAttribute("data-delete-event");
+
+    if (editToggleId) {
+      document.querySelector(`[data-edit-panel="${editToggleId}"]`)?.classList.toggle("hidden");
+      return false;
+    }
+
+    if (saveEditId) {
+      const payload = {
+        title: String(document.querySelector(`[data-edit-title="${saveEditId}"]`)?.value || "").trim(),
+        location: String(document.querySelector(`[data-edit-location="${saveEditId}"]`)?.value || "").trim() || null,
+        starts_at: toIso(String(document.querySelector(`[data-edit-start="${saveEditId}"]`)?.value || "").trim()),
+        ends_at: toIso(String(document.querySelector(`[data-edit-end="${saveEditId}"]`)?.value || "").trim()),
+        description: String(document.querySelector(`[data-edit-description="${saveEditId}"]`)?.value || "").trim() || null,
+      };
+      if (!payload.title || !payload.starts_at || !payload.ends_at) {
+        setMsg("Bitte Titel/Start/Ende vollständig ausfüllen.");
+        return false;
+      }
+      const out = await patchEvent(saveEditId, payload);
+      setMsg(out?.queued ? "Offline gespeichert. Terminänderung folgt bei Empfang." : "Termin aktualisiert.");
+      return true;
+    }
+
+    if (deleteId) {
+      if (!window.confirm("Termin wirklich löschen?")) return false;
+      const out = await deleteEvent(deleteId);
+      setMsg(out?.queued ? "Offline gespeichert. Löschung folgt bei Empfang." : "Termin gelöscht.");
+      return true;
+    }
+
+    if (publishId) {
+      const out = await publishEvent(publishId);
+      setMsg(out?.queued ? "Offline gespeichert. Veröffentlichung folgt bei Empfang." : "Termin veröffentlicht.");
+      return true;
+    }
+    if (cancelId) {
+      const out = await patchStatus(cancelId, "cancelled");
+      setMsg(out?.queued ? "Offline gespeichert. Absage folgt bei Empfang." : "Termin abgesagt.");
+      return true;
+    }
+    if (archiveId) {
+      const out = await patchStatus(archiveId, "archived");
+      setMsg(out?.queued ? "Offline gespeichert. Archivierung folgt bei Empfang." : "Termin archiviert.");
+      return true;
+    }
+
+    return false;
   }
 
   async function init() {
@@ -231,44 +345,19 @@
       }
     });
 
-    document.getElementById("termCockpitActive")?.addEventListener("click", async (e) => {
+    const onListClick = async (e) => {
       const t = e.target;
       if (!(t instanceof HTMLElement)) return;
-      const publishId = t.getAttribute("data-publish");
-      const cancelId = t.getAttribute("data-cancel");
-      const archiveId = t.getAttribute("data-archive");
       try {
-        if (publishId) {
-          const out = await publishEvent(publishId);
-          setMsg(out?.queued ? "Offline gespeichert. Veröffentlichung folgt bei Empfang." : "Termin veröffentlicht.");
-        }
-        if (cancelId) {
-          const out = await patchStatus(cancelId, "cancelled");
-          setMsg(out?.queued ? "Offline gespeichert. Absage folgt bei Empfang." : "Termin abgesagt.");
-        }
-        if (archiveId) {
-          const out = await patchStatus(archiveId, "archived");
-          setMsg(out?.queued ? "Offline gespeichert. Archivierung folgt bei Empfang." : "Termin archiviert.");
-        }
-        await refresh();
+        const didMutate = await handleCardAction(t);
+        if (didMutate) await refresh();
       } catch (err) {
         setMsg(err?.message || "Aktion fehlgeschlagen");
       }
-    });
+    };
 
-    document.getElementById("termCockpitHistory")?.addEventListener("click", async (e) => {
-      const t = e.target;
-      if (!(t instanceof HTMLElement)) return;
-      const archiveId = t.getAttribute("data-archive");
-      if (!archiveId) return;
-      try {
-        const out = await patchStatus(archiveId, "archived");
-        setMsg(out?.queued ? "Offline gespeichert. Archivierung folgt bei Empfang." : "Termin archiviert.");
-        await refresh();
-      } catch (err) {
-        setMsg(err?.message || "Aktion fehlgeschlagen");
-      }
-    });
+    document.getElementById("termCockpitActive")?.addEventListener("click", onListClick);
+    document.getElementById("termCockpitHistory")?.addEventListener("click", onListClick);
 
     await flushOfflineQueue().catch(() => {});
     await refresh();

@@ -32,17 +32,32 @@
 
   async function fetchOfflineVerifyToken() {
     const { url, key } = cfg();
-    const token = session()?.access_token;
-    if (!url || !key || !token) return null;
-    const res = await fetch(`${url}/functions/v1/member-card-offline-token`, {
-      method: "POST",
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({}),
-    });
+    if (!url || !key) return null;
+    let active = session();
+    if (!active?.access_token) {
+      active = await window.VDAN_AUTH?.refreshSession?.();
+    }
+    if (!active?.access_token) return null;
+
+    async function requestWith(token) {
+      const res = await fetch(`${url}/functions/v1/member-card-offline-token`, {
+        method: "POST",
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+      return res;
+    }
+
+    let res = await requestWith(active.access_token);
+    if (res.status === 401) {
+      const refreshed = await window.VDAN_AUTH?.refreshSession?.();
+      if (!refreshed?.access_token) return null;
+      res = await requestWith(refreshed.access_token);
+    }
     if (!res.ok) return null;
     const out = await res.json().catch(() => null);
     if (!out?.ok || !out?.token) return null;
@@ -249,5 +264,4 @@
   }
 
   document.addEventListener("DOMContentLoaded", init);
-  document.addEventListener("vdan:consent-changed", init);
 })();

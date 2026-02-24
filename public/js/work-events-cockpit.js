@@ -56,6 +56,30 @@
     await window.VDAN_OFFLINE_SYNC?.enqueue?.(OFFLINE_NS, { type, payload });
   }
 
+  async function invokeWorkEventAdminUpdate(action, eventId, patch = null) {
+    const { url, key } = cfg();
+    const token = session()?.access_token;
+    if (!url || !key || !token) throw new Error("Keine aktive Session.");
+    const res = await fetch(`${url}/functions/v1/work-event-admin-update`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action,
+        event_id: eventId,
+        ...(patch && typeof patch === "object" ? { patch } : {}),
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error || err?.message || `Admin-Update fehlgeschlagen (${res.status})`);
+    }
+    return res.json().catch(() => ({}));
+  }
+
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
@@ -388,30 +412,32 @@
 
   async function patchEventDetails(eventId, payload) {
     try {
-      await sb(`/rest/v1/work_events?id=eq.${encodeURIComponent(eventId)}`, {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      }, true);
+      await invokeWorkEventAdminUpdate("update", eventId, payload);
       return { queued: false };
     } catch (err) {
       if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
         await queueAction("patch_event_details", { eventId, payload });
         return { queued: true };
       }
-      throw err;
+      await sb(`/rest/v1/work_events?id=eq.${encodeURIComponent(eventId)}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }, true);
+      return { queued: false };
     }
   }
 
   async function deleteEvent(eventId) {
     try {
-      await sb(`/rest/v1/work_events?id=eq.${encodeURIComponent(eventId)}`, { method: "DELETE" }, true);
+      await invokeWorkEventAdminUpdate("delete", eventId);
       return { queued: false };
     } catch (err) {
       if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
         await queueAction("delete_event", { eventId });
         return { queued: true };
       }
-      throw err;
+      await sb(`/rest/v1/work_events?id=eq.${encodeURIComponent(eventId)}`, { method: "DELETE" }, true);
+      return { queued: false };
     }
   }
 

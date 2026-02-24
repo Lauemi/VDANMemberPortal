@@ -272,6 +272,8 @@
           Boolean(p.present),
           p.participationId || null,
           p.currentStatus || null,
+          p.plannedStartIso || null,
+          p.plannedEndIso || null,
           true
         );
         return;
@@ -293,8 +295,19 @@
     });
   }
 
-  async function applyManualPresence(eventId, userId, present, participationId = null, currentStatus = null, fromQueue = false) {
+  async function applyManualPresence(
+    eventId,
+    userId,
+    present,
+    participationId = null,
+    currentStatus = null,
+    plannedStartIso = null,
+    plannedEndIso = null,
+    fromQueue = false
+  ) {
     const nowIso = new Date().toISOString();
+    const checkinIso = plannedStartIso || nowIso;
+    const checkoutIso = plannedEndIso || plannedStartIso || nowIso;
     try {
       if (present) {
         await sb("/rest/v1/work_participations?on_conflict=event_id,auth_uid", {
@@ -303,29 +316,31 @@
           body: JSON.stringify([{
             event_id: eventId,
             auth_uid: userId,
-            status: "checked_in",
-            checkin_at: nowIso,
-            checkout_at: null,
-            note_admin: "Manuell anwesend gesetzt (Cockpit).",
+            status: "submitted",
+            checkin_at: checkinIso,
+            checkout_at: checkoutIso,
+            note_admin: "Manuell aus Mitgliederliste hinzugefügt.",
           }]),
         }, true);
         return { queued: false };
       }
 
       if (!participationId) return { queued: false };
-      const fallbackStatus = currentStatus === "approved" ? "approved" : "submitted";
       await sb(`/rest/v1/work_participations?id=eq.${encodeURIComponent(participationId)}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          checkout_at: nowIso,
-          status: fallbackStatus,
-          note_admin: "Manuell abgewählt (Cockpit).",
-        }),
+        method: "DELETE",
       }, true);
       return { queued: false };
     } catch (err) {
       if (!fromQueue && (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err))) {
-        await queueAction("manual_set_presence", { eventId, userId, present, participationId, currentStatus });
+        await queueAction("manual_set_presence", {
+          eventId,
+          userId,
+          present,
+          participationId,
+          currentStatus,
+          plannedStartIso,
+          plannedEndIso,
+        });
         return { queued: true };
       }
       throw err;
@@ -688,11 +703,24 @@
     const memberRows = (Array.isArray(members) ? members : [])
       .map((m) => {
         const p = byUid.get(m.id) || null;
-        const present = Boolean(p?.checkin_at && !p?.checkout_at && p?.status !== "rejected" && p?.status !== "no_show");
+        const present = Boolean(p && p.status !== "rejected" && p.status !== "no_show");
         const searchable = `${m.name} ${m.memberNo}`.toLowerCase();
         return `
           <tr data-member-row="${eventId}" data-search="${escapeHtml(searchable)}">
-            <td><strong>${escapeHtml(m.name)}</strong></td>
+            <td>
+              <button
+                type="button"
+                class="feed-btn ${present ? "" : "feed-btn--ghost"}"
+                data-toggle-presence="1"
+                data-event-id="${eventId}"
+                data-user-id="${m.id}"
+                data-present="${present ? "1" : "0"}"
+                data-part-id="${escapeHtml(String(p?.id || ""))}"
+                data-part-status="${escapeHtml(String(p?.status || ""))}"
+                data-event-start="${escapeHtml(String(eventMeta.startsAt || ""))}"
+                data-event-end="${escapeHtml(String(eventMeta.endsAt || ""))}"
+              >${escapeHtml(m.name)}</button>
+            </td>
             <td>${escapeHtml(m.memberNo || "-")}</td>
             <td>
               <button
@@ -704,6 +732,8 @@
                 data-present="${present ? "1" : "0"}"
                 data-part-id="${escapeHtml(String(p?.id || ""))}"
                 data-part-status="${escapeHtml(String(p?.status || ""))}"
+                data-event-start="${escapeHtml(String(eventMeta.startsAt || ""))}"
+                data-event-end="${escapeHtml(String(eventMeta.endsAt || ""))}"
               >${present ? "Anwesend" : "Nicht da"}</button>
             </td>
           </tr>
@@ -1050,16 +1080,31 @@
         const wasPresent = String(target.getAttribute("data-present") || "0") === "1";
         const partId = String(target.getAttribute("data-part-id") || "").trim() || null;
         const partStatus = String(target.getAttribute("data-part-status") || "").trim() || null;
+        const plannedStartIso = String(target.getAttribute("data-event-start") || "").trim() || null;
+        const plannedEndIso = String(target.getAttribute("data-event-end") || "").trim() || null;
         if (!eventId || !userId) return;
+        if (wasPresent) {
+          const ok = window.confirm("Mitglied wirklich aus diesem Arbeitseinsatz entfernen?");
+          if (!ok) return;
+        }
         try {
           setMsg(wasPresent ? "Setze auf abwesend..." : "Setze auf anwesend...");
-          const out = await applyManualPresence(eventId, userId, !wasPresent, partId, partStatus, false);
+          const out = await applyManualPresence(
+            eventId,
+            userId,
+            !wasPresent,
+            partId,
+            partStatus,
+            plannedStartIso,
+            plannedEndIso,
+            false
+          );
           setMsg(out?.queued ? "Offline gespeichert. Anwesenheit wird bei Empfang synchronisiert." : "Anwesenheit aktualisiert.");
           const host = document.getElementById(`parts-${eventId}`);
           if (host?.dataset.open === "1") {
             await renderParticipations(eventId, host, {
-              startsAt: target.getAttribute("data-event-start") || "",
-              endsAt: target.getAttribute("data-event-end") || "",
+              startsAt: plannedStartIso || "",
+              endsAt: plannedEndIso || "",
             });
           }
         } catch (err) {

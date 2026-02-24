@@ -33,10 +33,8 @@
   async function fetchOfflineVerifyToken() {
     const { url, key } = cfg();
     if (!url || !key) return null;
-    let active = session();
-    if (!active?.access_token) {
-      active = await window.VDAN_AUTH?.refreshSession?.();
-    }
+    let active = await window.VDAN_AUTH?.refreshSession?.().catch(() => null);
+    if (!active?.access_token) active = session();
     if (!active?.access_token) return null;
 
     async function requestWith(token) {

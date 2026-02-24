@@ -1,4 +1,4 @@
-const SW_VERSION = "v1.0.1";
+const SW_VERSION = "v1.0.2";
 const STATIC_CACHE = `vdan-static-${SW_VERSION}`;
 const PAGE_CACHE = `vdan-pages-${SW_VERSION}`;
 
@@ -47,7 +47,6 @@ function isApiPath(pathname) {
 function shouldBypassCache(request, url) {
   if (request.method !== "GET") return true;
   if (request.headers.has("authorization")) return true;
-  if (url.origin !== self.location.origin) return true;
   if (isApiPath(url.pathname)) return true;
   return false;
 }
@@ -116,9 +115,25 @@ async function cacheFirstStatic(request) {
   return network;
 }
 
+async function networkFirstStatic(request) {
+  const cache = await caches.open(STATIC_CACHE);
+  try {
+    const network = await fetch(request);
+    if (isCacheableResponse(network)) await cache.put(request, network.clone());
+    return network;
+  } catch {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    throw new Error("static_asset_unavailable");
+  }
+}
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
+
+  // Let the browser handle third-party requests directly.
+  if (url.origin !== self.location.origin) return;
 
   if (shouldBypassCache(request, url)) {
     event.respondWith(fetch(request));
@@ -130,14 +145,21 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  const isStaticAsset =
-    request.destination === "style" ||
+  const isScriptOrStyle =
     request.destination === "script" ||
+    request.destination === "style" ||
+    url.pathname.startsWith("/js/") ||
+    url.pathname.startsWith("/css/");
+
+  if (isScriptOrStyle) {
+    event.respondWith(networkFirstStatic(request));
+    return;
+  }
+
+  const isStaticAsset =
     request.destination === "image" ||
     request.destination === "font" ||
     request.destination === "manifest" ||
-    url.pathname.startsWith("/css/") ||
-    url.pathname.startsWith("/js/") ||
     url.pathname.startsWith("/Bilder/");
 
   if (isStaticAsset) {

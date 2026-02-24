@@ -1,8 +1,4 @@
 ;(() => {
-  function session() {
-    return window.VDAN_AUTH?.loadSession?.() || null;
-  }
-
   function setHidden(el, hidden) {
     if (!el) return;
     el.classList.toggle("hidden", hidden);
@@ -27,8 +23,17 @@
     const avatar = root?.querySelector(".account-avatar");
     if (!root || !toggle || !popover || !label || !loginLink || !appLink || !logoutBtn || !avatar) return;
 
-    const render = () => {
-      const s = session();
+    const readSession = async () => {
+      const auth = window.VDAN_AUTH;
+      let s = auth?.loadSession?.() || null;
+      if (!s && navigator.onLine && auth?.refreshSession) {
+        s = await auth.refreshSession().catch(() => null);
+      }
+      return s;
+    };
+
+    const render = async () => {
+      const s = await readSession();
       const loggedIn = Boolean(s);
       const name = loggedIn ? accountNameFromSession(s) : "Nicht eingeloggt";
       label.textContent = name;
@@ -56,14 +61,16 @@
         await window.VDAN_AUTH?.logout?.();
       } finally {
         document.dispatchEvent(new CustomEvent("vdan:session", { detail: { loggedIn: false } }));
-        render();
+        await render();
         close();
         window.location.assign("/");
       }
     });
 
-    render();
-    document.addEventListener("vdan:session", render);
+    render().catch(() => {});
+    document.addEventListener("vdan:session", () => {
+      render().catch(() => {});
+    });
   }
 
   document.addEventListener("DOMContentLoaded", bindAccountMenu);

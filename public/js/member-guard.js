@@ -8,6 +8,7 @@
     "/app/sitzungen/",
     "/app/ausweis/verifizieren/",
   ];
+  const MEMBER_ALWAYS_PATHS = ["/app/einstellungen/"];
 
   function onReady(fn){ if (document.readyState !== "loading") fn(); else document.addEventListener("DOMContentLoaded", fn); }
 
@@ -29,6 +30,10 @@
 
   function needsManager(path) {
     return MANAGER_PATHS.some((x) => path.startsWith(x));
+  }
+
+  function needsMemberOnly(path) {
+    return MEMBER_ALWAYS_PATHS.some((x) => path.startsWith(x));
   }
 
   function allowOfflineWithoutSession(path) {
@@ -79,6 +84,7 @@
         return;
       }
 
+      if (needsMemberOnly(path)) return;
       if (!needsAdmin(path) && !needsManager(path)) return;
 
       const roles = await loadRoles().catch(() => []);
@@ -98,7 +104,13 @@
     };
 
     run().catch(() => {
-      forbid();
+      const path = currentPath();
+      if (needsAdmin(path) || needsManager(path)) {
+        forbid();
+        return;
+      }
+      const next = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.replace(`/login/?next=${next}`);
     });
   });
 })();

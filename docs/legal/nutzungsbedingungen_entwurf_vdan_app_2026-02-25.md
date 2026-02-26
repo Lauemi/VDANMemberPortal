@@ -12,8 +12,11 @@ Nachfolgend wird der Verein als "VDAN" bezeichnet.
 ## 2. Anbieter / Verantwortliche Stelle
 VDAN (Verein der Angler und Naturfreunde Ottenheim 1957 e.V.)
 
-Betriebsverantwortung Portal:
-Michael Lauenroth (technischer Ansprechpartner)
+Ansprechpartner und operative Portalverantwortung:
+Michael Lauenroth
+
+Kontakt für Portalbetrieb:
+m.lauenroth@lauemi.de
 
 Hinweis: Rechtsverbindliche Anbieterangaben ergeben sich im Zweifel aus dem jeweils aktuellen Impressum.
 

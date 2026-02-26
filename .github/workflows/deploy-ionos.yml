@@ -69,9 +69,20 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           PUSH_NOTIFY_TOKEN: ${{ secrets.PUSH_NOTIFY_TOKEN }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$PUSH_NOTIFY_TOKEN" ]; then
             echo "SUPABASE_URL oder PUSH_NOTIFY_TOKEN fehlt - Push-Trigger wird übersprungen."
+            exit 0
+          fi
+
+          AUTH_KEY="$SUPABASE_SERVICE_ROLE_KEY"
+          if [ -z "$AUTH_KEY" ]; then
+            AUTH_KEY="$SUPABASE_ANON_KEY"
+          fi
+          if [ -z "$AUTH_KEY" ]; then
+            echo "SUPABASE_SERVICE_ROLE_KEY/PUBLIC_SUPABASE_ANON_KEY fehlt - Push-Trigger wird übersprungen."
             exit 0
           fi
 
@@ -80,5 +91,7 @@ jobs:
           echo "Sende Push-Trigger für Version ${VERSION_TAG}..."
           curl --fail-with-body -sS -X POST "${SUPABASE_URL}/functions/v1/push-notify-update" \
             -H "Content-Type: application/json" \
+            -H "apikey: ${AUTH_KEY}" \
+            -H "Authorization: Bearer ${AUTH_KEY}" \
             -H "x-push-token: ${PUSH_NOTIFY_TOKEN}" \
             -d "${PAYLOAD}"

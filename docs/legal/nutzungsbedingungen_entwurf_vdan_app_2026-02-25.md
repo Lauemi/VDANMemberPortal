@@ -1,19 +1,23 @@
-# Nutzungsbedingungen (Entwurf) – VDAN Website & Mitgliederportal
+# Nutzungsbedingungen (Entwurf) – VDAN Fishing-Club-Portal
 
 Stand: 25.02.2026
 
 Hinweis: Dieser Entwurf ist eine technische/juristische Arbeitsgrundlage und ersetzt keine anwaltliche Einzelfallprüfung.
 
 ## 1. Geltungsbereich
-Diese Nutzungsbedingungen gelten für die Nutzung der öffentlichen Website sowie des geschützten Mitgliederportals des
-Vereins der Angler und Naturfreunde Ottenheim 1957 e.V. (nachfolgend "Verein").
+Diese Nutzungsbedingungen gelten für die Nutzung der öffentlichen Website sowie des geschützten
+ Fishing-Club-Portals (Mitgliederbereich).
+Nachfolgend wird der Verein als "VDAN" bezeichnet.
 
-## 2. Anbieter
-Verein der Angler und Naturfreunde Ottenheim 1957 e.V.
-Georgenstr. 33, 77963 Schwanau
-E-Mail: vdan.ottenheim@freenet.de
+## 2. Anbieter / Verantwortliche Stelle
+VDAN (Verein der Angler und Naturfreunde Ottenheim 1957 e.V.)
 
-## 3. Leistungen
+Betriebsverantwortung Portal:
+Michael Lauenroth (technischer Ansprechpartner)
+
+Hinweis: Rechtsverbindliche Anbieterangaben ergeben sich im Zweifel aus dem jeweils aktuellen Impressum.
+
+## 3. Leistungen des VDAN Fishing-Club-Portals
 1. Öffentlich: Informationsseiten, Termine, Downloads, Kontakt.
 2. Mitgliederportal: rollenbasierte Funktionen (z. B. Fangliste, Arbeitseinsätze, Ausweis, Gewässerkarte, interne Verwaltung).
 3. Der Verein kann Funktionen aus technischen, organisatorischen oder rechtlichen Gründen ändern, einschränken oder einstellen.
@@ -55,6 +59,7 @@ E-Mail: vdan.ottenheim@freenet.de
 ## 11. Datenschutz
 Die Verarbeitung personenbezogener Daten richtet sich nach der Datenschutzerklärung in der jeweils aktuellen Fassung:
 `/datenschutz.html/`.
+Zusätzlich gelten die vereinsinternen Vorgaben zur Datenverarbeitung des VDAN.
 
 ## 12. Änderungen dieser Nutzungsbedingungen
 1. Der Verein kann diese Nutzungsbedingungen aus sachlichem Grund anpassen (z. B. Rechtsänderungen, Sicherheitsanforderungen, Funktionsänderungen).

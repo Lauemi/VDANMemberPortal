@@ -26,7 +26,10 @@ const appVersion = appVersionEnv && appVersionEnv !== "dev-local" ? appVersionEn
 // Guard member area paths:
 const path = Astro.url.pathname.toLowerCase();
 const isScannerPath = path.startsWith("/app/ausweis/verifizieren/");
-const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
+const isAppPath = path.startsWith("/app/");
+const isTermsPath = path === "/nutzungsbedingungen.html/" || path === "/nutzungsbedingungen.html";
+const showPortalTermsLink = isAppPath || isTermsPath;
+const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
 ---
 
 <!doctype html>
@@ -79,6 +82,7 @@ const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
                 <a href="/downloads.html/">Downloads</a>
                 <a href="/kontakt.html/">Kontakt</a>
                 <a href="/datenschutz.html/">Datenschutz</a>
+                {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
                 <a href="/impressum.html/">Impressum</a>
               </div>
             </div>
@@ -89,22 +93,20 @@ const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
     <button
       type="button"
       id="portalQuickToggle"
-      class="portal-quick-toggle hidden"
-      hidden
-      data-member-only
+      class="portal-quick-toggle"
       data-ui-session-skip
       aria-label="Portal öffnen"
     >
       <span aria-hidden="true">⌂</span>
       <span id="portalQuickUserBadge" class="portal-quick-user-badge hidden" hidden aria-hidden="true"></span>
     </button>
-    <aside id="portalRail" class="portal-rail hidden" hidden data-member-only data-ui-session-skip aria-label="Portal-Kurzmenü">
+    <aside id="portalRail" class="portal-rail hidden" hidden data-ui-session-skip aria-label="Portal-Kurzmenü">
       <div id="portalRailItems" class="portal-rail__items"></div>
     </aside>
-    <div id="portalQuickDrawer" class="portal-quick-drawer hidden" hidden data-member-only data-ui-session-skip>
+    <div id="portalQuickDrawer" class="portal-quick-drawer hidden" hidden data-ui-session-skip>
       <section id="portalQuickPanel" class="portal-quick-panel" aria-label="Portal Kurzmenü">
         <div class="portal-quick-panel__head">
-          <h2>Portal</h2>
+          <h2>Fishing-Club-Portal</h2>
         </div>
         <p class="small">Schnellzugriff für deine Favoriten.</p>
         <div id="portalQuickList" class="portal-quick-list"></div>
@@ -123,6 +125,7 @@ const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
         <nav class="site-footer__links" aria-label="Rechtliche Links">
           <a href="/kontakt.html/">Kontakt</a>
           <a href="/datenschutz.html/">Datenschutz</a>
+          {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
           <a href="/impressum.html/">Impressum</a>
           <a href="#" data-open-consent-settings>Datenschutz-Einstellungen</a>
         </nav>

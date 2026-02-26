@@ -16,11 +16,7 @@
 html,body{height:100%}
 body{
   margin:0;
-  background:
-    radial-gradient(920px 560px at 86% -8%, rgba(183, 154, 99, .08), transparent 64%),
-    radial-gradient(1150px 760px at 16% -6%, rgba(97, 130, 178, .12), transparent 58%),
-    radial-gradient(920px 660px at 88% 2%, rgba(78, 108, 150, .08), transparent 62%),
-    linear-gradient(180deg, #0a1019 0%, #0b111a 46%, #0a0f17 100%);
+  background:linear-gradient(180deg, #0a1019 0%, #0b111a 46%, #0a0f17 100%);
   color:var(--text);
   font-family: var(--font-family-body);
   font-size: var(--font-body);
@@ -1329,6 +1325,7 @@ body[data-portal-rail-side="left"] .catch-dialog__form{
   align-items:center;
   justify-content:center;
   font-size:var(--icon-size);
+  transform:translateZ(0);
 }
 
 .portal-quick-user-badge{
@@ -1526,10 +1523,63 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
   gap:var(--space-1);
 }
 
+.portal-quick-row--account .portal-quick-row__line{
+  align-items:flex-start;
+}
+
 .portal-quick-row__title{
   margin:0;
   color:var(--text);
   font-weight:600;
+}
+
+.portal-quick-account-name{
+  margin:.2rem 0 0;
+  color:var(--text);
+  font-weight:600;
+}
+
+.portal-quick-presence{
+  margin:.2rem 0 0;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+
+.portal-quick-presence-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  display:inline-block;
+}
+
+.portal-quick-presence-dot.is-online{
+  background:#3ad45b;
+}
+
+.portal-quick-presence-dot.is-offline{
+  background:#ef5350;
+}
+
+.portal-quick-legal-link{
+  color:var(--muted);
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+
+.portal-quick-settings-link{
+  min-width:var(--touch-target-min);
+  min-height:var(--touch-target-min);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  color:var(--text);
+  font-size:1.2rem;
+  border:1px solid var(--line);
+  border-radius:var(--radius-md);
+  background:rgba(255,255,255,.04);
+  flex-shrink:0;
 }
 
 .portal-quick-row__actions{
@@ -1864,11 +1914,24 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
 
 .catch-fab-stack{
   position:fixed;
+  --pq-size:clamp(56px, 14vw, 64px);
+  --portal-gap:var(--space-1);
+  left:auto;
   right:16px;
-  bottom:16px;
+  bottom:calc(var(--space-2) + env(safe-area-inset-bottom, 0px) + var(--pq-size) + var(--portal-gap));
   display:flex;
   gap:10px;
-  z-index:1250;
+  z-index:1488;
+}
+
+body[data-portal-rail-side="right"] .catch-fab-stack{
+  right:16px;
+  left:auto;
+}
+
+body[data-portal-rail-side="left"] .catch-fab-stack{
+  left:16px;
+  right:auto;
 }
 
 /* Keep map visuals below global menus/popovers */

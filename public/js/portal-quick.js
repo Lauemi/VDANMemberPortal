@@ -8,7 +8,10 @@
     login: "Login",
     logout: "Logout",
     settings: "Einstellungen",
+    terms: "Nutzungsbedingungen",
     notLoggedIn: "Nicht eingeloggt",
+    welcome: "Willkommen",
+    memberNo: "Mitgliedsnummer",
     createPost: "Post erstellen",
     pin: "Als Favorit markieren",
     unpin: "Favorit entfernen",
@@ -42,6 +45,7 @@
     loggedIn: false,
     uid: null,
     profileName: "",
+    profileMemberNo: "",
     roles: [],
     visibleModules: [],
     settings: { nav_handedness: "right", portal_favorites: [...DEFAULT_FAVORITES] },
@@ -95,9 +99,21 @@
     return String(meta.display_name || meta.full_name || fullFromParts || meta.name || user.email || LABELS.notLoggedIn).trim();
   }
 
+  function esc(str) {
+    return String(str || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
   function accountName() {
     if (state.profileName) return state.profileName;
     return accountNameFromSession(session());
+  }
+
+  function presenceInfo() {
+    const online = typeof navigator === "undefined" ? true : navigator.onLine !== false;
+    return {
+      label: online ? "Online" : "Offline",
+      className: online ? "is-online" : "is-offline",
+    };
   }
 
   function initialsFromName(nameRaw) {
@@ -195,30 +211,36 @@
     return Array.isArray(rows) ? rows.map((r) => String(r.role || "").toLowerCase()) : [];
   }
 
-  async function loadProfileName() {
+  async function loadProfileData() {
     const uid = state.uid;
-    if (!uid) return "";
+    if (!uid) return { name: "", memberNo: "" };
     try {
       const rows = await sb(
-        `/rest/v1/profiles?select=display_name,first_name,last_name,email&id=eq.${encodeURIComponent(uid)}&limit=1`,
+        `/rest/v1/profiles?select=display_name,first_name,last_name,email,member_no&id=eq.${encodeURIComponent(uid)}&limit=1`,
         { method: "GET" },
         true
       );
       const p = Array.isArray(rows) ? rows[0] : null;
-      if (!p) return "";
+      if (!p) return { name: "", memberNo: "" };
       const byNames = [p.first_name, p.last_name].map((x) => String(x || "").trim()).filter(Boolean).join(" ");
-      return String(p.display_name || byNames || p.email || "").trim();
+      return {
+        name: String(p.display_name || byNames || p.email || "").trim(),
+        memberNo: String(p.member_no || "").trim(),
+      };
     } catch {
       try {
         const rows = await sb(
-          `/rest/v1/profiles?select=display_name,email&id=eq.${encodeURIComponent(uid)}&limit=1`,
+          `/rest/v1/profiles?select=display_name,email,member_no&id=eq.${encodeURIComponent(uid)}&limit=1`,
           { method: "GET" },
           true
         );
         const p = Array.isArray(rows) ? rows[0] : null;
-        return String(p?.display_name || p?.email || "").trim();
+        return {
+          name: String(p?.display_name || p?.email || "").trim(),
+          memberNo: String(p?.member_no || "").trim(),
+        };
       } catch {
-        return "";
+        return { name: "", memberNo: "" };
       }
     }
   }
@@ -308,16 +330,23 @@
     const account = document.createElement("section");
     account.className = "portal-quick-group";
     const accountLabel = state.loggedIn ? accountName() : LABELS.notLoggedIn;
+    const memberNo = String(state.profileMemberNo || "").trim();
+    const presence = presenceInfo();
     account.innerHTML = `
       <h3 class="portal-quick-group__title">Konto</h3>
       <div class="portal-quick-group__list">
-        <article class="portal-quick-row">
+        <article class="portal-quick-row portal-quick-row--account">
           <div class="portal-quick-row__line">
-            <p class="portal-quick-row__title">${accountLabel}</p>
+            <div>
+              <p class="portal-quick-row__title">${LABELS.welcome}</p>
+              <p class="small portal-quick-account-name">${esc(accountLabel)}</p>
+              ${memberNo ? `<p class="small">${LABELS.memberNo}: ${esc(memberNo)}</p>` : ""}
+              ${state.loggedIn ? `<p class="small portal-quick-presence"><span class="portal-quick-presence-dot ${presence.className}" aria-hidden="true"></span>${presence.label}</p>` : ""}
+              ${state.loggedIn ? `<p class="small"><a class="portal-quick-legal-link" href="/nutzungsbedingungen.html/">${LABELS.terms}</a></p>` : ""}
+            </div>
+            ${state.loggedIn ? `<a class="portal-quick-settings-link" href="/app/einstellungen/" aria-label="${LABELS.settings}" title="${LABELS.settings}">⚙</a>` : ""}
           </div>
-          <div class="portal-quick-row__actions">
-            ${state.loggedIn ? `<a class="feed-btn feed-btn--ghost" href="/app/einstellungen/">${LABELS.settings}</a><button type="button" class="feed-btn feed-btn--ghost" data-action="logout">${LABELS.logout}</button>` : `<a class="feed-btn" href="/login/">${LABELS.login}</a>`}
-          </div>
+          ${state.loggedIn ? "" : `<div class="portal-quick-row__actions"><a class="feed-btn" href="/login/">${LABELS.login}</a></div>`}
         </article>
       </div>
     `;
@@ -561,6 +590,12 @@
       if (normalizeHandedness(state.settings.nav_handedness) === "auto") applySide();
       renderRail();
     });
+    window.addEventListener("online", () => {
+      if (state.loggedIn) renderDrawer();
+    });
+    window.addEventListener("offline", () => {
+      if (state.loggedIn) renderDrawer();
+    });
 
     window.addEventListener("pagehide", () => {
       setDrawerOpen(false, { immediate: true });
@@ -574,6 +609,7 @@
     state.loggedIn = Boolean(s);
     state.uid = s?.user?.id || null;
     state.profileName = "";
+    state.profileMemberNo = "";
 
     const toggle = document.getElementById("portalQuickToggle");
     const rail = document.getElementById("portalRail");
@@ -593,7 +629,9 @@
     }
 
     state.roles = await loadRoles().catch(() => []);
-    state.profileName = await loadProfileName().catch(() => "");
+    const profile = await loadProfileData().catch(() => ({ name: "", memberNo: "" }));
+    state.profileName = String(profile?.name || "").trim();
+    state.profileMemberNo = String(profile?.memberNo || "").trim();
     state.visibleModules = MODULES.filter((m) => canAccess(m.access, state.roles));
 
     const fallback = loadFallback(state.uid);

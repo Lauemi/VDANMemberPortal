@@ -28,6 +28,7 @@ jobs:
           PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
           PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.PUBLIC_VAPID_PUBLIC_KEY }}
           PUBLIC_MEMBER_CARD_VERIFY_PUBKEY: ${{ secrets.PUBLIC_MEMBER_CARD_VERIFY_PUBKEY }}
           PUBLIC_APP_NAME: ${{ secrets.PUBLIC_APP_NAME }}
           PUBLIC_APP_BRAND: ${{ secrets.PUBLIC_APP_BRAND }}
@@ -63,3 +64,21 @@ jobs:
             ./dist "$REMOTE_PATH"
           bye
           EOF
+
+      - name: Trigger app update push notification
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          PUSH_NOTIFY_TOKEN: ${{ secrets.PUSH_NOTIFY_TOKEN }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$PUSH_NOTIFY_TOKEN" ]; then
+            echo "SUPABASE_URL oder PUSH_NOTIFY_TOKEN fehlt - Push-Trigger wird übersprungen."
+            exit 0
+          fi
+
+          VERSION_TAG="deploy-${GITHUB_SHA::7}"
+          PAYLOAD="{\"version\":\"${VERSION_TAG}\",\"title\":\"VDAN APP\",\"message\":\"Neue Version verfügbar.\",\"url\":\"/app/einstellungen/\"}"
+          echo "Sende Push-Trigger für Version ${VERSION_TAG}..."
+          curl --fail-with-body -sS -X POST "${SUPABASE_URL}/functions/v1/push-notify-update" \
+            -H "Content-Type: application/json" \
+            -H "x-push-token: ${PUSH_NOTIFY_TOKEN}" \
+            -d "${PAYLOAD}"

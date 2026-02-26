@@ -1,6 +1,7 @@
 ;(() => {
   const MAX_IMAGE_BYTES = 350 * 1024;
   const MAX_LONG_EDGE = 1280;
+  const MIN_LONG_EDGE = 640;
   const OFFLINE_SCHEMA_VERSION = 1;
   const VIEW_KEY = "app:viewMode:fangliste:v1";
   const TABLE_KEY_PREFIX = "app:viewSettings:fangliste:user:v1";
@@ -574,34 +575,75 @@
 
   async function compressImageToWebp(file) {
     const bitmap = await fileToImageBitmap(file);
-    const scale = Math.min(1, MAX_LONG_EDGE / Math.max(bitmap.width, bitmap.height));
-    const width = Math.max(1, Math.round(bitmap.width * scale));
-    const height = Math.max(1, Math.round(bitmap.height * scale));
+    let longEdge = Math.max(bitmap.width, bitmap.height);
+    let scale = Math.min(1, MAX_LONG_EDGE / longEdge);
+    let width = Math.max(1, Math.round(bitmap.width * scale));
+    let height = Math.max(1, Math.round(bitmap.height * scale));
 
     const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
     const ctx = canvas.getContext("2d", { alpha: false });
-    ctx.drawImage(bitmap, 0, 0, width, height);
+    if (!ctx) throw new Error("Bildverarbeitung fehlgeschlagen");
 
-    let q = 0.88;
-    let blob = await new Promise((res) => canvas.toBlob(res, "image/webp", q));
-    while (blob && blob.size > MAX_IMAGE_BYTES && q > 0.42) {
-      q -= 0.08;
-      blob = await new Promise((res) => canvas.toBlob(res, "image/webp", q));
+    let bestBlob = null;
+    while (true) {
+      canvas.width = width;
+      canvas.height = height;
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(bitmap, 0, 0, width, height);
+
+      let q = 0.9;
+      let blob = await new Promise((res) => canvas.toBlob(res, "image/webp", q));
+      while (blob && blob.size > MAX_IMAGE_BYTES && q > 0.36) {
+        q -= 0.08;
+        blob = await new Promise((res) => canvas.toBlob(res, "image/webp", q));
+      }
+      if (blob) bestBlob = blob;
+      if (blob && blob.size <= MAX_IMAGE_BYTES) {
+        return {
+          data_url: await blobToDataUrl(blob),
+          bytes: blob.size,
+          width,
+          height,
+          mime: "image/webp",
+          updated_at: new Date().toISOString(),
+        };
+      }
+
+      longEdge = Math.max(width, height);
+      if (longEdge <= MIN_LONG_EDGE) break;
+      const nextLongEdge = Math.max(MIN_LONG_EDGE, Math.floor(longEdge * 0.82));
+      const downscale = nextLongEdge / longEdge;
+      width = Math.max(1, Math.round(width * downscale));
+      height = Math.max(1, Math.round(height * downscale));
     }
 
-    if (!blob) throw new Error("Bildverarbeitung fehlgeschlagen");
-    if (blob.size > MAX_IMAGE_BYTES) throw new Error("Bild ist zu groß. Bitte anderes Bild wählen.");
-
+    if (!bestBlob) throw new Error("Bildverarbeitung fehlgeschlagen");
     return {
-      data_url: await blobToDataUrl(blob),
-      bytes: blob.size,
+      data_url: await blobToDataUrl(bestBlob),
+      bytes: bestBlob.size,
       width,
       height,
       mime: "image/webp",
       updated_at: new Date().toISOString(),
     };
+  }
+
+  function queueIdFromLocalTripId(tripId) {
+    const raw = String(tripId || "");
+    if (!raw.startsWith("local:queued:")) return null;
+    return raw.slice("local:queued:".length) || null;
+  }
+
+  function removeLocalQueuedByTripId(tripId) {
+    const qid = queueIdFromLocalTripId(tripId);
+    trips = trips.filter((t) => String(t.id) !== String(tripId));
+    catches = catches.filter((c) => String(c.fishing_trip_id) !== String(tripId));
+    if (qid) {
+      const q = loadQueue().filter((item) => String(item.id) !== qid);
+      saveQueue(q);
+    }
+    saveOfflineCache();
+    updatePendingHint();
   }
 
   async function touchUserUsage() {
@@ -1350,6 +1392,9 @@
                 <span>Notiz</span>
                 <input data-field="note" type="text" value="${esc(c.note || "")}" />
               </label>
+              <div class="fangliste-full">
+                <button type="button" class="feed-btn feed-btn--ghost" data-delete-catch-id="${c.id}">Fangeintrag löschen</button>
+              </div>
             </div>
           `).join("")}
         </div>
@@ -1462,6 +1507,47 @@
     }
   }
 
+  async function deleteTripEntry() {
+    if (!activeTripId) return;
+    if (isLocalId(activeTripId)) {
+      removeLocalQueuedByTripId(activeTripId);
+      closeDetailDialog();
+      renderTrips();
+      await loadOwnStats().catch(() => {});
+      setMsg("Lokaler Offline-Eintrag gelöscht.");
+      return;
+    }
+    await sb(`/rest/v1/catch_entries?fishing_trip_id=eq.${encodeURIComponent(activeTripId)}`, {
+      method: "DELETE",
+      headers: { Prefer: "return=minimal" },
+    }, true).catch(() => {});
+    await sb(`/rest/v1/fishing_trips?id=eq.${encodeURIComponent(activeTripId)}`, {
+      method: "DELETE",
+      headers: { Prefer: "return=minimal" },
+    }, true);
+    closeDetailDialog();
+    await refreshAll();
+    setMsg("Eintrag gelöscht.");
+  }
+
+  async function deleteCatchEntry(catchId) {
+    if (!catchId || !activeTripId) return;
+    if (isLocalId(catchId) || isLocalId(activeTripId)) {
+      catches = catches.filter((c) => String(c.id) !== String(catchId));
+      saveOfflineCache();
+      openDetailDialog(activeTripId);
+      setDetailMsg("Lokaler Fangeintrag gelöscht.");
+      return;
+    }
+    await sb(`/rest/v1/catch_entries?id=eq.${encodeURIComponent(catchId)}`, {
+      method: "DELETE",
+      headers: { Prefer: "return=minimal" },
+    }, true);
+    await refreshAll();
+    openDetailDialog(activeTripId);
+    setDetailMsg("Fangeintrag gelöscht.");
+  }
+
   async function refreshAll() {
     await loadTripsAndCatches();
     renderTrips();
@@ -1529,6 +1615,16 @@
     document.getElementById("tripOpenCreate")?.addEventListener("click", openCreateDialog);
     document.getElementById("tripCreateClose")?.addEventListener("click", closeCreateDialog);
     document.getElementById("tripDetailClose")?.addEventListener("click", closeDetailDialog);
+    document.getElementById("tripDeleteEntryBtn")?.addEventListener("click", async () => {
+      const ok = window.confirm("Diesen Angeltag wirklich löschen?");
+      if (!ok) return;
+      try {
+        setDetailMsg("Eintrag wird gelöscht...");
+        await deleteTripEntry();
+      } catch (err) {
+        setDetailMsg(err?.message || "Löschen fehlgeschlagen.");
+      }
+    });
     document.getElementById("tripDetailSaveChanges")?.addEventListener("click", async () => {
       try {
         setDetailMsg("Speichere Änderungen...");
@@ -1604,6 +1700,21 @@
       if (!btn) return;
       const id = btn.getAttribute("data-trip-id");
       if (id) openDetailDialog(id);
+    });
+
+    document.getElementById("tripDetailBody")?.addEventListener("click", async (e) => {
+      const del = e.target?.closest?.("[data-delete-catch-id]");
+      if (!del) return;
+      const catchId = String(del.getAttribute("data-delete-catch-id") || "").trim();
+      if (!catchId) return;
+      const ok = window.confirm("Diesen Fangeintrag wirklich löschen?");
+      if (!ok) return;
+      try {
+        setDetailMsg("Fangeintrag wird gelöscht...");
+        await deleteCatchEntry(catchId);
+      } catch (err) {
+        setDetailMsg(err?.message || "Fangeintrag konnte nicht gelöscht werden.");
+      }
     });
 
     document.addEventListener("input", (e) => {

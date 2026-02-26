@@ -617,7 +617,71 @@
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
+  function memberPresence(p) {
+    return Boolean(p && p.status !== "rejected" && p.status !== "no_show");
+  }
+
+  function mapLatestParticipationByUser(rows) {
+    const byUid = new Map();
+    (Array.isArray(rows) ? rows : []).forEach((r) => {
+      const uid = String(r?.auth_uid || "").trim();
+      if (!uid || byUid.has(uid)) return;
+      byUid.set(uid, r);
+    });
+    return byUid;
+  }
+
+  function paintPresenceButton(btn, present, partId, partStatus) {
+    if (!(btn instanceof HTMLElement)) return;
+    btn.setAttribute("data-present", present ? "1" : "0");
+    btn.setAttribute("data-part-id", String(partId || ""));
+    btn.setAttribute("data-part-status", String(partStatus || ""));
+    btn.classList.toggle("feed-btn--ghost", !present);
+    if (present) {
+      btn.style.background = "#1f7a3b";
+      btn.style.borderColor = "#1f7a3b";
+      btn.style.color = "#fff";
+    } else {
+      btn.style.background = "";
+      btn.style.borderColor = "";
+      btn.style.color = "";
+    }
+  }
+
+  function updateParticipantsSummary(host, rows, membersCount) {
+    const open = (Array.isArray(rows) ? rows : []).filter((r) => r.checkin_at && !r.checkout_at && r.status !== "rejected" && r.status !== "no_show").length;
+    const gone = (Array.isArray(rows) ? rows : []).filter((r) => r.checkout_at).length;
+    const pending = (Array.isArray(rows) ? rows : []).filter((r) => r.status === "submitted" || r.status === "checked_in" || r.status === "registered").length;
+    const chips = host.querySelectorAll(".work-part-summary .feed-chip");
+    if (chips[0]) chips[0].textContent = `Da: ${open}`;
+    if (chips[1]) chips[1].textContent = `Gegangen: ${gone}`;
+    if (chips[2]) chips[2].textContent = `Zu prüfen: ${pending}`;
+
+    const summary = host.querySelector("details[data-members-list] > summary");
+    if (summary) summary.textContent = `Mitgliederliste aufklappen (${open}/${membersCount} aktiv)`;
+  }
+
+  async function syncParticipantsPanel(eventId, host) {
+    if (!host) return;
+    const [rows, members] = await Promise.all([listParticipations(eventId), listMembersLite()]);
+    const byUid = mapLatestParticipationByUser(rows);
+    const memberRows = host.querySelectorAll(`tr[data-member-row="${eventId}"][data-user-id]`);
+    memberRows.forEach((tr) => {
+      const uid = String(tr.getAttribute("data-user-id") || "").trim();
+      if (!uid) return;
+      const p = byUid.get(uid) || null;
+      const present = memberPresence(p);
+      const buttons = tr.querySelectorAll('[data-toggle-presence="1"]');
+      buttons.forEach((btn) => paintPresenceButton(btn, present, p?.id || "", p?.status || ""));
+      const presenceBtn = tr.querySelector(".work-member-col--presence [data-toggle-presence='1']");
+      if (presenceBtn) presenceBtn.textContent = present ? "Anwesend" : "Nicht da";
+    });
+    updateParticipantsSummary(host, rows, (Array.isArray(members) ? members : []).length);
+  }
+
   async function renderParticipations(eventId, host, eventMeta = {}) {
+    const previousDetails = host.querySelector('details[data-members-list]');
+    const previousMembersOpen = host.dataset.membersOpen === "1" || Boolean(previousDetails?.open);
     host.innerHTML = `<p class="small">Lädt Teilnehmer…</p>`;
     const [rows, members] = await Promise.all([listParticipations(eventId), listMembersLite()]);
 
@@ -696,18 +760,15 @@
       })
       .join("");
 
-    const byUid = new Map();
-    rows.forEach((r) => {
-      if (r?.auth_uid) byUid.set(String(r.auth_uid), r);
-    });
+    const byUid = mapLatestParticipationByUser(rows);
     const memberRows = (Array.isArray(members) ? members : [])
       .map((m) => {
         const p = byUid.get(m.id) || null;
-        const present = Boolean(p && p.status !== "rejected" && p.status !== "no_show");
+        const present = memberPresence(p);
         const activeStyle = present ? "background:#1f7a3b;border-color:#1f7a3b;color:#fff;" : "";
         const searchable = `${m.name} ${m.memberNo}`.toLowerCase();
         return `
-          <tr data-member-row="${eventId}" data-search="${escapeHtml(searchable)}">
+          <tr data-member-row="${eventId}" data-user-id="${escapeHtml(m.id)}" data-search="${escapeHtml(searchable)}">
             <td class="work-member-col work-member-col--name">
               <button
                 type="button"
@@ -749,12 +810,13 @@
     const leadSelected = String(eventMeta.leadId || "");
     const presentCount = (Array.isArray(members) ? members : []).filter((m) => {
       const p = byUid.get(m.id) || null;
-      return Boolean(p && p.status !== "rejected" && p.status !== "no_show");
+      return memberPresence(p);
     }).length;
     const leadOptions = (Array.isArray(members) ? members : [])
       .map((m) => `<option value="${escapeHtml(m.id)}" ${leadSelected === m.id ? "selected" : ""}>${escapeHtml(m.name)}${m.memberNo ? ` (${escapeHtml(m.memberNo)})` : ""}</option>`)
       .join("");
 
+    const membersOpen = typeof eventMeta.membersOpen === "boolean" ? eventMeta.membersOpen : previousMembersOpen;
     host.innerHTML = `
       <div class="work-part-summary">
         <span class="feed-chip">Da: ${open}</span>
@@ -795,7 +857,7 @@
               <button type="button" class="feed-btn" data-save-addendum="${eventId}">Nachtrag speichern</button>
             </div>
           </div>
-          <details>
+          <details data-members-list ${membersOpen ? "open" : ""}>
             <summary style="cursor:pointer;font-weight:600;">Mitgliederliste aufklappen (${presentCount}/${(Array.isArray(members) ? members : []).length} aktiv)</summary>
             <div class="work-part-table-wrap" style="margin-top:8px;">
               <table class="work-part-table work-member-table">
@@ -829,6 +891,13 @@
         </table>
       </div>
     `;
+    const detailsEl = host.querySelector('details[data-members-list]');
+    if (detailsEl) {
+      host.dataset.membersOpen = detailsEl.open ? "1" : "0";
+      detailsEl.addEventListener("toggle", () => {
+        host.dataset.membersOpen = detailsEl.open ? "1" : "0";
+      });
+    }
   }
 
   async function refresh() {
@@ -1101,8 +1170,10 @@
           const ok = window.confirm("Mitglied wirklich aus diesem Arbeitseinsatz entfernen?");
           if (!ok) return;
         }
+        const row = target.closest("tr");
+        const rowButtons = row ? row.querySelectorAll('[data-toggle-presence="1"]') : [];
+        rowButtons.forEach((btn) => btn.setAttribute("disabled", "disabled"));
         try {
-          setMsg(wasPresent ? "Setze auf abwesend..." : "Setze auf anwesend...");
           const out = await applyManualPresence(
             eventId,
             userId,
@@ -1113,16 +1184,19 @@
             plannedEndIso,
             false
           );
-          setMsg(out?.queued ? "Offline gespeichert. Anwesenheit wird bei Empfang synchronisiert." : "Anwesenheit aktualisiert.");
+          const nextPresent = !wasPresent;
+          rowButtons.forEach((btn) => paintPresenceButton(btn, nextPresent, partId, partStatus || (nextPresent ? "submitted" : "")));
+          const presenceBtn = row ? row.querySelector(".work-member-col--presence [data-toggle-presence='1']") : null;
+          if (presenceBtn) presenceBtn.textContent = nextPresent ? "Anwesend" : "Nicht da";
           const host = document.getElementById(`parts-${eventId}`);
           if (host?.dataset.open === "1") {
-            await renderParticipations(eventId, host, {
-              startsAt: plannedStartIso || "",
-              endsAt: plannedEndIso || "",
-            });
+            await syncParticipantsPanel(eventId, host);
           }
+          if (out?.queued) setMsg("Offline gespeichert. Anwesenheit wird bei Empfang synchronisiert.");
         } catch (err) {
           setMsg(err?.message || "Anwesenheit konnte nicht gesetzt werden.");
+        } finally {
+          rowButtons.forEach((btn) => btn.removeAttribute("disabled"));
         }
         return;
       }
@@ -1154,7 +1228,7 @@
           const out = await applyManualAddendum(saveAddendum, userId, fromIso, toIso, false);
           setMsg(out?.queued ? "Offline gespeichert. Nachtrag folgt bei Empfang." : "Nachtrag gespeichert.");
           const host = document.getElementById(`parts-${saveAddendum}`);
-          if (host?.dataset.open === "1") await renderParticipations(saveAddendum, host);
+          if (host?.dataset.open === "1") await renderParticipations(saveAddendum, host, { membersOpen: host.dataset.membersOpen === "1" });
         } catch (err) {
           setMsg(err?.message || "Nachtrag fehlgeschlagen.");
         }

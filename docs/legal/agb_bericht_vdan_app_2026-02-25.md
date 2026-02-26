@@ -1,8 +1,13 @@
-# AGB-/Nutzungsbedingungen-Bericht – VDAN App Template
+# AGB-/Nutzungsbedingungen-Bericht – VDAN Fishing-Club-Portal
 
 Stand: 25.02.2026
 
 Hinweis: Kein Ersatz für Rechtsberatung. Ziel dieses Berichts ist die technische/juristische Vorprüfung und die Vorbereitung der anwaltlichen Endprüfung.
+
+Ergaenzende Unterlagen:
+1. `docs/legal/nutzungsbedingungen_entwurf_vdan_app_2026-02-25.md`
+2. `docs/legal/dsgvo_check_vdan_fishing_club_portal_2026-02-26.md`
+3. `docs/project/PROJECT_BRIEF_PACKAGE_VDAN_2026-02-26.md`
 
 ## 1. Projektstatus (Ist-Zustand aus Repo)
 Vorhanden:

@@ -1,6 +1,17 @@
 ;(() => {
   const OFFLINE_NS = "work_member";
+  const VIEW_KEY = "app:viewMode:arbeitseinsaetze:v1";
+  const FILTER_KEY = "app:viewFilter:arbeitseinsaetze:v1";
   let featureFlags = { work_qr_enabled: false };
+  let listenersBound = false;
+  const state = {
+    ansicht: "zeile",
+    search: "",
+    upcomingAll: [],
+    mineAll: [],
+    upcomingRows: [],
+    mineRows: [],
+  };
 
   function cfg() {
     return {
@@ -76,6 +87,42 @@
       no_show: "Nicht erschienen",
     };
     return map[status] || status;
+  }
+
+  function escAttr(str) {
+    return escapeHtml(String(str || "")).replace(/"/g, "&quot;");
+  }
+
+  function loadView() {
+    try {
+      return String(localStorage.getItem(VIEW_KEY) || "zeile") === "karte" ? "karte" : "zeile";
+    } catch {
+      return "zeile";
+    }
+  }
+
+  function saveView(view) {
+    try {
+      localStorage.setItem(VIEW_KEY, view);
+    } catch {
+      // ignore
+    }
+  }
+
+  function loadFilter() {
+    try {
+      return JSON.parse(localStorage.getItem(FILTER_KEY) || "{}") || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveFilter(payload) {
+    try {
+      localStorage.setItem(FILTER_KEY, JSON.stringify(payload || {}));
+    } catch {
+      // ignore
+    }
   }
 
   function isCheckinWindowOpen(evt) {
@@ -256,12 +303,15 @@
   }
 
   function renderUpcoming(events, mineByEventId) {
-    const root = document.getElementById("workMemberUpcoming");
-    if (!root) return;
-    root.innerHTML = "";
+    const cardsRoot = document.getElementById("workMemberUpcomingCards");
+    const tableBody = document.getElementById("workMemberUpcomingTableBody");
+    if (!cardsRoot || !tableBody) return;
+    cardsRoot.innerHTML = "";
+    tableBody.innerHTML = "";
 
     if (!events.length) {
-      root.innerHTML = `<p class="small">Keine veröffentlichten Einsätze gefunden.</p>`;
+      cardsRoot.innerHTML = `<p class="small">Keine veröffentlichten Einsätze gefunden.</p>`;
+      tableBody.innerHTML = `<p class="small" style="padding:12px;">Keine veröffentlichten Einsätze gefunden.</p>`;
       return;
     }
 
@@ -270,8 +320,10 @@
       const canRegister = isRegisterWindowOpen(evt);
       const canCheckin = isCheckinWindowOpen(evt);
       const alreadyStarted = Boolean(mine?.checkin_at);
+      const rowId = `upcoming:${evt.id}`;
       const article = document.createElement("article");
       article.className = "card work-card";
+      article.setAttribute("data-open-detail", rowId);
       article.innerHTML = `
         <div class="card__body">
           <h3>${escapeHtml(evt.title)}</h3>
@@ -291,17 +343,33 @@
           </div>
         </div>
       `;
-      root.appendChild(article);
+      cardsRoot.appendChild(article);
+
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "catch-table__row";
+      row.setAttribute("data-open-detail", rowId);
+      row.style.gridTemplateColumns = "1.5fr 1fr 1fr 1fr";
+      row.innerHTML = `
+        <span>${escapeHtml(evt.title || "-")}</span>
+        <span>${escapeHtml(asLocalDate(evt.starts_at))}</span>
+        <span>${escapeHtml(evt.location || "-")}</span>
+        <span>${escapeHtml(mine ? statusLabel(mine.status) : "Noch nicht angemeldet")}</span>
+      `;
+      tableBody.appendChild(row);
     });
   }
 
   function renderMine(rows) {
-    const root = document.getElementById("workMemberMine");
-    if (!root) return;
-    root.innerHTML = "";
+    const cardsRoot = document.getElementById("workMemberMineCards");
+    const tableBody = document.getElementById("workMemberMineTableBody");
+    if (!cardsRoot || !tableBody) return;
+    cardsRoot.innerHTML = "";
+    tableBody.innerHTML = "";
 
     if (!rows.length) {
-      root.innerHTML = `<p class="small">Noch keine Teilnahmen vorhanden.</p>`;
+      cardsRoot.innerHTML = `<p class="small">Noch keine Teilnahmen vorhanden.</p>`;
+      tableBody.innerHTML = `<p class="small" style="padding:12px;">Noch keine Teilnahmen vorhanden.</p>`;
       return;
     }
 
@@ -313,6 +381,8 @@
       const endVal = row.checkout_at ? String(row.checkout_at).slice(0, 16) : "";
       const el = document.createElement("article");
       el.className = "card work-card";
+      const rowId = `mine:${row.id}`;
+      el.setAttribute("data-open-detail", rowId);
       el.innerHTML = `
         <div class="card__body">
           <h3>${escapeHtml(event.title || "Einsatz")}</h3>
@@ -332,15 +402,115 @@
           </div>
         </div>
       `;
-      root.appendChild(el);
+      cardsRoot.appendChild(el);
+
+      const tableRow = document.createElement("button");
+      tableRow.type = "button";
+      tableRow.className = "catch-table__row";
+      tableRow.setAttribute("data-open-detail", rowId);
+      tableRow.style.gridTemplateColumns = "1.5fr 1fr 1fr 1fr";
+      tableRow.innerHTML = `
+        <span>${escapeHtml(event.title || "Einsatz")}</span>
+        <span>${row.checkin_at ? escapeHtml(asLocalDate(row.checkin_at)) : "-"}</span>
+        <span>${row.checkout_at ? escapeHtml(asLocalDate(row.checkout_at)) : "-"}</span>
+        <span>${escapeHtml(statusLabel(row.status))}</span>
+      `;
+      tableBody.appendChild(tableRow);
     });
+  }
+
+  function applyView() {
+    const cardView = state.ansicht === "karte";
+    const ids = [
+      "workMemberUpcomingCards",
+      "workMemberMineCards",
+    ];
+    const tableIds = [
+      "workMemberUpcomingTableWrap",
+      "workMemberMineTableWrap",
+    ];
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      el?.classList.toggle("hidden", !cardView);
+      el?.toggleAttribute("hidden", !cardView);
+    });
+    tableIds.forEach((id) => {
+      const el = document.getElementById(id);
+      el?.classList.toggle("hidden", cardView);
+      el?.toggleAttribute("hidden", cardView);
+    });
+    document.getElementById("workMemberViewZeileBtn")?.classList.toggle("feed-btn--ghost", cardView);
+    document.getElementById("workMemberViewKarteBtn")?.classList.toggle("feed-btn--ghost", !cardView);
+  }
+
+  function applyFilters() {
+    const search = String(document.getElementById("workMemberSearch")?.value || "").trim().toLowerCase();
+    state.search = search;
+    saveFilter({ search });
+
+    const eventToMine = new Map(state.mineAll.map((m) => [m.event_id, m]));
+    state.upcomingRows = state.upcomingAll.filter((evt) => {
+      if (!search) return true;
+      const mine = eventToMine.get(evt.id);
+      const hay = `${evt.title || ""} ${evt.location || ""} ${mine ? statusLabel(mine.status) : ""}`.toLowerCase();
+      return hay.includes(search);
+    });
+    state.mineRows = state.mineAll.filter((row) => {
+      if (!search) return true;
+      const ev = row.work_events || {};
+      const hay = `${ev.title || ""} ${ev.location || ""} ${statusLabel(row.status)}`.toLowerCase();
+      return hay.includes(search);
+    });
+  }
+
+  function renderDetail(rowKey) {
+    const [scope, id] = String(rowKey || "").split(":");
+    const box = document.getElementById("workMemberDetailBody");
+    const dlg = document.getElementById("workMemberDetailDialog");
+    if (!box || !dlg || !scope || !id) return;
+    if (scope === "upcoming") {
+      const evt = state.upcomingAll.find((r) => String(r.id) === id);
+      if (!evt) return;
+      const mine = state.mineAll.find((m) => String(m.event_id) === id);
+      box.innerHTML = `
+        <p><strong>Titel:</strong> ${escapeHtml(evt.title || "-")}</p>
+        <p><strong>Start:</strong> ${escapeHtml(asLocalDate(evt.starts_at))}</p>
+        <p><strong>Ende:</strong> ${escapeHtml(asLocalDate(evt.ends_at))}</p>
+        <p><strong>Ort:</strong> ${escapeHtml(evt.location || "-")}</p>
+        <p><strong>Status:</strong> ${escapeHtml(mine ? statusLabel(mine.status) : "Noch nicht angemeldet")}</p>
+        <p><strong>Beschreibung:</strong> ${escapeHtml(evt.description || "-")}</p>
+      `;
+      dlg.showModal?.();
+      return;
+    }
+    const row = state.mineAll.find((r) => String(r.id) === id);
+    if (!row) return;
+    const ev = row.work_events || {};
+    box.innerHTML = `
+      <p><strong>Titel:</strong> ${escapeHtml(ev.title || "Einsatz")}</p>
+      <p><strong>Status:</strong> ${escapeHtml(statusLabel(row.status))}</p>
+      <p><strong>Von:</strong> ${row.checkin_at ? escapeHtml(asLocalDate(row.checkin_at)) : "-"}</p>
+      <p><strong>Bis:</strong> ${row.checkout_at ? escapeHtml(asLocalDate(row.checkout_at)) : "-"}</p>
+      <p><strong>Gemeldet:</strong> ${escapeHtml(String(row.minutes_reported ?? "-"))} min</p>
+      <p><strong>Freigegeben:</strong> ${escapeHtml(String(row.minutes_approved ?? "-"))} min</p>
+      <p><strong>Notiz:</strong> ${escapeHtml(row.note_member || "-")}</p>
+    `;
+    dlg.showModal?.();
+  }
+
+  function renderAll() {
+    applyFilters();
+    const byEvent = new Map(state.mineAll.map((m) => [m.event_id, m]));
+    renderUpcoming(state.upcomingRows, byEvent);
+    renderMine(state.mineRows);
+    applyView();
   }
 
   async function refresh() {
     const [events, mine] = await Promise.all([listUpcomingEvents(), listMyParticipations()]);
-    const byEvent = new Map(mine.map((m) => [m.event_id, m]));
-    renderUpcoming(events, byEvent);
-    renderMine(mine);
+    state.upcomingAll = Array.isArray(events) ? events : [];
+    state.mineAll = Array.isArray(mine) ? mine : [];
+    renderAll();
   }
 
   function readTokenFromUrl() {
@@ -363,7 +533,10 @@
       checkinBlock.toggleAttribute("hidden", !showQr);
     }
 
-    document.getElementById("workCheckinBtn")?.addEventListener("click", async () => {
+    if (!listenersBound) {
+      listenersBound = true;
+
+      document.getElementById("workCheckinBtn")?.addEventListener("click", async () => {
       if (!featureFlags.work_qr_enabled) return;
       const tokenInput = document.getElementById("workCheckinToken");
       const token = String(tokenInput?.value || "").trim();
@@ -380,11 +553,13 @@
       } catch (err) {
         setMsg(err?.message || "Check-in fehlgeschlagen");
       }
-    });
+      });
 
-    document.getElementById("workMemberUpcoming")?.addEventListener("click", async (e) => {
-      const target = e.target;
-      if (!(target instanceof HTMLElement)) return;
+      const upcomingWrap = document.getElementById("workMemberUpcomingCards");
+      const upcomingTable = document.getElementById("workMemberUpcomingTableBody");
+      [upcomingWrap, upcomingTable].forEach((el) => el?.addEventListener("click", async (e) => {
+        const target = e.target;
+        if (!(target instanceof HTMLElement)) return;
 
       const registerId = target.getAttribute("data-register");
       if (registerId) {
@@ -448,11 +623,13 @@
           setMsg(err?.message || "Check-in fehlgeschlagen");
         }
       }
-    });
+      }));
 
-    document.getElementById("workMemberMine")?.addEventListener("click", async (e) => {
-      const target = e.target;
-      if (!(target instanceof HTMLElement)) return;
+      const mineWrap = document.getElementById("workMemberMineCards");
+      const mineTable = document.getElementById("workMemberMineTableBody");
+      [mineWrap, mineTable].forEach((el) => el?.addEventListener("click", async (e) => {
+        const target = e.target;
+        if (!(target instanceof HTMLElement)) return;
       const rowId = target.getAttribute("data-save");
       const rowCheckoutEventId = target.getAttribute("data-checkout-row");
       if (rowCheckoutEventId) {
@@ -495,7 +672,31 @@
       } catch (err) {
         setMsg(err?.message || "Speichern fehlgeschlagen");
       }
-    });
+      }));
+
+      document.addEventListener("click", (e) => {
+        const target = e.target;
+        const open = target?.closest?.("[data-open-detail]");
+        if (open) {
+          if (target?.closest?.("[data-register],[data-checkout],[data-checkin],[data-save],[data-checkout-row]")) return;
+          renderDetail(String(open.getAttribute("data-open-detail") || ""));
+          return;
+        }
+        if (target?.closest?.("#workMemberViewZeileBtn")) {
+          state.ansicht = "zeile";
+          saveView(state.ansicht);
+          applyView();
+          return;
+        }
+        if (target?.closest?.("#workMemberViewKarteBtn")) {
+          state.ansicht = "karte";
+          saveView(state.ansicht);
+          applyView();
+        }
+      });
+
+      document.getElementById("workMemberSearch")?.addEventListener("input", renderAll);
+    }
 
     const queryToken = readTokenFromUrl();
     if (queryToken) {
@@ -513,3 +714,7 @@
     flushOfflineQueue().then(() => refresh()).catch(() => {});
   });
 })();
+    state.ansicht = loadView();
+    const filter = loadFilter();
+    const searchEl = document.getElementById("workMemberSearch");
+    if (searchEl && filter?.search) searchEl.value = String(filter.search);

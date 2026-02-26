@@ -656,7 +656,7 @@
         const minutesVal = row.minutes_approved ?? minutesCalculated ?? row.minutes_reported ?? 0;
         return `
         <tr class="work-part-row ${rowStateClass}">
-          <td>
+          <td class="work-part-col work-part-col--name">
             <div class="work-name-line">
               <strong>${escapeHtml(displayUser(row.auth_uid))}</strong>
               ${approvedMark}
@@ -664,10 +664,10 @@
             ${profileOf(row.auth_uid).memberNo ? `<div class="small">Mitgliedsnummer: ${escapeHtml(profileOf(row.auth_uid).memberNo)}</div>` : ""}
             <div class="small">${escapeHtml(statusLabel(row.status))}</div>
           </td>
-          <td>${row.checkin_at ? escapeHtml(asLocalDate(row.checkin_at)) : "-"}</td>
-          <td>${row.checkout_at ? escapeHtml(asLocalDate(row.checkout_at)) : "-"}</td>
-          <td><strong data-min-computed="${row.id}">${minutesLabel}</strong></td>
-          <td>
+          <td class="work-part-col work-part-col--from">${row.checkin_at ? escapeHtml(asLocalDate(row.checkin_at)) : "-"}</td>
+          <td class="work-part-col work-part-col--to">${row.checkout_at ? escapeHtml(asLocalDate(row.checkout_at)) : "-"}</td>
+          <td class="work-part-col work-part-col--calc"><strong data-min-computed="${row.id}">${minutesLabel}</strong></td>
+          <td class="work-part-col work-part-col--actions">
             <div class="work-part-actions">
               <label class="small">Freigabe-Minuten
                 <input type="number" min="0" step="1" value="${minutesVal}" data-min="${row.id}" style="max-width:110px;" />
@@ -708,7 +708,7 @@
         const searchable = `${m.name} ${m.memberNo}`.toLowerCase();
         return `
           <tr data-member-row="${eventId}" data-search="${escapeHtml(searchable)}">
-            <td>
+            <td class="work-member-col work-member-col--name">
               <button
                 type="button"
                 class="feed-btn ${present ? "" : "feed-btn--ghost"}"
@@ -723,8 +723,8 @@
                 data-event-end="${escapeHtml(String(eventMeta.endsAt || ""))}"
               >${escapeHtml(m.name)}</button>
             </td>
-            <td>${escapeHtml(m.memberNo || "-")}</td>
-            <td>
+            <td class="work-member-col work-member-col--member-no">${escapeHtml(m.memberNo || "-")}</td>
+            <td class="work-member-col work-member-col--presence">
               <button
                 type="button"
                 class="feed-btn ${present ? "" : "feed-btn--ghost"}"
@@ -798,9 +798,13 @@
           <details>
             <summary style="cursor:pointer;font-weight:600;">Mitgliederliste aufklappen (${presentCount}/${(Array.isArray(members) ? members : []).length} aktiv)</summary>
             <div class="work-part-table-wrap" style="margin-top:8px;">
-              <table class="work-part-table">
+              <table class="work-part-table work-member-table">
                 <thead>
-                  <tr><th>Name</th><th>Nr.</th><th>Anwesenheit</th></tr>
+                  <tr>
+                    <th class="work-member-col work-member-col--name">Name</th>
+                    <th class="work-member-col work-member-col--member-no">Nr.</th>
+                    <th class="work-member-col work-member-col--presence">Anwesenheit</th>
+                  </tr>
                 </thead>
                 <tbody>${memberRows || `<tr><td colspan="3" class="small">Keine Mitglieder gefunden.</td></tr>`}</tbody>
               </table>
@@ -809,14 +813,14 @@
         </div>
       </div>
       <div class="work-part-table-wrap">
-        <table class="work-part-table">
+        <table class="work-part-table work-part-table--admin">
           <thead>
             <tr>
-              <th>Teilnehmer</th>
-              <th>Von</th>
-              <th>Bis</th>
-              <th>Berechnet</th>
-              <th>Aktionen</th>
+              <th class="work-part-col work-part-col--name">Teilnehmer</th>
+              <th class="work-part-col work-part-col--from">Von</th>
+              <th class="work-part-col work-part-col--to">Bis</th>
+              <th class="work-part-col work-part-col--calc">Berechnet</th>
+              <th class="work-part-col work-part-col--actions">Aktionen</th>
             </tr>
           </thead>
           <tbody>

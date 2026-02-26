@@ -6,8 +6,29 @@ import { APP } from "../../../config/app";
 <Site title={`Bewerbungen • ${APP.name}`} description="Vorstand: Mitgliedsanträge prüfen" robots="noindex">
   <section class="card">
     <div class="card__body">
-      <h1>Bewerbungen</h1>
+      <div class="catch-table-toolbar">
+        <h1>Bewerbungen</h1>
+        <div class="ui-view-toggle" role="group" aria-label="Ansicht">
+          <button id="membershipViewZeileBtn" type="button" class="feed-btn">Ansicht Zeile</button>
+          <button id="membershipViewKarteBtn" type="button" class="feed-btn feed-btn--ghost">Ansicht Karte</button>
+        </div>
+      </div>
       <p class="small">Nur für Vorstand/Admin. Offene Bewerbungen prüfen, Fragebogen ergänzen und entscheiden.</p>
+      <div class="ui-filter-row">
+        <label>
+          <span>Suche</span>
+          <input id="membershipSearch" type="search" placeholder="Name, Ort, Status durchsuchen" />
+        </label>
+        <label>
+          <span>Filter</span>
+          <select id="membershipStatusFilter">
+            <option value="alle">Alle</option>
+            <option value="offen">Offen</option>
+            <option value="genehmigt">Genehmigt</option>
+            <option value="abgelehnt">Abgelehnt</option>
+          </select>
+        </label>
+      </div>
       <p id="membershipAdminMsg" class="small" aria-live="polite"></p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button id="membershipAdminReload" type="button" class="feed-btn feed-btn--ghost">Neu laden</button>
@@ -19,16 +40,44 @@ import { APP } from "../../../config/app";
   <section class="card">
     <div class="card__body">
       <h2>Offen</h2>
-      <div id="membershipPendingList" class="grid"></div>
+      <div id="membershipPendingTableWrap" class="catch-table">
+        <div class="catch-table__head" style="grid-template-columns:1.2fr 1fr 1fr 1fr">
+          <span>Name</span>
+          <span>Eingang</span>
+          <span>Status</span>
+          <span>Ort</span>
+        </div>
+        <div id="membershipPendingTable"></div>
+      </div>
+      <div id="membershipPendingList" class="grid hidden" hidden></div>
     </div>
   </section>
 
   <section class="card">
     <div class="card__body">
       <h2>Bearbeitet</h2>
-      <div id="membershipDoneList" class="grid"></div>
+      <div id="membershipDoneTableWrap" class="catch-table">
+        <div class="catch-table__head" style="grid-template-columns:1.2fr 1fr 1fr 1fr">
+          <span>Name</span>
+          <span>Entscheidung</span>
+          <span>Status</span>
+          <span>Ort</span>
+        </div>
+        <div id="membershipDoneTable"></div>
+      </div>
+      <div id="membershipDoneList" class="grid hidden" hidden></div>
     </div>
   </section>
+
+  <dialog id="membershipDetailDialog" class="catch-dialog">
+    <form method="dialog" class="catch-dialog__form">
+      <h3>Details</h3>
+      <div id="membershipDetailBody" class="catch-dialog__body"></div>
+      <div class="catch-dialog__actions">
+        <button type="submit" class="feed-btn">Schließen</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="/js/membership-applications-admin.js" defer></script>
 </Site>

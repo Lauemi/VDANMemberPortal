@@ -110,7 +110,7 @@
   }
 
   function setNavState(loggedIn){
-    document.querySelectorAll("[data-member-only]").forEach((el) => {
+    document.querySelectorAll("[data-member-only]:not([data-ui-session-skip])").forEach((el) => {
       el.classList.toggle("hidden", !loggedIn);
       el.toggleAttribute("hidden", !loggedIn);
     });
@@ -141,25 +141,9 @@
     });
   }
 
-  function ensurePortalSettingsEntry(loggedIn) {
-    if (!loggedIn) return;
-    const path = String(window.location.pathname || "").toLowerCase();
-    if (!(path === "/app" || path === "/app/")) return;
-    if (document.getElementById("portalSettingsQuickLink")) return;
-    const portalBody = document.querySelector(".app-portal");
-    if (!portalBody) return;
-    const p = document.createElement("p");
-    p.id = "portalSettingsQuickLink";
-    p.innerHTML = '<a class="feed-btn feed-btn--ghost" href="/app/einstellungen/">Einstellungen öffnen</a>';
-    const grid = portalBody.querySelector(".app-grid");
-    if (grid && grid.parentNode === portalBody) portalBody.insertBefore(p, grid);
-    else portalBody.appendChild(p);
-  }
-
   async function init(){
     const loggedIn = Boolean(window.VDAN_AUTH?.loadSession?.());
     setNavState(loggedIn);
-    ensurePortalSettingsEntry(loggedIn);
     if (!loggedIn) {
       if (touchTimer) {
         clearInterval(touchTimer);

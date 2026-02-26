@@ -70,7 +70,6 @@
 
 .fangliste-table__head {
   display: grid;
-  grid-template-columns: 120px 1fr 1.3fr;
   gap: 10px;
   align-items: center;
   padding: 10px 12px;
@@ -81,12 +80,17 @@
   letter-spacing: .02em;
 }
 
+.fangliste-table__head .documents-head__button {
+  justify-content: flex-start;
+  min-height: 40px;
+  padding: 8px 10px;
+}
+
 .fangliste-table__row {
   width: 100%;
   border: 0;
   border-top: 1px solid var(--line);
   display: grid;
-  grid-template-columns: 120px 1fr 1.3fr;
   gap: 10px;
   align-items: center;
   text-align: left;
@@ -108,8 +112,18 @@
   font-weight: 700;
 }
 
-.fangliste-table__water,
-.fangliste-table__catch {
+.fangliste-table__cell {
+  min-width: 0;
+}
+
+.fangliste-table__cell--trip_date {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.fangliste-table__cell--water,
+.fangliste-table__cell--summary,
+.fangliste-table__cell--status {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;

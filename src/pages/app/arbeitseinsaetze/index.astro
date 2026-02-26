@@ -18,16 +18,57 @@ import { APP } from "../../../config/app";
       </div>
 
       <p id="workMemberMsg" class="small" aria-live="polite"></p>
+      <div class="ui-filter-row">
+        <label>
+          <span>Suche</span>
+          <input id="workMemberSearch" type="search" placeholder="Titel oder Ort durchsuchen" />
+        </label>
+        <label>
+          <span>Ansicht</span>
+          <div class="ui-view-toggle" role="group" aria-label="Ansicht">
+            <button type="button" class="feed-btn" id="workMemberViewZeileBtn" data-ansicht="zeile">Ansicht Zeile</button>
+            <button type="button" class="feed-btn feed-btn--ghost" id="workMemberViewKarteBtn" data-ansicht="karte">Ansicht Karte</button>
+          </div>
+        </label>
+      </div>
       <hr />
 
       <h2>Kommende Einsätze</h2>
-      <div id="workMemberUpcoming" class="grid"></div>
+      <div id="workMemberUpcomingTableWrap" class="catch-table">
+        <div class="catch-table__head" style="grid-template-columns:1.5fr 1fr 1fr 1fr">
+          <span>Titel</span>
+          <span>Start</span>
+          <span>Ort</span>
+          <span>Status</span>
+        </div>
+        <div id="workMemberUpcomingTableBody"></div>
+      </div>
+      <div id="workMemberUpcomingCards" class="grid hidden" hidden></div>
 
       <hr />
       <h2>Meine Einsätze</h2>
-      <div id="workMemberMine" class="grid"></div>
+      <div id="workMemberMineTableWrap" class="catch-table">
+        <div class="catch-table__head" style="grid-template-columns:1.5fr 1fr 1fr 1fr">
+          <span>Titel</span>
+          <span>Von</span>
+          <span>Bis</span>
+          <span>Status</span>
+        </div>
+        <div id="workMemberMineTableBody"></div>
+      </div>
+      <div id="workMemberMineCards" class="grid hidden" hidden></div>
     </div>
   </section>
+
+  <dialog id="workMemberDetailDialog" class="catch-dialog">
+    <form method="dialog" class="catch-dialog__form">
+      <h3>Details</h3>
+      <div id="workMemberDetailBody" class="catch-dialog__body"></div>
+      <div class="catch-dialog__actions">
+        <button type="submit" class="feed-btn">Schließen</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="/js/work-events-member.js" defer></script>
 </Site>

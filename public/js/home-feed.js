@@ -22,6 +22,20 @@
   const forcedCategory = String(document.querySelector("[data-feed-category]")?.getAttribute("data-feed-category") || "").trim().toLowerCase() || "";
   const isForcedCategory = Boolean(forcedCategory);
   const isYouthFeed = forcedCategory === "jugend";
+  const YOUTH_TERM = "jugend";
+
+  function titleHasYouthTerm(title) {
+    return String(title || "").toLowerCase().includes(YOUTH_TERM);
+  }
+
+  function isYouthItem(row) {
+    return Boolean(row?.is_youth) || titleHasYouthTerm(row?.title);
+  }
+
+  function filterByFeedCategory(rows) {
+    const list = Array.isArray(rows) ? rows : [];
+    return list.filter((row) => (isYouthFeed ? isYouthItem(row) : !isYouthItem(row)));
+  }
 
   function cfg() {
     return {
@@ -231,28 +245,14 @@
 
   async function listUpcomingTerms() {
     const nowIso = new Date().toISOString();
-    try {
-      const rows = await sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}${termEventsFeedFilterQuery()}&order=starts_at.asc&limit=20`, { method: "GET" });
-      return Array.isArray(rows) ? rows : [];
-    } catch {
-      if (isYouthFeed) return [];
-      const rows = await sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc&limit=20`, { method: "GET" });
-      return (Array.isArray(rows) ? rows : []).map((row) => ({ ...row, is_youth: false }));
-    }
-  }
-
-  function termEventsFeedFilterQuery() {
-    return isYouthFeed ? "&is_youth=is.true" : "&is_youth=is.false";
-  }
-
-  function workEventsFeedFilterQuery() {
-    return isYouthFeed ? "&is_youth=is.true" : "&is_youth=is.false";
+    const rows = await sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc&limit=40`, { method: "GET" });
+    return filterByFeedCategory(rows);
   }
 
   async function listUpcomingWorkEvents() {
     const nowIso = new Date().toISOString();
-    const rows = await sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}${workEventsFeedFilterQuery()}&order=starts_at.asc&limit=20`, { method: "GET" });
-    return Array.isArray(rows) ? rows : [];
+    const rows = await sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc&limit=40`, { method: "GET" });
+    return filterByFeedCategory(rows);
   }
 
   function weekRangeIso() {
@@ -271,19 +271,16 @@
 
   async function listWeekCalendarItems() {
     const { nowIso, weekEndIso } = weekRangeIso();
-    let terms = [];
-    try {
-      terms = await sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}${termEventsFeedFilterQuery()}&order=starts_at.asc`, { method: "GET" });
-    } catch {
-      if (!isYouthFeed) {
-        const legacyTerms = await sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`, { method: "GET" });
-        terms = (Array.isArray(legacyTerms) ? legacyTerms : []).map((row) => ({ ...row, is_youth: false }));
-      }
-    }
-    const works = await sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}${workEventsFeedFilterQuery()}&order=starts_at.asc`, { method: "GET" });
+    const [termsRaw, worksRaw] = await Promise.all([
+      sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`, { method: "GET" }),
+      sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`, { method: "GET" }),
+    ]);
 
-    const t = (Array.isArray(terms) ? terms : []).map((row) => ({ ...row, source: "termin", sourceLabel: row.is_youth ? "Termin Jugend" : "Termin" }));
-    const w = (Array.isArray(works) ? works : []).map((row) => ({ ...row, source: "arbeitseinsatz", sourceLabel: row.is_youth ? "Arbeitseinsatz Jugend" : "Arbeitseinsatz" }));
+    const terms = filterByFeedCategory(termsRaw);
+    const works = filterByFeedCategory(worksRaw);
+
+    const t = terms.map((row) => ({ ...row, source: "termin", sourceLabel: isYouthItem(row) ? "Termin Jugend" : "Termin" }));
+    const w = works.map((row) => ({ ...row, source: "arbeitseinsatz", sourceLabel: isYouthItem(row) ? "Arbeitseinsatz Jugend" : "Arbeitseinsatz" }));
     return [...t, ...w].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
   }
 
@@ -1019,8 +1016,8 @@
           listUpcomingWorkEvents().catch(() => []),
         ]);
         const merged = [
-          ...(Array.isArray(terms) ? terms : []).map((row) => ({ ...row, sourceLabel: row.is_youth ? "Termin Jugend" : "Termin" })),
-          ...(Array.isArray(works) ? works : []).map((row) => ({ ...row, sourceLabel: row.is_youth ? "Arbeitseinsatz Jugend" : "Arbeitseinsatz" })),
+          ...(Array.isArray(terms) ? terms : []).map((row) => ({ ...row, sourceLabel: isYouthItem(row) ? "Termin Jugend" : "Termin" })),
+          ...(Array.isArray(works) ? works : []).map((row) => ({ ...row, sourceLabel: isYouthItem(row) ? "Arbeitseinsatz Jugend" : "Arbeitseinsatz" })),
         ].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
 
         if (merged.length) {
@@ -1337,6 +1334,31 @@
     host.appendChild(form);
   }
 
+  function consumeOpenComposerIntent() {
+    let shouldOpen = false;
+    try {
+      const url = new URL(window.location.href);
+      shouldOpen = url.searchParams.get("compose") === "1" || url.hash === "#post-erstellen";
+      if (shouldOpen) {
+        url.searchParams.delete("compose");
+        if (url.hash === "#post-erstellen") url.hash = "";
+        window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+      }
+    } catch {
+      // ignore URL parse errors
+    }
+
+    try {
+      if (sessionStorage.getItem("vdan_open_post_composer") === "1") {
+        shouldOpen = true;
+        sessionStorage.removeItem("vdan_open_post_composer");
+      }
+    } catch {
+      // ignore storage errors
+    }
+    return shouldOpen;
+  }
+
   function mountEditComposer(article, post) {
     const slot = article.querySelector(".feed-edit-slot");
     if (!slot) return;
@@ -1477,11 +1499,17 @@
       btn.addEventListener("click", mountNewComposer);
     }
 
+    if (canManage && consumeOpenComposerIntent()) mountNewComposer();
+
     await refresh();
   }
 
   document.addEventListener("DOMContentLoaded", init);
   document.addEventListener("vdan:session", init);
+  document.addEventListener("vdan:open-post-composer", () => {
+    if (!canManage) return;
+    mountNewComposer();
+  });
   window.addEventListener("online", () => {
     flushOfflineQueue().then(() => refresh()).catch(() => {});
   });

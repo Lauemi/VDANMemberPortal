@@ -1,8 +1,10 @@
 ;(() => {
   const ADMIN_ROLES = new Set(["admin"]);
+  const VIEW_KEY = "app:viewMode:mitglieder:v1";
   const state = {
     rows: [],
     search: "",
+    ansicht: "zeile",
     filters: {
       name: "",
       memberNo: "",
@@ -47,8 +49,30 @@
     if (el) el.textContent = text;
   }
 
+  function setDetailMsg(text = "") {
+    const el = document.getElementById("membersDetailMsg");
+    if (el) el.textContent = text;
+  }
+
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  function loadAnsicht() {
+    try {
+      const v = String(localStorage.getItem(VIEW_KEY) || "zeile").toLowerCase();
+      return v === "karte" ? "karte" : "zeile";
+    } catch {
+      return "zeile";
+    }
+  }
+
+  function saveAnsicht(v) {
+    try {
+      localStorage.setItem(VIEW_KEY, v);
+    } catch {
+      // ignore
+    }
   }
 
   async function loadMyRoles() {
@@ -213,6 +237,7 @@
     rows.forEach((u) => {
       const row = document.createElement("div");
       row.className = "catch-row";
+      row.setAttribute("data-open-member-id", u.id);
       row.style.gridTemplateColumns = "2fr 1fr 1.2fr 1.6fr";
       const selectedRole = primaryRole(u.roles);
       row.innerHTML = `
@@ -245,8 +270,135 @@
     });
   }
 
+  function renderCards(rows) {
+    const root = document.getElementById("membersAdminCards");
+    if (!root) return;
+    root.innerHTML = "";
+
+    if (!rows.length) {
+      root.innerHTML = `<p class="small">Keine Benutzer gefunden.</p>`;
+      return;
+    }
+
+    rows.forEach((u) => {
+      const selectedRole = primaryRole(u.roles);
+      const card = document.createElement("article");
+      card.className = "ui-karte";
+      card.setAttribute("data-open-member-id", u.id);
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
+      card.innerHTML = `
+        <div class="ui-karte__kopf">
+          <h3 class="ui-karte__titel">${escapeHtml(u.name || u.email || u.id)}</h3>
+          <span class="ui-chip">${u.isOnline ? "Online" : "Offline"}</span>
+        </div>
+        <p class="small">${escapeHtml(u.email || "-")}</p>
+        <p class="small">Mitglieds-Nr.: ${escapeHtml(u.memberNo || "-")}</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select data-card-select="${escapeHtml(u.id)}">
+            <option value="valid" ${u.cardValid ? "selected" : ""}>Gültig</option>
+            <option value="invalid" ${u.cardValid ? "" : "selected"}>Ungültig</option>
+          </select>
+          <button type="button" class="feed-btn js-save-card" data-user-id="${escapeHtml(u.id)}">Speichern</button>
+          <span class="small" data-card-msg="${escapeHtml(u.id)}">${u.cardValid && u.cardValidUntil ? `bis ${escapeHtml(u.cardValidUntil)}` : ""}</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select data-role-select="${escapeHtml(u.id)}">
+            <option value="member" ${selectedRole === "member" ? "selected" : ""}>Mitglied</option>
+            <option value="vorstand" ${selectedRole === "vorstand" ? "selected" : ""}>Vorstand</option>
+            <option value="admin" ${selectedRole === "admin" ? "selected" : ""}>Admin</option>
+          </select>
+          <button type="button" class="feed-btn js-save-role" data-user-id="${escapeHtml(u.id)}">Speichern</button>
+          <span class="small" data-role-msg="${escapeHtml(u.id)}"></span>
+        </div>
+      `;
+      root.appendChild(card);
+    });
+  }
+
+  function findUserById(userId) {
+    return state.rows.find((r) => String(r.id) === String(userId)) || null;
+  }
+
+  async function saveRoleForUser(userId, role, msgEl = null) {
+    if (!["member", "vorstand", "admin"].includes(role)) return;
+    if (msgEl) msgEl.textContent = "Speichere…";
+    await setSingleRole(userId, role);
+    if (msgEl) msgEl.textContent = "Gespeichert";
+    setMsg(`Rolle aktualisiert: ${userId} -> ${role}`);
+    await init();
+  }
+
+  async function saveCardForUser(userId, isValid, msgEl = null) {
+    if (msgEl) msgEl.textContent = "Speichere…";
+    await setCardValidity(userId, isValid);
+    if (msgEl) msgEl.textContent = isValid ? "Gespeichert (1 Jahr)" : "Gespeichert";
+    setMsg(`Ausweisstatus aktualisiert: ${userId} -> ${isValid ? "gültig" : "ungültig"}`);
+    await init();
+  }
+
+  function openMemberDialog(userId) {
+    const row = findUserById(userId);
+    const dlg = document.getElementById("membersDetailDialog");
+    const body = document.getElementById("membersDetailBody");
+    if (!row || !dlg || !body) return;
+
+    const selectedRole = primaryRole(row.roles);
+    body.innerHTML = `
+      <div class="grid cols2">
+        <p><strong>Name</strong><br>${escapeHtml(row.name || row.email || row.id)}</p>
+        <p><strong>E-Mail</strong><br>${escapeHtml(row.email || "-")}</p>
+        <p><strong>Mitglieds-Nr.</strong><br>${escapeHtml(row.memberNo || "-")}</p>
+        <p><strong>Status</strong><br>${row.isOnline ? "Online" : "Offline"}</p>
+        <p><strong>Letzte Aktivität</strong><br>${escapeHtml(formatTs(row.lastSeenAt))}</p>
+        <p><strong>Erstlogin</strong><br>${escapeHtml(formatTs(row.firstLoginAt))}</p>
+      </div>
+      <hr />
+      <div class="grid cols2">
+        <label>
+          <span>Ausweis</span>
+          <select id="membersDetailCardSelect">
+            <option value="valid" ${row.cardValid ? "selected" : ""}>Gültig</option>
+            <option value="invalid" ${row.cardValid ? "" : "selected"}>Ungültig</option>
+          </select>
+        </label>
+        <div style="display:flex;align-items:flex-end;">
+          <button type="button" class="feed-btn" id="membersDetailSaveCardBtn" data-user-id="${escapeHtml(row.id)}">Ausweis speichern</button>
+        </div>
+        <label>
+          <span>Rolle</span>
+          <select id="membersDetailRoleSelect">
+            <option value="member" ${selectedRole === "member" ? "selected" : ""}>Mitglied</option>
+            <option value="vorstand" ${selectedRole === "vorstand" ? "selected" : ""}>Vorstand</option>
+            <option value="admin" ${selectedRole === "admin" ? "selected" : ""}>Admin</option>
+          </select>
+        </label>
+        <div style="display:flex;align-items:flex-end;">
+          <button type="button" class="feed-btn" id="membersDetailSaveRoleBtn" data-user-id="${escapeHtml(row.id)}">Rolle speichern</button>
+        </div>
+      </div>
+    `;
+    setDetailMsg("");
+    if (!dlg.open) dlg.showModal();
+  }
+
   function renderFilteredRows() {
-    renderRows(applyFilters(state.rows));
+    const rows = applyFilters(state.rows);
+    const tableWrap = document.getElementById("membersTableWrap");
+    const cardsWrap = document.getElementById("membersAdminCards");
+    const zeileBtn = document.getElementById("membersViewZeileBtn");
+    const karteBtn = document.getElementById("membersViewKarteBtn");
+
+    const cardActive = state.ansicht === "karte";
+    tableWrap?.classList.toggle("hidden", cardActive);
+    tableWrap?.toggleAttribute("hidden", cardActive);
+    cardsWrap?.classList.toggle("hidden", !cardActive);
+    cardsWrap?.toggleAttribute("hidden", !cardActive);
+    zeileBtn?.classList.toggle("feed-btn--ghost", cardActive);
+    karteBtn?.classList.toggle("feed-btn--ghost", !cardActive);
+
+    renderRows(rows);
+    renderCards(rows);
   }
 
   function openFilterPanel(name) {
@@ -271,12 +423,16 @@
       return;
     }
 
+    state.ansicht = loadAnsicht();
+
     const roles = await loadMyRoles().catch(() => []);
     const isAdmin = roles.some((r) => ADMIN_ROLES.has(r));
     if (!isAdmin) {
       setMsg("Kein Zugriff: nur Admin.");
       const root = document.getElementById("membersAdminRows");
       if (root) root.innerHTML = "";
+      const cards = document.getElementById("membersAdminCards");
+      if (cards) cards.innerHTML = "";
       return;
     }
 
@@ -302,12 +458,8 @@
     if (!["member", "vorstand", "admin"].includes(role)) return;
 
     btn.disabled = true;
-    if (msgEl) msgEl.textContent = "Speichere…";
     try {
-      await setSingleRole(userId, role);
-      if (msgEl) msgEl.textContent = "Gespeichert";
-      setMsg(`Rolle aktualisiert: ${userId} -> ${role}`);
-      await init();
+      await saveRoleForUser(userId, role, msgEl);
     } catch (err) {
       if (msgEl) msgEl.textContent = "Fehler";
       setMsg(err?.message || "Rolle konnte nicht gespeichert werden.");
@@ -327,12 +479,8 @@
     const isValid = value === "valid";
 
     btn.disabled = true;
-    if (msgEl) msgEl.textContent = "Speichere…";
     try {
-      await setCardValidity(userId, isValid);
-      if (msgEl) msgEl.textContent = isValid ? "Gespeichert (1 Jahr)" : "Gespeichert";
-      setMsg(`Ausweisstatus aktualisiert: ${userId} -> ${isValid ? "gültig" : "ungültig"}`);
-      await init();
+      await saveCardForUser(userId, isValid, msgEl);
     } catch (err) {
       if (msgEl) msgEl.textContent = "Fehler";
       setMsg(err?.message || "Ausweisstatus konnte nicht gespeichert werden.");
@@ -386,5 +534,73 @@
       state.filters.card = String(e.target.value || "all");
       renderFilteredRows();
     }
+  });
+
+  document.addEventListener("click", (e) => {
+    const detailClose = e.target.closest("#membersDetailCloseBtn");
+    if (detailClose) {
+      document.getElementById("membersDetailDialog")?.close?.();
+      return;
+    }
+
+    const detailSaveRole = e.target.closest("#membersDetailSaveRoleBtn[data-user-id]");
+    if (detailSaveRole) {
+      const userId = String(detailSaveRole.getAttribute("data-user-id") || "");
+      const role = String(document.getElementById("membersDetailRoleSelect")?.value || "member");
+      if (!userId) return;
+      detailSaveRole.disabled = true;
+      saveRoleForUser(userId, role)
+        .then(() => setDetailMsg("Rolle gespeichert."))
+        .catch((err) => setDetailMsg(err?.message || "Rolle konnte nicht gespeichert werden."))
+        .finally(() => { detailSaveRole.disabled = false; });
+      return;
+    }
+
+    const detailSaveCard = e.target.closest("#membersDetailSaveCardBtn[data-user-id]");
+    if (detailSaveCard) {
+      const userId = String(detailSaveCard.getAttribute("data-user-id") || "");
+      const isValid = String(document.getElementById("membersDetailCardSelect")?.value || "valid") === "valid";
+      if (!userId) return;
+      detailSaveCard.disabled = true;
+      saveCardForUser(userId, isValid)
+        .then(() => setDetailMsg("Ausweis gespeichert."))
+        .catch((err) => setDetailMsg(err?.message || "Ausweis konnte nicht gespeichert werden."))
+        .finally(() => { detailSaveCard.disabled = false; });
+      return;
+    }
+
+    const openRow = e.target.closest("[data-open-member-id]");
+    if (openRow) {
+      if (e.target.closest(".js-save-role,.js-save-card,select,input,a,textarea,label")) return;
+      const userId = String(openRow.getAttribute("data-open-member-id") || "");
+      if (!userId) return;
+      openMemberDialog(userId);
+      return;
+    }
+
+    const zeile = e.target.closest("#membersViewZeileBtn");
+    if (zeile) {
+      state.ansicht = "zeile";
+      saveAnsicht(state.ansicht);
+      renderFilteredRows();
+      return;
+    }
+    const karte = e.target.closest("#membersViewKarteBtn");
+    if (karte) {
+      state.ansicht = "karte";
+      saveAnsicht(state.ansicht);
+      renderFilteredRows();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const openRow = e.target.closest?.("[data-open-member-id]");
+    if (!openRow) return;
+    if (e.target.closest(".js-save-role,.js-save-card,select,input,a,textarea,label")) return;
+    e.preventDefault();
+    const userId = String(openRow.getAttribute("data-open-member-id") || "");
+    if (!userId) return;
+    openMemberDialog(userId);
   });
 })();

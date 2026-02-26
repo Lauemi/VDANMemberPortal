@@ -1,8 +1,19 @@
 ;(() => {
   const OFFLINE_NS = "my_responsibilities";
   const OFFLINE_LIST_KEY = "list";
+  const VIEW_TASK_KEY = "app:viewMode:my-resp-task:v1";
+  const VIEW_LEAD_KEY = "app:viewMode:my-resp-lead:v1";
+  const FILTER_KEY = "app:viewFilter:my-resp:v1";
+
   let activeTaskId = null;
   let meetingTasks = [];
+  let allMeetingTasks = [];
+  let allWorkLeads = [];
+  let filteredMeetingTasks = [];
+  let filteredWorkLeads = [];
+  let taskView = "zeile";
+  let leadView = "zeile";
+  let bound = false;
 
   function cfg() {
     return {
@@ -57,6 +68,14 @@
     return d.toLocaleString("de-DE");
   }
 
+  function statusLabel(value) {
+    const v = String(value || "").toLowerCase();
+    if (v === "done") return "erledigt";
+    if (v === "blocked") return "blockiert";
+    if (v === "open") return "offen";
+    return value || "-";
+  }
+
   function setMsg(text = "") {
     const el = document.getElementById("myRespMsg");
     if (el) el.textContent = text;
@@ -65,6 +84,30 @@
   function setEditMsg(text = "") {
     const el = document.getElementById("myRespEditMsg");
     if (el) el.textContent = text;
+  }
+
+  function loadView(key, fallback = "zeile") {
+    try {
+      return String(localStorage.getItem(key) || fallback) === "karte" ? "karte" : "zeile";
+    } catch {
+      return fallback;
+    }
+  }
+
+  function saveView(key, value) {
+    try { localStorage.setItem(key, value); } catch {}
+  }
+
+  function loadFilter() {
+    try {
+      return JSON.parse(localStorage.getItem(FILTER_KEY) || "{}") || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveFilter(payload) {
+    try { localStorage.setItem(FILTER_KEY, JSON.stringify(payload || {})); } catch {}
   }
 
   async function loadResponsibilities() {
@@ -89,7 +132,13 @@
         ? { ...t, ...patch, updated_at: now, _offline_pending: true }
         : t
     );
-    renderMeetingTasks(meetingTasks);
+    allMeetingTasks = allMeetingTasks.map((t) =>
+      String(t.source_id) === id
+        ? { ...t, ...patch, updated_at: now, _offline_pending: true }
+        : t
+    );
+    applyFilters();
+    renderMeetingTasks();
   }
 
   async function queueTaskPatch(taskId, patch) {
@@ -112,49 +161,140 @@
     });
   }
 
-  function renderMeetingTasks(rows) {
-    const root = document.getElementById("myRespMeetingTasks");
-    if (!root) return;
-    meetingTasks = rows;
-    if (!rows.length) {
-      root.innerHTML = `<p class="small">Keine zugewiesenen Sitzungstasks.</p>`;
+  function applyView() {
+    const taskCard = taskView === "karte";
+    const leadCard = leadView === "karte";
+
+    const tt = document.getElementById("myRespMeetingTasksTableWrap");
+    const tc = document.getElementById("myRespMeetingTasksCards");
+    tt?.classList.toggle("hidden", taskCard);
+    tt?.toggleAttribute("hidden", taskCard);
+    tc?.classList.toggle("hidden", !taskCard);
+    tc?.toggleAttribute("hidden", !taskCard);
+
+    const lt = document.getElementById("myRespWorkLeadsTableWrap");
+    const lc = document.getElementById("myRespWorkLeadsCards");
+    lt?.classList.toggle("hidden", leadCard);
+    lt?.toggleAttribute("hidden", leadCard);
+    lc?.classList.toggle("hidden", !leadCard);
+    lc?.toggleAttribute("hidden", !leadCard);
+
+    document.getElementById("myRespTaskViewZeileBtn")?.classList.toggle("feed-btn--ghost", taskCard);
+    document.getElementById("myRespTaskViewKarteBtn")?.classList.toggle("feed-btn--ghost", !taskCard);
+    document.getElementById("myRespLeadViewZeileBtn")?.classList.toggle("feed-btn--ghost", leadCard);
+    document.getElementById("myRespLeadViewKarteBtn")?.classList.toggle("feed-btn--ghost", !leadCard);
+  }
+
+  function applyFilters() {
+    const taskSearch = String(document.getElementById("myRespTaskSearch")?.value || "").trim().toLowerCase();
+    const taskStatus = String(document.getElementById("myRespTaskStatusFilter")?.value || "alle").trim().toLowerCase();
+    const leadSearch = String(document.getElementById("myRespLeadSearch")?.value || "").trim().toLowerCase();
+
+    saveFilter({ taskSearch, taskStatus, leadSearch });
+
+    filteredMeetingTasks = allMeetingTasks.filter((r) => {
+      if (taskStatus !== "alle" && String(r.status || "").toLowerCase() !== taskStatus) return false;
+      if (!taskSearch) return true;
+      const hay = `${r.title || ""} ${r.status || ""} ${r.status_note || ""}`.toLowerCase();
+      return hay.includes(taskSearch);
+    });
+
+    filteredWorkLeads = allWorkLeads.filter((r) => {
+      if (!leadSearch) return true;
+      const hay = `${r.title || ""} ${r.status || ""} ${r.location || ""}`.toLowerCase();
+      return hay.includes(leadSearch);
+    });
+
+    meetingTasks = filteredMeetingTasks;
+  }
+
+  function renderMeetingTasks() {
+    const tableRoot = document.getElementById("myRespMeetingTasksTable");
+    const cardsRoot = document.getElementById("myRespMeetingTasksCards");
+    if (!tableRoot || !cardsRoot) return;
+
+    if (!filteredMeetingTasks.length) {
+      tableRoot.innerHTML = `<p class="small" style="padding:12px;">Keine zugewiesenen Sitzungstasks.</p>`;
+      cardsRoot.innerHTML = `<p class="small">Keine zugewiesenen Sitzungstasks.</p>`;
       return;
     }
-    root.innerHTML = rows.map((r) => `
-      <button type="button" class="catch-row resp-task-row" data-task-id="${esc(r.source_id)}" style="grid-template-columns:2fr 1fr 1fr;">
+
+    tableRoot.innerHTML = filteredMeetingTasks.map((r) => `
+      <button type="button" class="catch-table__row resp-task-row" data-task-id="${esc(r.source_id)}" style="grid-template-columns:2fr 1fr 1fr;">
         <span>
           <strong>${esc(r.title || "Task")}</strong>
           ${r.status_note ? `<small class="small">Hinweis: ${esc(r.status_note)}</small>` : ""}
           <small class="small">Aktualisiert: ${esc(fmtTs(r.updated_at))}</small>
         </span>
-        <span>${esc(r.status || "-")}</span>
+        <span>${esc(statusLabel(r.status))}</span>
         <span>${esc(fmtDate(r.due_date))}</span>
+      </button>
+    `).join("");
+
+    cardsRoot.innerHTML = filteredMeetingTasks.map((r) => `
+      <button type="button" class="card" data-task-id="${esc(r.source_id)}" style="text-align:left;">
+        <div class="card__body">
+          <h3>${esc(r.title || "Task")}</h3>
+          <p class="small">Status: <strong>${esc(statusLabel(r.status))}</strong></p>
+          <p class="small">Fällig: ${esc(fmtDate(r.due_date))}</p>
+          ${r.status_note ? `<p class="small">Hinweis: ${esc(r.status_note)}</p>` : ""}
+          <p class="small">Aktualisiert: ${esc(fmtTs(r.updated_at))}</p>
+        </div>
       </button>
     `).join("");
   }
 
-  function renderWorkLeads(rows) {
-    const root = document.getElementById("myRespWorkLeads");
-    if (!root) return;
-    if (!rows.length) {
-      root.innerHTML = `<p class="small">Keine zugewiesenen Arbeitseinsätze.</p>`;
+  function renderLeadDetail(id) {
+    const row = allWorkLeads.find((r) => String(r.source_id) === String(id));
+    if (!row) return;
+    const body = document.getElementById("myRespLeadDetailBody");
+    const dlg = document.getElementById("myRespLeadDetailDialog");
+    if (!body || !dlg) return;
+    body.innerHTML = `
+      <p><strong>Titel:</strong> ${esc(row.title || "Arbeitseinsatz")}</p>
+      <p><strong>Status:</strong> ${esc(statusLabel(row.status))}</p>
+      <p><strong>Start:</strong> ${esc(fmtTs(row.starts_at))}</p>
+      <p><strong>Ende:</strong> ${esc(fmtTs(row.ends_at))}</p>
+      <p><strong>Ort:</strong> ${esc(row.location || "-")}</p>
+    `;
+    dlg.showModal?.();
+  }
+
+  function renderWorkLeads() {
+    const tableRoot = document.getElementById("myRespWorkLeadsTable");
+    const cardsRoot = document.getElementById("myRespWorkLeadsCards");
+    if (!tableRoot || !cardsRoot) return;
+
+    if (!filteredWorkLeads.length) {
+      tableRoot.innerHTML = `<p class="small" style="padding:12px;">Keine zugewiesenen Arbeitseinsätze.</p>`;
+      cardsRoot.innerHTML = `<p class="small">Keine zugewiesenen Arbeitseinsätze.</p>`;
       return;
     }
-    root.innerHTML = rows.map((r) => `
-      <article class="card">
+
+    tableRoot.innerHTML = filteredWorkLeads.map((r) => `
+      <button type="button" class="catch-table__row" data-lead-id="${esc(r.source_id)}" style="grid-template-columns:1.8fr 1fr 1fr 1fr;">
+        <span>${esc(r.title || "Arbeitseinsatz")}</span>
+        <span>${esc(statusLabel(r.status))}</span>
+        <span>${esc(fmtTs(r.starts_at))}</span>
+        <span>${esc(r.location || "-")}</span>
+      </button>
+    `).join("");
+
+    cardsRoot.innerHTML = filteredWorkLeads.map((r) => `
+      <button type="button" class="card" data-lead-id="${esc(r.source_id)}" style="text-align:left;">
         <div class="card__body">
           <h3>${esc(r.title || "Arbeitseinsatz")}</h3>
-          <p class="small">Status: <strong>${esc(r.status || "-")}</strong></p>
+          <p class="small">Status: <strong>${esc(statusLabel(r.status))}</strong></p>
           <p class="small">Start: ${esc(fmtTs(r.starts_at))}</p>
           <p class="small">Ende: ${esc(fmtTs(r.ends_at))}</p>
           <p class="small">Ort: ${esc(r.location || "-")}</p>
         </div>
-      </article>
+      </button>
     `).join("");
   }
 
   function openTaskDialog(taskId) {
-    const task = meetingTasks.find((t) => String(t.source_id) === String(taskId));
+    const task = meetingTasks.find((t) => String(t.source_id) === String(taskId)) || allMeetingTasks.find((t) => String(t.source_id) === String(taskId));
     if (!task) return;
     activeTaskId = String(taskId);
 
@@ -175,21 +315,65 @@
     setEditMsg("");
   }
 
+  function renderAll() {
+    applyFilters();
+    renderMeetingTasks();
+    renderWorkLeads();
+    applyView();
+  }
+
   async function refresh() {
     const rows = await loadResponsibilities();
-    const tasks = rows.filter((r) => r.responsibility_type === "meeting_task");
-    const leads = rows.filter((r) => r.responsibility_type === "work_event_lead");
-    renderMeetingTasks(tasks);
-    renderWorkLeads(leads);
+    allMeetingTasks = rows.filter((r) => r.responsibility_type === "meeting_task");
+    allWorkLeads = rows.filter((r) => r.responsibility_type === "work_event_lead");
+    renderAll();
     setMsg(`Geladen: ${rows.length}`);
   }
 
   function bind() {
-    document.getElementById("myRespMeetingTasks")?.addEventListener("click", (e) => {
-      const row = e.target?.closest?.("[data-task-id]");
-      if (!row) return;
-      openTaskDialog(String(row.getAttribute("data-task-id") || ""));
+    if (bound) return;
+    bound = true;
+    document.addEventListener("click", (e) => {
+      const task = e.target?.closest?.("[data-task-id]");
+      if (task) {
+        openTaskDialog(String(task.getAttribute("data-task-id") || ""));
+        return;
+      }
+
+      const lead = e.target?.closest?.("[data-lead-id]");
+      if (lead) {
+        renderLeadDetail(String(lead.getAttribute("data-lead-id") || ""));
+        return;
+      }
+
+      if (e.target?.closest?.("#myRespTaskViewZeileBtn")) {
+        taskView = "zeile";
+        saveView(VIEW_TASK_KEY, taskView);
+        applyView();
+        return;
+      }
+      if (e.target?.closest?.("#myRespTaskViewKarteBtn")) {
+        taskView = "karte";
+        saveView(VIEW_TASK_KEY, taskView);
+        applyView();
+        return;
+      }
+      if (e.target?.closest?.("#myRespLeadViewZeileBtn")) {
+        leadView = "zeile";
+        saveView(VIEW_LEAD_KEY, leadView);
+        applyView();
+        return;
+      }
+      if (e.target?.closest?.("#myRespLeadViewKarteBtn")) {
+        leadView = "karte";
+        saveView(VIEW_LEAD_KEY, leadView);
+        applyView();
+      }
     });
+
+    document.getElementById("myRespTaskSearch")?.addEventListener("input", renderAll);
+    document.getElementById("myRespTaskStatusFilter")?.addEventListener("change", renderAll);
+    document.getElementById("myRespLeadSearch")?.addEventListener("input", renderAll);
 
     document.getElementById("myRespEditClose")?.addEventListener("click", closeTaskDialog);
 
@@ -234,6 +418,18 @@
       setMsg("Bitte einloggen.");
       return;
     }
+
+    taskView = loadView(VIEW_TASK_KEY, "zeile");
+    leadView = loadView(VIEW_LEAD_KEY, "zeile");
+    const filter = loadFilter();
+    const taskSearch = document.getElementById("myRespTaskSearch");
+    const taskStatus = document.getElementById("myRespTaskStatusFilter");
+    const leadSearch = document.getElementById("myRespLeadSearch");
+    if (taskSearch && filter.taskSearch) taskSearch.value = String(filter.taskSearch);
+    if (taskStatus && (filter.taskStatus === "alle" || filter.taskStatus === "open" || filter.taskStatus === "done" || filter.taskStatus === "blocked")) {
+      taskStatus.value = String(filter.taskStatus);
+    }
+    if (leadSearch && filter.leadSearch) leadSearch.value = String(filter.leadSearch);
 
     try {
       bind();

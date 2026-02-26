@@ -7,26 +7,105 @@ import { APP } from "../../../config/app";
   <section class="card">
     <div class="card__body">
       <h1>Dokumente verwalten</h1>
-      <p class="small">Nur für Vorstand/Admin. Dokumente können hier direkt bearbeitet, deaktiviert oder gelöscht werden.</p>
+      <p class="small">Nur für Vorstand/Admin. Datenbereich mit Ansicht, Suche, Filtern und Detaildialog.</p>
       <p id="documentsAdminMsg" class="small" aria-live="polite"></p>
 
-      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin:10px 0 12px 0;flex-wrap:wrap;">
-        <input id="documentsAdminSearch" type="search" placeholder="Suche Titel, Kategorie, Beschreibung" style="max-width:360px;width:100%;" />
+      <div class="ui-container-toolbar">
+        <div class="ui-view-toggle" role="group" aria-label="Ansicht">
+          <button type="button" class="feed-btn" id="documentsViewZeileBtn" data-ansicht="zeile">Ansicht Zeile</button>
+          <button type="button" class="feed-btn feed-btn--ghost" id="documentsViewKarteBtn" data-ansicht="karte">Ansicht Karte</button>
+        </div>
+        <input id="documentsAdminSearch" type="search" placeholder="Suche Titel, Kategorie, Beschreibung" />
+        <button type="button" class="feed-btn feed-btn--ghost" id="documentsColumnsToggleBtn" aria-expanded="false">Spalten und Filter</button>
         <button type="button" class="feed-btn" id="documentsAdminAddBtn">Neues Dokument</button>
       </div>
 
-      <div class="catch-table">
-        <div class="catch-table__head" style="grid-template-columns:1.4fr 1fr 1.3fr .9fr .9fr">
-          <div>Titel / Beschreibung</div>
-          <div>Kategorie</div>
-          <div>Quelle</div>
-          <div>Status</div>
-          <div>Aktionen</div>
+      <div id="documentsColumnsPanel" class="ui-column-panel hidden" hidden>
+        <div class="ui-column-panel__block">
+          <h3>Spalten anzeigen</h3>
+          <div id="documentsColumnVisibility" class="ui-column-list"></div>
         </div>
-        <div id="documentsAdminRows" class="grid"></div>
+        <div class="ui-column-panel__block">
+          <h3>Spaltenreihenfolge</h3>
+          <div id="documentsColumnOrder" class="ui-column-list"></div>
+        </div>
+        <div class="ui-column-panel__block">
+          <h3>Filter pro Spalte</h3>
+          <div id="documentsColumnFilters" class="ui-filter-row"></div>
+        </div>
       </div>
+
+      <div id="documentsTableWrap" class="catch-table">
+        <div class="catch-table__head documents-head" id="documentsTableHead"></div>
+        <div id="documentsAdminRowsZeile" class="grid"></div>
+      </div>
+      <div id="documentsAdminRowsKarte" class="ui-karten-grid hidden" hidden></div>
     </div>
   </section>
+
+  <dialog id="documentsAdminDialog" class="catch-dialog">
+    <form method="dialog" class="catch-dialog__form" id="documentsAdminDialogForm">
+      <h2>Dokument</h2>
+      <p id="documentsDialogMsg" class="small" aria-live="polite"></p>
+      <div class="grid cols2 catch-dialog__body">
+        <label>
+          <span>Titel</span>
+          <input id="docDialogTitle" required />
+        </label>
+        <label>
+          <span>Kategorie</span>
+          <select id="docDialogCategory" required>
+            <option value="Formulare">Formulare</option>
+            <option value="Mitgliedschaft">Mitgliedschaft</option>
+            <option value="Gewässer">Gewässer</option>
+            <option value="Termine">Termine</option>
+            <option value="Jugend">Jugend</option>
+            <option value="Rechtliches">Rechtliches</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </label>
+        <label class="feed-field--full">
+          <span>Beschreibung</span>
+          <textarea id="docDialogDescription" rows="3"></textarea>
+        </label>
+        <label>
+          <span>Quelle</span>
+          <select id="docDialogSourceMode">
+            <option value="link">Direkter Link</option>
+            <option value="datei">Dateispeicher</option>
+          </select>
+        </label>
+        <label>
+          <span>Status</span>
+          <select id="docDialogStatus">
+            <option value="true">Aktiv</option>
+            <option value="false">Inaktiv</option>
+          </select>
+        </label>
+        <label class="feed-field--full">
+          <span>Direkter Link</span>
+          <input id="docDialogPublicUrl" placeholder="/Downloads/datei.pdf oder /downloads.html/ oder https://..." />
+        </label>
+        <label>
+          <span>Dateispeicher Bereich</span>
+          <input id="docDialogBucket" placeholder="z. B. downloads" />
+        </label>
+        <label>
+          <span>Dateispeicher Pfad</span>
+          <input id="docDialogPath" placeholder="ordner/datei.pdf" />
+        </label>
+        <label>
+          <span>Sortierung</span>
+          <input id="docDialogSortOrder" type="number" min="0" step="1" />
+        </label>
+      </div>
+      <div class="catch-dialog__actions">
+        <button type="button" class="feed-btn" id="documentsDialogSaveBtn">Speichern</button>
+        <button type="button" class="feed-btn feed-btn--ghost" id="documentsDialogDeleteBtn">Löschen</button>
+        <button type="button" class="feed-btn feed-btn--ghost" id="documentsDialogCloseBtn">Schließen</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="/js/documents-admin.js" defer></script>
 </Site>

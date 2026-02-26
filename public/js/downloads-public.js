@@ -16,7 +16,11 @@
   }
 
   function resolveUrl(row, conf) {
-    if (row.public_url) return String(row.public_url);
+    if (row.public_url) {
+      const raw = String(row.public_url).trim();
+      if (!raw || raw === "/Downloads/" || raw === "/Downloads") return "/downloads.html/";
+      return raw;
+    }
     if (row.storage_bucket && row.storage_path && conf.url) {
       const p = String(row.storage_path).replace(/^\/+/, "");
       return `${conf.url}/storage/v1/object/public/${encodeURIComponent(row.storage_bucket)}/${p}`;

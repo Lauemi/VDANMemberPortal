@@ -14,7 +14,7 @@ import { APP } from "../../../config/app";
 
   <section class="card">
     <div class="card__body">
-      <h2>Benachrichtigungen</h2>
+      <h2>Benachrichtigungen und Portal</h2>
       <form id="settingsNotifyForm" class="resp-form-grid">
         <label class="resp-full">
           <span>
@@ -34,6 +34,20 @@ import { APP } from "../../../config/app";
             Neue Arbeitseinsätze
           </span>
         </label>
+        <label class="resp-full">
+          <span>
+            <input id="setNotifyAppUpdate" type="checkbox" checked />
+            App-Update verfügbar
+          </span>
+        </label>
+        <label class="resp-full">
+          <span>Portal-Seite</span>
+          <select id="setHandedness">
+            <option value="right">Rechts (Standard)</option>
+            <option value="auto">Auto</option>
+            <option value="left">Links</option>
+          </select>
+        </label>
         <div class="resp-full" style="display:flex;justify-content:flex-end;">
           <button type="submit" class="feed-btn">Speichern</button>
         </div>
@@ -46,6 +60,7 @@ import { APP } from "../../../config/app";
       <h2>App-Update</h2>
       <p class="small">Version: <strong id="settingsAppVersion">-</strong></p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" id="settingsEnableNotifyBtn" class="feed-btn feed-btn--ghost">Benachrichtigung erlauben</button>
         <button type="button" id="settingsCheckUpdateBtn" class="feed-btn feed-btn--ghost">Auf Update prüfen</button>
         <button type="button" id="settingsReloadBtn" class="feed-btn feed-btn--ghost">Neu laden</button>
       </div>

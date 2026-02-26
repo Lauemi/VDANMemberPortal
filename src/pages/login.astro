@@ -2,8 +2,8 @@
 import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
 
-const nextRaw = Astro.url.searchParams.get("next") ?? "/app/";
-const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
+const nextRaw = Astro.url.searchParams.get("next") ?? "/";
+const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/";
 const showDemoHint = Boolean(import.meta.env.DEV);
 const enablePasswordReset = String(import.meta.env.PUBLIC_ENABLE_PASSWORD_RESET || "").toLowerCase() === "true";
 ---

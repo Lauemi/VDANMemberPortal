@@ -1,6 +1,12 @@
 ;(() => {
   const MANAGER_ROLES = new Set(["admin", "vorstand"]);
+  const TASK_VIEW_KEY = "app:viewMode:sitzungen-task:v1";
+  const TASK_FILTER_KEY = "app:viewFilter:sitzungen-task:v1";
   let activeTaskId = null;
+  let taskView = "zeile";
+  let taskSearch = "";
+  let taskStatusFilter = "alle";
+  let adminBound = false;
 
   let profiles = [];
   let roleRows = [];
@@ -45,6 +51,30 @@
     return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
+  function loadView() {
+    try {
+      return String(localStorage.getItem(TASK_VIEW_KEY) || "zeile") === "karte" ? "karte" : "zeile";
+    } catch {
+      return "zeile";
+    }
+  }
+
+  function saveView(v) {
+    try { localStorage.setItem(TASK_VIEW_KEY, v); } catch {}
+  }
+
+  function loadFilter() {
+    try {
+      return JSON.parse(localStorage.getItem(TASK_FILTER_KEY) || "{}") || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveFilter(payload) {
+    try { localStorage.setItem(TASK_FILTER_KEY, JSON.stringify(payload || {})); } catch {}
+  }
+
   function setMsg(text = "") {
     const el = document.getElementById("respMsg");
     if (el) el.textContent = text;
@@ -79,6 +109,14 @@
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return String(value);
     return d.toLocaleString("de-DE");
+  }
+
+  function statusLabel(value) {
+    const v = String(value || "").toLowerCase();
+    if (v === "done") return "erledigt";
+    if (v === "blocked") return "blockiert";
+    if (v === "open") return "offen";
+    return value || "-";
   }
 
   function profileLabel(p) {
@@ -229,11 +267,39 @@
 
   function renderTaskRows() {
     const root = document.getElementById("respTaskRows");
+    const cards = document.getElementById("respTaskCards");
+    const tableWrap = document.querySelector(".work-part-table-wrap");
     const empty = document.getElementById("respTaskEmpty");
-    if (!root) return;
+    if (!root || !cards) return;
 
-    if (!meetingTasks.length) {
+    taskSearch = String(document.getElementById("respTaskSearch")?.value || "").trim().toLowerCase();
+    taskStatusFilter = String(document.getElementById("respTaskStatusFilter")?.value || "alle").trim().toLowerCase();
+    saveFilter({ taskSearch, taskStatusFilter });
+
+    const sessionMap = new Map(sessions.map((s) => [String(s.id), s]));
+    const agendaMap = new Map(agendaItems.map((a) => [String(a.id), a]));
+    const profileMap = new Map(profiles.map((p) => [String(p.id), profileLabel(p)]));
+    const aMap = asTaskAssigneeMap();
+
+    const rows = meetingTasks.filter((t) => {
+      if (taskStatusFilter !== "alle" && String(t.status || "").toLowerCase() !== taskStatusFilter) return false;
+      if (!taskSearch) return true;
+      const assigned = (aMap.get(String(t.id)) || []).map((id) => profileMap.get(id) || id).join(" ");
+      const hay = `${t.title || ""} ${t.status || ""} ${t.status_note || ""} ${assigned}`.toLowerCase();
+      return hay.includes(taskSearch);
+    });
+
+    const isCard = taskView === "karte";
+    tableWrap?.classList.toggle("hidden", isCard);
+    tableWrap?.toggleAttribute("hidden", isCard);
+    cards.classList.toggle("hidden", !isCard);
+    cards.toggleAttribute("hidden", !isCard);
+    document.getElementById("respTaskViewZeileBtn")?.classList.toggle("feed-btn--ghost", isCard);
+    document.getElementById("respTaskViewKarteBtn")?.classList.toggle("feed-btn--ghost", !isCard);
+
+    if (!rows.length) {
       root.innerHTML = "";
+      cards.innerHTML = "";
       if (empty) {
         empty.classList.remove("hidden");
         empty.removeAttribute("hidden");
@@ -245,12 +311,7 @@
       empty.setAttribute("hidden", "");
     }
 
-    const sessionMap = new Map(sessions.map((s) => [String(s.id), s]));
-    const agendaMap = new Map(agendaItems.map((a) => [String(a.id), a]));
-    const profileMap = new Map(profiles.map((p) => [String(p.id), profileLabel(p)]));
-    const aMap = asTaskAssigneeMap();
-
-    root.innerHTML = meetingTasks.map((t) => {
+    root.innerHTML = rows.map((t) => {
       const assigned = (aMap.get(String(t.id)) || []).map((id) => profileMap.get(id) || id);
       const sess = sessionMap.get(String(t.meeting_session_id || ""));
       const ag = agendaMap.get(String(t.agenda_item_id || ""));
@@ -261,10 +322,28 @@
             <span class="small">${ag ? `TOP ${ag.item_no}: ${esc(ag.title)}` : "Kein Sitzungspunkt"}</span><br />
             <span class="small">Sitzung: ${esc(sess ? fmtDate(sess.meeting_date) : "-")}</span>
           </td>
-          <td>${esc(t.status || "open")}</td>
+          <td>${esc(statusLabel(t.status || "open"))}</td>
           <td>${esc(fmtDate(t.due_date))}</td>
           <td class="small">${esc(assigned.length ? assigned.join(", ") : "-")}</td>
         </tr>
+      `;
+    }).join("");
+
+    cards.innerHTML = rows.map((t) => {
+      const assigned = (aMap.get(String(t.id)) || []).map((id) => profileMap.get(id) || id);
+      const sess = sessionMap.get(String(t.meeting_session_id || ""));
+      const ag = agendaMap.get(String(t.agenda_item_id || ""));
+      return `
+        <button type="button" class="card" data-task-id="${t.id}" style="text-align:left;">
+          <div class="card__body">
+            <h3>${esc(t.title)}</h3>
+            <p class="small">${ag ? `TOP ${ag.item_no}: ${esc(ag.title)}` : "Kein Sitzungspunkt"}</p>
+            <p class="small">Sitzung: ${esc(sess ? fmtDate(sess.meeting_date) : "-")}</p>
+            <p class="small">Status: <strong>${esc(statusLabel(t.status || "open"))}</strong></p>
+            <p class="small">Fällig: ${esc(fmtDate(t.due_date))}</p>
+            <p class="small">Zuständig: ${esc(assigned.length ? assigned.join(", ") : "-")}</p>
+          </div>
+        </button>
       `;
     }).join("");
   }
@@ -440,6 +519,8 @@
   }
 
   function bindAdminUi() {
+    if (adminBound) return;
+    adminBound = true;
     document.getElementById("respManagerChips")?.addEventListener("click", (e) => {
       const btn = e.target?.closest?.("[data-manager-chip]");
       if (!btn) return;
@@ -571,6 +652,25 @@
       const id = row.getAttribute("data-task-id");
       if (id) openEditDialog(id);
     });
+    document.getElementById("respTaskCards")?.addEventListener("click", (e) => {
+      const row = e.target?.closest?.("[data-task-id]");
+      if (!row) return;
+      const id = row.getAttribute("data-task-id");
+      if (id) openEditDialog(id);
+    });
+
+    document.getElementById("respTaskSearch")?.addEventListener("input", renderTaskRows);
+    document.getElementById("respTaskStatusFilter")?.addEventListener("change", renderTaskRows);
+    document.getElementById("respTaskViewZeileBtn")?.addEventListener("click", () => {
+      taskView = "zeile";
+      saveView(taskView);
+      renderTaskRows();
+    });
+    document.getElementById("respTaskViewKarteBtn")?.addEventListener("click", () => {
+      taskView = "karte";
+      saveView(taskView);
+      renderTaskRows();
+    });
 
     document.getElementById("respEditClose")?.addEventListener("click", closeEditDialog);
 
@@ -633,10 +733,18 @@
 
     const roles = await loadMyRoles().catch(() => []);
     const isManager = roles.some((r) => MANAGER_ROLES.has(r));
+    taskView = loadView();
+    const filter = loadFilter();
 
     try {
       if (isManager) {
         setAdminMsg("Lade Sitzungen...");
+        const searchEl = document.getElementById("respTaskSearch");
+        const statusEl = document.getElementById("respTaskStatusFilter");
+        if (searchEl && filter.taskSearch) searchEl.value = String(filter.taskSearch);
+        if (statusEl && (filter.taskStatusFilter === "alle" || filter.taskStatusFilter === "open" || filter.taskStatusFilter === "done" || filter.taskStatusFilter === "blocked")) {
+          statusEl.value = String(filter.taskStatusFilter);
+        }
         await refreshAdminData();
         bindAdminUi();
         setAdminMsg(`Geladen: ${sessions.length} Sitzungen, ${agendaItems.length} Sitzungspunkte, ${meetingTasks.length} Tasks`);

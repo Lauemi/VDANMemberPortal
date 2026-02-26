@@ -8,12 +8,49 @@ import { APP } from "../config/app";
     <div class="card__body">
       <div class="catch-table-toolbar">
         <h1>Termine</h1>
+        <div class="ui-view-toggle" role="group" aria-label="Ansicht">
+          <button type="button" class="feed-btn" id="termineViewZeileBtn" data-ansicht="zeile">Ansicht Zeile</button>
+          <button type="button" class="feed-btn feed-btn--ghost" id="termineViewKarteBtn" data-ansicht="karte">Ansicht Karte</button>
+        </div>
       </div>
       <p class="small">Alle kommenden Termine und Arbeitseinsätze in einer gemeinsamen Ansicht.</p>
+      <div class="ui-filter-row">
+        <label>
+          <span>Suche</span>
+          <input id="termineSearch" type="search" placeholder="Titel oder Ort durchsuchen" />
+        </label>
+        <label>
+          <span>Filter</span>
+          <select id="termineTypeFilter">
+            <option value="alle">Alle</option>
+            <option value="termin">Termin</option>
+            <option value="arbeitseinsatz">Arbeitseinsatz</option>
+          </select>
+        </label>
+      </div>
       <p id="termineMsg" class="small" aria-live="polite"></p>
-      <div id="termineList" class="grid"></div>
+      <div id="termineTableWrap" class="catch-table">
+        <div class="catch-table__head" style="grid-template-columns:1.2fr 1.6fr 1fr 1fr">
+          <span>Start</span>
+          <span>Titel</span>
+          <span>Art</span>
+          <span>Ort</span>
+        </div>
+        <div id="termineTableBody"></div>
+      </div>
+      <div id="termineCards" class="grid hidden" hidden></div>
     </div>
   </section>
+
+  <dialog id="termineDetailDialog" class="catch-dialog">
+    <form method="dialog" class="catch-dialog__form">
+      <h3>Details</h3>
+      <div id="termineDetailBody" class="catch-dialog__body"></div>
+      <div class="catch-dialog__actions">
+        <button type="submit" class="feed-btn">Schließen</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="/js/termine-merged.js" defer></script>
 </Site>

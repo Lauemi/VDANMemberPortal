@@ -11,11 +11,63 @@ import { APP } from "../../../config/app";
       <p id="myRespMsg" class="small" aria-live="polite"></p>
 
       <h2>Sitzungstasks</h2>
-      <div id="myRespMeetingTasks" class="grid"></div>
+      <div class="ui-filter-row">
+        <label>
+          <span>Suche</span>
+          <input id="myRespTaskSearch" type="search" placeholder="Task durchsuchen" />
+        </label>
+        <label>
+          <span>Status</span>
+          <select id="myRespTaskStatusFilter">
+            <option value="alle">Alle</option>
+            <option value="open">offen</option>
+            <option value="done">erledigt</option>
+            <option value="blocked">blockiert</option>
+          </select>
+        </label>
+        <label>
+          <span>Ansicht</span>
+          <div class="ui-view-toggle" role="group" aria-label="Ansicht">
+            <button type="button" class="feed-btn" id="myRespTaskViewZeileBtn">Ansicht Zeile</button>
+            <button type="button" class="feed-btn feed-btn--ghost" id="myRespTaskViewKarteBtn">Ansicht Karte</button>
+          </div>
+        </label>
+      </div>
+      <div id="myRespMeetingTasksTableWrap" class="catch-table">
+        <div class="catch-table__head" style="grid-template-columns:2fr 1fr 1fr">
+          <span>Task</span>
+          <span>Status</span>
+          <span>Fällig</span>
+        </div>
+        <div id="myRespMeetingTasksTable"></div>
+      </div>
+      <div id="myRespMeetingTasksCards" class="grid hidden" hidden></div>
 
       <hr />
       <h2>Arbeitseinsatz-Leitungen</h2>
-      <div id="myRespWorkLeads" class="grid"></div>
+      <div class="ui-filter-row">
+        <label>
+          <span>Suche</span>
+          <input id="myRespLeadSearch" type="search" placeholder="Titel oder Ort durchsuchen" />
+        </label>
+        <label>
+          <span>Ansicht</span>
+          <div class="ui-view-toggle" role="group" aria-label="Ansicht">
+            <button type="button" class="feed-btn" id="myRespLeadViewZeileBtn">Ansicht Zeile</button>
+            <button type="button" class="feed-btn feed-btn--ghost" id="myRespLeadViewKarteBtn">Ansicht Karte</button>
+          </div>
+        </label>
+      </div>
+      <div id="myRespWorkLeadsTableWrap" class="catch-table">
+        <div class="catch-table__head" style="grid-template-columns:1.8fr 1fr 1fr 1fr">
+          <span>Titel</span>
+          <span>Status</span>
+          <span>Start</span>
+          <span>Ort</span>
+        </div>
+        <div id="myRespWorkLeadsTable"></div>
+      </div>
+      <div id="myRespWorkLeadsCards" class="grid hidden" hidden></div>
     </div>
   </section>
 
@@ -26,9 +78,9 @@ import { APP } from "../../../config/app";
         <label>
           <span>Status</span>
           <select id="myRespEditStatus">
-            <option value="open">open</option>
-            <option value="done">done</option>
-            <option value="blocked">blocked</option>
+            <option value="open">offen</option>
+            <option value="done">erledigt</option>
+            <option value="blocked">blockiert</option>
           </select>
         </label>
         <label class="resp-full">
@@ -41,6 +93,16 @@ import { APP } from "../../../config/app";
         <button type="button" id="myRespEditClose" class="feed-btn feed-btn--ghost">Schließen</button>
       </div>
       <p id="myRespEditMsg" class="small" aria-live="polite"></p>
+    </form>
+  </dialog>
+
+  <dialog id="myRespLeadDetailDialog" class="catch-dialog">
+    <form method="dialog" class="catch-dialog__form">
+      <h3>Details</h3>
+      <div id="myRespLeadDetailBody" class="catch-dialog__body"></div>
+      <div class="catch-dialog__actions">
+        <button type="submit" class="feed-btn">Schließen</button>
+      </div>
     </form>
   </dialog>
 

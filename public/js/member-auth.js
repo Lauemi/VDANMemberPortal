@@ -64,7 +64,7 @@
     return `member_${safe}@${MEMBER_EMAIL_DOMAIN}`.toLowerCase();
   }
 
-  function pageTarget(defaultTarget = "/app/") {
+  function pageTarget(defaultTarget = "/") {
     const loginForm = document.getElementById("loginForm");
     const pwForm = document.getElementById("passwordChangeForm");
     const direct = String(loginForm?.dataset?.nextTarget || pwForm?.dataset?.nextTarget || "").trim();
@@ -271,7 +271,7 @@
           const profile = await getOwnProfile();
           if (msg) msg.textContent = "Login ok.";
           document.dispatchEvent(new CustomEvent("vdan:session", { detail: { loggedIn: true } }));
-          const target = pageTarget("/app/");
+          const target = pageTarget("/");
           if (profile?.must_change_password) {
             window.location.assign(`/app/passwort-aendern/?next=${encodeURIComponent(target)}`);
             return;
@@ -301,7 +301,7 @@
           if (msgEl) msgEl.textContent = "Speichere…";
           await updatePassword(p1);
           if (msgEl) msgEl.textContent = "Passwort aktualisiert.";
-          const target = pageTarget("/app/");
+          const target = pageTarget("/");
           window.location.assign(target);
         } catch (err) {
           if (msgEl) msgEl.textContent = err?.message || "Passwort konnte nicht geändert werden.";

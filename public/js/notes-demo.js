@@ -1,11 +1,15 @@
 ;(() => {
   const TABLE = "app_notes";
   const OFFLINE_NS = "notes";
+  const VIEW_KEY = "app:viewMode:notes:v1";
+  const FILTER_KEY = "app:viewFilter:notes:v1";
   let notesMem = [];
+  let filtered = [];
+  let view = "zeile";
 
   function cfg() {
     return {
-      url: String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/,""),
+      url: String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, ""),
       key: String(window.__APP_SUPABASE_KEY || "").trim(),
     };
   }
@@ -35,6 +39,30 @@
     return new Date().toISOString();
   }
 
+  function loadView() {
+    try {
+      return String(localStorage.getItem(VIEW_KEY) || "zeile") === "karte" ? "karte" : "zeile";
+    } catch {
+      return "zeile";
+    }
+  }
+
+  function saveView(v) {
+    try { localStorage.setItem(VIEW_KEY, v); } catch {}
+  }
+
+  function loadFilter() {
+    try {
+      return JSON.parse(localStorage.getItem(FILTER_KEY) || "{}") || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveFilter(payload) {
+    try { localStorage.setItem(FILTER_KEY, JSON.stringify(payload || {})); } catch {}
+  }
+
   async function loadLocalNotes() {
     const rows = await window.VDAN_OFFLINE_SYNC?.cacheGet?.(OFFLINE_NS, "rows", []);
     notesMem = Array.isArray(rows) ? rows : [];
@@ -48,9 +76,9 @@
     await window.VDAN_OFFLINE_SYNC?.enqueue?.(OFFLINE_NS, { type, payload });
   }
 
-  async function listNotes(){
+  async function listNotes() {
     try {
-      const rows = await sb(`/rest/v1/${TABLE}?select=id,created_at,text&order=created_at.desc`, { method:"GET" });
+      const rows = await sb(`/rest/v1/${TABLE}?select=id,created_at,text&order=created_at.desc`, { method: "GET" });
       const list = Array.isArray(rows) ? rows : [];
       notesMem = list;
       await saveLocalNotes();
@@ -60,10 +88,10 @@
     }
   }
 
-  async function addNote(text){
+  async function addNote(text) {
     try {
       const rows = await sb(`/rest/v1/${TABLE}`, {
-        method:"POST",
+        method: "POST",
         headers: { Prefer: "return=representation" },
         body: JSON.stringify([{ text }]),
       });
@@ -80,9 +108,9 @@
     }
   }
 
-  async function deleteNote(id){
+  async function deleteNote(id) {
     try {
-      await sb(`/rest/v1/${TABLE}?id=eq.${encodeURIComponent(id)}`, { method:"DELETE" });
+      await sb(`/rest/v1/${TABLE}?id=eq.${encodeURIComponent(id)}`, { method: "DELETE" });
     } catch (err) {
       if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
         await queueAction("delete_note", { id });
@@ -92,28 +120,49 @@
     }
   }
 
-  function render(rows){
-    const root = document.getElementById("notesList");
-    if (!root) return;
-    root.innerHTML = "";
-    if (!rows.length){
-      root.innerHTML = `<p class="small">Noch keine Notes.</p>`;
-      return;
-    }
-    rows.forEach((r) => {
-      const el = document.createElement("div");
-      el.className = "card";
-      el.innerHTML = `
-        <div class="card__body">
-          <div class="small" style="opacity:.75">${new Date(r.created_at).toLocaleString()}</div>
-          <div style="white-space:pre-wrap;margin:8px 0 10px">${escapeHtml(r.text)}${r._offline_pending ? " ⏳" : ""}</div>
-          <button data-del="${r.id}">Löschen</button>
-        </div>
-      `;
-      root.appendChild(el);
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  function applyFilters() {
+    const search = String(document.getElementById("noteSearch")?.value || "").trim().toLowerCase();
+    saveFilter({ search });
+    filtered = notesMem.filter((n) => {
+      if (!search) return true;
+      return String(n.text || "").toLowerCase().includes(search);
     });
+  }
+
+  function renderDetail(id) {
+    const note = notesMem.find((n) => String(n.id) === String(id));
+    if (!note) return;
+    const body = document.getElementById("notesDetailBody");
+    const dlg = document.getElementById("notesDetailDialog");
+    if (!body || !dlg) return;
+    body.innerHTML = `
+      <p><strong>Zeit:</strong> ${escapeHtml(new Date(note.created_at).toLocaleString())}</p>
+      <p><strong>Text:</strong></p>
+      <p>${escapeHtml(note.text)}${note._offline_pending ? " ⏳" : ""}</p>
+    `;
+    dlg.showModal?.();
+  }
+
+  function applyView() {
+    const isCard = view === "karte";
+    const tableWrap = document.getElementById("notesTableWrap");
+    const cardWrap = document.getElementById("notesList");
+    tableWrap?.classList.toggle("hidden", isCard);
+    tableWrap?.toggleAttribute("hidden", isCard);
+    cardWrap?.classList.toggle("hidden", !isCard);
+    cardWrap?.toggleAttribute("hidden", !isCard);
+    document.getElementById("notesViewZeileBtn")?.classList.toggle("feed-btn--ghost", isCard);
+    document.getElementById("notesViewKarteBtn")?.classList.toggle("feed-btn--ghost", !isCard);
+  }
+
+  function bindDeleteHandlers(root) {
     root.querySelectorAll("button[data-del]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
         const id = btn.getAttribute("data-del");
         if (!id) return;
         btn.disabled = true;
@@ -122,8 +171,8 @@
           notesMem = notesMem.filter((n) => String(n.id) !== String(id));
           await saveLocalNotes();
           await refresh();
-        } catch (e) {
-          alert(e?.message || "Delete failed");
+        } catch (err) {
+          alert(err?.message || "Löschen fehlgeschlagen");
         } finally {
           btn.disabled = false;
         }
@@ -131,18 +180,50 @@
     });
   }
 
-  function escapeHtml(str){
-    return String(str).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  function renderRows() {
+    applyFilters();
+
+    const table = document.getElementById("notesTable");
+    const cards = document.getElementById("notesList");
+    if (!table || !cards) return;
+
+    if (!filtered.length) {
+      table.innerHTML = `<p class="small" style="padding:12px;">Noch keine Notes.</p>`;
+      cards.innerHTML = `<p class="small">Noch keine Notes.</p>`;
+      applyView();
+      return;
+    }
+
+    table.innerHTML = filtered.map((r) => `
+      <button type="button" class="catch-table__row" data-open-note="${escapeHtml(r.id)}" style="grid-template-columns:1fr 3fr;">
+        <span>${escapeHtml(new Date(r.created_at).toLocaleString())}</span>
+        <span>${escapeHtml(String(r.text || "").slice(0, 180))}${String(r.text || "").length > 180 ? "…" : ""}${r._offline_pending ? " ⏳" : ""}</span>
+      </button>
+    `).join("");
+
+    cards.innerHTML = filtered.map((r) => `
+      <button type="button" class="card" data-open-note="${escapeHtml(r.id)}" style="text-align:left;">
+        <div class="card__body">
+          <div class="small" style="opacity:.75">${escapeHtml(new Date(r.created_at).toLocaleString())}</div>
+          <div style="white-space:pre-wrap;margin:8px 0 10px">${escapeHtml(r.text)}${r._offline_pending ? " ⏳" : ""}</div>
+          <button class="feed-btn feed-btn--ghost" data-del="${escapeHtml(r.id)}">Löschen</button>
+        </div>
+      </button>
+    `).join("");
+
+    bindDeleteHandlers(cards);
+    applyView();
   }
 
-  async function refresh(){
+  async function refresh() {
     const msg = document.getElementById("noteMsg");
     try {
       const rows = await listNotes();
-      render(rows);
+      notesMem = Array.isArray(rows) ? rows : [];
+      renderRows();
       if (msg) msg.textContent = "";
-    } catch (e) {
-      if (msg) msg.textContent = e?.message || "Fehler";
+    } catch (err) {
+      if (msg) msg.textContent = err?.message || "Fehler";
     }
   }
 
@@ -152,7 +233,7 @@
       const p = op?.payload || {};
       if (op?.type === "add_note") {
         const rows = await sb(`/rest/v1/${TABLE}`, {
-          method:"POST",
+          method: "POST",
           headers: { Prefer: "return=representation" },
           body: JSON.stringify([{ text: String(p.text || "") }]),
         });
@@ -165,7 +246,7 @@
         return;
       }
       if (op?.type === "delete_note") {
-        await sb(`/rest/v1/${TABLE}?id=eq.${encodeURIComponent(String(p.id || ""))}`, { method:"DELETE" });
+        await sb(`/rest/v1/${TABLE}?id=eq.${encodeURIComponent(String(p.id || ""))}`, { method: "DELETE" });
       }
     });
   }
@@ -174,8 +255,33 @@
     const form = document.getElementById("noteForm");
     const txt = document.getElementById("noteText");
     const msg = document.getElementById("noteMsg");
+    const filter = loadFilter();
+    view = loadView();
+
+    const searchEl = document.getElementById("noteSearch");
+    if (searchEl && filter.search) searchEl.value = String(filter.search);
 
     loadLocalNotes().then(() => flushOfflineQueue()).then(() => refresh());
+
+    document.getElementById("noteSearch")?.addEventListener("input", renderRows);
+    document.getElementById("notesViewZeileBtn")?.addEventListener("click", () => {
+      view = "zeile";
+      saveView(view);
+      applyView();
+    });
+    document.getElementById("notesViewKarteBtn")?.addEventListener("click", () => {
+      view = "karte";
+      saveView(view);
+      applyView();
+    });
+
+    document.addEventListener("click", (e) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      const open = target.closest("[data-open-note]");
+      if (!open || target.closest("[data-del]")) return;
+      renderDetail(String(open.getAttribute("data-open-note") || ""));
+    });
 
     if (!form) return;
     form.addEventListener("submit", async (e) => {

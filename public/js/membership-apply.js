@@ -65,7 +65,12 @@
       setMsg(`Bewerbung erfolgreich gesendet. Vorgangs-ID: ${appId || "-"}`);
       form.reset();
     } catch (err) {
-      setMsg(err?.message || "Bewerbung konnte nicht gesendet werden.", true);
+      const raw = String(err?.message || "Bewerbung konnte nicht gesendet werden.");
+      if (raw.includes("Encryption key missing. Set app.settings.encryption_key")) {
+        setMsg("Server-Konfiguration fehlt: app.settings.encryption_key ist nicht gesetzt. Bitte Admin (Supabase SQL) konfigurieren.", true);
+        return;
+      }
+      setMsg(raw, true);
     } finally {
       if (submitBtn) submitBtn.disabled = false;
     }

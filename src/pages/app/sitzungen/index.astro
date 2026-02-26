@@ -62,9 +62,9 @@ import { APP } from "../../../config/app";
         <label>
           <span>Status</span>
           <select id="respTaskStatus">
-            <option value="open">open</option>
-            <option value="done">done</option>
-            <option value="blocked">blocked</option>
+            <option value="open">offen</option>
+            <option value="done">erledigt</option>
+            <option value="blocked">blockiert</option>
           </select>
         </label>
 
@@ -95,6 +95,28 @@ import { APP } from "../../../config/app";
 
       <hr />
       <h2>Alle Sitzungstasks</h2>
+      <div class="ui-filter-row">
+        <label>
+          <span>Suche</span>
+          <input id="respTaskSearch" type="search" placeholder="Task oder Zuständig durchsuchen" />
+        </label>
+        <label>
+          <span>Status</span>
+          <select id="respTaskStatusFilter">
+            <option value="alle">Alle</option>
+            <option value="open">offen</option>
+            <option value="done">erledigt</option>
+            <option value="blocked">blockiert</option>
+          </select>
+        </label>
+        <label>
+          <span>Ansicht</span>
+          <div class="ui-view-toggle" role="group" aria-label="Ansicht">
+            <button type="button" class="feed-btn" id="respTaskViewZeileBtn">Ansicht Zeile</button>
+            <button type="button" class="feed-btn feed-btn--ghost" id="respTaskViewKarteBtn">Ansicht Karte</button>
+          </div>
+        </label>
+      </div>
       <div class="work-part-table-wrap">
         <table class="work-part-table" id="respTaskTable">
           <thead>
@@ -108,6 +130,7 @@ import { APP } from "../../../config/app";
           <tbody id="respTaskRows"></tbody>
         </table>
       </div>
+      <div id="respTaskCards" class="grid hidden" hidden></div>
       <p id="respTaskEmpty" class="small hidden" hidden>Noch keine Sitzungstasks vorhanden.</p>
     </div>
   </section>
@@ -129,9 +152,9 @@ import { APP } from "../../../config/app";
         <label>
           <span>Status</span>
           <select id="respEditStatus">
-            <option value="open">open</option>
-            <option value="done">done</option>
-            <option value="blocked">blocked</option>
+            <option value="open">offen</option>
+            <option value="done">erledigt</option>
+            <option value="blocked">blockiert</option>
           </select>
         </label>
 

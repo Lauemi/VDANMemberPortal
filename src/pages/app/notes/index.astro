@@ -8,6 +8,19 @@ import { APP } from "../../../config/app";
     <div class="card__body">
       <h1>Notes (Demo)</h1>
       <p class="small">Diese Seite nutzt Supabase via <code>/js/notes-demo.js</code>. RLS: du siehst nur deine eigenen Notes.</p>
+      <div class="ui-filter-row">
+        <label>
+          <span>Suche</span>
+          <input id="noteSearch" type="search" placeholder="Notes durchsuchen" />
+        </label>
+        <label>
+          <span>Ansicht</span>
+          <div class="ui-view-toggle" role="group" aria-label="Ansicht">
+            <button type="button" class="feed-btn" id="notesViewZeileBtn">Ansicht Zeile</button>
+            <button type="button" class="feed-btn feed-btn--ghost" id="notesViewKarteBtn">Ansicht Karte</button>
+          </div>
+        </label>
+      </div>
 
       <form id="noteForm" class="grid" style="max-width:620px">
         <label>
@@ -19,9 +32,26 @@ import { APP } from "../../../config/app";
       </form>
 
       <hr/>
-      <div id="notesList" class="grid"></div>
+      <div id="notesTableWrap" class="catch-table">
+        <div class="catch-table__head" style="grid-template-columns:1fr 3fr">
+          <span>Zeit</span>
+          <span>Text</span>
+        </div>
+        <div id="notesTable"></div>
+      </div>
+      <div id="notesList" class="grid hidden" hidden></div>
     </div>
   </section>
+
+  <dialog id="notesDetailDialog" class="catch-dialog">
+    <form method="dialog" class="catch-dialog__form">
+      <h3>Details</h3>
+      <div id="notesDetailBody" class="catch-dialog__body"></div>
+      <div class="catch-dialog__actions">
+        <button type="submit" class="feed-btn">Schließen</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="/js/notes-demo.js" defer></script>
 </Site>

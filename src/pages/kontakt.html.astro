@@ -3,6 +3,7 @@ import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
 
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
+const turnstileEnabled = Boolean(String(turnstileSiteKey || "").trim());
 ---
 
 <Site title={`Kontakt • ${APP.name}`} description="Kontaktformular für den VDAN Ottenheim.">
@@ -12,7 +13,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
       <p class="small">Kontaktanfragen werden erst nach E-Mail-Bestätigung weitergeleitet.</p>
       <p id="contactFormMsg" class="small" aria-live="polite"></p>
 
-      <form id="contact" class="grid cols2" novalidate>
+      <form id="contact" class="grid cols2" novalidate data-turnstile-required={turnstileEnabled ? "true" : "false"}>
         <label>Anrede
           <select name="salut" id="salut">
             <option disabled selected value="">Bitte wählen</option>
@@ -41,10 +42,10 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
         <input type="text" name="company" id="hpCompany" tabindex="-1" autocomplete="off" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" />
 
         <div style="grid-column:1 / -1;">
-          {turnstileSiteKey ? (
+          {turnstileEnabled ? (
             <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-callback="onTurnstileDone"></div>
           ) : (
-            <p class="small" style="color:#fecaca;">Turnstile Site Key fehlt (`PUBLIC_TURNSTILE_SITE_KEY`).</p>
+            <p class="small">Captcha ist lokal deaktiviert (kein `PUBLIC_TURNSTILE_SITE_KEY` gesetzt).</p>
           )}
         </div>
 
@@ -57,6 +58,6 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
     </div>
   </section>
 
-  {turnstileSiteKey && <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
+  {turnstileEnabled && <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
   <script src="/js/contact-submit.js" defer></script>
 </Site>

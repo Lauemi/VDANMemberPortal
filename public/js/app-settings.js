@@ -1,5 +1,7 @@
 ;(() => {
   const FALLBACK_KEY = "vdan_user_settings_fallback_v1";
+  const UPDATE_NOTIFY_KEY = "vdan_notify_app_update_v1";
+  const PUSH_SCOPE = "/";
 
   function cfg() {
     return {
@@ -36,11 +38,125 @@
   }
 
   function formState() {
+    const handednessRaw = String(document.getElementById("setHandedness")?.value || "right").trim().toLowerCase();
+    const nav_handedness = handednessRaw === "left" || handednessRaw === "right" ? handednessRaw : "auto";
     return {
       notify_new_post: Boolean(document.getElementById("setNotifyPosts")?.checked),
       notify_new_event: Boolean(document.getElementById("setNotifyEvents")?.checked),
       notify_new_work_event: Boolean(document.getElementById("setNotifyWorkEvents")?.checked),
+      nav_handedness,
     };
+  }
+
+  function readUpdateNotifyPref() {
+    try {
+      const raw = String(localStorage.getItem(UPDATE_NOTIFY_KEY) || "1").trim();
+      return raw !== "0";
+    } catch {
+      return true;
+    }
+  }
+
+  function writeUpdateNotifyPref(enabled) {
+    try {
+      localStorage.setItem(UPDATE_NOTIFY_KEY, enabled ? "1" : "0");
+    } catch {
+      // ignore
+    }
+  }
+
+  function vapidPublicKey() {
+    return String(document.body?.dataset?.vapidPublicKey || "").trim();
+  }
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = atob(base64);
+    const out = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; i += 1) out[i] = rawData.charCodeAt(i);
+    return out;
+  }
+
+  function abToBase64Url(ab) {
+    if (!ab) return "";
+    const bytes = new Uint8Array(ab);
+    let str = "";
+    bytes.forEach((b) => { str += String.fromCharCode(b); });
+    return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  async function getSwRegistration() {
+    if (!("serviceWorker" in navigator)) throw new Error("Service Worker nicht verfügbar.");
+    const reg = await navigator.serviceWorker.getRegistration(PUSH_SCOPE);
+    if (reg) return reg;
+    return navigator.serviceWorker.ready;
+  }
+
+  async function upsertPushSubscription(sub, enabled = true) {
+    if (!sub) return;
+    const endpoint = String(sub.endpoint || "").trim();
+    if (!endpoint) return;
+    const p256dh = abToBase64Url(sub.getKey("p256dh"));
+    const auth = abToBase64Url(sub.getKey("auth"));
+    const payload = [{
+      user_id: uid(),
+      endpoint,
+      p256dh,
+      auth,
+      enabled: Boolean(enabled),
+      notify_app_update: readUpdateNotifyPref(),
+      user_agent: String(navigator.userAgent || "").slice(0, 500),
+      updated_at: new Date().toISOString(),
+    }];
+    await sb("/rest/v1/push_subscriptions", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(payload),
+    }, true);
+  }
+
+  async function deletePushSubscription(endpoint) {
+    const ep = String(endpoint || "").trim();
+    if (!ep) return;
+    await sb(`/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(ep)}`, {
+      method: "DELETE",
+      headers: { Prefer: "return=minimal" },
+    }, true);
+  }
+
+  async function enablePushNotifications() {
+    if (!uid()) throw new Error("Bitte einloggen.");
+    if (!("Notification" in window)) throw new Error("Browser unterstützt keine Benachrichtigungen.");
+    if (!("PushManager" in window)) throw new Error("Push wird auf diesem Gerät nicht unterstützt.");
+    const key = vapidPublicKey();
+    if (!key) throw new Error("PUBLIC_VAPID_PUBLIC_KEY fehlt.");
+
+    const permission = Notification.permission === "granted"
+      ? "granted"
+      : await Notification.requestPermission();
+    if (permission !== "granted") throw new Error("Benachrichtigung nicht erlaubt.");
+
+    const reg = await getSwRegistration();
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(key),
+      });
+    }
+    await upsertPushSubscription(sub, true);
+  }
+
+  async function disablePushNotifications() {
+    if (!uid()) return;
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    const reg = await getSwRegistration();
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) return;
+    const endpoint = String(sub.endpoint || "");
+    await sub.unsubscribe().catch(() => {});
+    await deletePushSubscription(endpoint).catch(() => {});
   }
 
   function applyState(s) {
@@ -52,6 +168,10 @@
     set("setNotifyPosts", state.notify_new_post, true);
     set("setNotifyEvents", state.notify_new_event, true);
     set("setNotifyWorkEvents", state.notify_new_work_event, true);
+    set("setNotifyAppUpdate", readUpdateNotifyPref(), true);
+    const handed = String(state.nav_handedness || "right").toLowerCase();
+    const handedEl = document.getElementById("setHandedness");
+    if (handedEl) handedEl.value = handed === "left" || handed === "right" ? handed : "right";
   }
 
   function loadFallback() {
@@ -72,13 +192,14 @@
 
   function looksLikeMissingSettingsTable(err) {
     const msg = String(err?.message || "").toLowerCase();
-    return msg.includes("user_settings") && (msg.includes("does not exist") || msg.includes("relation"));
+    return (msg.includes("user_settings") && (msg.includes("does not exist") || msg.includes("relation")))
+      || (msg.includes("column") && msg.includes("user_settings"));
   }
 
   async function loadRemoteSettings() {
     const userId = uid();
     if (!userId) throw new Error("Bitte einloggen.");
-    const rows = await sb(`/rest/v1/user_settings?select=notify_new_post,notify_new_event,notify_new_work_event&user_id=eq.${encodeURIComponent(userId)}&limit=1`, { method: "GET" }, true);
+    const rows = await sb(`/rest/v1/user_settings?select=notify_new_post,notify_new_event,notify_new_work_event,nav_handedness&user_id=eq.${encodeURIComponent(userId)}&limit=1`, { method: "GET" }, true);
     if (!Array.isArray(rows) || !rows[0]) return null;
     return rows[0];
   }
@@ -114,13 +235,19 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const state = formState();
+      const wantsUpdateNotify = Boolean(document.getElementById("setNotifyAppUpdate")?.checked);
+      writeUpdateNotifyPref(wantsUpdateNotify);
       try {
         await saveRemoteSettings(state);
+        if (wantsUpdateNotify) await enablePushNotifications().catch(() => {});
+        else await disablePushNotifications().catch(() => {});
         setMsg("Gespeichert.");
+        document.dispatchEvent(new CustomEvent("vdan:portal-settings", { detail: { nav_handedness: state.nav_handedness } }));
       } catch (err) {
         saveFallback(state);
         if (looksLikeMissingSettingsTable(err)) setMsg("DB-Setup fehlt. Lokal gespeichert.");
         else setMsg(err?.message || "Speichern fehlgeschlagen.");
+        document.dispatchEvent(new CustomEvent("vdan:portal-settings", { detail: { nav_handedness: state.nav_handedness } }));
       }
     });
 
@@ -129,6 +256,18 @@
 
     document.getElementById("settingsReloadBtn")?.addEventListener("click", () => {
       window.location.reload();
+    });
+
+    document.getElementById("settingsEnableNotifyBtn")?.addEventListener("click", async () => {
+      try {
+        await enablePushNotifications();
+        const notifyToggle = document.getElementById("setNotifyAppUpdate");
+        if (notifyToggle) notifyToggle.checked = true;
+        writeUpdateNotifyPref(true);
+        setMsg("Benachrichtigungen erlaubt und registriert.");
+      } catch (err) {
+        setMsg(err?.message || "Benachrichtigung konnte nicht aktiviert werden.");
+      }
     });
 
     document.getElementById("settingsCheckUpdateBtn")?.addEventListener("click", async () => {

@@ -1,6 +1,7 @@
 ---
 import "../styles/app-shell.css";
 import { APP } from "../config/app";
+import pkg from "../../package.json";
 
 const {
   title = APP.name,
@@ -17,7 +18,10 @@ const {
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
 const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
 const memberCardVerifyPubKey = import.meta.env.PUBLIC_MEMBER_CARD_VERIFY_PUBKEY ?? "";
-const appVersion = import.meta.env.PUBLIC_APP_VERSION ?? "dev-local";
+const vapidPublicKey = import.meta.env.PUBLIC_VAPID_PUBLIC_KEY ?? "";
+const appVersionEnv = String(import.meta.env.PUBLIC_APP_VERSION ?? "").trim();
+const pkgVersion = String(pkg?.version || "0.1.0").trim();
+const appVersion = appVersionEnv && appVersionEnv !== "dev-local" ? appVersionEnv : `${pkgVersion}-local`;
 
 // Guard member area paths:
 const path = Astro.url.pathname.toLowerCase();
@@ -42,6 +46,7 @@ const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/css/ui-standards.css" />
     <link rel="stylesheet" href="/css/main.css" />
     <link rel="stylesheet" href="/css/consent-manager.css" />
   </head>
@@ -49,6 +54,7 @@ const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
     data-supabase-url={supabaseUrl}
     data-supabase-key={supabaseKey}
     data-member-card-verify-pubkey={memberCardVerifyPubKey}
+    data-vapid-public-key={vapidPublicKey}
     data-app-version={appVersion}
   >
     <header class="header">
@@ -74,38 +80,36 @@ const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
                 <a href="/kontakt.html/">Kontakt</a>
                 <a href="/datenschutz.html/">Datenschutz</a>
                 <a href="/impressum.html/">Impressum</a>
-                <a href="/app/arbeitseinsaetze/" data-member-only class="hidden" hidden>Arbeitseinsätze</a>
-                <a href="/app/ausweis/" data-member-only class="hidden" hidden>Mitgliedsausweis</a>
-                <a href="/app/gewaesserkarte/" data-member-only class="hidden" hidden>Gewässerkarte</a>
-                <a href="/app/ausweis/verifizieren/" data-manager-only class="hidden" hidden>Scanner</a>
-                <a href="/app/arbeitseinsaetze/cockpit/" data-manager-only class="hidden" hidden>Arbeitseinsatz Cockpit</a>
-                <a href="/app/termine/cockpit/" data-manager-only class="hidden" hidden>Termine Cockpit</a>
-                <a href="/app/sitzungen/" data-manager-only class="hidden" hidden>Sitzungen</a>
-                <a href="/app/zustaendigkeiten/" data-member-only class="hidden" hidden>Zuständigkeiten</a>
-                <a href="/app/bewerbungen/" data-manager-only class="hidden" hidden>Bewerbungen</a>
-                <a href="/app/dokumente/" data-manager-only class="hidden" hidden>Dokumente verwalten</a>
-                <a href="/app/mitglieder/" data-admin-only class="hidden" hidden>Mitgliederverwaltung</a>
-                <a href="/app/fangliste/cockpit/" data-admin-only class="hidden" hidden>Fangliste Cockpit</a>
-                <a href="/app/einstellungen/" data-member-only class="hidden" hidden>Einstellungen</a>
               </div>
             </div>
-
-            <div class="account-menu" id="accountMenu">
-            <button type="button" id="accountToggle" class="account-toggle" aria-label="Account">
-              <span class="account-avatar">A</span>
-            </button>
-            <div id="accountPopover" class="account-popover hidden" hidden>
-              <p id="accountLabel" class="small">Nicht eingeloggt</p>
-              <a href="/login/" id="accountLoginLink" class="feed-btn">Login</a>
-              <a href="/app/" id="accountAppLink" class="feed-btn hidden" hidden>Memberportal</a>
-              <a href="/app/einstellungen/" id="accountSettingsLink" class="feed-btn feed-btn--ghost hidden" hidden>Einstellungen</a>
-              <button type="button" id="accountLogoutBtn" class="feed-btn feed-btn--ghost hidden" hidden>Logout</button>
-            </div>
-          </div>
           </div>
         </nav>
       </div>
     </header>
+    <button
+      type="button"
+      id="portalQuickToggle"
+      class="portal-quick-toggle hidden"
+      hidden
+      data-member-only
+      data-ui-session-skip
+      aria-label="Portal öffnen"
+    >
+      <span aria-hidden="true">⌂</span>
+      <span id="portalQuickUserBadge" class="portal-quick-user-badge hidden" hidden aria-hidden="true"></span>
+    </button>
+    <aside id="portalRail" class="portal-rail hidden" hidden data-member-only data-ui-session-skip aria-label="Portal-Kurzmenü">
+      <div id="portalRailItems" class="portal-rail__items"></div>
+    </aside>
+    <div id="portalQuickDrawer" class="portal-quick-drawer hidden" hidden data-member-only data-ui-session-skip>
+      <section id="portalQuickPanel" class="portal-quick-panel" aria-label="Portal Kurzmenü">
+        <div class="portal-quick-panel__head">
+          <h2>Portal</h2>
+        </div>
+        <p class="small">Schnellzugriff für deine Favoriten.</p>
+        <div id="portalQuickList" class="portal-quick-list"></div>
+      </section>
+    </div>
 
     <main class="main">
       <div class="container">
@@ -134,7 +138,7 @@ const needsMemberGuard = path.startsWith("/app/") && !isScannerPath;
     {needsMemberGuard && <script src="/js/member-guard.js" defer></script>}
     <script src="/js/ui-session.js" defer></script>
     <script src="/js/nav-burger.js" defer></script>
-    <script src="/js/account-menu.js" defer></script>
+    <script src="/js/portal-quick.js" defer></script>
     <script src="/js/pwa-register.js" defer></script>
     <!-- <script src="/js/maintenance-gate.js" defer></script> -->
   </body>

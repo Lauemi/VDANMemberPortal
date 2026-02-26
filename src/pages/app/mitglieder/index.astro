@@ -10,7 +10,11 @@ import { APP } from "../../../config/app";
       <p class="small">Nur für Admin. Übersicht aller Benutzer mit Rollen und Mitgliedsnummer.</p>
       <p id="membersAdminMsg" class="small" aria-live="polite"></p>
 
-      <div style="display:flex;justify-content:flex-end;margin:10px 0 12px 0;">
+      <div class="ui-container-toolbar">
+        <div class="ui-view-toggle" role="group" aria-label="Ansicht">
+          <button type="button" class="feed-btn" id="membersViewZeileBtn" data-ansicht="zeile">Ansicht Zeile</button>
+          <button type="button" class="feed-btn feed-btn--ghost" id="membersViewKarteBtn" data-ansicht="karte">Ansicht Karte</button>
+        </div>
         <input
           id="membersAdminSearch"
           type="search"
@@ -19,7 +23,7 @@ import { APP } from "../../../config/app";
         />
       </div>
 
-      <div class="catch-table">
+      <div id="membersTableWrap" class="catch-table">
         <div class="catch-table__head" style="grid-template-columns:2fr 1fr 1.2fr 1.6fr">
           <div class="members-filter-cell">
             <button type="button" class="members-filter-toggle" data-filter-toggle="name">Name / E-Mail</button>
@@ -61,8 +65,20 @@ import { APP } from "../../../config/app";
         </div>
         <div id="membersAdminRows" class="grid"></div>
       </div>
+      <div id="membersAdminCards" class="ui-karten-grid hidden" hidden></div>
     </div>
   </section>
+
+  <dialog id="membersDetailDialog" class="catch-dialog">
+    <form method="dialog" class="catch-dialog__form">
+      <h2>Mitglied</h2>
+      <p id="membersDetailMsg" class="small" aria-live="polite"></p>
+      <div id="membersDetailBody" class="catch-dialog__body"></div>
+      <div class="catch-dialog__actions">
+        <button type="button" class="feed-btn feed-btn--ghost" id="membersDetailCloseBtn">Schließen</button>
+      </div>
+    </form>
+  </dialog>
 
   <style>
     .members-filter-cell {

@@ -374,7 +374,7 @@
     forceHideVerdict();
     stopScanner();
     if (!window.isSecureContext) {
-      setMsg("Kamera nur in sicherem Kontext (HTTPS) verfuegbar.");
+      setMsg("Kamera nur über HTTPS oder localhost verfügbar. Auf Android im Browser bitte die https:// Adresse öffnen.");
       setInlineStatus("HTTPS erforderlich", "invalid");
       return;
     }

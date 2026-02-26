@@ -22,9 +22,33 @@ import { APP } from "../../../config/app";
     <div class="card__body">
       <h2>Meine Angeltage</h2>
 
+      <div class="ui-container-toolbar">
+        <div class="ui-view-toggle" role="group" aria-label="Ansicht">
+          <button type="button" class="feed-btn" id="tripViewZeileBtn" data-ansicht="zeile">Ansicht Zeile</button>
+          <button type="button" class="feed-btn feed-btn--ghost" id="tripViewKarteBtn" data-ansicht="karte">Ansicht Karte</button>
+        </div>
+        <input id="tripSearch" type="search" placeholder="Suche Tag, Gewässer, Fang" />
+        <button type="button" class="feed-btn feed-btn--ghost" id="tripColumnsToggleBtn" aria-expanded="false">Spalten und Filter</button>
+      </div>
+
       <label class="fangliste-filter">
         <input id="tripOnlyNoCatch" type="checkbox" /> Nur Kein Fang
       </label>
+
+      <div id="tripColumnsPanel" class="ui-column-panel hidden" hidden>
+        <div class="ui-column-panel__block">
+          <h3>Spalten anzeigen</h3>
+          <div id="tripColumnVisibility" class="ui-column-list"></div>
+        </div>
+        <div class="ui-column-panel__block">
+          <h3>Spaltenreihenfolge</h3>
+          <div id="tripColumnOrder" class="ui-column-list"></div>
+        </div>
+        <div class="ui-column-panel__block">
+          <h3>Filter pro Spalte</h3>
+          <div id="tripColumnFilters" class="ui-filter-row"></div>
+        </div>
+      </div>
 
       <div id="tripList" class="fangliste-list" style="margin-top:10px"></div>
     </div>

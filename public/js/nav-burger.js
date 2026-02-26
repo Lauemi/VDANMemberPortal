@@ -10,15 +10,6 @@
     const toggle = document.getElementById("burgerToggle");
     const popover = document.getElementById("burgerPopover");
     if (!root || !toggle || !popover) return;
-    if (!popover.querySelector('a[href="/app/einstellungen/"]')) {
-      const link = document.createElement("a");
-      link.href = "/app/einstellungen/";
-      link.textContent = "Einstellungen";
-      link.className = "hidden";
-      link.setAttribute("hidden", "");
-      link.setAttribute("data-member-only", "");
-      popover.appendChild(link);
-    }
 
     const close = () => setHidden(popover, true);
     const open = () => setHidden(popover, false);

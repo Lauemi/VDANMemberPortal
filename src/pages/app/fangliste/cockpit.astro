@@ -10,13 +10,47 @@ import { APP } from "../../../config/app";
       <p class="small">Nur für Admin. Gesamtübersicht über alle Mitglieder.</p>
       <p id="catchCockpitMsg" class="small" aria-live="polite"></p>
 
-      <div style="display:flex;justify-content:flex-end;margin:8px 0 12px 0;">
+      <div class="ui-container-toolbar">
+        <div class="ui-view-toggle" role="group" aria-label="Ansicht">
+          <button type="button" class="feed-btn" id="catchCockpitViewZeileBtn">Ansicht Zeile</button>
+          <button type="button" class="feed-btn feed-btn--ghost" id="catchCockpitViewKarteBtn">Ansicht Karte</button>
+        </div>
         <input id="catchCockpitSearch" type="search" placeholder="Suche Name, E-Mail, Mitglieds-Nr." style="max-width:340px;width:100%;" />
+        <button type="button" class="feed-btn feed-btn--ghost" id="catchCockpitColumnsToggleBtn" aria-expanded="false">Spalten und Filter</button>
       </div>
 
-      <div id="catchCockpitTable"></div>
+      <div id="catchCockpitColumnsPanel" class="ui-column-panel hidden" hidden>
+        <div class="ui-column-panel__block">
+          <h3>Spalten anzeigen</h3>
+          <div id="catchCockpitColumnVisibility" class="ui-column-list"></div>
+        </div>
+        <div class="ui-column-panel__block">
+          <h3>Spaltenreihenfolge</h3>
+          <div id="catchCockpitColumnOrder" class="ui-column-list"></div>
+        </div>
+        <div class="ui-column-panel__block">
+          <h3>Filter pro Spalte</h3>
+          <div id="catchCockpitColumnFilters" class="ui-filter-row"></div>
+        </div>
+      </div>
+
+      <div id="catchCockpitTableWrap" class="catch-table">
+        <div id="catchCockpitHead" class="catch-table__head"></div>
+        <div id="catchCockpitRows" class="grid"></div>
+      </div>
+      <div id="catchCockpitCards" class="ui-karten-grid hidden" hidden></div>
     </div>
   </section>
+
+  <dialog id="catchCockpitDetailDialog" class="catch-dialog">
+    <form method="dialog" class="catch-dialog__form">
+      <h2>Mitgliedsdetails</h2>
+      <div id="catchCockpitDetailBody" class="catch-dialog__body"></div>
+      <div class="catch-dialog__actions">
+        <button type="button" class="feed-btn feed-btn--ghost" id="catchCockpitDetailCloseBtn">Schließen</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="/js/catchlist-cockpit.js" defer></script>
 </Site>

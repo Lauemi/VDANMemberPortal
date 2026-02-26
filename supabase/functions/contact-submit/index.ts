@@ -24,13 +24,26 @@ Deno.serve(async (req) => {
     if (!v.ok) return new Response(JSON.stringify({ ok: false, error: v.reason }), { status: 400, headers: { ...headers, "Content-Type": "application/json" } });
 
     const cleaned = v.cleaned!;
+    const turnstileSecret = String(Deno.env.get("TURNSTILE_SECRET_KEY") || "").trim();
+    const turnstileDisabled = String(Deno.env.get("CONTACT_TURNSTILE_DISABLED") || "").trim() === "1";
+    const requireTurnstile = Boolean(turnstileSecret) && !turnstileDisabled;
     const ip = getClientIp(req);
     const salt = Deno.env.get("IP_HASH_SALT") || "";
     if (!salt) return new Response(JSON.stringify({ ok: false, error: "server_ip_hash_salt_missing" }), { status: 500, headers: { ...headers, "Content-Type": "application/json" } });
     const ipHash = await sha256Hex(`${salt}:${ip}`);
 
-    const turnstile = await verifyTurnstile(cleaned.token, ip);
-    if (!turnstile.ok) return new Response(JSON.stringify({ ok: false, error: turnstile.reason }), { status: 400, headers: { ...headers, "Content-Type": "application/json" } });
+    let turnstileVerified = false;
+    if (requireTurnstile) {
+      if (!cleaned.token) {
+        return new Response(JSON.stringify({ ok: false, error: "turnstile_token_missing" }), {
+          status: 400,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+      const turnstile = await verifyTurnstile(cleaned.token, ip);
+      if (!turnstile.ok) return new Response(JSON.stringify({ ok: false, error: turnstile.reason }), { status: 400, headers: { ...headers, "Content-Type": "application/json" } });
+      turnstileVerified = true;
+    }
 
     const limits = await checkRateLimits(ipHash, cleaned.email);
     if (!limits.ok) return new Response(JSON.stringify({ ok: false, error: limits.reason }), { status: 429, headers: { ...headers, "Content-Type": "application/json" } });
@@ -49,7 +62,7 @@ Deno.serve(async (req) => {
         name: cleaned.name,
         subject: cleaned.subject,
         message: cleaned.message,
-        turnstile_verified: true,
+        turnstile_verified: turnstileVerified,
         email_verified: false,
         status: "pending",
         honeypot_triggered: false,
@@ -85,4 +98,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-

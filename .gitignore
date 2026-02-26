@@ -3,3 +3,5 @@ dist/
 .astro/
 .env
 .DS_Store
+docs/supabase/44_set_encryption_key_example.sql
+supabase/.temp/

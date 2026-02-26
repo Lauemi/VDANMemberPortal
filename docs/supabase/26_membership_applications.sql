@@ -8,7 +8,7 @@
 
 begin;
 
-create extension if not exists pgcrypto;
+create extension if not exists pgcrypto with schema extensions;
 
 create sequence if not exists public.membership_number_seq start 1000;
 
@@ -174,7 +174,7 @@ create or replace function public.membership_get_encryption_key()
 returns text
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public
 as $$
 declare
   v_key text;
@@ -231,7 +231,7 @@ create or replace function public.submit_membership_application(
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public
 as $$
 declare
   v_app_id uuid;
@@ -279,7 +279,7 @@ begin
   insert into public.membership_application_bank_data (application_id, iban_encrypted)
   values (
     v_app_id,
-    pgp_sym_encrypt(v_iban_norm, v_key)
+    extensions.pgp_sym_encrypt(v_iban_norm, v_key, 'cipher-algo=aes256')
   );
 
   insert into public.membership_application_audit (application_id, action, actor_id, payload)
@@ -301,7 +301,7 @@ create or replace function public.membership_set_internal_questionnaire(
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public
 as $$
 begin
   if not public.is_admin_or_vorstand() then
@@ -339,7 +339,7 @@ create or replace function public.approve_membership(
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public
 as $$
 declare
   v_app public.membership_applications;
@@ -458,7 +458,7 @@ create or replace function public.reject_membership(
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public
 as $$
 declare
   v_app public.membership_applications;
@@ -496,7 +496,9 @@ begin
 end;
 $$;
 
-create or replace view public.export_members as
+create or replace view public.export_members
+with (security_invoker = true)
+as
 select
   m.membership_number,
   m.first_name,
@@ -515,6 +517,16 @@ grant select on public.membership_applications to authenticated;
 grant select on public.membership_application_audit to authenticated;
 grant select on public.members to authenticated;
 grant select on public.export_members to authenticated;
+
+revoke execute on function public.membership_get_encryption_key() from public, anon, authenticated;
+revoke execute on function public.membership_normalize_iban(text) from public, anon, authenticated;
+revoke execute on function public.membership_iban_last4(text) from public, anon, authenticated;
+revoke execute on function public.submit_membership_application(
+  text, text, date, text, text, text, boolean, text, boolean, text, text
+) from public;
+revoke execute on function public.membership_set_internal_questionnaire(uuid, jsonb) from public, anon;
+revoke execute on function public.approve_membership(uuid, text) from public, anon;
+revoke execute on function public.reject_membership(uuid, text) from public, anon;
 
 grant execute on function public.submit_membership_application(
   text, text, date, text, text, text, boolean, text, boolean, text, text

@@ -83,7 +83,9 @@ grant execute on function public.rpc_touch_user() to authenticated;
 -- =========================================
 -- 3) Admin view: online status (last_seen_at <= 5 min)
 -- =========================================
-create or replace view public.v_admin_online_users as
+create or replace view public.v_admin_online_users
+with (security_invoker = true)
+as
 select
   p.id as user_id,
   p.member_no,

@@ -78,8 +78,6 @@ export function validatePayload(payload: ContactPayload) {
   const m = message.toLowerCase();
   if (spamWords.some((w) => m.includes(w))) return { ok: false, reason: "message_spam_keyword" };
 
-  if (!token) return { ok: false, reason: "turnstile_token_missing" };
-
   return { ok: true, cleaned: { name, email, subject, message, token } };
 }
 

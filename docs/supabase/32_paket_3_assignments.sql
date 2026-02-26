@@ -126,7 +126,9 @@ with check (public.is_admin_or_vorstand());
 -- =========================================
 -- 5) Meine Zuständigkeiten (auth.uid())
 -- =========================================
-create or replace view public.v_my_responsibilities as
+create or replace view public.v_my_responsibilities
+with (security_invoker = true)
+as
 select
   'meeting_task'::text as responsibility_type,
   mt.id as source_id,

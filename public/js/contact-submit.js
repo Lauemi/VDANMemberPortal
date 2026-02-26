@@ -35,7 +35,8 @@
 
       if (first.length < 2 || last.length < 2) throw new Error("Bitte Vor- und Nachname korrekt ausfüllen.");
       if (!email || !subject || message.length < 30) throw new Error("Bitte Pflichtfelder ausfüllen (Nachricht mind. 30 Zeichen).");
-      if (!turnstileToken) throw new Error("Bitte Captcha bestätigen.");
+      const turnstileRequired = String(form.getAttribute("data-turnstile-required") || "false") === "true";
+      if (turnstileRequired && !turnstileToken) throw new Error("Bitte Captcha bestätigen.");
 
       const { url } = cfg();
       if (!url) throw new Error("Backend-Konfiguration fehlt.");
@@ -49,7 +50,7 @@
           subject,
           message,
           hp_company: hp,
-          turnstile_token: turnstileToken,
+          turnstile_token: turnstileToken || null,
         }),
       });
 
@@ -77,4 +78,3 @@
     form.addEventListener("submit", submit);
   });
 })();
-

@@ -195,6 +195,16 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
   border-color:var(--line);
   background:rgba(255,255,255,.03);
 }
+.feed-btn--upload-ok{
+  border-color:rgba(58,212,91,.56);
+  box-shadow:0 0 0 1px rgba(58,212,91,.24) inset;
+}
+.feed-btn__ok-check{
+  margin-left:6px;
+  color:#3ad45b;
+  font-weight:800;
+  line-height:1;
+}
 
 .feed-shell{
   width:min(100%, 1080px);

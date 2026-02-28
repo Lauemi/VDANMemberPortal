@@ -6,8 +6,9 @@
   const MANAGER_ROLES = new Set(["admin", "vorstand"]);
   const MAX_MEDIA_FILES = 2;
   const MAX_LONG_EDGE = 1280;
-  const MIN_LONG_EDGE = 320;
-  const MAX_FILE_BYTES = 400 * 1024;
+  const MIN_LONG_EDGE = 240;
+  // Keep below storage bucket limit from SQL baseline (524288 bytes).
+  const MAX_FILE_BYTES = 500 * 1024;
 
   const CATEGORY_OPTIONS = [
     { value: "info", label: "Info" },
@@ -49,6 +50,14 @@
     return window.VDAN_AUTH?.loadSession?.() || null;
   }
 
+  async function ensureAccessToken() {
+    let s = session();
+    if (!s?.access_token && navigator.onLine && window.VDAN_AUTH?.refreshSession) {
+      s = await window.VDAN_AUTH.refreshSession().catch(() => null);
+    }
+    return String(s?.access_token || "").trim();
+  }
+
   function currentUserId() {
     return session()?.user?.id || null;
   }
@@ -60,8 +69,10 @@
     if (!(init.body instanceof Blob)) {
       headers.set("Content-Type", "application/json");
     }
-    if (withAuth && session()?.access_token) {
-      headers.set("Authorization", `Bearer ${session().access_token}`);
+    if (withAuth) {
+      const token = await ensureAccessToken();
+      if (!token) throw new Error("Sitzung abgelaufen. Bitte neu anmelden.");
+      headers.set("Authorization", `Bearer ${token}`);
     }
 
     const res = await fetch(`${url}${path}`, { ...init, headers });
@@ -503,7 +514,7 @@
     let bestHeight = height;
     let bestMime = "image/webp";
 
-    for (let pass = 0; pass < 5; pass += 1) {
+    for (let pass = 0; pass < 8; pass += 1) {
       canvas.width = width;
       canvas.height = height;
       ctx.clearRect(0, 0, width, height);
@@ -546,9 +557,6 @@
     }
 
     if (!bestBlob) throw new Error("Bildverarbeitung fehlgeschlagen");
-    if (bestBlob.size > MAX_FILE_BYTES) {
-      throw new Error(`Bild ${file.name} ist zu groß. Bitte enger zuschneiden.`);
-    }
 
     return { blob: bestBlob, width: bestWidth, height: bestHeight, bytes: bestBlob.size, mime: bestMime };
   }
@@ -560,6 +568,8 @@
     if (!uid) throw new Error("Nicht eingeloggt");
 
     const { url, key } = cfg();
+    const accessToken = await ensureAccessToken();
+    if (!accessToken) throw new Error("Sitzung abgelaufen. Bitte neu anmelden.");
     const uploads = [];
 
     const totalSteps = Math.max(1, files.length * 2);
@@ -586,7 +596,7 @@
 
       const headers = new Headers();
       headers.set("apikey", key);
-      headers.set("Authorization", `Bearer ${session().access_token}`);
+      headers.set("Authorization", `Bearer ${accessToken}`);
       headers.set("Content-Type", processed.mime);
       headers.set("x-upsert", "false");
 
@@ -624,7 +634,7 @@
   async function deleteUploadedMedia(items = []) {
     if (!Array.isArray(items) || !items.length) return;
     const { url, key } = cfg();
-    const token = session()?.access_token;
+    const token = await ensureAccessToken();
     if (!url || !key || !token) return;
 
     await Promise.all(items.map(async (m) => {
@@ -974,6 +984,7 @@
       renderUploadedMediaPreview(form, uploaded);
       setUploadProgress(form, 100, "Upload abgeschlossen.", true);
       setFormSaving(form, false);
+      showUploadSuccessOnSubmit(form);
     } finally {
       delete form.dataset.uploading;
     }
@@ -990,10 +1001,31 @@
     const cancelBtn = form.querySelector("[data-cancel]");
     if (submitBtn) {
       if (!submitBtn.dataset.defaultLabel) submitBtn.dataset.defaultLabel = submitBtn.textContent || "Speichern";
+      if (isSaving) {
+        submitBtn.classList.remove("feed-btn--upload-ok");
+        if (form._submitSuccessTimer) {
+          clearTimeout(form._submitSuccessTimer);
+          form._submitSuccessTimer = null;
+        }
+      }
       submitBtn.disabled = Boolean(isSaving);
       submitBtn.textContent = isSaving ? savingLabel : submitBtn.dataset.defaultLabel;
     }
     if (cancelBtn) cancelBtn.disabled = Boolean(isSaving);
+  }
+
+  function showUploadSuccessOnSubmit(form) {
+    const submitBtn = form?.querySelector?.('button[type="submit"]');
+    if (!submitBtn) return;
+    const defaultLabel = submitBtn.dataset.defaultLabel || submitBtn.textContent || "Speichern";
+    submitBtn.classList.add("feed-btn--upload-ok");
+    submitBtn.innerHTML = `${escapeHtml(defaultLabel)} <span class="feed-btn__ok-check" aria-hidden="true">✓</span>`;
+    if (form._submitSuccessTimer) clearTimeout(form._submitSuccessTimer);
+    form._submitSuccessTimer = setTimeout(() => {
+      submitBtn.classList.remove("feed-btn--upload-ok");
+      submitBtn.textContent = defaultLabel;
+      form._submitSuccessTimer = null;
+    }, 1400);
   }
 
   function setUploadProgress(form, percent = 0, text = "", show = false) {

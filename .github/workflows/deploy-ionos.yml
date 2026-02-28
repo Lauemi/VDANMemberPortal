@@ -70,28 +70,25 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           PUSH_NOTIFY_TOKEN: ${{ secrets.PUSH_NOTIFY_TOKEN }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
         run: |
-          if [ -z "$SUPABASE_URL" ] || [ -z "$PUSH_NOTIFY_TOKEN" ]; then
-            echo "SUPABASE_URL oder PUSH_NOTIFY_TOKEN fehlt - Push-Trigger wird übersprungen."
-            exit 0
-          fi
-
-          AUTH_KEY="$SUPABASE_SERVICE_ROLE_KEY"
-          if [ -z "$AUTH_KEY" ]; then
-            AUTH_KEY="$SUPABASE_ANON_KEY"
-          fi
-          if [ -z "$AUTH_KEY" ]; then
-            echo "SUPABASE_SERVICE_ROLE_KEY/PUBLIC_SUPABASE_ANON_KEY fehlt - Push-Trigger wird übersprungen."
+          if [ -z "$SUPABASE_URL" ] || [ -z "$PUSH_NOTIFY_TOKEN" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "SUPABASE_URL/PUSH_NOTIFY_TOKEN/SUPABASE_SERVICE_ROLE_KEY fehlt - Push-Trigger wird übersprungen."
             exit 0
           fi
 
           VERSION_TAG="deploy-${GITHUB_SHA::7}"
           PAYLOAD="{\"version\":\"${VERSION_TAG}\",\"title\":\"VDAN APP\",\"message\":\"Neue Version verfügbar.\",\"url\":\"/app/einstellungen/\"}"
           echo "Sende Push-Trigger für Version ${VERSION_TAG}..."
-          curl --fail-with-body -sS -X POST "${SUPABASE_URL}/functions/v1/push-notify-update" \
+          HTTP_CODE="$(curl -sS -o /tmp/push_notify_resp.json -w "%{http_code}" -X POST "${SUPABASE_URL}/functions/v1/push-notify-update" \
             -H "Content-Type: application/json" \
-            -H "apikey: ${AUTH_KEY}" \
-            -H "Authorization: Bearer ${AUTH_KEY}" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
             -H "x-push-token: ${PUSH_NOTIFY_TOKEN}" \
-            -d "${PAYLOAD}"
+            -d "${PAYLOAD}" || true)"
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "Push-Trigger erfolgreich (${HTTP_CODE})."
+          else
+            echo "Warnung: Push-Trigger fehlgeschlagen (${HTTP_CODE}). Deploy bleibt erfolgreich."
+            cat /tmp/push_notify_resp.json || true
+          fi

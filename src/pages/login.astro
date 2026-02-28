@@ -12,7 +12,8 @@ const enablePasswordReset = String(import.meta.env.PUBLIC_ENABLE_PASSWORD_RESET 
   <section class="card" style="max-width:520px;margin:0 auto;">
     <div class="card__body">
       <h1>Login</h1>
-      <p class="small">Mitgliedsnummer + Passwort. Beim ersten Login mit Standardpasswort musst du dein Passwort ändern.</p>
+      <p class="small">Bitte Mitgliedsnummer zum login verwenden. Das Passwort Erstpasswort wird vom Vorstand bei Fortschritt der Tests ausgegeben. 
+      </p>
 
       <form id="loginForm" data-next-target={nextTarget}>
         <label>
@@ -39,7 +40,7 @@ const enablePasswordReset = String(import.meta.env.PUBLIC_ENABLE_PASSWORD_RESET 
       {showDemoHint && (
         <>
           <hr />
-          <p class="small">Hinweis: Demo-User nutzen Mitgliedsnummern ab 9990.</p>
+          
         </>
       )}
     </div>

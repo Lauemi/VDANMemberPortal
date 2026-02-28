@@ -1602,6 +1602,24 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
   text-underline-offset:2px;
 }
 
+.portal-quick-legal-row{
+  margin:.35rem 0 0;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.portal-quick-logout-link{
+  border:none;
+  background:transparent;
+  color:var(--muted);
+  text-decoration:underline;
+  text-underline-offset:2px;
+  padding:0;
+  font:inherit;
+  cursor:pointer;
+}
+
 .portal-quick-settings-link{
   min-width:var(--touch-target-min);
   min-height:var(--touch-target-min);

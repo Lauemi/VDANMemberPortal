@@ -344,7 +344,7 @@
               <p class="small portal-quick-account-name">${esc(accountLabel)}</p>
               ${memberNo ? `<p class="small">${LABELS.memberNo}: ${esc(memberNo)}</p>` : ""}
               ${state.loggedIn ? `<p class="small portal-quick-presence"><span class="portal-quick-presence-dot ${presence.className}" aria-hidden="true"></span>${presence.label}</p>` : ""}
-              ${state.loggedIn ? `<p class="small"><a class="portal-quick-legal-link" href="/nutzungsbedingungen.html/">${LABELS.terms}</a></p>` : ""}
+              ${state.loggedIn ? `<p class="small portal-quick-legal-row"><a class="portal-quick-legal-link" href="/nutzungsbedingungen.html/">${LABELS.terms}</a><button type="button" class="portal-quick-logout-link" data-action="logout">${LABELS.logout}</button></p>` : ""}
             </div>
             ${state.loggedIn ? `<a class="portal-quick-settings-link" href="/app/einstellungen/" aria-label="${LABELS.settings}" title="${LABELS.settings}">⚙</a>` : ""}
           </div>

@@ -45,7 +45,7 @@ const turnstileEnabled = Boolean(String(turnstileSiteKey || "").trim());
           {turnstileEnabled ? (
             <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-callback="onTurnstileDone"></div>
           ) : (
-            <p class="small">Captcha ist lokal deaktiviert (kein `PUBLIC_TURNSTILE_SITE_KEY` gesetzt).</p>
+            <></>
           )}
         </div>
 

@@ -21,7 +21,12 @@ const memberCardVerifyPubKey = import.meta.env.PUBLIC_MEMBER_CARD_VERIFY_PUBKEY 
 const vapidPublicKey = import.meta.env.PUBLIC_VAPID_PUBLIC_KEY ?? "";
 const appVersionEnv = String(import.meta.env.PUBLIC_APP_VERSION ?? "").trim();
 const pkgVersion = String(pkg?.version || "0.1.0").trim();
-const appVersion = appVersionEnv && appVersionEnv !== "dev-local" ? appVersionEnv : `${pkgVersion}-local`;
+const appVersion = appVersionEnv && appVersionEnv !== "dev-local" ? appVersionEnv : `v${pkgVersion}-beta.dev`;
+const appChannel = String(import.meta.env.PUBLIC_APP_CHANNEL ?? "beta").trim().toLowerCase();
+const isBetaChannel = appChannel === "beta";
+const displayTitle = isBetaChannel && !String(title).toLowerCase().includes("beta")
+  ? `${title} · BETA`
+  : title;
 
 // Guard member area paths:
 const path = Astro.url.pathname.toLowerCase();
@@ -37,7 +42,7 @@ const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
+    <title>{displayTitle}</title>
     {description && <meta name="description" content={description} />}
     <meta name="robots" content={`${robots},follow`} />
     <link rel="canonical" href={canonical} />
@@ -66,6 +71,7 @@ const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
           <a class="logo" href="/" aria-label={APP.name}>
             <img src="/Bilder/logo300x300.png" alt={APP.name} />
           </a>
+          {isBetaChannel && <span class="app-beta-badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
           <div class="nav-actions">
             <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
             <div class="burger-menu" id="burgerMenu">

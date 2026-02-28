@@ -6,6 +6,7 @@
   const MANAGER_ROLES = new Set(["admin", "vorstand"]);
   const MAX_MEDIA_FILES = 2;
   const MAX_LONG_EDGE = 1280;
+  const MIN_LONG_EDGE = 320;
   const MAX_FILE_BYTES = 400 * 1024;
 
   const CATEGORY_OPTIONS = [
@@ -516,7 +517,7 @@
         blob = await canvasToBlob(canvas, mime, quality);
       }
 
-      while (blob && blob.size > MAX_FILE_BYTES && quality > 0.35) {
+      while (blob && blob.size > MAX_FILE_BYTES && quality > 0.22) {
         quality -= 0.07;
         blob = await canvasToBlob(canvas, mime, quality);
         if (!blob && mime === "image/webp") {
@@ -536,8 +537,12 @@
         return { blob, width, height, bytes: blob.size, mime };
       }
 
-      width = Math.max(640, Math.round(width * 0.82));
-      height = Math.max(360, Math.round(height * 0.82));
+      const longEdge = Math.max(width, height);
+      if (longEdge <= MIN_LONG_EDGE) break;
+      const nextLongEdge = Math.max(MIN_LONG_EDGE, Math.floor(longEdge * 0.82));
+      const downscale = nextLongEdge / longEdge;
+      width = Math.max(1, Math.round(width * downscale));
+      height = Math.max(1, Math.round(height * downscale));
     }
 
     if (!bestBlob) throw new Error("Bildverarbeitung fehlgeschlagen");

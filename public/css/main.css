@@ -40,6 +40,21 @@ a{color:inherit}
   object-fit:contain;
   display:block;
 }
+
+.app-beta-badge{
+  margin-right:auto;
+  padding:4px 10px;
+  border:1px solid rgba(238,242,248,.55);
+  border-radius:999px;
+  background:linear-gradient(0deg, rgba(120,128,142,.92) 0%, rgba(228,233,242,.96) 100%);
+  color:#101521;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.03em;
+  line-height:1.2;
+  text-transform:uppercase;
+  box-shadow:0 4px 12px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.45);
+}
 .nav-actions{
   margin-left:auto;
   display:flex;
@@ -2095,6 +2110,12 @@ body[data-portal-rail-side="left"] .catch-fab-stack{
 @media(max-width:640px){
   .container{
     padding:0 12px;
+  }
+
+  .app-beta-badge{
+    font-size:11px;
+    padding:3px 8px;
+    margin-left:4px;
   }
 
   .main{

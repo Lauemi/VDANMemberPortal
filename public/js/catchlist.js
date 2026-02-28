@@ -1,7 +1,7 @@
 ;(() => {
   const MAX_IMAGE_BYTES = 350 * 1024;
   const MAX_LONG_EDGE = 1280;
-  const MIN_LONG_EDGE = 640;
+  const MIN_LONG_EDGE = 320;
   const OFFLINE_SCHEMA_VERSION = 1;
   const VIEW_KEY = "app:viewMode:fangliste:v1";
   const TABLE_KEY_PREFIX = "app:viewSettings:fangliste:user:v1";
@@ -585,26 +585,47 @@
     if (!ctx) throw new Error("Bildverarbeitung fehlgeschlagen");
 
     let bestBlob = null;
+    let bestMime = "image/webp";
+    async function encodeAtCurrentSize() {
+      const mimes = ["image/webp", "image/jpeg"];
+      let localBest = null;
+      let localBestMime = "image/webp";
+      for (const mime of mimes) {
+        let q = 0.9;
+        let blob = await new Promise((res) => canvas.toBlob(res, mime, q));
+        while (blob && blob.size > MAX_IMAGE_BYTES && q > 0.22) {
+          q -= 0.08;
+          blob = await new Promise((res) => canvas.toBlob(res, mime, q));
+        }
+        if (blob && (!localBest || blob.size < localBest.size)) {
+          localBest = blob;
+          localBestMime = mime;
+        }
+        if (blob && blob.size <= MAX_IMAGE_BYTES) {
+          return { blob, mime };
+        }
+      }
+      return { blob: localBest, mime: localBestMime };
+    }
+
     while (true) {
       canvas.width = width;
       canvas.height = height;
       ctx.clearRect(0, 0, width, height);
       ctx.drawImage(bitmap, 0, 0, width, height);
 
-      let q = 0.9;
-      let blob = await new Promise((res) => canvas.toBlob(res, "image/webp", q));
-      while (blob && blob.size > MAX_IMAGE_BYTES && q > 0.36) {
-        q -= 0.08;
-        blob = await new Promise((res) => canvas.toBlob(res, "image/webp", q));
+      const { blob, mime } = await encodeAtCurrentSize();
+      if (blob && (!bestBlob || blob.size < bestBlob.size)) {
+        bestBlob = blob;
+        bestMime = mime;
       }
-      if (blob) bestBlob = blob;
       if (blob && blob.size <= MAX_IMAGE_BYTES) {
         return {
           data_url: await blobToDataUrl(blob),
           bytes: blob.size,
           width,
           height,
-          mime: "image/webp",
+          mime,
           updated_at: new Date().toISOString(),
         };
       }
@@ -618,12 +639,15 @@
     }
 
     if (!bestBlob) throw new Error("Bildverarbeitung fehlgeschlagen");
+    if (bestBlob.size > MAX_IMAGE_BYTES) {
+      throw new Error("Bild ist zu groß. Bitte enger zuschneiden.");
+    }
     return {
       data_url: await blobToDataUrl(bestBlob),
       bytes: bestBlob.size,
       width,
       height,
-      mime: "image/webp",
+      mime: bestMime,
       updated_at: new Date().toISOString(),
     };
   }

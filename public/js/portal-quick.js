@@ -53,6 +53,8 @@
     initialized: false,
   };
   let drawerCloseTimer = null;
+  let touchStartX = 0;
+  let touchStartY = 0;
 
   function cfg() {
     return {
@@ -518,7 +520,8 @@
       }
 
       const drawer = document.getElementById("portalQuickDrawer");
-      if (drawer && e.target === drawer) {
+      const panel = document.getElementById("portalQuickPanel");
+      if (drawer && panel && drawer.contains(e.target) && !panel.contains(e.target)) {
         setDrawerOpen(false);
         return;
       }
@@ -585,6 +588,32 @@
       setDrawerOpen(false, { immediate: true });
       window.location.assign(href);
     });
+
+    document.addEventListener("touchstart", (e) => {
+      if (!state.drawerOpen) return;
+      const t = e.changedTouches?.[0];
+      if (!t) return;
+      touchStartX = t.clientX;
+      touchStartY = t.clientY;
+    }, { passive: true });
+
+    document.addEventListener("touchmove", (e) => {
+      if (!state.drawerOpen) return;
+      const drawer = document.getElementById("portalQuickDrawer");
+      const panel = document.getElementById("portalQuickPanel");
+      const target = e.target;
+      if (!drawer || !panel || !(target instanceof Node) || !drawer.contains(target)) return;
+      const t = e.changedTouches?.[0];
+      if (!t) return;
+      const dx = Math.abs(t.clientX - touchStartX);
+      const dy = Math.abs(t.clientY - touchStartY);
+      const inPanel = panel.contains(target);
+
+      // Block edge/back-forward swipe while drawer is open.
+      if (!inPanel || dx > dy) {
+        e.preventDefault();
+      }
+    }, { passive: false });
 
     window.addEventListener("resize", () => {
       if (normalizeHandedness(state.settings.nav_handedness) === "auto") applySide();

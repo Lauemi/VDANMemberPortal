@@ -239,9 +239,17 @@
       writeUpdateNotifyPref(wantsUpdateNotify);
       try {
         await saveRemoteSettings(state);
-        if (wantsUpdateNotify) await enablePushNotifications().catch(() => {});
-        else await disablePushNotifications().catch(() => {});
-        setMsg("Gespeichert.");
+        let pushWarning = "";
+        if (wantsUpdateNotify) {
+          try {
+            await enablePushNotifications();
+          } catch (err) {
+            pushWarning = ` Hinweis Push: ${String(err?.message || "Registrierung fehlgeschlagen.")}`;
+          }
+        } else {
+          await disablePushNotifications().catch(() => {});
+        }
+        setMsg(`Gespeichert.${pushWarning}`);
         document.dispatchEvent(new CustomEvent("vdan:portal-settings", { detail: { nav_handedness: state.nav_handedness } }));
       } catch (err) {
         saveFallback(state);

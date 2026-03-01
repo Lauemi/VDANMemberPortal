@@ -37,6 +37,7 @@
 
     { id: "mitglieder", href: "/app/mitglieder/", label: "Mitglieder", short: "MV", access: "admin", group: "admin" },
     { id: "fangliste_cockpit", href: "/app/fangliste/cockpit/", label: "Fangliste Cockpit", short: "FC", access: "admin", group: "admin" },
+    { id: "lizenzen_api", href: "/app/lizenzen/", label: "Wetter & Karten API", short: "WX", access: "admin", group: "admin" },
   ];
 
   const GROUP_ORDER = ["member", "manager", "admin"];
@@ -639,11 +640,14 @@
     state.uid = s?.user?.id || null;
     state.profileName = "";
     state.profileMemberNo = "";
+    state.roles = [];
+    state.visibleModules = [];
 
     const toggle = document.getElementById("portalQuickToggle");
     const rail = document.getElementById("portalRail");
     const badge = document.getElementById("portalQuickUserBadge");
     if (!state.loggedIn) {
+      state.settings = { nav_handedness: "right", portal_favorites: [...DEFAULT_FAVORITES] };
       setHidden(toggle, false);
       setHidden(rail, true);
       setHidden(badge, true);

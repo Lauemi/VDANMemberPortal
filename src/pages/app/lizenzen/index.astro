@@ -1,0 +1,74 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Wetter & Karten API • ${APP.name}`} description="Adminbereich für lizenzfreie API-Anbindungen." robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <h1>Wetter & Karten API</h1>
+      <p class="small">Lizenzfreie Anbindungen: Wetter, Luftdruck, Regenradar, Mondphase und Standortverwaltung.</p>
+      <p id="adminApiMsg" class="small" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__body">
+      <h2>Standort</h2>
+      <div class="admin-api-toolbar">
+        <button id="adminApiLocateBtn" type="button" class="feed-btn">Aktuellen Standort nutzen</button>
+        <button id="adminApiCenterBtn" type="button" class="feed-btn feed-btn--ghost">Kartenmitte übernehmen</button>
+      </div>
+      <div class="admin-api-map-wrap">
+        <div id="adminApiMap" class="admin-api-map" role="application" aria-label="Standortkarte"></div>
+      </div>
+      <article class="admin-api-item">
+        <h3>Regenradar-Steuerung</h3>
+        <p class="small"><strong id="adminApiRadarStatus">-</strong></p>
+        <p class="small">Frame: <span id="adminApiRadarFrameLabel">-</span></p>
+        <div class="admin-api-toolbar admin-api-toolbar--tight">
+          <button id="adminApiRadarPrev" type="button" class="feed-btn feed-btn--ghost">◀</button>
+          <select id="adminApiRadarFrame" aria-label="Radar-Zeitpunkt wählen"></select>
+          <button id="adminApiRadarNext" type="button" class="feed-btn feed-btn--ghost">▶</button>
+        </div>
+        <label class="small" for="adminApiRadarOpacity">Radar-Transparenz</label>
+        <input id="adminApiRadarOpacity" type="range" min="20" max="90" step="5" value="55" />
+        <button id="adminApiRadarRefresh" type="button" class="feed-btn feed-btn--ghost">Radar aktualisieren</button>
+      </article>
+      <div class="admin-api-toolbar">
+        <input id="adminApiLocationName" type="text" placeholder="Name für Standort (z. B. Vereinssee)" />
+        <button id="adminApiSaveBtn" type="button" class="feed-btn">Standort speichern</button>
+      </div>
+      <div id="adminApiLocations" class="admin-api-locations"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__body">
+      <h2>Live-Daten</h2>
+      <div class="admin-api-grid">
+        <article class="admin-api-item">
+          <h3>Wetter</h3>
+          <p class="small">Temperatur (aktuell): <strong id="adminApiTemp">-</strong></p>
+          <p class="small">Luftdruck (aktuell): <strong id="adminApiPressure">-</strong></p>
+          <p class="small">Niederschlag: <strong id="adminApiRain">-</strong></p>
+          <p class="small">Luftdruck (Tagesmittel, 2 Tage zurück + heute + 5 Tage Vorschau):</p>
+          <div id="adminApiPressureSeries" class="admin-api-pressure-series small">-</div>
+          <button id="adminApiWeatherToggle" type="button" class="feed-btn feed-btn--ghost" aria-expanded="false" aria-controls="adminApiWeatherForecast">
+            Wettervorschau (7 Tage) anzeigen
+          </button>
+          <div id="adminApiWeatherForecast" class="admin-api-forecast" hidden></div>
+        </article>
+        <article class="admin-api-item">
+          <h3>Mondphase</h3>
+          <div id="adminApiMoonVisual" class="admin-api-moon-visual" aria-hidden="true">🌑</div>
+          <p class="small"><strong id="adminApiMoonLabel">-</strong></p>
+          <p class="small">Wert: <span id="adminApiMoonRaw">-</span></p>
+        </article>
+      </div>
+      <p class="small">Datenquellen: Open-Meteo, OpenStreetMap, RainViewer.</p>
+    </div>
+  </section>
+
+  <script src="/js/admin-license-tools.js" defer></script>
+</Site>

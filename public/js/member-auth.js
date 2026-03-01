@@ -1,5 +1,6 @@
 ;(() => {
   const SESSION_KEY = "vdan_member_session_v1";
+  const SESSION_PERSIST_KEY = "vdan_member_session_persistent_v1";
   const EXPIRY_SKEW_MS = 30_000;
   const MEMBER_EMAIL_DOMAIN = "members.vdan.local";
 
@@ -27,9 +28,15 @@
 
   function loadStoredSession() {
     try {
-      const raw = localStorage.getItem(SESSION_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw);
+      const rawSession = sessionStorage.getItem(SESSION_KEY);
+      if (rawSession) return JSON.parse(rawSession);
+    } catch {
+      // ignore
+    }
+    try {
+      const rawLocal = localStorage.getItem(SESSION_KEY);
+      if (!rawLocal) return null;
+      return JSON.parse(rawLocal);
     } catch {
       return null;
     }
@@ -40,12 +47,39 @@
     return isValidSession(parsed) ? parsed : null;
   }
 
-  function saveSession(payload) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
+  function saveSession(payload, persistent = true) {
+    const raw = JSON.stringify(payload);
+    if (persistent) {
+      localStorage.setItem(SESSION_KEY, raw);
+      localStorage.setItem(SESSION_PERSIST_KEY, "1");
+      try {
+        sessionStorage.removeItem(SESSION_KEY);
+      } catch {
+        // ignore
+      }
+      return;
+    }
+    sessionStorage.setItem(SESSION_KEY, raw);
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.setItem(SESSION_PERSIST_KEY, "0");
   }
 
   function clearSession() {
     localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_PERSIST_KEY);
+    try {
+      sessionStorage.removeItem(SESSION_KEY);
+    } catch {
+      // ignore
+    }
+  }
+
+  function prefersPersistentSession() {
+    try {
+      return String(localStorage.getItem(SESSION_PERSIST_KEY) || "1").trim() !== "0";
+    } catch {
+      return true;
+    }
   }
 
   async function sbFetch(path, init) {
@@ -72,7 +106,7 @@
     return defaultTarget;
   }
 
-  async function loginWithPassword(identifier, password) {
+  async function loginWithPassword(identifier, password, persistent = true) {
     const input = String(identifier || "").trim();
     const email = input.includes("@") ? input.toLowerCase() : memberNoToEmail(input);
     if (!email) {
@@ -92,7 +126,7 @@
     // Supabase returns expires_in (seconds)
     const expiresAt = nowMs() + (Number(data.expires_in || 0) * 1000);
     const session = { ...data, expiresAt };
-    saveSession(session);
+    saveSession(session, persistent);
     return session;
   }
 
@@ -119,7 +153,7 @@
       user: data?.user || stored?.user || null,
       expiresAt,
     };
-    saveSession(session);
+    saveSession(session, prefersPersistentSession());
     return isValidSession(session) ? session : null;
   }
 
@@ -266,8 +300,9 @@
           ""
         ).trim();
         const password = String(document.getElementById("loginPass")?.value || "");
+        const persistent = Boolean(document.getElementById("loginRemember")?.checked);
         try {
-          await loginWithPassword(memberNo, password);
+          await loginWithPassword(memberNo, password, persistent);
           const profile = await getOwnProfile();
           if (msg) msg.textContent = "Login ok.";
           document.dispatchEvent(new CustomEvent("vdan:session", { detail: { loggedIn: true } }));
@@ -307,6 +342,10 @@
           if (msgEl) msgEl.textContent = err?.message || "Passwort konnte nicht geändert werden.";
         }
       });
+    }
+
+    if (!loadSession() && navigator.onLine) {
+      refreshSession().catch(() => null);
     }
 
     if (loadSession()) {

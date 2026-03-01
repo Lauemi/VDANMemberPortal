@@ -1041,6 +1041,16 @@
     if (msg) msg.textContent = String(text || "");
   }
 
+  function reloadAfterCreate(delayMs = 220) {
+    window.setTimeout(() => {
+      try {
+        window.location.reload();
+      } catch {
+        // ignore reload issues
+      }
+    }, Math.max(0, Number(delayMs) || 0));
+  }
+
   async function refresh() {
     const list = document.getElementById("feedList");
     if (!list) return;
@@ -1267,6 +1277,7 @@
             host.innerHTML = "";
             await refresh();
             setMessage(payload.publishNow ? "Termin erstellt und veröffentlicht." : "Termin erstellt.");
+            reloadAfterCreate();
           } catch (err) {
             if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
               await queueAction("create_term_event", payload);
@@ -1289,6 +1300,7 @@
             host.innerHTML = "";
             await refresh();
             setMessage(payload.publishNow ? "Arbeitseinsatz erstellt, Leiter zugewiesen und veröffentlicht." : "Arbeitseinsatz erstellt und Leiter zugewiesen.");
+            reloadAfterCreate();
           } catch (err) {
             if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
               await queueAction("create_work_event", payload);
@@ -1330,6 +1342,7 @@
             host.innerHTML = "";
             await refresh();
             setMessage("Beitrag veröffentlicht.");
+            reloadAfterCreate();
           } catch (err) {
             if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
               const offlineMedia = offlineFiles.length ? await buildOfflineMediaPayload(offlineFiles) : [];

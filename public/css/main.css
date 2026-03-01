@@ -216,6 +216,166 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
   box-shadow:var(--shadow);
 }
 
+.admin-api-toolbar{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin:.5rem 0 1rem;
+}
+.admin-api-toolbar--tight{
+  margin:.35rem 0 .6rem;
+}
+.admin-api-toolbar input[type="text"]{
+  flex:1 1 240px;
+}
+.admin-api-map-wrap{
+  border:1px solid var(--line);
+  border-radius:var(--radius-md);
+  overflow:hidden;
+  background:rgba(255,255,255,.02);
+}
+.admin-api-map{
+  width:100%;
+  min-height:320px;
+}
+.admin-api-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px;
+}
+.admin-api-item{
+  border:1px solid var(--line);
+  border-radius:var(--radius-md);
+  padding:12px;
+  background:rgba(255,255,255,.02);
+}
+.admin-api-item h3{
+  margin:0 0 .35rem;
+}
+.admin-api-item select{
+  min-height:var(--control-height);
+  padding:0 10px;
+}
+.admin-api-item .admin-api-toolbar select{
+  flex:1 1 170px;
+}
+.admin-api-item input[type="range"]{
+  width:100%;
+  margin:.25rem 0 .75rem;
+}
+.admin-api-pressure-series{
+  display:grid;
+  gap:4px;
+}
+.admin-api-pressure-row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:4px 0;
+  border-bottom:1px dashed rgba(220,228,241,.14);
+}
+.admin-api-pressure-row:last-child{
+  border-bottom:none;
+}
+.admin-api-trend{
+  font-weight:800;
+}
+.admin-api-trend.is-up{
+  color:#45d483;
+}
+.admin-api-trend.is-down{
+  color:#ff7b7b;
+}
+.admin-api-trend.is-flat{
+  color:#b8c1d4;
+}
+.admin-api-forecast{
+  margin-top:.7rem;
+  display:grid;
+  gap:8px;
+}
+.admin-api-forecast-row{
+  border:1px solid var(--line);
+  border-radius:var(--radius-md);
+  padding:10px;
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+}
+.admin-api-forecast-day{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.admin-api-weather-icon{
+  width:40px;
+  height:40px;
+  border-radius:999px;
+  border:1px solid rgba(220,228,241,.26);
+  background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.42), rgba(255,255,255,.06));
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.2rem;
+  line-height:1;
+}
+.admin-api-forecast-day p{
+  margin:0;
+}
+.admin-api-forecast-values{
+  display:grid;
+  gap:2px;
+  text-align:right;
+  font-size:var(--font-secondary-rem);
+}
+.admin-api-moon-visual{
+  width:56px;
+  height:56px;
+  border-radius:999px;
+  border:1px solid rgba(220,228,241,.35);
+  background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.56), rgba(255,255,255,.08));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.8rem;
+  margin:0 0 .45rem;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25), 0 8px 18px rgba(0,0,0,.25);
+}
+@media(max-width:720px){
+  .admin-api-forecast-row{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  .admin-api-forecast-values{
+    text-align:left;
+  }
+}
+.admin-api-locations{
+  display:grid;
+  gap:8px;
+}
+.admin-api-location{
+  border:1px solid var(--line);
+  border-radius:var(--radius-md);
+  padding:10px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  background:rgba(255,255,255,.02);
+}
+.admin-api-location p{
+  margin:0;
+}
+.admin-api-location__actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
 .home-hero-slider{
   width:min(100%, 1080px);
   margin:0 auto 1rem;

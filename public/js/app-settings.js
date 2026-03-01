@@ -86,11 +86,38 @@
     return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   }
 
+  function isIosDevice() {
+    const ua = String(navigator.userAgent || "").toLowerCase();
+    return /iphone|ipad|ipod/.test(ua);
+  }
+
+  function isStandaloneApp() {
+    try {
+      if (window.matchMedia?.("(display-mode: standalone)")?.matches) return true;
+    } catch {
+      // ignore
+    }
+    return Boolean(window.navigator?.standalone);
+  }
+
+  async function waitForSwReady(timeoutMs = 8000) {
+    const timeout = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Service Worker nicht bereit. Bitte Seite neu laden.")), timeoutMs);
+    });
+    return Promise.race([navigator.serviceWorker.ready, timeout]);
+  }
+
   async function getSwRegistration() {
     if (!("serviceWorker" in navigator)) throw new Error("Service Worker nicht verfügbar.");
     const reg = await navigator.serviceWorker.getRegistration(PUSH_SCOPE);
     if (reg) return reg;
-    return navigator.serviceWorker.ready;
+    try {
+      const created = await navigator.serviceWorker.register("/sw.js", { scope: PUSH_SCOPE });
+      if (created) return created;
+    } catch {
+      // ignore and use ready fallback below
+    }
+    return waitForSwReady();
   }
 
   async function upsertPushSubscription(sub, enabled = true) {
@@ -127,6 +154,9 @@
 
   async function enablePushNotifications() {
     if (!uid()) throw new Error("Bitte einloggen.");
+    if (isIosDevice() && !isStandaloneApp()) {
+      throw new Error("Auf iPhone nur in der installierten Home-Bildschirm-App verfügbar.");
+    }
     if (!("Notification" in window)) throw new Error("Browser unterstützt keine Benachrichtigungen.");
     if (!("PushManager" in window)) throw new Error("Push wird auf diesem Gerät nicht unterstützt.");
     const key = vapidPublicKey();

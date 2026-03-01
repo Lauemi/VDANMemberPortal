@@ -1,5 +1,5 @@
 ;(() => {
-  const ADMIN_PATHS = ["/app/mitglieder/", "/app/fangliste/cockpit/"];
+  const ADMIN_PATHS = ["/app/mitglieder/", "/app/fangliste/cockpit/", "/app/lizenzen/"];
   const MANAGER_PATHS = [
     "/app/dokumente/",
     "/app/bewerbungen/",

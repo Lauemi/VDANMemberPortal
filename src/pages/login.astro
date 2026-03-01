@@ -24,6 +24,12 @@ const enablePasswordReset = String(import.meta.env.PUBLIC_ENABLE_PASSWORD_RESET 
           <span>Passwort</span>
           <input id="loginPass" name="password" type="password" autocomplete="current-password" required />
         </label>
+        <label>
+          <span>
+            <input id="loginRemember" name="remember" type="checkbox" checked />
+            Angemeldet bleiben
+          </span>
+        </label>
 
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="primary" type="submit">Einloggen</button>

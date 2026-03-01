@@ -166,6 +166,7 @@ Zweck: Zentrale Basis fuer Bedienungsanleitung, Marketing, Audit und Release-Fre
 - A-011 Vercel Environment Secrets Matrix: `docs/project/VERCEL_ENV_SECRETS_MATRIX_2026-03-01.md`.
 - A-012 Multi-Club Phase-1 Implementierungsbacklog: `docs/project/MULTI_CLUB_PHASE1_IMPLEMENTATION_BACKLOG_2026-03-01.md`.
 - A-013 Multi-Club SQL-Plan: `docs/supabase/50_multi_club_phase1_plan.sql`.
+- A-014 Staging/Beta/Prod Execution Checkpoints: `docs/project/STAGING_BETA_PROD_EXECUTION_CHECKPOINTS_2026-03-01.md`.
 
 ## 8) Fallstricke und Risiken (operativ wichtig)
 - R-001 PWA Cache-/Update-Verhalten kann alte UI-Zustaende zeigen, wenn SW-Update nicht sauber greift.
@@ -196,3 +197,4 @@ Zweck: Zentrale Basis fuer Bedienungsanleitung, Marketing, Audit und Release-Fre
 - Open-Items und Priorisierung: `docs/project/MASTERLISTE_OPEN_ITEMS_TRACKER_2026-03-01.md`.
 - Vercel Secret-Matrix je Environment: `docs/project/VERCEL_ENV_SECRETS_MATRIX_2026-03-01.md`.
 - Multi-Club Umsetzungsbacklog + SQL-Phase-1: `docs/project/MULTI_CLUB_PHASE1_IMPLEMENTATION_BACKLOG_2026-03-01.md`, `docs/supabase/50_multi_club_phase1_plan.sql`.
+- Ausfuehrungs-Checkpoints fuer Staging/Beta/Prod: `docs/project/STAGING_BETA_PROD_EXECUTION_CHECKPOINTS_2026-03-01.md`.

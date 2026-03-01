@@ -162,6 +162,10 @@ Zweck: Zentrale Basis fuer Bedienungsanleitung, Marketing, Audit und Release-Fre
 - A-007 Release-Smoke-Test je Umgebung: `docs/project/RELEASE_SMOKE_TEST_STAGING_BETA_PROD_2026-03-01.md`.
 - A-008 Multi-Club-Ausbau-Gates: `docs/project/MULTI_CLUB_FINAL_AUSBAU_GATES_2026-03-01.md`.
 - A-009 Vercel-Cutover-Runbook: `docs/project/VERCEL_CUTOVER_RUNBOOK_2026-03-01.md`.
+- A-010 Open-Items-Tracker: `docs/project/MASTERLISTE_OPEN_ITEMS_TRACKER_2026-03-01.md`.
+- A-011 Vercel Environment Secrets Matrix: `docs/project/VERCEL_ENV_SECRETS_MATRIX_2026-03-01.md`.
+- A-012 Multi-Club Phase-1 Implementierungsbacklog: `docs/project/MULTI_CLUB_PHASE1_IMPLEMENTATION_BACKLOG_2026-03-01.md`.
+- A-013 Multi-Club SQL-Plan: `docs/supabase/50_multi_club_phase1_plan.sql`.
 
 ## 8) Fallstricke und Risiken (operativ wichtig)
 - R-001 PWA Cache-/Update-Verhalten kann alte UI-Zustaende zeigen, wenn SW-Update nicht sauber greift.
@@ -189,3 +193,6 @@ Zweck: Zentrale Basis fuer Bedienungsanleitung, Marketing, Audit und Release-Fre
 - Release-Freigabecheck (staging/beta/prod): `docs/project/RELEASE_SMOKE_TEST_STAGING_BETA_PROD_2026-03-01.md`.
 - Multi-Club Final-Ausbau: `docs/project/MULTI_CLUB_FINAL_AUSBAU_GATES_2026-03-01.md`.
 - Vercel-Cutover und Branch-Deploys: `docs/project/VERCEL_CUTOVER_RUNBOOK_2026-03-01.md`.
+- Open-Items und Priorisierung: `docs/project/MASTERLISTE_OPEN_ITEMS_TRACKER_2026-03-01.md`.
+- Vercel Secret-Matrix je Environment: `docs/project/VERCEL_ENV_SECRETS_MATRIX_2026-03-01.md`.
+- Multi-Club Umsetzungsbacklog + SQL-Phase-1: `docs/project/MULTI_CLUB_PHASE1_IMPLEMENTATION_BACKLOG_2026-03-01.md`, `docs/supabase/50_multi_club_phase1_plan.sql`.

@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Setup template for GitHub ENVIRONMENT secrets used by deploy-vercel.yml
+# This script sets secrets for one environment at a time.
+# Usage:
+#   1) Fill placeholders below.
+#   2) Run for each env: staging / beta / prod
+#      TARGET_ENV=staging bash scripts/setup-vercel-env-secrets-template.sh
+
+: "${TARGET_ENV:=staging}"
+
+GH_REPO="PLACEHOLDER_OWNER/PLACEHOLDER_REPO"
+
+# Vercel
+VERCEL_TOKEN="PLACEHOLDER_VERCEL_TOKEN"
+VERCEL_ORG_ID="PLACEHOLDER_VERCEL_ORG_ID"
+VERCEL_PROJECT_ID="PLACEHOLDER_VERCEL_PROJECT_ID"
+VERCEL_STAGING_DOMAIN="staging.fishing-club-portal.de"
+VERCEL_BETA_DOMAIN="beta.fishing-club-portal.de"
+
+# Public app env
+PUBLIC_SUPABASE_URL="https://PLACEHOLDER.supabase.co"
+PUBLIC_SUPABASE_ANON_KEY="PLACEHOLDER"
+PUBLIC_SUPABASE_PUBLISHABLE_KEY="PLACEHOLDER"
+PUBLIC_VAPID_PUBLIC_KEY="PLACEHOLDER"
+PUBLIC_MEMBER_CARD_VERIFY_PUBKEY="-----BEGIN PUBLIC KEY-----\nPLACEHOLDER\n-----END PUBLIC KEY-----"
+PUBLIC_APP_NAME="Fishing-Club-Portal"
+PUBLIC_APP_BRAND="FCP"
+PUBLIC_APP_CHANNEL="$TARGET_ENV"
+PUBLIC_APP_VERSION="2026.03.01-${TARGET_ENV}.1"
+PUBLIC_ENABLE_PASSWORD_RESET="true"
+PUBLIC_TURNSTILE_SITE_KEY="PLACEHOLDER_OPTIONAL"
+
+# Server/push env
+SUPABASE_URL="https://PLACEHOLDER.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="PLACEHOLDER"
+PUSH_NOTIFY_TOKEN="PLACEHOLDER"
+
+if ! command -v gh >/dev/null 2>&1; then
+  echo "gh CLI fehlt"
+  exit 1
+fi
+
+if [[ "$GH_REPO" == PLACEHOLDER_* ]]; then
+  echo "GH_REPO bitte setzen"
+  exit 1
+fi
+
+echo "Setze Secrets fuer $GH_REPO Environment=$TARGET_ENV"
+
+set_secret() {
+  local key="$1"
+  local value="$2"
+  gh secret set "$key" --repo "$GH_REPO" --env "$TARGET_ENV" --body "$value"
+}
+
+set_secret VERCEL_TOKEN "$VERCEL_TOKEN"
+set_secret VERCEL_ORG_ID "$VERCEL_ORG_ID"
+set_secret VERCEL_PROJECT_ID "$VERCEL_PROJECT_ID"
+set_secret VERCEL_STAGING_DOMAIN "$VERCEL_STAGING_DOMAIN"
+set_secret VERCEL_BETA_DOMAIN "$VERCEL_BETA_DOMAIN"
+
+set_secret PUBLIC_SUPABASE_URL "$PUBLIC_SUPABASE_URL"
+set_secret PUBLIC_SUPABASE_ANON_KEY "$PUBLIC_SUPABASE_ANON_KEY"
+set_secret PUBLIC_SUPABASE_PUBLISHABLE_KEY "$PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+set_secret PUBLIC_VAPID_PUBLIC_KEY "$PUBLIC_VAPID_PUBLIC_KEY"
+set_secret PUBLIC_MEMBER_CARD_VERIFY_PUBKEY "$PUBLIC_MEMBER_CARD_VERIFY_PUBKEY"
+set_secret PUBLIC_APP_NAME "$PUBLIC_APP_NAME"
+set_secret PUBLIC_APP_BRAND "$PUBLIC_APP_BRAND"
+set_secret PUBLIC_APP_CHANNEL "$PUBLIC_APP_CHANNEL"
+set_secret PUBLIC_APP_VERSION "$PUBLIC_APP_VERSION"
+set_secret PUBLIC_ENABLE_PASSWORD_RESET "$PUBLIC_ENABLE_PASSWORD_RESET"
+set_secret PUBLIC_TURNSTILE_SITE_KEY "$PUBLIC_TURNSTILE_SITE_KEY"
+
+set_secret SUPABASE_URL "$SUPABASE_URL"
+set_secret SUPABASE_SERVICE_ROLE_KEY "$SUPABASE_SERVICE_ROLE_KEY"
+set_secret PUSH_NOTIFY_TOKEN "$PUSH_NOTIFY_TOKEN"
+
+echo "Fertig: $TARGET_ENV"

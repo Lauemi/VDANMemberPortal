@@ -1,0 +1,122 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - develop
+      - beta
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'prod' || github.ref_name == 'beta' && 'beta' || 'staging' }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Ensure Rollup Linux binary
+        run: npm install --no-save --no-audit --no-fund @rollup/rollup-linux-x64-gnu@4.57.1
+
+      - name: Validate Vercel secrets
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "VERCEL_TOKEN/VERCEL_ORG_ID/VERCEL_PROJECT_ID fehlt."
+            exit 1
+          fi
+
+      - name: Build
+        env:
+          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+          PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.PUBLIC_VAPID_PUBLIC_KEY }}
+          PUBLIC_MEMBER_CARD_VERIFY_PUBKEY: ${{ secrets.PUBLIC_MEMBER_CARD_VERIFY_PUBKEY }}
+          PUBLIC_APP_NAME: ${{ secrets.PUBLIC_APP_NAME }}
+          PUBLIC_APP_BRAND: ${{ secrets.PUBLIC_APP_BRAND }}
+          PUBLIC_APP_CHANNEL: ${{ secrets.PUBLIC_APP_CHANNEL }}
+          PUBLIC_APP_VERSION: ${{ secrets.PUBLIC_APP_VERSION }}
+          PUBLIC_ENABLE_PASSWORD_RESET: ${{ secrets.PUBLIC_ENABLE_PASSWORD_RESET }}
+          PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.PUBLIC_TURNSTILE_SITE_KEY }}
+        run: npm run build
+
+      - name: Pull Vercel environment
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            npx --yes vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          else
+            npx --yes vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+          fi
+
+      - name: Build on Vercel (prebuilt output)
+        run: npx --yes vercel build --token="$VERCEL_TOKEN"
+
+      - name: Deploy to Vercel
+        id: vercel_deploy
+        env:
+          VERCEL_STAGING_DOMAIN: ${{ secrets.VERCEL_STAGING_DOMAIN }}
+          VERCEL_BETA_DOMAIN: ${{ secrets.VERCEL_BETA_DOMAIN }}
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            DEPLOY_URL="$(npx --yes vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")"
+            echo "deploy_url=${DEPLOY_URL}" >> "$GITHUB_OUTPUT"
+            echo "Production deploy completed: ${DEPLOY_URL}"
+            exit 0
+          fi
+
+          DEPLOY_URL="$(npx --yes vercel deploy --prebuilt --token="$VERCEL_TOKEN")"
+          echo "deploy_url=${DEPLOY_URL}" >> "$GITHUB_OUTPUT"
+          echo "Preview deploy completed: ${DEPLOY_URL}"
+
+          if [ "${GITHUB_REF_NAME}" = "develop" ] && [ -n "$VERCEL_STAGING_DOMAIN" ]; then
+            npx --yes vercel alias set "$DEPLOY_URL" "$VERCEL_STAGING_DOMAIN" --token="$VERCEL_TOKEN"
+            echo "Aliased to ${VERCEL_STAGING_DOMAIN}"
+          fi
+
+          if [ "${GITHUB_REF_NAME}" = "beta" ] && [ -n "$VERCEL_BETA_DOMAIN" ]; then
+            npx --yes vercel alias set "$DEPLOY_URL" "$VERCEL_BETA_DOMAIN" --token="$VERCEL_TOKEN"
+            echo "Aliased to ${VERCEL_BETA_DOMAIN}"
+          fi
+
+      - name: Trigger app update push notification
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          PUSH_NOTIFY_TOKEN: ${{ secrets.PUSH_NOTIFY_TOKEN }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$PUSH_NOTIFY_TOKEN" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "SUPABASE_URL/PUSH_NOTIFY_TOKEN/SUPABASE_SERVICE_ROLE_KEY fehlt - Push-Trigger wird übersprungen."
+            exit 0
+          fi
+
+          VERSION_TAG="${GITHUB_REF_NAME}-deploy-${GITHUB_SHA::7}"
+          PAYLOAD="{\"version\":\"${VERSION_TAG}\",\"title\":\"Fishing-Club-Portal\",\"message\":\"Neue Version verfügbar.\",\"url\":\"/app/einstellungen/\"}"
+          echo "Sende Push-Trigger für Version ${VERSION_TAG}..."
+
+          HTTP_CODE="$(curl -sS -o /tmp/push_notify_resp.json -w "%{http_code}" -X POST "${SUPABASE_URL}/functions/v1/push-notify-update" \
+            -H "Content-Type: application/json" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "x-push-token: ${PUSH_NOTIFY_TOKEN}" \
+            -d "${PAYLOAD}" || true)"
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "Push-Trigger erfolgreich (${HTTP_CODE})."
+          else
+            echo "Warnung: Push-Trigger fehlgeschlagen (${HTTP_CODE}). Deploy bleibt erfolgreich."
+            cat /tmp/push_notify_resp.json || true
+          fi

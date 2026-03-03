@@ -15,6 +15,14 @@ Zweck: Zentrale Basis fuer Bedienungsanleitung, Marketing, Audit und Release-Fre
 - `Mitglied` (`member`): interne Member-Module.
 - `Vorstand` (`vorstand`): erweiterte Orga-/Pruef-Funktionen.
 - `Admin` (`admin`): Vollzugriff auf Admin-Module und Einstellungen.
+- `Webmaster` (`webmaster`): organisatorische Funktionsrolle.
+- `Gewaesserwart` (`gewaesserwart`): organisatorische Funktionsrolle.
+- `Kassenwart` (`kassenwart`): organisatorische Funktionsrolle.
+- `Schriftfuehrer` (`schriftfuehrer`): organisatorische Funktionsrolle.
+- `Jugendwart` (`jugendwart`): organisatorische Funktionsrolle.
+
+Hinweis Stand 1:
+- Manager-Rechte bleiben technisch weiterhin auf `admin` und `vorstand` begrenzt, bis ein feingranulares Rechtekonzept pro Funktionsrolle umgesetzt ist.
 
 ## 3) Modul- und Featureliste (Stand 1)
 

@@ -3,6 +3,14 @@
 Stand: 2026-03-01
 Ziel: Ab sofort nur noch Vercel fuer automatische Deploys nutzen, mit branchbasiertem Multi-Env-Betrieb.
 
+## 0) Betriebsmodus bis Pro-Upgrade (verbindlich)
+1. `main` bleibt `PROD` (VDAN live).
+2. `prep_vercel_multienv_admin_tools` dient als FCP-Vorbereitungszweig.
+3. Supabase bleibt in dieser Phase ein gemeinsames Projekt (keine getrennte Staging-DB moeglich auf Free).
+4. Konsequenz:
+   1. nur kontrollierte, nicht-destruktive Tests auf Preview-Deploys,
+   2. kein schema-breaking Test ohne Freigabe/Restore-Plan.
+
 ## 1) Zielabbild
 1. `develop` -> `staging` -> `staging.fishing-club-portal.de`
 2. `beta` -> `beta` -> `beta.fishing-club-portal.de`

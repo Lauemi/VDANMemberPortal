@@ -4,6 +4,15 @@ Stand: 2026-03-01
 Branch: prep_vercel_multienv_admin_tools
 Zweck: Zentrale Steuerdatei fuer Multi-Tenant-Ausbau, Store-Faehigkeit, Billing, Performance und Bereinigung.
 
+## 0) Verbindliche Betriebsfestlegung (ab sofort)
+- `main` ist produktiv und bleibt `PROD` (VDAN live).
+- Aktuelles Supabase-Projekt ist `PROD`-Datenbank.
+- Uebergangsmodus bis Revenue-Trigger:
+  - eine Supabase-DB (`PROD`) fuer Betrieb,
+  - zwei Frontend-URLs/Deploy-Ziele (`VDAN` und `fishing-club-portal.de`) ueber Branch-/Domainsteuerung.
+- `prep_vercel_multienv_admin_tools` ist der Vorbereitungsbranch fuer FCP-Ausbau.
+- Trennung in separate `staging`/`beta` Datenbanken erfolgt erst bei wirtschaftlichem Trigger (erster zahlender Verein / Upgrade auf Pro).
+
 ## 1) Marker-Legende
 - `SEC` = Security-relevant
 - `DSGVO` = Datenschutz/Compliance-relevant

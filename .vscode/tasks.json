@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Secrets: Generate (staging, hidden)",
+      "type": "shell",
+      "command": "bash scripts/secrets-generate.sh --env staging --out .secrets.staging.env --no-print",
+      "problemMatcher": []
+    },
+    {
+      "label": "Secrets: Verify env readiness",
+      "type": "shell",
+      "command": "bash scripts/verify-vercel-env-readiness.sh",
+      "problemMatcher": []
+    },
+    {
+      "label": "Secrets: Apply to GitHub (dry-run)",
+      "type": "shell",
+      "command": "bash scripts/secrets-apply.sh --source .secrets.staging.env --github --dry-run",
+      "problemMatcher": []
+    }
+  ]
+}

@@ -3,6 +3,12 @@
 Stand: 2026-03-01
 Ziel: Parallelbetrieb der bestehenden VDAN-Seite und des neuen Endprodukts auf `fishing-club-portal.de` mit klar getrennten Umgebungen.
 
+## 0) Verbindlicher Ist-Zustand (fixiert)
+1. `main` = `PROD` (VDAN live).
+2. Aktuelles Supabase-Projekt = `PROD`-Backend.
+3. Bis Pro-Upgrade: ein gemeinsames Backend, zwei Frontend-Domains/Deploypfade.
+4. `prep_vercel_multienv_admin_tools` baut FCP vor, ohne `main` zu destabilisieren.
+
 ## 1) Zielbild (Soll-Zustand)
 1. `vdan` bleibt vorerst live (Bestandsbetrieb).
 2. `fishing-club-portal.de` wird neues Endprodukt (`prod`).
@@ -108,12 +114,13 @@ Ziel: Parallelbetrieb der bestehenden VDAN-Seite und des neuen Endprodukts auf `
 5. Falls VDAN im Bestand bleiben muss: Mandantentrennung/Brandtrennung klar dokumentieren.
 
 ## 8) Supabase-Migrationsplan pro Umgebung
-1. Neues Supabase-Projekt pro Umgebung anlegen.
-2. SQL-Migrationen in definierter Reihenfolge ausrollen.
-3. Seed-Daten nur wo noetig (staging/beta).
-4. Functions deployen (`push-notify-update` etc.).
-5. Secrets setzen und pruefen (`supabase secrets list`).
-6. Smoke-Test gegen jeweilige Umgebung.
+1. Aktuelle Phase (ohne Pro): ein gemeinsames Supabase-Projekt nutzen, keine Prod-destruktiven Tests.
+2. Nach Upgrade: neues Supabase-Projekt fuer `staging` anlegen (spaeter optional `beta` separat).
+3. SQL-Migrationen in definierter Reihenfolge ausrollen.
+4. Seed-Daten nur wo noetig (staging/beta).
+5. Functions deployen (`push-notify-update` etc.).
+6. Secrets setzen und pruefen (`supabase secrets list`).
+7. Smoke-Test gegen jeweilige Umgebung.
 
 ## 9) Sicherheits- und Audit-Gates vor Produktivfreigabe
 1. Build/Test gruen.

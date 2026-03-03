@@ -34,8 +34,12 @@ a{color:inherit}
   align-items:center;
 }
 
+.logo picture{
+  display:block;
+}
+
 .logo img{
-  width:44px;
+  width:clamp(132px, 20vw, 210px);
   height:44px;
   object-fit:contain;
   display:block;

@@ -27,6 +27,7 @@ const isBetaChannel = appChannel === "beta";
 const displayTitle = isBetaChannel && !String(title).toLowerCase().includes("beta")
   ? `${title} · BETA`
   : title;
+const siteLockdown = String(import.meta.env.PUBLIC_SITE_LOCKDOWN ?? "true").trim().toLowerCase() === "true";
 
 // Guard member area paths:
 const path = Astro.url.pathname.toLowerCase();
@@ -65,91 +66,155 @@ const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
     data-vapid-public-key={vapidPublicKey}
     data-app-version={appVersion}
   >
-    <header class="header">
-      <div class="container">
-        <nav class="nav" aria-label="Hauptnavigation">
-          <a class="logo" href="/" aria-label={APP.name}>
-            <img src="/Bilder/logo300x300.png" alt={APP.name} />
-          </a>
-          {isBetaChannel && <span class="app-beta-badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
-          <div class="nav-actions">
-            <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
-            <div class="burger-menu" id="burgerMenu">
-              <button type="button" id="burgerToggle" class="burger-toggle" aria-label="Menü">
-                <span>☰</span>
-              </button>
-              <div id="burgerPopover" class="burger-popover hidden" hidden>
-                <a href="/">Start</a>
-                <a href="/termine.html/">Termine</a>
-                <a href="/vdan-jugend.html/">Jugend</a>
-                <a href="/mitglied-werden.html/">Mitglied werden</a>
-                <a href="/fischereipruefung.html/">Fischereiprüfung</a>
-                <a href="/anglerheim-ottenheim.html/">Anglerheim</a>
-                <a href="/downloads.html/">Downloads</a>
-                <a href="/kontakt.html/">Kontakt</a>
-                <a href="/datenschutz.html/">Datenschutz</a>
-                {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
-                <a href="/impressum.html/">Impressum</a>
+    {siteLockdown ? (
+      <main class="lockdown" aria-labelledby="lockdownTitle">
+        <section class="lockdown__card">
+          <picture class="lockdown__brand">
+            <source srcset="/Branding/WEBSVGLogo-Fishing-Club-Portal.svg" type="image/svg+xml" />
+            <img src="/Branding/WEBLOGOPNGLogo-Fishing-Club-Portal.png" alt="Fishing-Club-Portal" />
+          </picture>
+          <p class="lockdown__badge">Fishing-Club-Portal</p>
+          <h1 id="lockdownTitle">Hier entsteht etwas Neues</h1>
+          <p class="small">Die Plattform wird aktuell aufgebaut. Bitte später wieder vorbeischauen.</p>
+        </section>
+      </main>
+    ) : (
+      <>
+        <header class="header">
+          <div class="container">
+            <nav class="nav" aria-label="Hauptnavigation">
+              <a class="logo" href="/" aria-label={APP.name}>
+                <picture>
+                  <source srcset="/Branding/WEBSVGLogo-Fishing-Club-Portal.svg" type="image/svg+xml" />
+                  <img src="/Branding/WEBLOGOPNGLogo-Fishing-Club-Portal.png" alt={APP.name} />
+                </picture>
+              </a>
+              {isBetaChannel && <span class="app-beta-badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+              <div class="nav-actions">
+                <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
+                <div class="burger-menu" id="burgerMenu">
+                  <button type="button" id="burgerToggle" class="burger-toggle" aria-label="Menü">
+                    <span>☰</span>
+                  </button>
+                  <div id="burgerPopover" class="burger-popover hidden" hidden>
+                    <a href="/">Start</a>
+                    <a href="/termine.html/">Termine</a>
+                    <a href="/vdan-jugend.html/">Jugend</a>
+                    <a href="/mitglied-werden.html/">Mitglied werden</a>
+                    <a href="/fischereipruefung.html/">Fischereiprüfung</a>
+                    <a href="/anglerheim-ottenheim.html/">Anglerheim</a>
+                    <a href="/downloads.html/">Downloads</a>
+                    <a href="/kontakt.html/">Kontakt</a>
+                    <a href="/datenschutz.html/">Datenschutz</a>
+                    {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
+                    <a href="/impressum.html/">Impressum</a>
+                  </div>
+                </div>
               </div>
-            </div>
+            </nav>
           </div>
-        </nav>
-      </div>
-    </header>
-    <button
-      type="button"
-      id="portalQuickToggle"
-      class="portal-quick-toggle"
-      data-ui-session-skip
-      aria-label="Portal öffnen"
-    >
-      <span aria-hidden="true">⌂</span>
-      <span id="portalQuickUserBadge" class="portal-quick-user-badge hidden" hidden aria-hidden="true"></span>
-    </button>
-    <aside id="portalRail" class="portal-rail hidden" hidden data-ui-session-skip aria-label="Portal-Kurzmenü">
-      <div id="portalRailItems" class="portal-rail__items"></div>
-    </aside>
-    <div id="portalQuickDrawer" class="portal-quick-drawer hidden" hidden data-ui-session-skip>
-      <section id="portalQuickPanel" class="portal-quick-panel" aria-label="Portal Kurzmenü">
-        <div class="portal-quick-panel__head">
-          <h2>Fishing-Club-Portal</h2>
-          <button type="button" id="portalQuickClose" class="portal-quick-close" aria-label="Portal schließen">✕</button>
+        </header>
+        <button
+          type="button"
+          id="portalQuickToggle"
+          class="portal-quick-toggle"
+          data-ui-session-skip
+          aria-label="Portal öffnen"
+        >
+          <span aria-hidden="true">⌂</span>
+          <span id="portalQuickUserBadge" class="portal-quick-user-badge hidden" hidden aria-hidden="true"></span>
+        </button>
+        <aside id="portalRail" class="portal-rail hidden" hidden data-ui-session-skip aria-label="Portal-Kurzmenü">
+          <div id="portalRailItems" class="portal-rail__items"></div>
+        </aside>
+        <div id="portalQuickDrawer" class="portal-quick-drawer hidden" hidden data-ui-session-skip>
+          <section id="portalQuickPanel" class="portal-quick-panel" aria-label="Portal Kurzmenü">
+            <div class="portal-quick-panel__head">
+              <h2>Fishing-Club-Portal</h2>
+              <button type="button" id="portalQuickClose" class="portal-quick-close" aria-label="Portal schließen">✕</button>
+            </div>
+            <p class="small">Schnellzugriff für deine Favoriten.</p>
+            <div id="portalQuickList" class="portal-quick-list"></div>
+          </section>
         </div>
-        <p class="small">Schnellzugriff für deine Favoriten.</p>
-        <div id="portalQuickList" class="portal-quick-list"></div>
-      </section>
-    </div>
 
-    <main class="main">
-      <div class="container">
-        <slot />
-      </div>
-    </main>
+        <main class="main">
+          <div class="container">
+            <slot />
+          </div>
+        </main>
 
-    <footer class="site-footer">
-      <div class="container site-footer__inner">
-        <p class="small">© VDAN Ottenheim</p>
-        <nav class="site-footer__links" aria-label="Rechtliche Links">
-          <a href="/kontakt.html/">Kontakt</a>
-          <a href="/datenschutz.html/">Datenschutz</a>
-          {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
-          <a href="/impressum.html/">Impressum</a>
-          <a href="#" data-open-consent-settings>Datenschutz-Einstellungen</a>
-        </nav>
-      </div>
-    </footer>
+        <footer class="site-footer">
+          <div class="container site-footer__inner">
+            <p class="small">© VDAN Ottenheim</p>
+            <nav class="site-footer__links" aria-label="Rechtliche Links">
+              <a href="/kontakt.html/">Kontakt</a>
+              <a href="/datenschutz.html/">Datenschutz</a>
+              {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
+              <a href="/impressum.html/">Impressum</a>
+              <a href="#" data-open-consent-settings>Datenschutz-Einstellungen</a>
+            </nav>
+          </div>
+        </footer>
 
-    <script is:inline src="/js/runtime-guard.js"></script>
-    <script src="/js/app-env.js" defer></script>
-    <script src="/js/offline-data-store.js" defer></script>
-    <script src="/js/offline-sync.js" defer></script>
-    <script src="/js/consent-manager.js" defer></script>
-    <script src="/js/member-auth.js" defer></script>
-    {needsMemberGuard && <script src="/js/member-guard.js" defer></script>}
-    <script src="/js/ui-session.js" defer></script>
-    <script src="/js/nav-burger.js" defer></script>
-    <script src="/js/portal-quick.js" defer></script>
-    <script src="/js/pwa-register.js" defer></script>
-    <!-- <script src="/js/maintenance-gate.js" defer></script> -->
+        <script is:inline src="/js/runtime-guard.js"></script>
+        <script src="/js/app-env.js" defer></script>
+        <script src="/js/offline-data-store.js" defer></script>
+        <script src="/js/offline-sync.js" defer></script>
+        <script src="/js/consent-manager.js" defer></script>
+        <script src="/js/member-auth.js" defer></script>
+        {needsMemberGuard && <script src="/js/member-guard.js" defer></script>}
+        <script src="/js/ui-session.js" defer></script>
+        <script src="/js/nav-burger.js" defer></script>
+        <script src="/js/portal-quick.js" defer></script>
+        <script src="/js/pwa-register.js" defer></script>
+        <!-- <script src="/js/maintenance-gate.js" defer></script> -->
+      </>
+    )}
+    {siteLockdown && (
+      <style>
+        .lockdown {
+          min-height: 100vh;
+          display: grid;
+          place-items: center;
+          padding: clamp(16px, 4vw, 40px);
+          background:
+            radial-gradient(circle at top, rgba(95, 153, 220, 0.24), transparent 48%),
+            linear-gradient(180deg, #0a1019 0%, #090e16 100%);
+        }
+
+        .lockdown__card {
+          width: min(760px, 100%);
+          border: 1px solid var(--line);
+          border-radius: 20px;
+          padding: clamp(20px, 5vw, 44px);
+          text-align: center;
+          background: linear-gradient(180deg, rgba(20, 26, 36, 0.96), rgba(11, 16, 24, 0.96));
+          box-shadow: 0 16px 42px rgba(0, 0, 0, 0.45);
+        }
+
+        .lockdown__brand {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 14px;
+        }
+
+        .lockdown__brand img {
+          width: min(430px, 82%);
+          height: auto;
+          object-fit: contain;
+          display: block;
+        }
+
+        .lockdown__badge {
+          margin: 0 0 10px;
+          color: var(--muted);
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+          font-size: 0.78rem;
+          font-weight: 700;
+        }
+      </style>
+    )}
   </body>
 </html>

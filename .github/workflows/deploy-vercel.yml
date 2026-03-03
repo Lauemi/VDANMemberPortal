@@ -1,15 +1,14 @@
-name: Deploy to Vercel
+name: Deploy to Vercel (FCP)
 
 on:
   push:
     branches:
-      - develop
-      - beta
-      - main
+      - prep_vercel_multienv_admin_tools
   workflow_dispatch:
 
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/prep_vercel_multienv_admin_tools'
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'prod' || github.ref_name == 'beta' && 'beta' || 'staging' }}
     env:

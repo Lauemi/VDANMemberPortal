@@ -1,5 +1,25 @@
 ;(() => {
   const ADMIN_ROLES = new Set(["admin"]);
+  const ROLE_PRIORITY = [
+    "admin",
+    "vorstand",
+    "webmaster",
+    "gewaesserwart",
+    "kassenwart",
+    "schriftfuehrer",
+    "jugendwart",
+    "member",
+  ];
+  const ROLE_OPTIONS = [
+    { value: "member", label: "Mitglied" },
+    { value: "vorstand", label: "Vorstand" },
+    { value: "admin", label: "Admin" },
+    { value: "webmaster", label: "Webmaster" },
+    { value: "gewaesserwart", label: "Gewässerwart" },
+    { value: "kassenwart", label: "Kassenwart" },
+    { value: "schriftfuehrer", label: "Schriftführer" },
+    { value: "jugendwart", label: "Jugendwart" },
+  ];
   const VIEW_KEY = "app:viewMode:mitglieder:v1";
   const state = {
     rows: [],
@@ -99,9 +119,14 @@
 
   function primaryRole(roles) {
     const list = Array.isArray(roles) ? roles.map((r) => String(r || "").toLowerCase()) : [];
-    if (list.includes("admin")) return "admin";
-    if (list.includes("vorstand")) return "vorstand";
+    for (const role of ROLE_PRIORITY) {
+      if (list.includes(role)) return role;
+    }
     return "member";
+  }
+
+  function roleOptionsHtml(selectedRole) {
+    return ROLE_OPTIONS.map((r) => `<option value="${escapeHtml(r.value)}" ${selectedRole === r.value ? "selected" : ""}>${escapeHtml(r.label)}</option>`).join("");
   }
 
   async function setSingleRole(userId, role) {
@@ -258,9 +283,7 @@
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <select data-role-select="${escapeHtml(u.id)}">
-            <option value="member" ${selectedRole === "member" ? "selected" : ""}>Mitglied</option>
-            <option value="vorstand" ${selectedRole === "vorstand" ? "selected" : ""}>Vorstand</option>
-            <option value="admin" ${selectedRole === "admin" ? "selected" : ""}>Admin</option>
+            ${roleOptionsHtml(selectedRole)}
           </select>
           <button type="button" class="feed-btn js-save-role" data-user-id="${escapeHtml(u.id)}">Speichern</button>
           <span class="small" data-role-msg="${escapeHtml(u.id)}"></span>
@@ -304,9 +327,7 @@
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <select data-role-select="${escapeHtml(u.id)}">
-            <option value="member" ${selectedRole === "member" ? "selected" : ""}>Mitglied</option>
-            <option value="vorstand" ${selectedRole === "vorstand" ? "selected" : ""}>Vorstand</option>
-            <option value="admin" ${selectedRole === "admin" ? "selected" : ""}>Admin</option>
+            ${roleOptionsHtml(selectedRole)}
           </select>
           <button type="button" class="feed-btn js-save-role" data-user-id="${escapeHtml(u.id)}">Speichern</button>
           <span class="small" data-role-msg="${escapeHtml(u.id)}"></span>

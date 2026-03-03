@@ -49,7 +49,7 @@ with check (auth.uid() = id);
 -- =========================
 create table if not exists public.user_roles (
   user_id uuid references auth.users(id) on delete cascade,
-  role text not null check (role in ('member','admin','vorstand')),
+  role text not null check (role in ('member','vorstand','admin','webmaster','gewaesserwart','kassenwart','schriftfuehrer','jugendwart')),
   created_at timestamptz not null default now(),
   primary key (user_id, role)
 );

@@ -7,7 +7,7 @@ begin;
 alter table public.user_roles drop constraint if exists user_roles_role_check;
 alter table public.user_roles
   add constraint user_roles_role_check
-  check (role in ('member','admin','vorstand'));
+  check (role in ('member','vorstand','admin','webmaster','gewaesserwart','kassenwart','schriftfuehrer','jugendwart'));
 
 -- 2) Helper: admin or vorstand
 create or replace function public.is_admin_or_vorstand()

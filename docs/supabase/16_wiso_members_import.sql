@@ -12,7 +12,7 @@ create table if not exists public.club_members (
   membership_kind text,
   fishing_card_type text,
   is_youth boolean not null default false,
-  role text not null default 'member' check (role in ('member','vorstand','admin')),
+  role text not null default 'member' check (role in ('member','vorstand','admin','webmaster','gewaesserwart','kassenwart','schriftfuehrer','jugendwart')),
   wiso_roles text,
   updated_at timestamptz not null default now(),
   created_at timestamptz not null default now()

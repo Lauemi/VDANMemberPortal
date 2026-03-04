@@ -97,6 +97,14 @@
     return Array.isArray(rows) ? rows : [];
   }
 
+  async function listAuthLastSignins() {
+    const rows = await sb("/rest/v1/rpc/admin_user_last_signins", {
+      method: "POST",
+      body: JSON.stringify({}),
+    }, true);
+    return Array.isArray(rows) ? rows : [];
+  }
+
   function primaryRole(roles) {
     const list = Array.isArray(roles) ? roles.map((r) => String(r || "").toLowerCase()) : [];
     if (list.includes("admin")) return "admin";
@@ -137,7 +145,7 @@
     }, true);
   }
 
-  function mergeRows(profiles, roles, usageRows = []) {
+  function mergeRows(profiles, roles, usageRows = [], authRows = []) {
     const roleMap = new Map();
     roles.forEach((r) => {
       const uid = String(r.user_id || "");
@@ -152,11 +160,17 @@
         .filter((r) => r?.user_id)
         .map((r) => [String(r.user_id), r])
     );
+    const authMap = new Map(
+      (authRows || [])
+        .filter((r) => r?.user_id)
+        .map((r) => [String(r.user_id), r])
+    );
 
     const ids = new Set([
       ...profiles.map((p) => String(p.id || "")),
       ...roles.map((r) => String(r.user_id || "")),
       ...usageRows.map((r) => String(r.user_id || "")),
+      ...authRows.map((r) => String(r.user_id || "")),
     ]);
 
     const merged = [...ids]
@@ -165,6 +179,7 @@
         const p = profiles.find((x) => String(x.id) === id) || {};
         const rs = [...new Set((roleMap.get(id) || []).filter(Boolean))];
         const u = usageMap.get(id) || {};
+        const a = authMap.get(id) || {};
         return {
           id,
           name: String(p.display_name || "").trim(),
@@ -175,6 +190,7 @@
           roles: rs,
           firstLoginAt: String(u.first_login_at || "").trim(),
           lastSeenAt: String(u.last_seen_at || "").trim(),
+          lastSignInAt: String(a.last_sign_in_at || "").trim(),
           isOnline: Boolean(u.is_online),
         };
       })
@@ -245,6 +261,7 @@
           <strong>${escapeHtml(u.name || u.email || u.id)}</strong>
           <div class="small">${escapeHtml(u.email || "-")}</div>
           <div class="small">${u.isOnline ? "Online" : "Offline"} • Letzte Aktivität: ${escapeHtml(formatTs(u.lastSeenAt))}</div>
+          <div class="small">Letzter Login: ${escapeHtml(formatTs(u.lastSignInAt))}</div>
           <div class="small">Erstlogin: ${escapeHtml(formatTs(u.firstLoginAt))}</div>
         </div>
         <div>${escapeHtml(u.memberNo || "-")}</div>
@@ -351,6 +368,7 @@
         <p><strong>Mitglieds-Nr.</strong><br>${escapeHtml(row.memberNo || "-")}</p>
         <p><strong>Status</strong><br>${row.isOnline ? "Online" : "Offline"}</p>
         <p><strong>Letzte Aktivität</strong><br>${escapeHtml(formatTs(row.lastSeenAt))}</p>
+        <p><strong>Letzter Login</strong><br>${escapeHtml(formatTs(row.lastSignInAt))}</p>
         <p><strong>Erstlogin</strong><br>${escapeHtml(formatTs(row.firstLoginAt))}</p>
       </div>
       <hr />
@@ -438,8 +456,13 @@
 
     try {
       setMsg("Lade Benutzer...");
-      const [profiles, userRoles, usageRows] = await Promise.all([listProfiles(), listRoles(), listOnlineUsage().catch(() => [])]);
-      state.rows = mergeRows(profiles, userRoles, usageRows);
+      const [profiles, userRoles, usageRows, authRows] = await Promise.all([
+        listProfiles(),
+        listRoles(),
+        listOnlineUsage().catch(() => []),
+        listAuthLastSignins().catch(() => []),
+      ]);
+      state.rows = mergeRows(profiles, userRoles, usageRows, authRows);
       renderFilteredRows();
       setMsg(`Benutzer geladen: ${profiles.length}`);
     } catch (err) {

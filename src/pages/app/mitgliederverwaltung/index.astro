@@ -1,0 +1,58 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Mitglieder-Registry • ${APP.name}`} description="Admin: Vereinsmitglieder verwalten" robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <h1>Mitglieder-Registry</h1>
+      <p class="small">Admin-Übersicht für Vereinsverwaltung, Login-Aktivität und Stammdatenpflege.</p>
+      <p id="memberRegistryMsg" class="small" aria-live="polite"></p>
+
+      <div class="ui-filter-row">
+        <label>
+          <span>Suche</span>
+          <input id="memberRegistrySearch" type="search" placeholder="Mitglieds-Nr., Name, Status, Ort..." />
+        </label>
+        <label>
+          <span>Status</span>
+          <select id="memberRegistryStatusFilter">
+            <option value="all">Alle</option>
+            <option value="aktiv">Aktiv</option>
+            <option value="passiv">Passiv</option>
+          </select>
+        </label>
+        <button id="memberRegistryReload" type="button" class="feed-btn feed-btn--ghost">Neu laden</button>
+      </div>
+
+      <details>
+        <summary>Spalten anzeigen/ausblenden</summary>
+        <div id="memberRegistryColumnToggles" class="ui-filter-row" style="margin-top:8px;"></div>
+      </details>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__body">
+      <div class="catch-table">
+        <div id="memberRegistryHead" class="catch-table__head"></div>
+        <div id="memberRegistryRows"></div>
+      </div>
+    </div>
+  </section>
+
+  <dialog id="memberRegistryDialog" class="catch-dialog">
+    <form method="dialog" class="catch-dialog__form">
+      <h2>Mitglied verwalten</h2>
+      <p id="memberRegistryDialogMsg" class="small" aria-live="polite"></p>
+      <div id="memberRegistryDialogBody" class="catch-dialog__body"></div>
+      <div class="catch-dialog__actions">
+        <button type="button" id="memberRegistrySaveBtn" class="feed-btn">Speichern</button>
+        <button type="submit" class="feed-btn feed-btn--ghost">Schließen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/js/member-registry-admin.js" defer></script>
+</Site>

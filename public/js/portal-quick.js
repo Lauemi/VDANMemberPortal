@@ -37,6 +37,7 @@
     { id: "dokumente", href: "/app/dokumente/", label: "Dokumente", short: "DV", access: "manager", group: "manager" },
 
     { id: "mitglieder", href: "/app/mitglieder/", label: "Mitglieder", short: "MV", access: "admin", group: "admin" },
+    { id: "mitgliederverwaltung", href: "/app/mitgliederverwaltung/", label: "Mitglieder-Registry", short: "MR", access: "admin", group: "admin" },
     { id: "fangliste_cockpit", href: "/app/fangliste/cockpit/", label: "Fangliste Cockpit", short: "FC", access: "admin", group: "admin" },
     { id: "lizenzen_api", href: "/app/lizenzen/", label: "Wetter & Karten API", short: "WX", access: "admin", group: "admin" },
     { id: "feedback_cockpit", href: "/app/feedback/cockpit/", label: "Fehler-Cockpit", short: "BC", access: "admin", group: "admin" },

@@ -76,6 +76,19 @@ Erwartung:
 
 Wenn ungeplante Seiteneffekte auftreten:
 
+Vor Ruecksetzung der PK auf `(user_id, role)` zwingend pruefen, ob es bereits
+mehrere Rollenzeilen pro User und Rolle ueber verschiedene Clubs gibt:
+
+```sql
+select user_id, role, count(*) as c
+from public.user_roles
+group by user_id, role
+having count(*) > 1;
+```
+
+Wenn diese Abfrage Zeilen liefert, darf die alte PK nicht direkt gesetzt werden.
+In diesem Fall zuerst fachlich entscheiden, welche Zeilen bestehen bleiben sollen.
+
 ```sql
 begin;
 

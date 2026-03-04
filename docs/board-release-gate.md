@@ -1,4 +1,4 @@
-wi# Board Release Gate - Multi-Tenant + DSGVO
+# Board Release Gate - Multi-Tenant + DSGVO
 
 Stand: 4. Maerz 2026
 

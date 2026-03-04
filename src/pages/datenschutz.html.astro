@@ -3,24 +3,32 @@ import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
 ---
 
-<Site title={`Datenschutz • ${APP.name}`} description="Datenschutzhinweise für die Website und das Mitgliederportal des VDAN Ottenheim.">
+<Site title={`Datenschutz • ${APP.name}`} description="Datenschutzhinweise für Fishing-Club-Portal und angebundene Vereinsauftritte.">
   <section class="card" style="max-width:980px;margin:0 auto;">
     <div class="card__body">
       <h1>Datenschutzerklärung</h1>
-      <p class="small">Stand: 21. Februar 2026</p>
+      <p class="small">Stand: 03. März 2026</p>
 
-      <h2>1. Verantwortlicher</h2>
+      <h2>1. Verantwortlicher und Geltungsbereich</h2>
       <p>
-        Verein der Angler und Naturfreunde Ottenheim 1957 e.V.<br />
-        Georgenstr. 33, 77963 Schwanau<br />
-        E-Mail: <a href="mailto:vdan.ottenheim@freenet.de">vdan.ottenheim@freenet.de</a>
+        Diese Datenschutzerklärung gilt für den Betrieb der Plattform <strong>Fishing-Club-Portal</strong> unter den
+        zugehörigen Domains/Subdomains (inkl. Vereinsauftritte und Mitgliederportal).
+      </p>
+      <p>
+        Plattform-Betrieb / technische Verantwortung:<br />
+        Michael Lauenroth<br />
+        E-Mail: <a href="mailto:m.lauenroth@lauemi.de">m.lauenroth@lauemi.de</a>
+      </p>
+      <p>
+        Für vereinsbezogene Inhalte und fachliche Entscheidungen im jeweiligen Vereinsauftritt bleibt der jeweilige Verein
+        verantwortlich. Die rechtsverbindlichen Anbieterangaben finden sich im Impressum.
       </p>
 
       <h2>2. Zwecke und Rechtsgrundlagen der Verarbeitung</h2>
       <p>
-        Wir verarbeiten personenbezogene Daten zur Bereitstellung dieser Website und des Mitgliederportals, zur
-        Vereinsverwaltung (z. B. Mitgliedsdaten, Arbeitsstunden, Fangdaten), zur Durchführung von Vereinsabläufen sowie
-        zur Kommunikation mit Mitgliedern.
+        Wir verarbeiten personenbezogene Daten zur Bereitstellung der Plattform, zur Authentifizierung und
+        Zugriffssteuerung, zur Vereinsverwaltung (z. B. Mitgliedsdaten, Arbeitsstunden, Fangdaten), zur Durchführung von
+        Vereinsabläufen sowie zur Kommunikation mit Mitgliedern.
       </p>
       <p>
         Rechtsgrundlagen sind insbesondere Art. 6 Abs. 1 lit. b DSGVO (mitgliedschaftsbezogene Leistungen),
@@ -30,8 +38,9 @@ import { APP } from "../config/app";
 
       <h2>3. Hosting und technische Dienstleister</h2>
       <p>
-        Die Website wird bei IONOS gehostet. Für das Mitgliederportal nutzen wir Supabase als Backend
-        (Authentifizierung, Datenbank, Berechtigungen).
+        Die Plattform wird primär über Vercel bereitgestellt. Für Datenbank, Authentifizierung, Storage und Funktionen
+        wird Supabase eingesetzt. In Übergangs- oder Migrationsphasen können einzelne Domains weiterhin über IONOS
+        betrieben sein.
       </p>
       <p>
         Mit eingesetzten Dienstleistern werden, soweit erforderlich, Verträge zur Auftragsverarbeitung gemäß Art. 28
@@ -48,10 +57,15 @@ import { APP } from "../config/app";
         gelöscht, soweit keine längere Aufbewahrung zur Missbrauchs- oder Sicherheitsaufklärung erforderlich ist.
       </p>
 
-      <h2>5. Mitgliederportal und Zugriffsschutz</h2>
+      <h2>5. Mitgliederportal, Rollen und Zugriffsschutz</h2>
       <p>
         Der Zugriff auf geschützte Funktionen erfolgt nur nach Anmeldung. Die Datenverarbeitung im Portal erfolgt
         rollenbasiert auf Basis technischer Zugriffskontrollen und Berechtigungsregeln.
+      </p>
+      <p>
+        Für mandantenfähige Vereinsstrukturen wird der Datenzugriff technisch nach Vereinskontext getrennt
+        (Tenant-/`club_id`-Prinzip). Ein bereichsübergreifender Zugriff erfolgt nur, wenn dies technisch und rechtlich
+        zulässig konfiguriert ist.
       </p>
 
       <h2>6. Online-Bewerbung „Mitglied werden“</h2>
@@ -102,7 +116,14 @@ import { APP } from "../config/app";
         optionalen externen Inhalte ist Ihre Einwilligung (Art. 6 Abs. 1 lit. a DSGVO).
       </p>
 
-      <h2>9. Kontaktformular / Spam-Schutz</h2>
+      <h2>9. Push-Benachrichtigungen (optional)</h2>
+      <p>
+        Push-Benachrichtigungen werden nur nach aktiver Gerätefreigabe genutzt. Die Speicherung der
+        Benachrichtigungs-Subscription erfolgt gerätebezogen. Die Deaktivierung ist jederzeit in den App-/Browser-
+        Einstellungen möglich.
+      </p>
+
+      <h2>10. Kontaktformular / Spam-Schutz</h2>
       <p>
         Das Kontaktformular wird serverseitig verarbeitet. Zur Abwehr automatisierter Anfragen setzen wir eine
         technische Bot-Prüfung (Cloudflare Turnstile), ein Honeypot-Feld, serverseitige Plausibilitätsprüfungen und
@@ -113,13 +134,13 @@ import { APP } from "../config/app";
         dabei nicht im Klartext gespeichert, sondern gehasht verarbeitet.
       </p>
 
-      <h2>10. Speicherdauer</h2>
+      <h2>11. Speicherdauer</h2>
       <p>
         Personenbezogene Daten werden nur so lange gespeichert, wie es für die genannten Zwecke erforderlich ist oder
         gesetzliche Aufbewahrungspflichten bestehen.
       </p>
 
-      <h2>11. Ihre Rechte</h2>
+      <h2>12. Ihre Rechte</h2>
       <p>
         Sie haben nach Maßgabe der Art. 15 ff. DSGVO insbesondere das Recht auf Auskunft, Berichtigung, Löschung,
         Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch.
@@ -128,10 +149,10 @@ import { APP } from "../config/app";
         Außerdem haben Sie das Recht auf Beschwerde bei einer zuständigen Datenschutzaufsichtsbehörde.
       </p>
 
-      <h2>12. Kontakt Datenschutz</h2>
+      <h2>13. Kontakt Datenschutz</h2>
       <p>
         Bei Fragen zum Datenschutz wenden Sie sich bitte an:<br />
-        <a href="mailto:vdan.ottenheim@freenet.de">vdan.ottenheim@freenet.de</a>
+        <a href="mailto:m.lauenroth@lauemi.de">m.lauenroth@lauemi.de</a>
       </p>
     </div>
   </section>

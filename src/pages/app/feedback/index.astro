@@ -1,0 +1,42 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Fehler melden • ${APP.name}`} description="Fehler digital melden und Rückmeldungen verfolgen" robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <h1>Fehler melden</h1>
+      <p class="small">Melde Fehler direkt aus der App. Du siehst hier auch den Bearbeitungsstand und Rückfragen.</p>
+      <p id="bugReportMsg" class="small" aria-live="polite"></p>
+
+      <form id="bugReportForm" class="grid" style="gap:10px;">
+        <label>
+          <span>Titel</span>
+          <input id="bugTitle" type="text" maxlength="140" required placeholder="Kurz: Was ist kaputt?" />
+        </label>
+        <label>
+          <span>Beschreibung</span>
+          <textarea id="bugDescription" rows="5" required placeholder="Was hast du gemacht, was ist passiert, was wäre erwartet?"></textarea>
+        </label>
+        <label>
+          <span>Screenshot-Link (optional)</span>
+          <input id="bugScreenshotUrl" type="url" placeholder="https://..." />
+        </label>
+        <button id="bugSubmitBtn" type="submit" class="feed-btn">Fehler absenden</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__body">
+      <div class="catch-table-toolbar">
+        <h2>Meine Meldungen</h2>
+        <button id="bugReloadBtn" type="button" class="feed-btn feed-btn--ghost">Neu laden</button>
+      </div>
+      <div id="bugReportList" class="grid" style="gap:10px;"></div>
+    </div>
+  </section>
+
+  <script src="/js/feedback-reports.js" defer></script>
+</Site>

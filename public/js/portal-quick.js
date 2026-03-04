@@ -27,6 +27,7 @@
     { id: "gewaesserkarte", href: "/app/gewaesserkarte/", label: "Gewässerkarte", short: "GK", access: "member", group: "member" },
     { id: "zustaendigkeiten", href: "/app/zustaendigkeiten/", label: "Zuständigkeiten", short: "ZU", access: "member", group: "member" },
     { id: "einstellungen", href: "/app/einstellungen/", label: "Einstellungen", short: "ES", access: "member", group: "member" },
+    { id: "feedback", href: "/app/feedback/", label: "Fehler melden", short: "FB", access: "member", group: "member" },
 
     { id: "scanner", href: "/app/ausweis/verifizieren/", label: "Scanner", short: "SC", access: "manager", group: "manager" },
     { id: "as_cockpit", href: "/app/arbeitseinsaetze/cockpit/", label: "Arbeitseinsatz Cockpit", short: "AC", access: "manager", group: "manager" },
@@ -38,6 +39,7 @@
     { id: "mitglieder", href: "/app/mitglieder/", label: "Mitglieder", short: "MV", access: "admin", group: "admin" },
     { id: "fangliste_cockpit", href: "/app/fangliste/cockpit/", label: "Fangliste Cockpit", short: "FC", access: "admin", group: "admin" },
     { id: "lizenzen_api", href: "/app/lizenzen/", label: "Wetter & Karten API", short: "WX", access: "admin", group: "admin" },
+    { id: "feedback_cockpit", href: "/app/feedback/cockpit/", label: "Fehler-Cockpit", short: "BC", access: "admin", group: "admin" },
   ];
 
   const GROUP_ORDER = ["member", "manager", "admin"];

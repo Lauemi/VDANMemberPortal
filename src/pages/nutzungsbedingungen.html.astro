@@ -3,37 +3,35 @@ import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
 ---
 
-<Site title={`Nutzungsbedingungen • ${APP.name}`} description="Nutzungsbedingungen für das VDAN Fishing-Club-Portal.">
+<Site title={`Nutzungsbedingungen • ${APP.name}`} description="Nutzungsbedingungen für das Fishing-Club-Portal.">
   <section class="card">
     <div class="card__body prose">
       <h1>Nutzungsbedingungen</h1>
-      <p><strong>Stand:</strong> 26.02.2026</p>
+      <p><strong>Stand:</strong> 03.03.2026</p>
 
       <h2>1. Geltungsbereich</h2>
       <p>
-        Diese Nutzungsbedingungen gelten für die Nutzung der öffentlichen Website sowie des geschützten
-         Fishing-Club-Portals (Mitgliederbereich). Nachfolgend wird der Verein als "VDAN" bezeichnet.
+        Diese Nutzungsbedingungen gelten für die Nutzung der öffentlichen Website sowie der geschützten
+        Mitgliederbereiche des Fishing-Club-Portals. Sie gelten für Plattformnutzer und für angebundene Vereinsauftritte.
       </p>
 
-      <h2>2. Anbieter / Verantwortliche Stelle</h2>
+      <h2>2. Anbieter / verantwortliche Stelle</h2>
       <p>
-        VDAN (Verein der Angler und Naturfreunde Ottenheim 1957 e.V.)
-      </p>
-      <p>
-        Ansprechpartner und operative Portalverantwortung: Michael Lauenroth
+        Plattformbetrieb: Michael Lauenroth (Fishing-Club-Portal)
       </p>
       <p>
         Kontakt für Portalbetrieb: <a href="mailto:m.lauenroth@lauemi.de">m.lauenroth@lauemi.de</a>
       </p>
       <p>
-        Rechtsverbindliche Anbieterangaben ergeben sich im Zweifel aus dem jeweils aktuellen Impressum.
+        Für vereinsspezifische Inhalte und Entscheidungen ist der jeweilige Verein verantwortlich.
+        Rechtsverbindliche Anbieterangaben ergeben sich aus dem jeweils aktuellen Impressum.
       </p>
 
       <h2>3. Eigentum, Rechte und Nutzungsumfang</h2>
       <ol>
         <li>Das Fishing-Club-Portal ist ein eigenständiges Produkt von Michael Lauenroth.</li>
         <li>Eigentums-, Urheber- und Verwertungsrechte verbleiben vollständig beim Entwickler.</li>
-        <li>Der Verein erhält ein einfaches, nicht übertragbares Nutzungsrecht für den internen Vereinsbetrieb.</li>
+        <li>Der jeweilige Verein erhält ein einfaches, nicht übertragbares Nutzungsrecht für den internen Vereinsbetrieb.</li>
         <li>Es besteht kein Anspruch auf Quellcode, Miturheberrechte oder Verwertungsbeteiligung.</li>
       </ol>
 
@@ -48,7 +46,14 @@ import { APP } from "../config/app";
       <ol>
         <li>Öffentlich: Informationsseiten, Termine, Downloads, Kontakt.</li>
         <li>Mitgliederportal: rollenbasierte Funktionen (z. B. Fangliste, Arbeitseinsätze, Ausweis, Gewässerkarte, interne Verwaltung).</li>
-        <li>VDAN kann Funktionen aus technischen, organisatorischen oder rechtlichen Gründen ändern, einschränken oder einstellen.</li>
+        <li>Plattformbetrieb und Vereine können Funktionen aus technischen, organisatorischen oder rechtlichen Gründen ändern, einschränken oder einstellen.</li>
+      </ol>
+
+      <h2>5a. Mandanten- und Rollenprinzip</h2>
+      <ol>
+        <li>Zugriffe auf geschützte Daten erfolgen vereinsbezogen und rollenbasiert.</li>
+        <li>Ein Nutzer kann mehreren Vereinen zugeordnet sein, sofern dies organisatorisch freigeschaltet ist.</li>
+        <li>Schreibvorgänge erfolgen stets in einem klaren Vereinskontext.</li>
       </ol>
 
       <h2>6. Registrierung und Zugang</h2>
@@ -67,14 +72,14 @@ import { APP } from "../config/app";
 
       <h2>8. Verfügbarkeit</h2>
       <ol>
-        <li>VDAN bemüht sich um einen störungsarmen Betrieb.</li>
+        <li>Der Plattformbetrieb bemüht sich um einen störungsarmen Betrieb.</li>
         <li>Eine durchgehende Verfügbarkeit wird nicht geschuldet.</li>
         <li>Wartung, Sicherheitsupdates, Ausfälle von Drittanbietern, höhere Gewalt oder Netzstörungen können zu Unterbrechungen führen.</li>
       </ol>
 
       <h2>9. Sicherheitserklärung</h2>
       <ol>
-        <li>VDAN setzt angemessene technische und organisatorische Maßnahmen zum Schutz von Daten und Systemen ein.</li>
+        <li>Der Plattformbetrieb setzt angemessene technische und organisatorische Maßnahmen zum Schutz von Daten und Systemen ein.</li>
         <li>Dazu gehören insbesondere rollenbasierte Zugriffssteuerung, Authentifizierungsmechanismen und Protokollierung sicherheitsrelevanter Ereignisse.</li>
         <li>Ein vollständig risikofreier Betrieb kann technisch nicht garantiert werden.</li>
       </ol>
@@ -87,8 +92,8 @@ import { APP } from "../config/app";
 
       <h2>11. Haftung</h2>
       <ol>
-        <li>VDAN haftet unbeschränkt bei Vorsatz und grober Fahrlässigkeit sowie bei Schäden aus Verletzung von Leben, Körper oder Gesundheit.</li>
-        <li>Bei leicht fahrlässiger Verletzung wesentlicher Vertragspflichten haftet VDAN nur auf den vertragstypischen, vorhersehbaren Schaden.</li>
+        <li>Der Plattformbetreiber haftet unbeschränkt bei Vorsatz und grober Fahrlässigkeit sowie bei Schäden aus Verletzung von Leben, Körper oder Gesundheit.</li>
+        <li>Bei leicht fahrlässiger Verletzung wesentlicher Vertragspflichten haftet der Plattformbetreiber nur auf den vertragstypischen, vorhersehbaren Schaden.</li>
         <li>Im Übrigen ist die Haftung bei leichter Fahrlässigkeit ausgeschlossen.</li>
         <li>Zwingende gesetzliche Haftungsvorschriften bleiben unberührt.</li>
       </ol>
@@ -107,7 +112,7 @@ import { APP } from "../config/app";
 
       <h2>14. Änderungen dieser Nutzungsbedingungen</h2>
       <ol>
-        <li>VDAN kann diese Nutzungsbedingungen aus sachlichem Grund anpassen (z. B. Rechtsänderungen, Sicherheitsanforderungen, Funktionsänderungen).</li>
+        <li>Der Plattformbetrieb kann diese Nutzungsbedingungen aus sachlichem Grund anpassen (z. B. Rechtsänderungen, Sicherheitsanforderungen, Funktionsänderungen).</li>
         <li>Die jeweils aktuelle Fassung wird auf der Website veröffentlicht.</li>
       </ol>
 

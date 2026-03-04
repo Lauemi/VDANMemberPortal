@@ -35,13 +35,18 @@ a{color:inherit}
 }
 
 .logo picture{
-  display:block;
+  width:140px;
+  height:44px;
+  display:flex;
+  align-items:center;
 }
 
 .logo img{
-  width:clamp(132px, 20vw, 210px);
-  height:44px;
+  width:100%;
+  min-width:100px;
+  height:100%;
   object-fit:contain;
+  object-position:left center;
   display:block;
 }
 
@@ -2549,4 +2554,27 @@ body[data-portal-rail-side="left"] .catch-fab-stack{
   .home-hero-slider__slide{
     flex:0 0 100%;
   }
+}
+
+.feedback-fab{
+  position:fixed;
+  right:max(14px, env(safe-area-inset-right));
+  bottom:calc(18px + env(safe-area-inset-bottom));
+  z-index:80;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border-radius:999px;
+  padding:10px 14px;
+  background:linear-gradient(135deg, #1f6feb, #0ea5e9);
+  color:#fff;
+  font-weight:700;
+  text-decoration:none;
+  box-shadow:0 10px 20px rgba(0,0,0,.28);
+}
+
+.feedback-fab:hover,
+.feedback-fab:focus-visible{
+  transform:translateY(-1px);
+  filter:brightness(1.05);
 }

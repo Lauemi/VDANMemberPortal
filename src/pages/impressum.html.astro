@@ -3,41 +3,43 @@ import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
 ---
 
-<Site title={`Impressum • ${APP.name}`} description="Impressum des Vereins der Angler und Naturfreunde Ottenheim 1957 e.V.">
+<Site title={`Impressum • ${APP.name}`} description="Impressum für den Plattformbetrieb des Fishing-Club-Portals.">
   <section class="card" style="max-width:900px;margin:0 auto;">
     <div class="card__body">
       <h1>Impressum</h1>
+      <p class="small">Stand: 03. März 2026</p>
 
       <h2>Angaben gemäß § 5 TMG</h2>
       <p>
-        Verein der Angler und Naturfreunde Ottenheim 1957 e.V.<br />
-        Georgenstr. 33<br />
+        Plattformbetreiber: Fishing-Club-Portal (technischer Betrieb)<br />
+        Michael Lauenroth<br />
+        Gartenstraße 21<br />
         77963 Schwanau
-      </p>
-
-      <h2>Vertreten durch den Vorstand</h2>
-      <p>
-        1. Vorstand: Rolf Bühler<br />
-        2. Vorstand: Markus Mild
       </p>
 
       <h2>Kontakt</h2>
       <p>
-        E-Mail: <a href="mailto:vdan.ottenheim@freenet.de">vdan.ottenheim@freenet.de</a>
-      </p>
-
-      <h2>Vereinsregister</h2>
-      <p>
-        Registergericht: Amtsgericht Freiburg im Breisgau<br />
-        Registernummer: VR 390454
-      </p>
-
-      <h2>Webseiten-Administration</h2>
-      <p>
-        Michael Lauenroth<br />
-        Gartenstraße 21<br />
-        77963 Schwanau<br />
         E-Mail: <a href="mailto:m.lauenroth@lauemi.de">m.lauenroth@lauemi.de</a>
+      </p>
+
+      <h2>Inhalte der Vereinsauftritte</h2>
+      <p>
+        Für inhaltliche Angaben einzelner Vereine (z. B. Termine, Ansprechpartner, vereinsinterne Veröffentlichungen)
+        ist der jeweilige Verein verantwortlich. Vereinsbezogene Kontaktdaten werden in den jeweiligen Vereinsbereichen
+        ausgewiesen.
+      </p>
+
+      <h2>Technische Dienstleister</h2>
+      <p>
+        Bereitstellung/Hosting: Vercel<br />
+        Backend (Datenbank, Authentifizierung, Funktionen): Supabase<br />
+        Übergangsweise können einzelne Domains oder Dienste über IONOS geführt werden.
+      </p>
+
+      <h2>Hinweis zur Rechtsnatur</h2>
+      <p>
+        Dieses Impressum beschreibt den technischen Plattformbetrieb. Sofern gesetzlich erforderlich, werden
+        vereinsspezifische Pflichtangaben je Vereinsauftritt ergänzt.
       </p>
 
       <h2>Haftung für Inhalte</h2>

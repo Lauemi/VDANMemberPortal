@@ -23,7 +23,38 @@ import { APP } from "../../../config/app";
             <option value="passiv">Passiv</option>
           </select>
         </label>
+        <label>
+          <span>Club</span>
+          <select id="memberRegistryClubFilter">
+            <option value="all">Alle</option>
+          </select>
+        </label>
+        <label>
+          <span>Login</span>
+          <select id="memberRegistryLoginFilter">
+            <option value="all">Alle</option>
+            <option value="yes">Mit Login</option>
+            <option value="no">Ohne Login</option>
+          </select>
+        </label>
+        <label>
+          <span>Zeilen</span>
+          <select id="memberRegistryPageSize">
+            <option value="25">25</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="250">250</option>
+          </select>
+        </label>
         <button id="memberRegistryReload" type="button" class="feed-btn feed-btn--ghost">Neu laden</button>
+      </div>
+      <div class="ui-filter-row" style="margin-top:8px;">
+        <p id="memberRegistryStats" class="small" style="margin:0;flex:1 1 auto;"></p>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="memberRegistryPrevPage" type="button" class="feed-btn feed-btn--ghost">Zurück</button>
+          <span id="memberRegistryPageInfo" class="small">Seite 1 / 1</span>
+          <button id="memberRegistryNextPage" type="button" class="feed-btn feed-btn--ghost">Weiter</button>
+        </div>
       </div>
 
       <details>
@@ -35,9 +66,14 @@ import { APP } from "../../../config/app";
 
   <section class="card">
     <div class="card__body">
-      <div class="catch-table">
-        <div id="memberRegistryHead" class="catch-table__head"></div>
-        <div id="memberRegistryRows"></div>
+      <div class="work-part-table-wrap">
+        <table class="work-part-table" id="memberRegistryTable">
+          <colgroup id="memberRegistryColgroup"></colgroup>
+          <thead>
+            <tr id="memberRegistryHead"></tr>
+          </thead>
+          <tbody id="memberRegistryRows"></tbody>
+        </table>
       </div>
     </div>
   </section>

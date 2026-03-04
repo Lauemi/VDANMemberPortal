@@ -1,25 +1,26 @@
 ;(() => {
   const STORAGE_COLS = "admin:member_registry:cols:v1";
   const STORAGE_SORT = "admin:member_registry:sort:v1";
+  const STORAGE_PAGE = "admin:member_registry:page:v1";
   const COLUMNS = [
-    { key: "club_code", label: "Club", default: true },
-    { key: "club_id", label: "ClubID", default: true },
-    { key: "member_no", label: "Mitgliedsnummer", default: true },
-    { key: "last_name", label: "Name", default: true },
-    { key: "first_name", label: "Vorname", default: true },
-    { key: "status", label: "Status", default: true },
-    { key: "fishing_card_type", label: "Angelkarte", default: true },
-    { key: "login_dot", label: "Login", default: true },
-    { key: "last_sign_in_at", label: "Zuletzt angemeldet", default: false },
-    { key: "street", label: "Adresse", default: false },
-    { key: "zip", label: "PLZ", default: false },
-    { key: "city", label: "Ort", default: false },
-    { key: "phone", label: "Tel", default: false },
-    { key: "mobile", label: "Mobil", default: false },
-    { key: "birthdate", label: "Geburtstag", default: false },
-    { key: "guardian_member_no", label: "Bezugsperson", default: false },
-    { key: "sepa_approved", label: "SEPA", default: false },
-    { key: "iban_last4", label: "IBAN (letzte 4)", default: false },
+    { key: "club_code", label: "Club", default: true, width: 100 },
+    { key: "club_id", label: "ClubID", default: false, width: 220 },
+    { key: "member_no", label: "Mitgliedsnummer", default: true, width: 150 },
+    { key: "last_name", label: "Name", default: true, width: 160 },
+    { key: "first_name", label: "Vorname", default: true, width: 150 },
+    { key: "status", label: "Status", default: true, width: 120 },
+    { key: "fishing_card_type", label: "Angelkarte", default: true, width: 140 },
+    { key: "login_dot", label: "Login", default: true, width: 90 },
+    { key: "last_sign_in_at", label: "Zuletzt angemeldet", default: false, width: 190 },
+    { key: "street", label: "Adresse", default: false, width: 220 },
+    { key: "zip", label: "PLZ", default: false, width: 110 },
+    { key: "city", label: "Ort", default: false, width: 150 },
+    { key: "phone", label: "Tel", default: false, width: 140 },
+    { key: "mobile", label: "Mobil", default: false, width: 140 },
+    { key: "birthdate", label: "Geburtstag", default: false, width: 140 },
+    { key: "guardian_member_no", label: "Bezugsperson", default: false, width: 160 },
+    { key: "sepa_approved", label: "SEPA", default: false, width: 110 },
+    { key: "iban_last4", label: "IBAN (letzte 4)", default: false, width: 140 },
   ];
 
   const state = {
@@ -27,9 +28,13 @@
     filtered: [],
     search: "",
     statusFilter: "all",
+    clubFilter: "all",
+    loginFilter: "all",
     visibleCols: new Set(COLUMNS.filter((c) => c.default).map((c) => c.key)),
     sortKey: "member_no",
     sortDir: "asc",
+    page: 1,
+    pageSize: 50,
     activeRow: null,
   };
 
@@ -90,9 +95,13 @@
     try {
       const cols = JSON.parse(localStorage.getItem(STORAGE_COLS) || "[]");
       if (Array.isArray(cols) && cols.length) state.visibleCols = new Set(cols.filter((k) => COLUMNS.some((c) => c.key === k)));
+      state.visibleCols.delete("club_id");
       const sort = JSON.parse(localStorage.getItem(STORAGE_SORT) || "{}");
       if (sort?.key) state.sortKey = String(sort.key);
       if (sort?.dir === "desc") state.sortDir = "desc";
+      const page = JSON.parse(localStorage.getItem(STORAGE_PAGE) || "{}");
+      const size = Number(page?.size || 50);
+      if ([25, 50, 100, 250].includes(size)) state.pageSize = size;
     } catch {
       // ignore
     }
@@ -102,6 +111,7 @@
     try {
       localStorage.setItem(STORAGE_COLS, JSON.stringify([...state.visibleCols]));
       localStorage.setItem(STORAGE_SORT, JSON.stringify({ key: state.sortKey, dir: state.sortDir }));
+      localStorage.setItem(STORAGE_PAGE, JSON.stringify({ size: state.pageSize }));
     } catch {
       // ignore
     }
@@ -118,6 +128,14 @@
     if (state.statusFilter !== "all") {
       rows = rows.filter((r) => String(r.status || "").toLowerCase() === state.statusFilter);
     }
+    if (state.clubFilter !== "all") {
+      rows = rows.filter((r) => String(r.club_code || "").toLowerCase() === state.clubFilter);
+    }
+    if (state.loginFilter === "yes") {
+      rows = rows.filter((r) => Boolean(r.has_login));
+    } else if (state.loginFilter === "no") {
+      rows = rows.filter((r) => !r.has_login);
+    }
     if (q) {
       rows = rows.filter((r) => [
         r.club_code, r.member_no, r.first_name, r.last_name, r.status, r.city, r.zip, r.fishing_card_type,
@@ -131,6 +149,8 @@
       return av.localeCompare(bv, "de") * dir;
     });
     state.filtered = rows;
+    const maxPage = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
+    if (state.page > maxPage) state.page = maxPage;
   }
 
   function columnLabel(key) {
@@ -143,14 +163,22 @@
     return `<span title="${ok ? "Login vorhanden" : "Kein Login"}" style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${ok ? "#16a34a" : "#dc2626"};"></span>`;
   }
 
+  function pagedRows() {
+    const start = (state.page - 1) * state.pageSize;
+    return state.filtered.slice(start, start + state.pageSize);
+  }
+
   function renderHead() {
     const head = document.getElementById("memberRegistryHead");
+    const colgroup = document.getElementById("memberRegistryColgroup");
     if (!head) return;
     const visible = COLUMNS.filter((c) => state.visibleCols.has(c.key));
-    head.style.gridTemplateColumns = `repeat(${Math.max(visible.length, 1)}, minmax(120px, 1fr))`;
+    if (colgroup) {
+      colgroup.innerHTML = visible.map((c) => `<col style="width:${Math.max(80, Number(c.width || 120))}px" />`).join("");
+    }
     head.innerHTML = visible.map((c) => {
       const arrow = state.sortKey === c.key ? (state.sortDir === "asc" ? " ↑" : " ↓") : "";
-      return `<button type="button" class="members-filter-toggle" data-sort="${esc(c.key)}">${esc(c.label)}${arrow}</button>`;
+      return `<th scope="col"><button type="button" class="members-filter-toggle" data-sort="${esc(c.key)}">${esc(c.label)}${arrow}</button></th>`;
     }).join("");
   }
 
@@ -164,17 +192,40 @@
   function renderRows() {
     const root = document.getElementById("memberRegistryRows");
     if (!root) return;
+    const visible = COLUMNS.filter((c) => state.visibleCols.has(c.key));
     if (!state.filtered.length) {
-      root.innerHTML = `<p class="small">Keine Mitglieder gefunden.</p>`;
+      root.innerHTML = `<tr><td colspan="${Math.max(1, visible.length)}" class="small">Keine Mitglieder gefunden.</td></tr>`;
       return;
     }
-    const visible = COLUMNS.filter((c) => state.visibleCols.has(c.key));
-    const template = `repeat(${Math.max(visible.length, 1)}, minmax(120px, 1fr))`;
-    root.innerHTML = state.filtered.map((r) => `
-      <button type="button" class="catch-row" data-open-member="${esc(r.member_no)}" style="grid-template-columns:${template};text-align:left;">
-        ${visible.map((c) => `<span>${cellValue(r, c.key)}</span>`).join("")}
-      </button>
+    root.innerHTML = pagedRows().map((r) => `
+      <tr data-open-member="${esc(r.member_no)}" style="cursor:pointer;">
+        ${visible.map((c) => `<td>${cellValue(r, c.key)}</td>`).join("")}
+      </tr>
     `).join("");
+  }
+
+  function renderClubFilter() {
+    const el = document.getElementById("memberRegistryClubFilter");
+    if (!el) return;
+    const clubs = [...new Set(state.rows.map((r) => String(r.club_code || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "de"));
+    const current = state.clubFilter;
+    el.innerHTML = [`<option value="all">Alle</option>`, ...clubs.map((c) => `<option value="${esc(c.toLowerCase())}">${esc(c)}</option>`)].join("");
+    el.value = clubs.some((c) => c.toLowerCase() === current) ? current : "all";
+    if (el.value !== current) state.clubFilter = el.value;
+  }
+
+  function renderStatsAndPager() {
+    const stats = document.getElementById("memberRegistryStats");
+    const info = document.getElementById("memberRegistryPageInfo");
+    const prev = document.getElementById("memberRegistryPrevPage");
+    const next = document.getElementById("memberRegistryNextPage");
+    const total = state.rows.length;
+    const found = state.filtered.length;
+    const pages = Math.max(1, Math.ceil(found / state.pageSize));
+    if (stats) stats.textContent = `Gefunden: ${found} von ${total}`;
+    if (info) info.textContent = `Seite ${state.page} / ${pages}`;
+    if (prev) prev.disabled = state.page <= 1;
+    if (next) next.disabled = state.page >= pages;
   }
 
   function renderColumnToggles() {
@@ -250,28 +301,59 @@
   async function refresh() {
     setMsg("Lade Mitglieder...");
     state.rows = await loadRows();
+    renderClubFilter();
     applyFilterSort();
     renderHead();
     renderRows();
+    renderStatsAndPager();
     setMsg(`Mitglieder geladen: ${state.rows.length}`);
   }
 
   document.addEventListener("DOMContentLoaded", () => {
     loadPrefs();
     renderColumnToggles();
+    const pageSizeEl = document.getElementById("memberRegistryPageSize");
+    if (pageSizeEl) pageSizeEl.value = String(state.pageSize);
 
     document.getElementById("memberRegistryReload")?.addEventListener("click", () => {
       refresh().catch((e) => setMsg(e.message || "Laden fehlgeschlagen", true));
     });
     document.getElementById("memberRegistrySearch")?.addEventListener("input", (e) => {
       state.search = String(e.target.value || "");
+      state.page = 1;
       applyFilterSort();
       renderRows();
+      renderStatsAndPager();
     });
     document.getElementById("memberRegistryStatusFilter")?.addEventListener("change", (e) => {
       state.statusFilter = String(e.target.value || "all").toLowerCase();
+      state.page = 1;
       applyFilterSort();
       renderRows();
+      renderStatsAndPager();
+    });
+    document.getElementById("memberRegistryClubFilter")?.addEventListener("change", (e) => {
+      state.clubFilter = String(e.target.value || "all").toLowerCase();
+      state.page = 1;
+      applyFilterSort();
+      renderRows();
+      renderStatsAndPager();
+    });
+    document.getElementById("memberRegistryLoginFilter")?.addEventListener("change", (e) => {
+      state.loginFilter = String(e.target.value || "all").toLowerCase();
+      state.page = 1;
+      applyFilterSort();
+      renderRows();
+      renderStatsAndPager();
+    });
+    document.getElementById("memberRegistryPageSize")?.addEventListener("change", (e) => {
+      const size = Number(e.target.value || 50);
+      state.pageSize = [25, 50, 100, 250].includes(size) ? size : 50;
+      state.page = 1;
+      savePrefs();
+      applyFilterSort();
+      renderRows();
+      renderStatsAndPager();
     });
     document.getElementById("memberRegistryColumnToggles")?.addEventListener("change", (e) => {
       const key = e.target?.getAttribute?.("data-col");
@@ -293,6 +375,7 @@
       applyFilterSort();
       renderHead();
       renderRows();
+      renderStatsAndPager();
     });
     document.getElementById("memberRegistryRows")?.addEventListener("click", (e) => {
       const row = e.target.closest("[data-open-member]");
@@ -308,6 +391,19 @@
       } catch (e) {
         setDialogMsg(e.message || "Speichern fehlgeschlagen", true);
       }
+    });
+    document.getElementById("memberRegistryPrevPage")?.addEventListener("click", () => {
+      if (state.page <= 1) return;
+      state.page -= 1;
+      renderRows();
+      renderStatsAndPager();
+    });
+    document.getElementById("memberRegistryNextPage")?.addEventListener("click", () => {
+      const pages = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
+      if (state.page >= pages) return;
+      state.page += 1;
+      renderRows();
+      renderStatsAndPager();
     });
 
     refresh().catch((e) => setMsg(e.message || "Laden fehlgeschlagen", true));

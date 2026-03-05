@@ -134,6 +134,20 @@
     });
   }
 
+  function configuredSuperadmins() {
+    return String(document.body?.getAttribute("data-superadmin-user-ids") || "")
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
+  }
+
+  function setSuperadminState(isSuperadmin) {
+    document.querySelectorAll("[data-superadmin-only]").forEach((el) => {
+      el.classList.toggle("hidden", !isSuperadmin);
+      el.toggleAttribute("hidden", !isSuperadmin);
+    });
+  }
+
   function setFeatureState(featureKey, enabled) {
     document.querySelectorAll(`[data-feature-${featureKey}]`).forEach((el) => {
       el.classList.toggle("hidden", !enabled);
@@ -151,6 +165,7 @@
       }
       setManagerState(false);
       setAdminState(false);
+      setSuperadminState(false);
       setFeatureState("work-qr", false);
       return;
     }
@@ -158,8 +173,11 @@
     const roles = await loadRoles().catch(() => []);
     const isManager = roles.includes("admin") || roles.includes("vorstand");
     const isAdmin = roles.includes("admin");
+    const uid = String(session()?.user?.id || "");
+    const isSuperadmin = configuredSuperadmins().includes(uid);
     setManagerState(isManager);
     setAdminState(isAdmin);
+    setSuperadminState(isSuperadmin);
 
     if (!isManager) {
       setFeatureState("work-qr", false);

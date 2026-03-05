@@ -18,6 +18,7 @@
     group_member: "Mitglied",
     group_manager: "Vorstand",
     group_admin: "Admin",
+    group_superadmin: "Superadmin",
   };
 
   const MODULES = [
@@ -36,14 +37,14 @@
     { id: "dokumente", href: "/app/dokumente/", label: "Dokumente", short: "DV", access: "manager", group: "manager" },
 
     { id: "mitglieder", href: "/app/mitglieder/", label: "Mitglieder", short: "MV", access: "admin", group: "admin" },
-    { id: "admin_board", href: "/app/admin-panel/", label: "Admin Board", short: "AB", access: "superadmin", group: "admin" },
+    { id: "admin_board", href: "/app/admin-panel/", label: "Admin Board", short: "AB", access: "superadmin", group: "superadmin" },
     { id: "mitgliederverwaltung", href: "/app/mitgliederverwaltung/", label: "Mitglieder-Registry", short: "MR", access: "admin", group: "admin" },
-    { id: "vereine_setup", href: "/app/vereine/", label: "Vereins-Setup", short: "VS", access: "admin", group: "admin" },
-    { id: "ui_neumorph_demo", href: "/app/ui-neumorph-demo/", label: "UI Neumorph Demo", short: "UI", access: "admin", group: "admin" },
+    { id: "vereine_setup", href: "/app/vereine/", label: "Vereins-Setup", short: "VS", access: "superadmin", group: "superadmin" },
+    { id: "ui_neumorph_demo", href: "/app/ui-neumorph-demo/", label: "UI Neumorph Demo", short: "UI", access: "superadmin", group: "superadmin" },
     { id: "fangliste_cockpit", href: "/app/fangliste/cockpit/", label: "Fangliste Cockpit", short: "FC", access: "admin", group: "admin" },
   ];
 
-  const GROUP_ORDER = ["member", "manager", "admin"];
+  const GROUP_ORDER = ["member", "manager", "admin", "superadmin"];
 
   const state = {
     loggedIn: false,
@@ -332,6 +333,7 @@
   function groupLabel(group) {
     if (group === "manager") return LABELS.group_manager;
     if (group === "admin") return LABELS.group_admin;
+    if (group === "superadmin") return LABELS.group_superadmin;
     return LABELS.group_member;
   }
 

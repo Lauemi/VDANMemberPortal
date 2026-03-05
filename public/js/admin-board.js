@@ -5,7 +5,8 @@
     { name: "Fangliste", scope: "Member", status: "aktiv", deps: "login" },
     { name: "Arbeitseinsätze", scope: "Member", status: "aktiv", deps: "login" },
     { name: "Helferplan", scope: "Member", status: "geplant", deps: "club membership" },
-    { name: "Vereins-Setup", scope: "Admin", status: "aktiv", deps: "superadmin/admin" },
+    { name: "Vereins-Setup", scope: "Superadmin", status: "aktiv", deps: "fixed user binding" },
+    { name: "UI Demo", scope: "Superadmin", status: "aktiv", deps: "fixed user binding" },
     { name: "Admin Board", scope: "Superadmin", status: "aktiv", deps: "fixed user binding" },
   ];
 

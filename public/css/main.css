@@ -24,8 +24,94 @@ body{
   line-height:1.5;
 }
 
+body[data-app-theme="fcp_tactical"]{
+  --bg: #e6decc;
+  --panel: #f3efe5;
+  --text: #2f3328;
+  --muted: rgba(108,112,91,.92);
+  --line: rgba(108,112,91,.26);
+  --accent: #595a3d;
+  --accent-warm: #ffc830;
+  --accent-warm-soft: rgba(255,200,48,.22);
+  --accent-cool-soft: rgba(89,90,61,.22);
+  --shadow: 0 14px 32px rgba(62,56,34,.15);
+  background: linear-gradient(180deg, #2f352a 0%, #252b21 100%);
+  color: var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] .header{
+  border-bottom:1px solid rgba(221,212,194,.42);
+  background:rgba(47,53,42,.82);
+}
+
+body[data-app-theme="fcp_tactical"] .site-footer{
+  border-top:1px solid rgba(221,212,194,.42);
+  background:rgba(37,43,33,.86);
+}
+
+body[data-app-theme="fcp_tactical"] .card{
+  background:linear-gradient(180deg, rgba(243,239,229,.98), rgba(237,229,214,.95));
+  border-color:rgba(221,212,194,.9);
+  box-shadow:var(--shadow);
+}
+
+body[data-app-theme="fcp_tactical"] input:not([type="checkbox"]):not([type="radio"]),
+body[data-app-theme="fcp_tactical"] button,
+body[data-app-theme="fcp_tactical"] textarea,
+body[data-app-theme="fcp_tactical"] select{
+  border-color:rgba(221,212,194,.9);
+  background:rgba(243,239,229,.98);
+  color:var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] button.primary{
+  background:linear-gradient(180deg, rgba(89,90,61,.95), rgba(75,76,51,.95));
+  border-color:rgba(75,76,51,.95);
+  color:#fff;
+}
+
+body[data-app-theme="fcp_tactical"] .feed-btn{
+  border-color:rgba(75,76,51,.6);
+  background:linear-gradient(180deg, rgba(89,90,61,.24), rgba(243,239,229,.95));
+  color:var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] .feed-btn--ghost{
+  border-color:rgba(108,112,91,.35);
+  background:rgba(243,239,229,.9);
+}
+
+body[data-app-theme="fcp_tactical"] .feed-shell,
+body[data-app-theme="fcp_tactical"] .feed-post,
+body[data-app-theme="fcp_tactical"] .home-hero-slider{
+  border-color:rgba(221,212,194,.9);
+  background:linear-gradient(180deg, rgba(243,239,229,.98), rgba(237,229,214,.95));
+  box-shadow:var(--shadow);
+}
+
+body[data-app-theme="fcp_tactical"] .burger-toggle{
+  border:1px solid rgba(221,212,194,.55);
+  background:rgba(89,90,61,.5);
+}
+
+body[data-app-theme="fcp_tactical"] .burger-popover{
+  border-color:rgba(221,212,194,.7);
+  background:linear-gradient(180deg, rgba(243,239,229,.98), rgba(237,229,214,.96));
+}
+
+body[data-app-theme="fcp_tactical"] .burger-popover a:hover{
+  background:rgba(89,90,61,.14);
+}
+
+body[data-app-theme="fcp_tactical"] .app-beta-badge{
+  border-color:rgba(221,212,194,.8);
+  background:linear-gradient(0deg, rgba(221,212,194,.95) 0%, rgba(255,255,255,.95) 100%);
+  color:#2f3328;
+}
+
 a{color:inherit}
 .container{max-width:1050px;margin:0 auto;padding:0 var(--space-2)}
+.container--admin-wide{max-width:none;width:100%;padding-inline:var(--space-2)}
 .header{border-bottom:1px solid rgba(183,154,99,.2);backdrop-filter: blur(10px);position:sticky;top:0;background:rgba(9,13,21,.72);z-index:1200}
 .nav{display:flex;align-items:center;justify-content:space-between;padding:var(--space-2) 0;gap:var(--space-2)}
 .logo{font-weight:800;text-decoration:none;letter-spacing:.2px}
@@ -34,10 +120,19 @@ a{color:inherit}
   align-items:center;
 }
 
-.logo img{
-  width:44px;
+.logo picture{
+  width:140px;
   height:44px;
+  display:flex;
+  align-items:center;
+}
+
+.logo img{
+  width:100%;
+  min-width:100px;
+  height:100%;
   object-fit:contain;
+  object-position:left center;
   display:block;
 }
 
@@ -62,8 +157,50 @@ a{color:inherit}
   gap:var(--space-1);
 }
 
+.header-auth-cta{
+  order:1;
+  min-height:var(--touch-target-min);
+  padding:0 12px;
+  border-radius:var(--radius-md);
+  border:1px solid rgba(183,154,99,.38);
+  background:rgba(183,154,99,.14);
+  color:var(--text);
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.9rem;
+  font-weight:700;
+  line-height:1;
+  white-space:nowrap;
+}
+
+.header-auth-cta:hover,
+.header-auth-cta:focus-visible{
+  background:rgba(183,154,99,.22);
+}
+
+.header-auth-cta:focus-visible{
+  outline:2px solid rgba(183,154,99,.75);
+  outline-offset:2px;
+}
+
+.header-auth-cta[aria-disabled="true"]{
+  opacity:.6;
+  pointer-events:none;
+}
+
 .burger-menu{
+  order:2;
   position:relative;
+}
+
+body[data-portal-rail-side="left"] .nav-actions .header-auth-cta{
+  order:3;
+}
+
+body[data-portal-rail-side="left"] .nav-actions .burger-menu{
+  order:2;
 }
 
 .burger-toggle{
@@ -214,6 +351,166 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
   border-radius:var(--radius);
   background:linear-gradient(180deg, rgba(21,30,48,.92), rgba(16,23,38,.9));
   box-shadow:var(--shadow);
+}
+
+.admin-api-toolbar{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin:.5rem 0 1rem;
+}
+.admin-api-toolbar--tight{
+  margin:.35rem 0 .6rem;
+}
+.admin-api-toolbar input[type="text"]{
+  flex:1 1 240px;
+}
+.admin-api-map-wrap{
+  border:1px solid var(--line);
+  border-radius:var(--radius-md);
+  overflow:hidden;
+  background:rgba(255,255,255,.02);
+}
+.admin-api-map{
+  width:100%;
+  min-height:320px;
+}
+.admin-api-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px;
+}
+.admin-api-item{
+  border:1px solid var(--line);
+  border-radius:var(--radius-md);
+  padding:12px;
+  background:rgba(255,255,255,.02);
+}
+.admin-api-item h3{
+  margin:0 0 .35rem;
+}
+.admin-api-item select{
+  min-height:var(--control-height);
+  padding:0 10px;
+}
+.admin-api-item .admin-api-toolbar select{
+  flex:1 1 170px;
+}
+.admin-api-item input[type="range"]{
+  width:100%;
+  margin:.25rem 0 .75rem;
+}
+.admin-api-pressure-series{
+  display:grid;
+  gap:4px;
+}
+.admin-api-pressure-row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:4px 0;
+  border-bottom:1px dashed rgba(220,228,241,.14);
+}
+.admin-api-pressure-row:last-child{
+  border-bottom:none;
+}
+.admin-api-trend{
+  font-weight:800;
+}
+.admin-api-trend.is-up{
+  color:#45d483;
+}
+.admin-api-trend.is-down{
+  color:#ff7b7b;
+}
+.admin-api-trend.is-flat{
+  color:#b8c1d4;
+}
+.admin-api-forecast{
+  margin-top:.7rem;
+  display:grid;
+  gap:8px;
+}
+.admin-api-forecast-row{
+  border:1px solid var(--line);
+  border-radius:var(--radius-md);
+  padding:10px;
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+}
+.admin-api-forecast-day{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.admin-api-weather-icon{
+  width:40px;
+  height:40px;
+  border-radius:999px;
+  border:1px solid rgba(220,228,241,.26);
+  background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.42), rgba(255,255,255,.06));
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.2rem;
+  line-height:1;
+}
+.admin-api-forecast-day p{
+  margin:0;
+}
+.admin-api-forecast-values{
+  display:grid;
+  gap:2px;
+  text-align:right;
+  font-size:var(--font-secondary-rem);
+}
+.admin-api-moon-visual{
+  width:56px;
+  height:56px;
+  border-radius:999px;
+  border:1px solid rgba(220,228,241,.35);
+  background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.56), rgba(255,255,255,.08));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.8rem;
+  margin:0 0 .45rem;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25), 0 8px 18px rgba(0,0,0,.25);
+}
+@media(max-width:720px){
+  .admin-api-forecast-row{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  .admin-api-forecast-values{
+    text-align:left;
+  }
+}
+.admin-api-locations{
+  display:grid;
+  gap:8px;
+}
+.admin-api-location{
+  border:1px solid var(--line);
+  border-radius:var(--radius-md);
+  padding:10px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  background:rgba(255,255,255,.02);
+}
+.admin-api-location p{
+  margin:0;
+}
+.admin-api-location__actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
 }
 
 .home-hero-slider{
@@ -2208,6 +2505,28 @@ body[data-portal-rail-side="left"] .catch-fab-stack{
     height:var(--touch-target-min);
   }
 
+  .header-auth-cta{
+    min-height:var(--touch-target-min);
+    padding:0 10px;
+    font-size:.86rem;
+  }
+
+  body[data-portal-rail-side="right"] .nav-actions .header-auth-cta{
+    order:1;
+  }
+
+  body[data-portal-rail-side="right"] .nav-actions .burger-menu{
+    order:2;
+  }
+
+  body[data-portal-rail-side="left"] .nav-actions .burger-menu{
+    order:2;
+  }
+
+  body[data-portal-rail-side="left"] .nav-actions .header-auth-cta{
+    order:3;
+  }
+
   .portal-quick-toggle{
     width:var(--pq-size);
     height:var(--pq-size);
@@ -2385,4 +2704,297 @@ body[data-portal-rail-side="left"] .catch-fab-stack{
   .home-hero-slider__slide{
     flex:0 0 100%;
   }
+}
+
+.feedback-fab{
+  position:fixed;
+  right:max(14px, env(safe-area-inset-right));
+  bottom:calc(18px + env(safe-area-inset-bottom));
+  z-index:80;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border-radius:999px;
+  padding:10px 14px;
+  background:linear-gradient(135deg, #1f6feb, #0ea5e9);
+  color:#fff;
+  font-weight:700;
+  text-decoration:none;
+  box-shadow:0 10px 20px rgba(0,0,0,.28);
+}
+
+body[data-portal-rail-side="right"] .feedback-fab{
+  left:max(14px, env(safe-area-inset-left));
+  right:auto;
+}
+
+body[data-portal-rail-side="left"] .feedback-fab{
+  right:max(14px, env(safe-area-inset-right));
+  left:auto;
+}
+
+.feedback-fab:hover,
+.feedback-fab:focus-visible{
+  transform:translateY(-1px);
+  filter:brightness(1.05);
+}
+
+/* FCP Tactical final overrides (keep at file end for precedence) */
+body[data-app-theme="fcp_tactical"] p,
+body[data-app-theme="fcp_tactical"] .small{
+  color: var(--muted);
+}
+
+body[data-app-theme="fcp_tactical"] .card,
+body[data-app-theme="fcp_tactical"] .feed-shell,
+body[data-app-theme="fcp_tactical"] .feed-post,
+body[data-app-theme="fcp_tactical"] .account-popover,
+body[data-app-theme="fcp_tactical"] .portal-quick-panel,
+body[data-app-theme="fcp_tactical"] .portal-rail,
+body[data-app-theme="fcp_tactical"] .burger-popover{
+  color: var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] .card p,
+body[data-app-theme="fcp_tactical"] .feed-post p,
+body[data-app-theme="fcp_tactical"] .portal-quick-panel p{
+  color: var(--muted);
+}
+
+body[data-app-theme="fcp_tactical"] .burger-toggle{
+  border-color: rgba(221,212,194,.72);
+  background: linear-gradient(180deg, rgba(89,90,61,.78), rgba(75,76,51,.78));
+  color: #f3efe5;
+}
+
+body[data-app-theme="fcp_tactical"] .burger-toggle span{
+  color: #f3efe5;
+}
+
+body[data-app-theme="fcp_tactical"] .burger-popover{
+  border-color: rgba(221,212,194,.82);
+  background: linear-gradient(180deg, rgba(243,239,229,.99), rgba(237,229,214,.98));
+  box-shadow: 0 14px 28px rgba(62,56,34,.18);
+}
+
+body[data-app-theme="fcp_tactical"] .burger-popover a{
+  color: var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] .burger-popover a:hover{
+  background: rgba(89,90,61,.16);
+}
+
+body[data-app-theme="fcp_tactical"] .portal-quick-toggle{
+  border-color: rgba(221,212,194,.75);
+  background: linear-gradient(180deg, rgba(89,90,61,.82), rgba(75,76,51,.82));
+  color: #f3efe5;
+  box-shadow: 0 10px 20px rgba(62,56,34,.22);
+}
+
+body[data-app-theme="fcp_tactical"] .portal-quick-user-badge{
+  border-color: rgba(221,212,194,.75);
+  background: rgba(243,239,229,.95);
+  color: var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] .portal-rail{
+  border-color: rgba(221,212,194,.82);
+  background: linear-gradient(180deg, rgba(243,239,229,.98), rgba(237,229,214,.98));
+  box-shadow: 0 14px 28px rgba(62,56,34,.2);
+}
+
+body[data-app-theme="fcp_tactical"] .portal-rail__item{
+  border-color: rgba(221,212,194,.9);
+  background: rgba(243,239,229,.95);
+  color: var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] .portal-quick-drawer{
+  background: rgba(31,35,27,.42);
+}
+
+body[data-app-theme="fcp_tactical"] .portal-quick-panel{
+  border-color: rgba(221,212,194,.88);
+  background: linear-gradient(180deg, rgba(243,239,229,.99), rgba(237,229,214,.98));
+  box-shadow: 0 14px 28px rgba(62,56,34,.22);
+}
+
+body[data-app-theme="fcp_tactical"] .portal-quick-panel__head h2,
+body[data-app-theme="fcp_tactical"] .portal-quick-row__title,
+body[data-app-theme="fcp_tactical"] .portal-quick-account-name{
+  color: var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] .portal-quick-close,
+body[data-app-theme="fcp_tactical"] .portal-quick-settings-link{
+  border-color: rgba(221,212,194,.85);
+  background: rgba(243,239,229,.95);
+  color: var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] .portal-quick-group__title,
+body[data-app-theme="fcp_tactical"] .portal-quick-legal-link,
+body[data-app-theme="fcp_tactical"] .portal-quick-logout-link{
+  color: var(--muted);
+}
+
+body[data-app-theme="fcp_tactical"] .portal-quick-row{
+  border-color: rgba(221,212,194,.88);
+  background: rgba(243,239,229,.94);
+}
+
+body[data-app-theme="fcp_tactical"] .portal-quick-star{
+  color: rgba(89,90,61,.72);
+}
+
+body[data-app-theme="fcp_tactical"] .portal-quick-star.is-active{
+  color: var(--accent-warm);
+}
+
+body[data-app-theme="fcp_tactical"] .account-popover{
+  border-color: rgba(221,212,194,.82);
+  background: linear-gradient(180deg, rgba(243,239,229,.99), rgba(237,229,214,.98));
+  box-shadow: 0 14px 28px rgba(62,56,34,.18);
+}
+
+body[data-app-theme="fcp_tactical"] .feedback-fab{
+  background: linear-gradient(135deg, #595a3d, #4b4c33);
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(62,56,34,.28);
+}
+
+body[data-app-theme="fcp_tactical"] .catch-dialog{
+  border-left: 1px solid rgba(221,212,194,.88);
+  border-right: 0;
+}
+
+body[data-app-theme="fcp_tactical"][data-portal-rail-side="left"] .catch-dialog{
+  border-right: 1px solid rgba(221,212,194,.88);
+  border-left: 0;
+}
+
+body[data-app-theme="fcp_tactical"] .catch-dialog::backdrop{
+  background: rgba(31,35,27,.42);
+}
+
+body[data-app-theme="fcp_tactical"] .catch-dialog__form{
+  background: linear-gradient(180deg, rgba(243,239,229,.99), rgba(237,229,214,.97));
+  color: var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] .catch-dialog__form p,
+body[data-app-theme="fcp_tactical"] .catch-dialog__form .small{
+  color: var(--muted);
+}
+
+body[data-app-theme="fcp_tactical"] .catch-dialog__form h1,
+body[data-app-theme="fcp_tactical"] .catch-dialog__form h2,
+body[data-app-theme="fcp_tactical"] .catch-dialog__form h3,
+body[data-app-theme="fcp_tactical"] .catch-dialog__form strong{
+  color: var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] .catch-dialog-photo{
+  border-color: rgba(221,212,194,.88);
+  background: rgba(243,239,229,.94);
+}
+
+body[data-app-theme="fcp_tactical"] .catch-table,
+body[data-app-theme="fcp_tactical"] .work-part-table-wrap,
+body[data-app-theme="fcp_tactical"] .ui-column-panel,
+body[data-app-theme="fcp_tactical"] .ui-karte{
+  border-color: rgba(221,212,194,.9);
+  background: linear-gradient(180deg, rgba(243,239,229,.98), rgba(237,229,214,.96));
+}
+
+body[data-app-theme="fcp_tactical"] .catch-table-toolbar h2,
+body[data-app-theme="fcp_tactical"] .ui-karte__titel{
+  color: var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] .ui-view-toggle .feed-btn,
+body[data-app-theme="fcp_tactical"] .ui-view-toggle .btn,
+body[data-app-theme="fcp_tactical"] .ui-view-toggle button{
+  border-color: rgba(108,112,91,.35);
+  background: rgba(243,239,229,.95);
+  color: var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] .catch-table__head{
+  color: var(--muted);
+  background: #ddd4c2;
+  border-bottom: 1px solid rgba(108,112,91,.24);
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,.5);
+}
+
+body[data-app-theme="fcp_tactical"] .catch-table__row,
+body[data-app-theme="fcp_tactical"] .catch-row{
+  color: var(--text);
+  border-top: 1px solid rgba(221,212,194,.75);
+}
+
+body[data-app-theme="fcp_tactical"] .catch-table__row:nth-of-type(odd),
+body[data-app-theme="fcp_tactical"] .catch-row:nth-of-type(odd){
+  background: rgba(243,239,229,.95);
+}
+
+body[data-app-theme="fcp_tactical"] .catch-table__row:nth-of-type(even),
+body[data-app-theme="fcp_tactical"] .catch-row:nth-of-type(even){
+  background: rgba(237,229,214,.95);
+}
+
+body[data-app-theme="fcp_tactical"] .catch-table__row:hover,
+body[data-app-theme="fcp_tactical"] .catch-row:hover{
+  background: rgba(221,212,194,.62);
+}
+
+body[data-app-theme="fcp_tactical"] .work-part-table th{
+  color: var(--muted);
+  background: #ddd4c2;
+  border-bottom: 1px solid rgba(108,112,91,.24);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+body[data-app-theme="fcp_tactical"] .work-part-table th,
+body[data-app-theme="fcp_tactical"] .work-part-table td{
+  border-bottom: 1px solid rgba(221,212,194,.85);
+  color: var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] .work-part-table tbody tr:nth-child(odd){
+  background: rgba(243,239,229,.95);
+}
+
+body[data-app-theme="fcp_tactical"] .work-part-table tbody tr:nth-child(even){
+  background: rgba(237,229,214,.95);
+}
+
+body[data-app-theme="fcp_tactical"] .work-part-table tbody tr:hover{
+  background: rgba(221,212,194,.62);
+}
+
+body[data-app-theme="fcp_tactical"] .ui-chip{
+  border-color: rgba(108,112,91,.35);
+  background: rgba(243,239,229,.9);
+  color: var(--text);
+}
+
+body[data-app-theme="fcp_tactical"] .ui-chip.ui-chip--success{
+  background: rgba(107,122,69,.2);
+  border-color: rgba(107,122,69,.48);
+  color: #43522c;
+}
+
+body[data-app-theme="fcp_tactical"] .ui-chip.ui-chip--warning{
+  background: rgba(217,164,65,.2);
+  border-color: rgba(217,164,65,.48);
+  color: #7f5c16;
+}
+
+body[data-app-theme="fcp_tactical"] .ui-chip.ui-chip--danger{
+  background: rgba(180,78,62,.2);
+  border-color: rgba(180,78,62,.48);
+  color: #7f2f24;
 }

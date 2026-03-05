@@ -96,6 +96,33 @@
     return session;
   }
 
+  async function signUpWithPassword(emailRaw, password, metadata = {}) {
+    const email = String(emailRaw || "").trim().toLowerCase();
+    if (!email || !email.includes("@")) throw new Error("Bitte eine gültige E-Mail eingeben.");
+    if (String(password || "").length < 8) throw new Error("Passwort muss mindestens 8 Zeichen haben.");
+
+    const res = await sbFetch("/auth/v1/signup", {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        password,
+        data: metadata || {},
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.msg || err?.error_description || "Registrierung fehlgeschlagen");
+    }
+
+    const data = await res.json().catch(() => ({}));
+    if (data?.access_token && Number(data?.expires_in || 0) > 0) {
+      const expiresAt = nowMs() + (Number(data.expires_in || 0) * 1000);
+      saveSession({ ...data, expiresAt }, true);
+    }
+    return data;
+  }
+
   async function refreshSession() {
     const stored = loadStoredSession();
     const refreshToken = String(stored?.refresh_token || "").trim();
@@ -228,6 +255,7 @@
     loadSession,
     refreshSession,
     loginWithPassword,
+    signUpWithPassword,
     getOwnProfile,
     updatePassword,
     requestPasswordReset,
@@ -239,6 +267,7 @@
   // Login page wiring (if present)
   document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
     const passwordForm = document.getElementById("passwordChangeForm");
     const logoutBtn = document.getElementById("logoutBtn");
     const msg = document.getElementById("loginMsg");
@@ -279,6 +308,44 @@
           window.location.assign(target);
         } catch (err) {
           if (msg) msg.textContent = err?.message || "Login fehlgeschlagen";
+        }
+      });
+    }
+
+    if (registerForm) {
+      const regMsg = document.getElementById("registerMsg");
+      registerForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (regMsg) regMsg.textContent = "…";
+        const email = String(document.getElementById("registerEmail")?.value || "").trim();
+        const pass = String(document.getElementById("registerPass")?.value || "");
+        const pass2 = String(document.getElementById("registerPass2")?.value || "");
+        const firstName = String(document.getElementById("registerFirstName")?.value || "").trim();
+        const lastName = String(document.getElementById("registerLastName")?.value || "").trim();
+        const accepted = Boolean(document.getElementById("registerAccept")?.checked);
+
+        if (!accepted) {
+          if (regMsg) regMsg.textContent = "Bitte Nutzungsbedingungen bestätigen.";
+          return;
+        }
+        if (pass !== pass2) {
+          if (regMsg) regMsg.textContent = "Passwörter stimmen nicht überein.";
+          return;
+        }
+        try {
+          const result = await signUpWithPassword(email, pass, {
+            first_name: firstName,
+            last_name: lastName,
+          });
+          if (result?.access_token) {
+            if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Du bist angemeldet.";
+            const next = pageTarget("/app/");
+            window.location.assign(next);
+            return;
+          }
+          if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Bitte E-Mail bestätigen und danach einloggen.";
+        } catch (err) {
+          if (regMsg) regMsg.textContent = err?.message || "Registrierung fehlgeschlagen.";
         }
       });
     }

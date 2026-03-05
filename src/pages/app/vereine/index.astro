@@ -1,0 +1,59 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Vereins-Setup • ${APP.name}`} description="Admin: Neuen Verein anlegen" robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <h1>Vereins-Setup</h1>
+      <p class="small">Nur für Admin. Erstellt einen neuen Vereinskontext mit Metadaten, Angelkarte und initialen Gewässern.</p>
+      <p id="clubSetupMsg" class="small" aria-live="polite"></p>
+
+      <form id="clubSetupForm" class="resp-form-grid">
+        <label>
+          <span>Vereinsname</span>
+          <input id="clubSetupName" type="text" placeholder="z. B. FCP Ottenheim" required />
+        </label>
+        <label>
+          <span>Club-Code (AA00)</span>
+          <input id="clubSetupCode" type="text" placeholder="wird automatisch erzeugt" readonly />
+        </label>
+
+        <label class="resp-full">
+          <span>Standard-Angelkarte</span>
+          <input id="clubSetupCardDefault" type="text" placeholder="z. B. FCP Standard" required />
+        </label>
+
+        <label class="resp-full">
+          <span>Weitere Angelkarten (optional, eine pro Zeile)</span>
+          <textarea id="clubSetupCards" rows="4" placeholder="FCP Jugend\nFCP Gastkarte"></textarea>
+        </label>
+
+        <label class="resp-full">
+          <span>Initiale Gewässer (eine pro Zeile)</span>
+          <textarea id="clubSetupWaters" rows="5" placeholder="FCP Gewässer 1\nFCP Gewässer 2"></textarea>
+        </label>
+
+        <label class="resp-full">
+          <span><input id="clubSetupSetPublic" type="checkbox" /> Als `public_active_club_id` setzen</span>
+        </label>
+
+        <label class="resp-full">
+          <span><input id="clubSetupAssignCreator" type="checkbox" checked /> Mich im neuen Verein als `admin` + `member` zuordnen</span>
+        </label>
+
+        <div class="resp-full" style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;">
+          <button id="clubSetupSubmit" type="button" class="feed-btn">Verein anlegen</button>
+        </div>
+      </form>
+
+      <details style="margin-top:12px;">
+        <summary>Antwortdetails</summary>
+        <pre id="clubSetupResult" class="small" style="white-space:pre-wrap;"></pre>
+      </details>
+    </div>
+  </section>
+
+  <script src="/js/club-admin-setup.js" defer></script>
+</Site>

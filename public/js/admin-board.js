@@ -30,9 +30,12 @@
   };
 
   function cfg() {
+    const body = document.body;
+    const bodyUrl = String(body?.getAttribute("data-supabase-url") || "").trim();
+    const bodyKey = String(body?.getAttribute("data-supabase-key") || "").trim();
     return {
-      url: String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, ""),
-      key: String(window.__APP_SUPABASE_KEY || "").trim(),
+      url: String(window.__APP_SUPABASE_URL || bodyUrl).trim().replace(/\/+$/, ""),
+      key: String(window.__APP_SUPABASE_KEY || bodyKey).trim(),
       superadmins: String(document.body?.getAttribute("data-superadmin-user-ids") || "")
         .split(",")
         .map((v) => v.trim())
@@ -576,6 +579,10 @@
 
     setMsg("Admin-Board lädt...");
     await loadCoreData();
+    if (state.users.length === 0 && state.clubs.length === 0) {
+      const diag = state.diagnostics.length ? ` Diagnose: ${state.diagnostics.slice(0, 4).join(" | ")}` : "";
+      setMsg("Keine Datensaetze sichtbar. Wahrscheinlich fehlen Select-Policies (RLS) oder Profile/Club-Daten fuer diesen User." + diag, true);
+    }
     const clubRows = computeClubMetrics();
     const userRows = computeUserMetrics();
     state.membersFiltered = userRows;

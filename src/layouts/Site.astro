@@ -36,8 +36,10 @@ const path = Astro.url.pathname.toLowerCase();
 const isScannerPath = path.startsWith("/app/ausweis/verifizieren/");
 const isAppPath = path.startsWith("/app/");
 const isTermsPath = path === "/nutzungsbedingungen.html/" || path === "/nutzungsbedingungen.html";
+const isHomePath = path === "/" || path === "/index.html/" || path === "/index.html";
 const showPortalTermsLink = isAppPath || isTermsPath;
 const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
+const showHeaderAuthCta = !(APP.theme === "vdan_default" && isHomePath);
 ---
 
 <!doctype html>
@@ -80,7 +82,7 @@ const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
           {isBetaChannel && <span class="app-beta-badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
           <div class="nav-actions">
             <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
-            <a id="headerAuthCta" class="header-auth-cta" href="/login/" data-ui-session-skip>Sign in</a>
+            {showHeaderAuthCta && <a id="headerAuthCta" class="header-auth-cta" href="/login/" data-ui-session-skip>Sign in</a>}
             <div class="burger-menu" id="burgerMenu">
               <button type="button" id="burgerToggle" class="burger-toggle" aria-label="Menü">
                 <span>☰</span>

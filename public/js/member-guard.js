@@ -1,5 +1,6 @@
 ;(() => {
-  const ADMIN_PATHS = ["/app/mitglieder/", "/app/mitgliederverwaltung/", "/app/fangliste/cockpit/", "/app/lizenzen/", "/app/feedback/cockpit/"];
+  const ADMIN_PATHS = ["/app/mitglieder/", "/app/mitgliederverwaltung/", "/app/vereine/", "/app/ui-neumorph-demo/", "/app/fangliste/cockpit/", "/app/lizenzen/", "/app/feedback/cockpit/"];
+  const SUPERADMIN_PATHS = ["/app/admin-panel/"];
   const MANAGER_PATHS = [
     "/app/dokumente/",
     "/app/bewerbungen/",
@@ -28,6 +29,10 @@
     return ADMIN_PATHS.some((x) => path.startsWith(x));
   }
 
+  function needsSuperadmin(path) {
+    return SUPERADMIN_PATHS.some((x) => path.startsWith(x));
+  }
+
   function needsManager(path) {
     return MANAGER_PATHS.some((x) => path.startsWith(x));
   }
@@ -41,6 +46,13 @@
     if (path.startsWith("/app/arbeitseinsaetze/")) return true;
     if (path.startsWith("/app/zustaendigkeiten/")) return true;
     return false;
+  }
+
+  function configuredSuperadmins() {
+    return String(document.body?.getAttribute("data-superadmin-user-ids") || "")
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
   }
 
   async function sb(path, init = {}, withAuth = false) {
@@ -85,6 +97,21 @@
       }
 
       if (needsMemberOnly(path)) return;
+
+      if (needsSuperadmin(path)) {
+        const superadmins = configuredSuperadmins();
+        if (!superadmins.length) {
+          forbid();
+          return;
+        }
+        const currentUid = String(session?.user?.id || "");
+        if (!superadmins.includes(currentUid)) {
+          forbid();
+          return;
+        }
+        return;
+      }
+
       if (!needsAdmin(path) && !needsManager(path)) return;
 
       const roles = await loadRoles().catch(() => []);
@@ -105,7 +132,7 @@
 
     run().catch(() => {
       const path = currentPath();
-      if (needsAdmin(path) || needsManager(path)) {
+      if (needsSuperadmin(path) || needsAdmin(path) || needsManager(path)) {
         forbid();
         return;
       }

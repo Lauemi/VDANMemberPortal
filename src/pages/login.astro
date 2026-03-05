@@ -33,6 +33,7 @@ const enablePasswordReset = String(import.meta.env.PUBLIC_ENABLE_PASSWORD_RESET 
 
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="primary" type="submit">Einloggen</button>
+          <a class="feed-btn feed-btn--ghost" href={`/registrieren/?next=${encodeURIComponent(nextTarget)}`}>Noch nicht registriert?</a>
           <span id="loginMsg" class="small" aria-live="polite"></span>
         </div>
       </form>
@@ -41,6 +42,13 @@ const enablePasswordReset = String(import.meta.env.PUBLIC_ENABLE_PASSWORD_RESET 
         {enablePasswordReset
           ? <a href="/passwort-vergessen/">Passwort vergessen?</a>
           : "Passwort vergessen ist vorbereitet, aber aktuell noch deaktiviert."}
+      </p>
+
+      <p class="small" style="margin-top:8px;">
+        Noch kein Zugang? <a href={`/registrieren/?next=${encodeURIComponent(nextTarget)}`}>Registrierung starten</a>.
+      </p>
+      <p class="small" style="margin-top:8px;">
+        Du willst dem Verein beitreten? <a href="/mitglied-werden.html/">Mitglied werden</a>.
       </p>
 
       {showDemoHint && (

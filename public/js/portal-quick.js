@@ -37,7 +37,10 @@
     { id: "dokumente", href: "/app/dokumente/", label: "Dokumente", short: "DV", access: "manager", group: "manager" },
 
     { id: "mitglieder", href: "/app/mitglieder/", label: "Mitglieder", short: "MV", access: "admin", group: "admin" },
+    { id: "admin_board", href: "/app/admin-panel/", label: "Admin Board", short: "AB", access: "superadmin", group: "admin" },
     { id: "mitgliederverwaltung", href: "/app/mitgliederverwaltung/", label: "Mitglieder-Registry", short: "MR", access: "admin", group: "admin" },
+    { id: "vereine_setup", href: "/app/vereine/", label: "Vereins-Setup", short: "VS", access: "admin", group: "admin" },
+    { id: "ui_neumorph_demo", href: "/app/ui-neumorph-demo/", label: "UI Neumorph Demo", short: "UI", access: "admin", group: "admin" },
     { id: "fangliste_cockpit", href: "/app/fangliste/cockpit/", label: "Fangliste Cockpit", short: "FC", access: "admin", group: "admin" },
     { id: "lizenzen_api", href: "/app/lizenzen/", label: "Wetter & Karten API", short: "WX", access: "admin", group: "admin" },
     { id: "feedback_cockpit", href: "/app/feedback/cockpit/", label: "Fehler-Cockpit", short: "BC", access: "admin", group: "admin" },
@@ -76,6 +79,13 @@
   }
 
   function canAccess(access, roles) {
+    if (access === "superadmin") {
+      const superadmins = String(document.body?.getAttribute("data-superadmin-user-ids") || "")
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean);
+      return superadmins.includes(String(state.uid || ""));
+    }
     if (access === "admin") return roles.includes("admin");
     if (access === "manager") return isManager(roles);
     return true;

@@ -1,6 +1,6 @@
 # Ablaufplan FCP Cutover mit Security-Baseline
 
-Stand: 2026-03-03  
+Stand: 2026-03-05  
 Branch-Arbeitsmodus: `prep_vercel_multienv_admin_tools`  
 Produktionsschutz-Regel: `main` bleibt VDAN-Schutzlinie bis finalem Cutover.
 
@@ -165,3 +165,125 @@ Ziel: Schnell testen/promoten, ohne dass Tester echte Mitgliederdaten sehen.
 
 ### Sicherheitsregel
 - Solange noch Single-DB: keine echten sensiblen Vereinsdaten in Demo-Content verwenden.
+
+## 11) Update 2026-03-05 - Plattform-Cutover (Security/DSGVO/Deployment)
+Ziel: Das bestehende Cutover-Modell um Theme-/Domain-Betrieb, echten Key-Switch und Mitgliederauswirkung erweitern.
+
+### 11.1 Security- und DSGVO-Baseline (verbindlich vor Go)
+1. Security Gate aus `docs/board-release-gate.md` bleibt Pflicht:
+   - keine aktiven `anon`-Write-Grants/Policies,
+   - RLS-Leak-Test bestanden.
+2. Consent Gate bleibt Pflicht:
+   - externe Inhalte nur nach Einwilligung,
+   - Widerruf technisch wirksam.
+3. Datenschutz-Governance bleibt Pflicht:
+   - juristische Endfreigabe terminiert und dokumentiert,
+   - Betreiber-/Dienstleisterrollen konsistent in den Unterlagen.
+
+### 11.2 Bedeutung fuer Mitglieder (Change-Impact)
+1. Erwarteter positiver Effekt:
+   - klarere Datenabgrenzung je Verein (Tenant/RLS),
+   - sauberere Rechtezuordnung.
+2. Moegliche kurzfristige Effekte:
+   - einmaliger Re-Login bei Domain/Redirect/Cookie-Umstellung,
+   - kurze Synchronisationsverzoegerung bei PWA-Cache-Umschaltung.
+3. Abnahmekriterium:
+   - Smoke-Test `member` ohne Datenverlust und ohne Cross-Club-Leak bestanden.
+
+### 11.3 Umschaltung Platzhalter -> echte Keys (Vercel/Supabase)
+1. Trennregel:
+   - `PUBLIC_*` nur fuer oeffentliche Runtime-Werte (z. B. URL/anon/theme flags),
+   - `SUPABASE_SERVICE_ROLE_KEY` nie als `PUBLIC_*`, nur serverseitig.
+2. Umschaltreihenfolge:
+   1. Staging-Env mit echten Keys setzen,
+   2. Redirect/CORS/Auth-URLs pruefen,
+   3. Staging Smoke + RLS-Leak + Consent komplett gruen,
+   4. erst dann Production-Keys umstellen.
+3. Pflichtnachweis:
+   - dokumentierte Env-Matrix je Umgebung,
+   - Rollback auf letzte stabile Vercel-Deployment-ID.
+
+### 11.4 VDAN Deployment-Mode (Unified Product, Theme-Layer)
+1. Zielbild:
+   - ein Codebase/Build, kein Portal-Fork.
+2. Domains:
+   - `www-vdan-ottenheim.com` -> Website-Scope + VDAN Theme,
+   - `portal.vdan-ottenheim.com` -> Portal-Scope + FCP/Club Theme.
+3. Vercel-Rolle:
+   - Frontend Delivery, Domains, Preview/Prod Promotion, optionale Hostname-Middleware.
+4. Supabase-Rolle:
+   - Auth, Daten, RLS, serverseitige Funktionen (inkl. spaeterer Billing-Webhooks).
+
+### 11.5 Top-Fallstricke (vorab entschärfen)
+1. Falsche Environment-Zuordnung (staging/prod keys vertauscht).
+2. Subdomain-Auth-Fehler (Redirect, Cookie-Scope, Logout-Flow).
+3. Half-Theming durch Hardcoded Farben statt Token-Nutzung.
+4. Alte PWA-Assets nach Cutover (fehlendes Cache-Busting/Update-Prompt).
+5. Unvollstaendige Rollback-Dokumentation bei Live-Switch.
+6. Auth Cookie / Redirect Scope nicht vollständig getestet (www/portal).
+
+#### 11.5.6 Auth Cookie / Redirect Scope (Subdomains `www` / `portal`)
+Ziel: Sicherstellen, dass Auth/Sessions bei Domain-/Subdomain-Betrieb stabil funktionieren (Login/Logout/Refresh/Deep-Links), ohne "Phantom-Logout" oder Redirect-Loops.
+
+##### A) Supabase Redirect URLs (Pflicht-Check)
+1. In Supabase Auth Settings sicherstellen, dass alle benoetigten Redirect-URLs fuer Prod und Staging hinterlegt sind:
+   - `https://www-vdan-ottenheim.com/*` (oder exakter Pfad, je nach Flow)
+   - `https://portal.vdan-ottenheim.com/*`
+   - falls vorhanden: `https://staging...` / Preview-Domains (nur wenn notwendig)
+2. Fuer OAuth (falls genutzt): OAuth Redirect URLs explizit pruefen (Provider-Console + Supabase).
+
+Go/No-Go: Wenn Redirect-URLs fehlen oder zu eng sind -> No-Go, weil Login/OAuth sonst sporadisch bricht.
+
+##### B) Cookie-/Session-Verhalten zwischen Subdomains (E2E Tests)
+Testfaelle (jeweils auf Staging, dann Prod):
+1. Login auf `portal`
+   - Login durchfuehren
+   - Seite neu laden (Hard Reload)
+   - Session bleibt aktiv, kein erneuter Login erforderlich.
+2. Deep-Link Test
+   - Direktlink auf eine Portal-Unterseite oeffnen (z. B. `/app/...`)
+   - Wenn nicht eingeloggt: Redirect -> Login -> danach Ruecksprung auf Deep-Link.
+3. Logout Test
+   - Logout auf `portal`
+   - anschliessend `portal` neu laden -> bleibt ausgeloggt
+   - anschliessend `www` oeffnen -> keine "halbe Session", keine automatischen Redirect-Loops.
+4. Session-Refresh / Token-Rotation
+   - im Portal 5-10 Minuten aktiv bleiben
+   - erneut eine DB-Operation ausfuehren (z. B. Liste laden)
+   - keine 401/Refresh-Fehler, kein "silent logout".
+5. Wechsel `www` <-> `portal`
+   - von `www` ins Portal wechseln (CTA "Portal/Login")
+   - erwartetes Verhalten: entweder sauberer Redirect oder sauberer Login-Start
+   - keine Endlosschleifen, kein "mixed state".
+
+Go/No-Go: Wenn einer dieser Tests sporadisch fehlschlaegt (Loop, Logout, 401 nach kurzer Zeit) -> No-Go, weil Support-/Mitgliederimpact hoch.
+
+##### C) Konfiguration pruefen (falls vorhanden)
+1. Site URL / Redirect Base (falls ihr das nutzt) korrekt je Umgebung.
+2. CORS / Allowed Origins (Supabase + ggf. Edge Functions) enthalten:
+   - `https://www-vdan-ottenheim.com`
+   - `https://portal.vdan-ottenheim.com`
+3. SameSite / Secure Cookie-Constraints beachten (insb. bei OAuth / externen Redirects).
+
+Hinweis: iFrame wird bewusst vermieden, um Cookie-/SameSite-Probleme zu reduzieren.
+
+##### D) Dokumentationspflicht
+- Ergebnis der Tests als kurzer Runlog dokumentieren:
+  - Datum/Uhrzeit
+  - Umgebung (staging/prod)
+  - Tester
+  - Ergebnis je Testfall (OK/FAIL) + ggf. Screenshot/Log-Auszug
+
+### 11.6 Erweiterte Phasenlogik (A-G bleibt, neue H-Phase)
+1. Phase H - Theme/Domain/Key Cutover (neu)
+   - H1: Token-/Theme-Loader stabil (kein FOUC/kein Hardcode).
+   - H2: Hostname-Scope (`www` vs `portal`) stabil.
+   - H3: echte Staging-Keys + End-to-End Test.
+   - H4: Production Key-Switch im Freeze-Fenster.
+   - H5: 48h Hypercare mit Incident-Triage.
+
+### 11.7 Go/No-Go Zusatzkriterien fuer finalen Cutover
+1. Security Gate + Functional Gate + Consent Gate: vollstaendig abgehakt.
+2. Env-/Secret-Drift-Check: kein Drift zwischen dokumentierter Matrix und Laufzeit.
+3. Auth-Flow auf `www` und `portal`: Login, Logout, Session-Refresh, Deep-Link getestet.
+4. Rollback-Plan praktisch testbar (nicht nur theoretisch dokumentiert).

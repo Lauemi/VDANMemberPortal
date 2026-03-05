@@ -1,0 +1,1048 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`UI Demo • ${APP.name}`} description="Admin: Soft UI Fishing Dashboard Demo" robots="noindex">
+  <section class="nm-demo-theme">
+    <div class="card__body demo-shell">
+      <header class="demo-head">
+        <div>
+          <h1>Fishing Club UI Demo</h1>
+          <p class="small">Soft UI · Outdoor Dashboard Stil</p>
+        </div>
+        <span class="demo-badge">v2 Direction</span>
+      </header>
+
+      <article class="demo-card">
+        <h2>Farbschema</h2>
+        <div class="palette-grid">
+          <div class="swatch-card" style="--sw: var(--color-bg)"><i class="swatch"></i><strong>bg</strong><code>#6C705B</code></div>
+          <div class="swatch-card" style="--sw: var(--color-surface)"><i class="swatch"></i><strong>surface</strong><code>#F3EFE5</code></div>
+          <div class="swatch-card" style="--sw: var(--color-surface-2)"><i class="swatch"></i><strong>surface-2</strong><code>#DDD4C2</code></div>
+          <div class="swatch-card" style="--sw: var(--color-text)"><i class="swatch"></i><strong>text</strong><code>#2F3328</code></div>
+          <div class="swatch-card" style="--sw: var(--color-muted)"><i class="swatch"></i><strong>muted</strong><code>#6C705B</code></div>
+          <div class="swatch-card" style="--sw: var(--color-primary)"><i class="swatch"></i><strong>primary</strong><code>#595A3D</code></div>
+          <div class="swatch-card" style="--sw: var(--color-accent)"><i class="swatch"></i><strong>accent</strong><code>#FFC830</code></div>
+          <div class="swatch-card" style="--sw: var(--color-success)"><i class="swatch"></i><strong>success</strong><code>#6B7A45</code></div>
+          <div class="swatch-card" style="--sw: var(--color-warning)"><i class="swatch"></i><strong>warning</strong><code>#D9A441</code></div>
+          <div class="swatch-card" style="--sw: var(--color-danger)"><i class="swatch"></i><strong>danger</strong><code>#B44E3E</code></div>
+        </div>
+      </article>
+
+      <article class="demo-card">
+        <h2>Token Mapping</h2>
+        <div class="token-grid">
+          <code>--bg: #6C705B</code>
+          <code>--surface: #F3EFE5</code>
+          <code>--surface-2: #DDD4C2</code>
+          <code>--text: #2F3328</code>
+          <code>--muted: #6C705B</code>
+          <code>--primary: #595A3D</code>
+          <code>--accent: #FFC830</code>
+          <code>--success: #6B7A45</code>
+          <code>--warning: #D9A441</code>
+          <code>--danger: #B44E3E</code>
+        </div>
+      </article>
+
+      <div class="demo-grid">
+        <article class="demo-card">
+          <h2>Form Controls</h2>
+          <div class="demo-form">
+            <label>
+              <span>Vereinsname</span>
+              <input type="text" value="FCP Ottenheim" />
+            </label>
+            <label>
+              <span>Club-Code</span>
+              <input type="text" value="FC01" />
+            </label>
+            <label>
+              <span>Standard-Angelkarte</span>
+              <input type="text" value="FCP Standard" />
+            </label>
+            <label>
+              <span>Gewässer</span>
+              <select>
+                <option>FCP Gewässer 1</option>
+                <option>FCP Gewässer 2</option>
+              </select>
+            </label>
+            <label class="switch-row">
+              <span>Als public_active_club_id setzen</span>
+              <button type="button" class="toggle" aria-pressed="true"><span></span></button>
+            </label>
+            <div class="actions">
+              <button class="btn btn-secondary" type="button">Zurücksetzen</button>
+              <button class="btn btn-primary" type="button">Speichern</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="demo-card">
+          <h2>Status</h2>
+          <div class="status-list">
+            <p><span class="chip chip-success">Aktiv</span> Setup validiert</p>
+            <p><span class="chip chip-warning">Prüfen</span> Restore-Drill offen</p>
+            <p><span class="chip chip-danger">Kritisch</span> Juristische Endfreigabe ausstehend</p>
+          </div>
+        </article>
+      </div>
+
+      <article class="demo-card">
+        <h2>Standardisierte Tabelle</h2>
+        <p class="small">Kompakte Toolbar, klarer Header, Filter per Icon-Popover.</p>
+        <div class="demo-table-shell">
+          <div class="table-toolbar" role="region" aria-label="Tabellensteuerung">
+            <label class="table-search">
+              <span class="visually-hidden">Suche in der Tabelle</span>
+              <input id="tableSearchInput" type="search" placeholder="Suche Mitglied, Rolle, Angelkarte, Status..." />
+            </label>
+            <div class="table-toolbar-actions">
+              <span id="activeFilterChip" class="filter-meta hidden-chip">0 Filter aktiv</span>
+              <div class="table-view-toggle" role="group" aria-label="Ansicht umschalten">
+                <button class="btn btn-secondary btn-mini is-active" type="button" data-view-mode="table">Tabelle</button>
+                <button class="btn btn-secondary btn-mini" type="button" data-view-mode="cards">Cards</button>
+              </div>
+              <button id="resetFiltersBtn" class="btn btn-secondary" type="button">Reset Filter</button>
+            </div>
+          </div>
+          <div class="work-part-table-wrap demo-table-wrap">
+            <table class="work-part-table demo-table">
+              <thead>
+                <tr>
+                  <th data-col="member">
+                    <span class="th-label">Mitglied</span>
+                    <span class="th-actions">
+                      <button class="th-icon sort-btn" type="button" data-sort="member" aria-label="Sortieren nach Mitglied">↕</button>
+                      <button class="th-icon filter-btn" type="button" data-filter-trigger="member" aria-label="Filter Mitglied">⏷</button>
+                    </span>
+                    <div class="col-filter" data-col="member">
+                      <label>
+                        <span>Enthält</span>
+                        <input type="text" data-text-filter="member" placeholder="z. B. Vorstand" />
+                      </label>
+                    </div>
+                  </th>
+                  <th data-col="role">
+                    <span class="th-label">Rolle</span>
+                    <span class="th-actions">
+                      <button class="th-icon sort-btn" type="button" data-sort="role" aria-label="Sortieren nach Rolle">↕</button>
+                      <button class="th-icon filter-btn" type="button" data-filter-trigger="role" aria-label="Filter Rolle">⏷</button>
+                    </span>
+                    <div class="col-filter" data-col="role">
+                      <label>
+                        <span>Enthält</span>
+                        <input type="text" data-text-filter="role" placeholder="z. B. Mitglied" />
+                      </label>
+                    </div>
+                  </th>
+                  <th data-col="card">
+                    <span class="th-label">Angelkarte</span>
+                    <span class="th-actions">
+                      <button class="th-icon sort-btn" type="button" data-sort="card" aria-label="Sortieren nach Angelkarte">↕</button>
+                      <button class="th-icon filter-btn" type="button" data-filter-trigger="card" aria-label="Filter Angelkarte">⏷</button>
+                    </span>
+                    <div class="col-filter" data-col="card">
+                      <label>
+                        <span>Enthält</span>
+                        <input type="text" data-text-filter="card" placeholder="z. B. Standard" />
+                      </label>
+                    </div>
+                  </th>
+                  <th data-col="status">
+                    <span class="th-label">Status</span>
+                    <span class="th-actions">
+                      <button class="th-icon sort-btn" type="button" data-sort="status" aria-label="Sortieren nach Status">↕</button>
+                      <button class="th-icon filter-btn" type="button" data-filter-trigger="status" aria-label="Filter Status">⏷</button>
+                    </span>
+                    <div class="col-filter col-filter-status" data-col="status">
+                      <p>Status auswählen</p>
+                      <label><input type="checkbox" value="aktiv" /> Aktiv</label>
+                      <label><input type="checkbox" value="pruefen" /> Prüfen</label>
+                      <label><input type="checkbox" value="kritisch" /> Kritisch</label>
+                      <div class="col-filter-actions">
+                        <button type="button" class="btn btn-secondary btn-mini" data-status-clear>Clear</button>
+                        <button type="button" class="btn btn-primary btn-mini" data-status-apply>Apply</button>
+                      </div>
+                    </div>
+                  </th>
+                  <th data-col="login">
+                    <span class="th-label">Letzter Login</span>
+                    <span class="th-actions">
+                      <button class="th-icon sort-btn" type="button" data-sort="login" aria-label="Sortieren nach Login">↕</button>
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="demoTableBody">
+                <tr data-member="Demo Vorstand" data-role="Vorstand" data-card="FCP Standard" data-status="aktiv" data-login="04.03.2026 15:13">
+                  <td class="cell-main">Demo Vorstand</td>
+                  <td>Vorstand</td>
+                  <td>FCP Standard</td>
+                  <td><span class="chip chip-success">Aktiv</span></td>
+                  <td>04.03.2026 15:13</td>
+                </tr>
+                <tr data-member="Demo Mitglied" data-role="Mitglied" data-card="FCP Standard" data-status="aktiv" data-login="03.03.2026 20:42">
+                  <td class="cell-main">Demo Mitglied</td>
+                  <td>Mitglied</td>
+                  <td>FCP Standard</td>
+                  <td><span class="chip">Aktiv</span></td>
+                  <td>03.03.2026 20:42</td>
+                </tr>
+                <tr data-member="Demo Gewaesserwart" data-role="Mitglied" data-card="FCP Jugend" data-status="pruefen" data-login="02.03.2026 09:08">
+                  <td class="cell-main">Demo Gewaesserwart</td>
+                  <td>Mitglied</td>
+                  <td>FCP Jugend</td>
+                  <td><span class="chip chip-warning">Prüfen</span></td>
+                  <td>02.03.2026 09:08</td>
+                </tr>
+                <tr data-member="Demo Schriftfuehrer" data-role="Mitglied" data-card="FCP Standard" data-status="kritisch" data-login="01.03.2026 08:01">
+                  <td class="cell-main">Demo Schriftfuehrer</td>
+                  <td>Mitglied</td>
+                  <td>FCP Standard</td>
+                  <td><span class="chip chip-danger">Kritisch</span></td>
+                  <td>01.03.2026 08:01</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="demoCardList" class="demo-cards-wrap is-hidden" aria-live="polite">
+            <article class="demo-data-card" data-member="Demo Vorstand" data-role="Vorstand" data-card="FCP Standard" data-status="aktiv" data-login="04.03.2026 15:13">
+              <h3>Demo Vorstand</h3>
+              <p><strong>Rolle:</strong> Vorstand</p>
+              <p><strong>Angelkarte:</strong> FCP Standard</p>
+              <p><strong>Status:</strong> <span class="chip chip-success">Aktiv</span></p>
+              <p><strong>Login:</strong> 04.03.2026 15:13</p>
+            </article>
+            <article class="demo-data-card" data-member="Demo Mitglied" data-role="Mitglied" data-card="FCP Standard" data-status="aktiv" data-login="03.03.2026 20:42">
+              <h3>Demo Mitglied</h3>
+              <p><strong>Rolle:</strong> Mitglied</p>
+              <p><strong>Angelkarte:</strong> FCP Standard</p>
+              <p><strong>Status:</strong> <span class="chip">Aktiv</span></p>
+              <p><strong>Login:</strong> 03.03.2026 20:42</p>
+            </article>
+            <article class="demo-data-card" data-member="Demo Gewaesserwart" data-role="Mitglied" data-card="FCP Jugend" data-status="pruefen" data-login="02.03.2026 09:08">
+              <h3>Demo Gewaesserwart</h3>
+              <p><strong>Rolle:</strong> Mitglied</p>
+              <p><strong>Angelkarte:</strong> FCP Jugend</p>
+              <p><strong>Status:</strong> <span class="chip chip-warning">Prüfen</span></p>
+              <p><strong>Login:</strong> 02.03.2026 09:08</p>
+            </article>
+            <article class="demo-data-card" data-member="Demo Schriftfuehrer" data-role="Mitglied" data-card="FCP Standard" data-status="kritisch" data-login="01.03.2026 08:01">
+              <h3>Demo Schriftfuehrer</h3>
+              <p><strong>Rolle:</strong> Mitglied</p>
+              <p><strong>Angelkarte:</strong> FCP Standard</p>
+              <p><strong>Status:</strong> <span class="chip chip-danger">Kritisch</span></p>
+              <p><strong>Login:</strong> 01.03.2026 08:01</p>
+            </article>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <dialog id="demoRowDialog" class="catch-dialog">
+    <form method="dialog" class="catch-dialog__form">
+      <h2 id="demoRowDialogTitle">Mitglied</h2>
+      <div class="catch-dialog__body demo-row-dialog__body">
+        <p><strong>Rolle:</strong> <span id="demoRowRole"></span></p>
+        <p><strong>Angelkarte:</strong> <span id="demoRowCard"></span></p>
+        <p><strong>Status:</strong> <span id="demoRowStatus"></span></p>
+        <p><strong>Letzter Login:</strong> <span id="demoRowLogin"></span></p>
+      </div>
+      <div class="catch-dialog__actions">
+        <button type="submit" class="btn btn-secondary">Schließen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const tableBody = document.getElementById("demoTableBody");
+    if (tableBody) {
+      const rows = Array.from(tableBody.querySelectorAll("tr"));
+      const searchInput = document.getElementById("tableSearchInput");
+      const resetBtn = document.getElementById("resetFiltersBtn");
+      const activeFilterChip = document.getElementById("activeFilterChip");
+      const filterTriggers = Array.from(document.querySelectorAll("[data-filter-trigger]"));
+      const filterPanels = Array.from(document.querySelectorAll(".col-filter"));
+      const textInputs = Array.from(document.querySelectorAll("[data-text-filter]"));
+      const statusPanel = document.querySelector('.col-filter[data-col="status"]');
+      const statusChecks = statusPanel ? Array.from(statusPanel.querySelectorAll('input[type="checkbox"]')) : [];
+      const statusApply = statusPanel?.querySelector("[data-status-apply]");
+      const statusClear = statusPanel?.querySelector("[data-status-clear]");
+      const sortButtons = Array.from(document.querySelectorAll("[data-sort]"));
+      const cardList = document.getElementById("demoCardList");
+      const cards = cardList ? Array.from(cardList.querySelectorAll(".demo-data-card")) : [];
+      const viewButtons = Array.from(document.querySelectorAll("[data-view-mode]"));
+      const tableWrap = document.querySelector(".demo-table-wrap");
+      const rowDialog = document.getElementById("demoRowDialog");
+      const rowDialogTitle = document.getElementById("demoRowDialogTitle");
+      const rowRole = document.getElementById("demoRowRole");
+      const rowCard = document.getElementById("demoRowCard");
+      const rowStatus = document.getElementById("demoRowStatus");
+      const rowLogin = document.getElementById("demoRowLogin");
+
+      const state = {
+        search: "",
+        text: { member: "", role: "", card: "" },
+        status: new Set(),
+        sort: { col: "login", dir: "desc" },
+        view: "table"
+      };
+
+      const parseLogin = (value) => {
+        const [d, t] = value.split(" ");
+        const [day, month, year] = d.split(".").map((v) => Number(v));
+        const [hour, minute] = t.split(":").map((v) => Number(v));
+        return new Date(year, month - 1, day, hour, minute).getTime();
+      };
+
+      const closePopovers = () => {
+        filterPanels.forEach((p) => p.classList.remove("open"));
+        filterTriggers.forEach((b) => b.classList.remove("is-active"));
+      };
+
+      const updateFilterCount = () => {
+        let count = 0;
+        if (state.search) count += 1;
+        if (state.text.member) count += 1;
+        if (state.text.role) count += 1;
+        if (state.text.card) count += 1;
+        if (state.status.size) count += 1;
+        activeFilterChip?.classList.toggle("hidden-chip", count === 0);
+        if (activeFilterChip) activeFilterChip.textContent = `${count} Filter aktiv`;
+      };
+
+      const applyFilters = () => {
+        rows.forEach((row) => {
+          const member = (row.dataset.member || "").toLowerCase();
+          const role = (row.dataset.role || "").toLowerCase();
+          const card = (row.dataset.card || "").toLowerCase();
+          const status = (row.dataset.status || "").toLowerCase();
+          const login = (row.dataset.login || "").toLowerCase();
+          const haystack = `${member} ${role} ${card} ${status} ${login}`;
+
+          const globalMatch = !state.search || haystack.includes(state.search);
+          const memberMatch = !state.text.member || member.includes(state.text.member);
+          const roleMatch = !state.text.role || role.includes(state.text.role);
+          const cardMatch = !state.text.card || card.includes(state.text.card);
+          const statusMatch = !state.status.size || state.status.has(status);
+
+          row.hidden = !(globalMatch && memberMatch && roleMatch && cardMatch && statusMatch);
+        });
+
+        cards.forEach((card) => {
+          const member = (card.dataset.member || "").toLowerCase();
+          const role = (card.dataset.role || "").toLowerCase();
+          const cardType = (card.dataset.card || "").toLowerCase();
+          const status = (card.dataset.status || "").toLowerCase();
+          const login = (card.dataset.login || "").toLowerCase();
+          const haystack = `${member} ${role} ${cardType} ${status} ${login}`;
+
+          const globalMatch = !state.search || haystack.includes(state.search);
+          const memberMatch = !state.text.member || member.includes(state.text.member);
+          const roleMatch = !state.text.role || role.includes(state.text.role);
+          const cardMatch = !state.text.card || cardType.includes(state.text.card);
+          const statusMatch = !state.status.size || state.status.has(status);
+
+          card.hidden = !(globalMatch && memberMatch && roleMatch && cardMatch && statusMatch);
+        });
+        updateFilterCount();
+      };
+
+      const sortRows = (col, dir) => {
+        const sorted = [...rows].sort((a, b) => {
+          const av = (a.dataset[col] || "").toLowerCase();
+          const bv = (b.dataset[col] || "").toLowerCase();
+          let result = 0;
+          if (col === "login") {
+            result = parseLogin(a.dataset.login || "") - parseLogin(b.dataset.login || "");
+          } else {
+            result = av.localeCompare(bv, "de");
+          }
+          return dir === "asc" ? result : -result;
+        });
+        sorted.forEach((row) => tableBody.appendChild(row));
+        const sortedCards = [...cards].sort((a, b) => {
+          const av = (a.dataset[col] || "").toLowerCase();
+          const bv = (b.dataset[col] || "").toLowerCase();
+          let result = 0;
+          if (col === "login") {
+            result = parseLogin(a.dataset.login || "") - parseLogin(b.dataset.login || "");
+          } else {
+            result = av.localeCompare(bv, "de");
+          }
+          return dir === "asc" ? result : -result;
+        });
+        sortedCards.forEach((card) => cardList?.appendChild(card));
+      };
+
+      const applyView = () => {
+        const showCards = state.view === "cards";
+        tableWrap?.classList.toggle("is-hidden", showCards);
+        cardList?.classList.toggle("is-hidden", !showCards);
+        viewButtons.forEach((btn) => {
+          const isActive = btn.getAttribute("data-view-mode") === state.view;
+          btn.classList.toggle("is-active", isActive);
+        });
+      };
+
+      const openRowDialog = (source) => {
+        if (!rowDialog || !(rowDialog instanceof HTMLDialogElement)) return;
+        const member = source?.dataset?.member || "-";
+        const role = source?.dataset?.role || "-";
+        const card = source?.dataset?.card || "-";
+        const status = source?.dataset?.status || "-";
+        const login = source?.dataset?.login || "-";
+        if (rowDialogTitle) rowDialogTitle.textContent = member;
+        if (rowRole) rowRole.textContent = role;
+        if (rowCard) rowCard.textContent = card;
+        if (rowStatus) rowStatus.textContent = status;
+        if (rowLogin) rowLogin.textContent = login;
+        rowDialog.showModal();
+      };
+
+      searchInput?.addEventListener("input", (e) => {
+        state.search = String(e.target.value || "").trim().toLowerCase();
+        applyFilters();
+      });
+
+      textInputs.forEach((input) => {
+        input.addEventListener("input", (e) => {
+          const key = String(e.target.getAttribute("data-text-filter"));
+          state.text[key] = String(e.target.value || "").trim().toLowerCase();
+          const trigger = document.querySelector(`[data-filter-trigger="${key}"]`);
+          trigger?.classList.toggle("has-filter", Boolean(state.text[key]));
+          applyFilters();
+        });
+      });
+
+      statusApply?.addEventListener("click", () => {
+        state.status.clear();
+        statusChecks.forEach((cb) => {
+          if (cb.checked) state.status.add(cb.value);
+        });
+        const statusTrigger = document.querySelector('[data-filter-trigger="status"]');
+        statusTrigger?.classList.toggle("has-filter", state.status.size > 0);
+        applyFilters();
+        closePopovers();
+      });
+
+      statusClear?.addEventListener("click", () => {
+        statusChecks.forEach((cb) => {
+          cb.checked = false;
+        });
+        state.status.clear();
+        document.querySelector('[data-filter-trigger="status"]')?.classList.remove("has-filter");
+        applyFilters();
+      });
+
+      sortButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const col = String(btn.getAttribute("data-sort"));
+          const dir = state.sort.col === col && state.sort.dir === "asc" ? "desc" : "asc";
+          state.sort = { col, dir };
+          sortButtons.forEach((b) => b.classList.remove("is-active"));
+          btn.classList.add("is-active");
+          btn.textContent = dir === "asc" ? "↑" : "↓";
+          sortRows(col, dir);
+        });
+      });
+
+      filterTriggers.forEach((trigger) => {
+        trigger.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const col = trigger.getAttribute("data-filter-trigger");
+          const panel = document.querySelector(`.col-filter[data-col="${col}"]`);
+          const open = panel?.classList.contains("open");
+          closePopovers();
+          if (!open) {
+            panel?.classList.add("open");
+            trigger.classList.add("is-active");
+          }
+        });
+      });
+
+      filterPanels.forEach((panel) => {
+        panel.addEventListener("click", (e) => e.stopPropagation());
+      });
+
+      resetBtn?.addEventListener("click", () => {
+        state.search = "";
+        state.text.member = "";
+        state.text.role = "";
+        state.text.card = "";
+        state.status.clear();
+        if (searchInput) searchInput.value = "";
+        textInputs.forEach((input) => {
+          input.value = "";
+        });
+        statusChecks.forEach((cb) => {
+          cb.checked = false;
+        });
+        filterTriggers.forEach((b) => b.classList.remove("has-filter"));
+        closePopovers();
+        applyFilters();
+      });
+
+      viewButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.view = String(btn.getAttribute("data-view-mode") || "table");
+          applyView();
+        });
+      });
+
+      rows.forEach((row) => {
+        row.addEventListener("click", () => openRowDialog(row));
+      });
+      cards.forEach((card) => {
+        card.addEventListener("click", () => openRowDialog(card));
+      });
+
+      document.addEventListener("click", closePopovers);
+      sortRows("login", "desc");
+      applyFilters();
+      applyView();
+    }
+  </script>
+
+  <style>
+    .nm-demo-theme {
+      --color-bg: #6c705b;
+      --color-surface: #f3efe5;
+      /* --color-surface-2: #ddd4c2; */
+      --color-text: #2f3328;
+      --color-muted: #6c705b;
+      --color-primary: #595a3d;
+      --color-primary-hover: #4b4c33;
+      --color-accent: #ffc830;
+      --color-accent-hover: #e6b52b;
+      --color-success: #6b7a45;
+      --color-warning: #d9a441;
+      --color-danger: #b44e3e;
+
+      --space-xs: 8px;
+      --space-sm: 16px;
+      --space-md: 24px;
+      --space-lg: 32px;
+
+      background: var(--color-bg);
+      border: 1px solid rgba(47, 51, 40, 0.28);
+      box-shadow: 0 8px 18px rgba(62, 56, 34, 0.12);
+      border-radius: 14px;
+      color: var(--color-text);
+    }
+
+    .demo-shell { display: grid; gap: var(--space-md); }
+
+    .demo-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .demo-head h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.2;
+      color: var(--color-text);
+    }
+
+    .demo-head .small { color: var(--color-muted); }
+
+    .demo-badge {
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-surface-2);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      color: var(--color-muted);
+      font-weight: 600;
+    }
+
+    .demo-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-surface-2);
+      border-radius: 14px;
+      padding: var(--space-md);
+      box-shadow: 0 8px 18px rgba(62, 56, 34, 0.12);
+    }
+
+    .demo-card h2 {
+      margin: 0 0 var(--space-sm);
+      font-size: 20px;
+      color: var(--color-text);
+    }
+
+    .small { color: var(--color-muted); font-size: 14px; }
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-xs);
+    }
+
+    @media (min-width: 760px) {
+      .palette-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (min-width: 1200px) {
+      .palette-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    }
+
+    .swatch-card {
+      display: grid;
+      grid-template-columns: 30px 1fr;
+      grid-template-areas: "sw l" "sw h";
+      gap: 2px 10px;
+      align-items: center;
+      background: var(--color-surface);
+      border: 1px solid var(--color-surface-2);
+      border-radius: 10px;
+      min-height: 78px;
+      padding: 12px;
+      box-shadow:
+        inset 1px 1px 0 rgba(255, 255, 255, 0.8),
+        inset -1px -1px 0 rgba(120, 108, 75, 0.16),
+        inset 0 0 0 1px rgba(120, 108, 75, 0.1);
+    }
+
+    .swatch {
+      grid-area: sw;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: var(--sw);
+      border: 1px solid rgba(120, 108, 75, 0.2);
+      box-shadow:
+        0 2px 4px rgba(120, 108, 75, 0.2),
+        0 1px 0 rgba(255, 255, 255, 0.9) inset;
+    }
+
+    .swatch-card strong { grid-area: l; font-size: 14px; }
+    .swatch-card code { grid-area: h; color: var(--color-muted); font-size: 12px; }
+
+    .token-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--space-xs);
+    }
+
+    .token-grid code {
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-surface-2);
+      border-radius: 10px;
+      padding: 8px 10px;
+      color: var(--color-text);
+      font-size: 12px;
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-sm);
+    }
+
+    @media (min-width: 980px) {
+      .demo-grid { grid-template-columns: 2fr 1fr; }
+    }
+
+    .demo-form {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-xs);
+    }
+
+    @media (min-width: 860px) {
+      .demo-form { grid-template-columns: 1fr 1fr; }
+      .demo-form .switch-row,
+      .demo-form .actions { grid-column: 1 / -1; }
+    }
+
+    .demo-form label { display: grid; gap: 6px; }
+    .demo-form label span { color: var(--color-muted); font-size: 14px; }
+
+    .demo-form input,
+    .demo-form select {
+      background: var(--color-surface);
+      border: 1px solid var(--color-surface-2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--color-text);
+      font-size: 16px;
+    }
+
+    .demo-form input:focus,
+    .demo-form select:focus {
+      outline: none;
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 35%, transparent);
+    }
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-sm);
+    }
+
+    .toggle {
+      width: 54px;
+      height: 30px;
+      border: 1px solid var(--color-surface-2);
+      border-radius: 999px;
+      background: var(--color-primary);
+      display: inline-flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 3px;
+    }
+
+    .toggle span {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+    }
+
+    .actions { display: flex; justify-content: flex-end; gap: var(--space-xs); }
+
+    .btn {
+      border-radius: 10px;
+      padding: 10px 18px;
+      border: 1px solid transparent;
+      font-weight: 700;
+      font-size: 16px;
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-primary { background: var(--color-primary); }
+    .btn-primary { border-color: color-mix(in srgb, var(--color-primary) 80%, #000); box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 28%, transparent); }
+    .btn-primary:hover { background: var(--color-primary-hover); transform: translateY(-1px); }
+    .btn-secondary { background: var(--color-surface-2); color: var(--color-text); border-color: color-mix(in srgb, var(--color-muted) 28%, transparent); }
+    .btn-secondary:hover { background: color-mix(in srgb, var(--color-surface-2) 88%, #fff); }
+    .btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .status-list { display: grid; gap: var(--space-xs); }
+    .status-list p { margin: 0; display: flex; align-items: center; gap: var(--space-xs); color: var(--color-muted); }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      min-height: 24px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-text);
+      background: color-mix(in srgb, var(--color-muted) 18%, transparent);
+    }
+
+    .hidden-chip { display: none; }
+    .chip-success { background: color-mix(in srgb, var(--color-success) 18%, transparent); color: var(--color-success); }
+    .chip-warning { background: color-mix(in srgb, var(--color-warning) 18%, transparent); color: var(--color-warning); }
+    .chip-danger { background: color-mix(in srgb, var(--color-danger) 18%, transparent); color: var(--color-danger); }
+
+    .demo-table-shell {
+      display: grid;
+      gap: var(--space-md);
+    }
+
+    .table-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      justify-content: space-between;
+      align-items: center;
+      background: var(--color-surface);
+      border: 1px solid var(--color-surface-2);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .table-search {
+      flex: 1 1 300px;
+      max-width: 560px;
+    }
+
+    .table-search input {
+      width: 100%;
+      background: var(--color-surface);
+      border: 1px solid var(--color-surface-2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--color-text);
+      box-shadow:
+        inset 1px 1px 0 rgba(255, 255, 255, 0.75),
+        inset -1px -1px 0 rgba(120, 108, 75, 0.15);
+    }
+
+    .table-search input:focus {
+      outline: none;
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 35%, transparent);
+    }
+
+    .table-toolbar-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+    }
+
+    .table-view-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px;
+      border-radius: 10px;
+      background: rgba(243, 239, 229, 0.75);
+      border: 1px solid var(--color-surface-2);
+    }
+
+    .filter-meta {
+      font-size: 12px;
+      color: var(--color-muted);
+      letter-spacing: 0.02em;
+      border: 1px solid var(--color-surface-2);
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: color-mix(in srgb, var(--color-surface-2) 38%, #fff);
+    }
+
+    .demo-table-wrap {
+      border: 1px solid var(--color-surface-2);
+      border-radius: 12px;
+      overflow: auto;
+      background: var(--color-surface);
+      max-height: min(56vh, 520px);
+    }
+
+    .demo-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      color: var(--color-text);
+    }
+
+    .demo-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .demo-table th {
+      background: var(--color-surface-2);
+      color: var(--color-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 12.5px;
+      font-weight: 600;
+      border-bottom: 1px solid color-mix(in srgb, var(--color-muted) 24%, transparent);
+      box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.5);
+      position: relative;
+    }
+
+    .th-label {
+      display: inline-flex;
+      align-items: center;
+      min-height: 20px;
+    }
+
+    .th-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .th-icon {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--color-muted);
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1;
+      display: inline-grid;
+      place-items: center;
+      cursor: pointer;
+    }
+
+    .th-icon:hover { color: var(--color-text); border-color: color-mix(in srgb, var(--color-muted) 35%, transparent); background: rgba(255, 255, 255, 0.45); }
+    .th-icon.is-active,
+    .th-icon.has-filter { color: var(--color-accent-hover); border-color: color-mix(in srgb, var(--color-accent-hover) 35%, transparent); background: color-mix(in srgb, var(--color-accent) 38%, transparent); }
+
+    .col-filter {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 10px;
+      width: 240px;
+      border: 1px solid color-mix(in srgb, var(--color-muted) 35%, transparent);
+      border-radius: 10px;
+      background: var(--color-surface);
+      box-shadow: 0 8px 18px rgba(62, 56, 34, 0.16);
+      padding: 10px;
+      display: none;
+      z-index: 8;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .col-filter.open { display: grid; gap: 8px; }
+    .col-filter label { display: grid; gap: 6px; font-size: 13px; color: var(--color-muted); }
+    .col-filter input[type="text"] {
+      width: 100%;
+      background: var(--color-surface);
+      border: 1px solid var(--color-surface-2);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--color-text);
+    }
+
+    .col-filter-status p {
+      margin: 0;
+      color: var(--color-muted);
+      font-size: 12px;
+    }
+
+    .col-filter-status label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--color-text);
+    }
+
+    .col-filter-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .btn-mini {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 8px;
+    }
+    .btn-mini.is-active {
+      background: var(--color-primary);
+      border-color: color-mix(in srgb, var(--color-primary) 80%, #000);
+      color: #fff;
+    }
+
+    .demo-table td,
+    .demo-table th {
+      border-bottom: 1px solid var(--color-surface-2);
+      padding: 13px 18px;
+      text-align: left;
+      white-space: nowrap;
+      min-height: 46px;
+    }
+
+    .demo-table tbody tr { background: var(--color-surface); }
+    .demo-table tbody tr { cursor: pointer; }
+    .demo-table tbody tr:nth-child(even) td { background: #ede5d6; }
+    .demo-table tbody tr:hover td {
+      background: color-mix(in srgb, var(--color-surface) 78%, var(--color-surface-2));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -1px 0 rgba(120, 108, 75, 0.16);
+    }
+    .demo-table .cell-main { font-weight: 600; }
+
+    .demo-cards-wrap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--space-sm);
+    }
+
+    .demo-data-card {
+      border: 1px solid var(--color-surface-2);
+      border-radius: 12px;
+      background: var(--color-surface);
+      padding: 12px;
+      box-shadow: 0 8px 16px rgba(62, 56, 34, 0.1);
+      cursor: pointer;
+    }
+
+    .demo-data-card h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      color: var(--color-text);
+    }
+
+    .demo-data-card p {
+      margin: 0 0 6px;
+      color: var(--color-muted);
+      font-size: 14px;
+    }
+
+    .demo-data-card p strong {
+      color: var(--color-text);
+      font-weight: 600;
+    }
+
+    .is-hidden { display: none !important; }
+
+    .demo-row-dialog__body p {
+      margin: 0 0 8px;
+      color: var(--color-muted);
+    }
+
+    .demo-row-dialog__body p strong {
+      color: var(--color-text);
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+    :global(body) {
+      background: linear-gradient(180deg, #2f352a 0%, #252b21 100%);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+
+    :global(.main) { background: transparent; }
+
+    :global(.header) {
+      background: #2f352a;
+      border-bottom: 1px solid var(--color-surface-2);
+    }
+
+    :global(.site-footer) {
+      background: #252b21;
+      border-top: 1px solid var(--color-surface-2);
+    }
+
+    :global(.feedback-fab),
+    :global(.portal-quick-toggle),
+    :global(.portal-rail),
+    :global(.portal-rail__item) {
+      box-shadow: none !important;
+      background-image: none !important;
+      border: 1px solid var(--color-surface-2) !important;
+      background-color: var(--color-surface) !important;
+      color: var(--color-text) !important;
+      border-radius: 12px !important;
+    }
+  </style>
+</Site>

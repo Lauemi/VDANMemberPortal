@@ -1,0 +1,207 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site
+  title={`Admin Board • ${APP.name}`}
+  description="Zentrales Admin-Board fuer Onboarding, Auth und Plattform-Überblick"
+  robots="noindex"
+  containerClass="container container--admin-wide"
+>
+  <section class="card">
+    <div class="card__body">
+      <h1>Admin Board</h1>
+      <p class="small">P0 Steuerzentrale fuer Onboarding/Auth/Uebersicht vor dem grossen Umbau.</p>
+      <p id="adminBoardMsg" class="small" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__body admin-board">
+      <aside class="admin-board__nav" aria-label="Admin Navigation">
+        <button type="button" class="admin-nav-btn is-active" data-admin-section="dashboard">Dashboard</button>
+        <button type="button" class="admin-nav-btn" data-admin-section="clubs">Clubs</button>
+        <button type="button" class="admin-nav-btn" data-admin-section="members">Mitglieder</button>
+        <button type="button" class="admin-nav-btn" data-admin-section="analytics">Analytics</button>
+        <button type="button" class="admin-nav-btn" data-admin-section="bugs">Bugs</button>
+        <button type="button" class="admin-nav-btn" data-admin-section="finance">Finanzen</button>
+        <button type="button" class="admin-nav-btn" data-admin-section="dsgvo">DSGVO</button>
+        <button type="button" class="admin-nav-btn" data-admin-section="security">Security</button>
+        <button type="button" class="admin-nav-btn" data-admin-section="modules">Module</button>
+        <button type="button" class="admin-nav-btn" data-admin-section="webmodules">Modul Web</button>
+      </aside>
+
+      <div class="admin-board__content">
+        <section class="admin-section is-active" data-admin-panel="dashboard">
+          <article class="admin-card">
+            <h2>Dashboard</h2>
+            <div class="admin-kpi-grid">
+              <article class="admin-kpi"><h3>Vereine gesamt</h3><p id="kpiClubs">-</p></article>
+              <article class="admin-kpi"><h3>Mitglieder aktiv</h3><p id="kpiMembersActive">-</p></article>
+              <article class="admin-kpi"><h3>Nie eingeloggt</h3><p id="kpiNeverLogin">-</p></article>
+              <article class="admin-kpi"><h3>User ohne Verein</h3><p id="kpiUsersNoClub">-</p></article>
+              <article class="admin-kpi"><h3>User mit Verein</h3><p id="kpiUsersWithClub">-</p></article>
+            </div>
+          </article>
+
+          <article class="admin-card">
+            <h3>Vereine (Top-Liste)</h3>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminClubsTopTable">
+                <thead>
+                  <tr>
+                    <th>Clubname</th><th>Club-ID</th><th>Mitglieder</th><th>Aktiv</th><th>Letzte Aktivität</th><th>Status</th>
+                  </tr>
+                </thead>
+                <tbody><tr><td colspan="6" class="small">Lade Daten...</td></tr></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="admin-card">
+            <h3>User (zuletzt aktiv)</h3>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminUsersTopTable">
+                <thead>
+                  <tr>
+                    <th>Name/Mail</th><th>User-ID</th><th>Letzter Login</th><th>Clubs</th><th>Status</th>
+                  </tr>
+                </thead>
+                <tbody><tr><td colspan="5" class="small">Lade Daten...</td></tr></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="admin-section" data-admin-panel="clubs">
+          <article class="admin-card">
+            <h2>Clubs</h2>
+            <div class="admin-actions">
+              <a href="/app/vereine/" class="feed-btn">Neuen Club anlegen</a>
+            </div>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminClubsTable">
+                <thead>
+                  <tr>
+                    <th>Clubname</th><th>Club-ID</th><th>Erstellt am</th><th>Mitglieder</th><th>Aktiv</th><th>Nie eingeloggt</th><th>Status</th><th>Aktionen</th>
+                  </tr>
+                </thead>
+                <tbody><tr><td colspan="8" class="small">Lade Daten...</td></tr></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="admin-section" data-admin-panel="members">
+          <article class="admin-card">
+            <h2>Mitglieder</h2>
+            <div class="admin-filter-row">
+              <input id="adminMemberSearch" type="search" placeholder="Suche Name, Mail, User-ID..." />
+              <select id="adminMemberFilter">
+                <option value="all">Alle</option>
+                <option value="no_club">Ohne Verein</option>
+                <option value="with_club">Mit Verein</option>
+                <option value="never_login">Nie eingeloggt</option>
+              </select>
+            </div>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminMembersTable">
+                <thead>
+                  <tr>
+                    <th>Name</th><th>E-Mail</th><th>User-ID</th><th>Letzter Login</th><th>Nie eingeloggt</th><th>Clubs</th><th>Status</th><th>Aktionen</th>
+                  </tr>
+                </thead>
+                <tbody><tr><td colspan="8" class="small">Lade Daten...</td></tr></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="admin-section" data-admin-panel="analytics">
+          <article class="admin-card is-missing">
+            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+            <h2>Analytics</h2>
+            <p class="small">Login/Registrierung/Clubbeitritte als Zeitreihen sind als naechster Schritt vorgesehen.</p>
+          </article>
+        </section>
+
+        <section class="admin-section" data-admin-panel="bugs">
+          <article class="admin-card is-missing">
+            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+            <h2>Bugs</h2>
+            <p class="small">Bug-Board mit P0/P1/P2, Owner und Referenzen wird hier zentral aggregiert.</p>
+          </article>
+        </section>
+
+        <section class="admin-section" data-admin-panel="finance">
+          <article class="admin-card is-missing">
+            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+            <h2>Finanzen</h2>
+            <p class="small">Einnahmen/Entitlements/Export als spaetere Billing-Ausbaustufe.</p>
+          </article>
+        </section>
+
+        <section class="admin-section" data-admin-panel="dsgvo">
+          <article class="admin-card is-missing">
+            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+            <h2>DSGVO Board</h2>
+            <ul class="small">
+              <li>Verantwortlicher / Kontakt</li>
+              <li>Zwecke / Datenkategorien</li>
+              <li>Auftragsverarbeiter / Subprozessoren</li>
+              <li>Speicherfristen / Betroffenenrechte / Consent</li>
+            </ul>
+          </article>
+        </section>
+
+        <section class="admin-section" data-admin-panel="security">
+          <article class="admin-card is-missing">
+            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+            <h2>Security Board</h2>
+            <ul class="small">
+              <li>Auth-Konzept / Rollenmodell</li>
+              <li>RLS-Status je Domaintabelle</li>
+              <li>Secrets/Rotation/Runbook</li>
+              <li>Audit-Logging / Backup & Restore</li>
+            </ul>
+          </article>
+        </section>
+
+        <section class="admin-section" data-admin-panel="modules">
+          <article class="admin-card">
+            <h2>Module</h2>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminModulesTable">
+                <thead>
+                  <tr>
+                    <th>Modul</th><th>Scope</th><th>Status</th><th>Abhängigkeiten</th><th>Aktion</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="admin-section" data-admin-panel="webmodules">
+          <article class="admin-card">
+            <h2>Modul Web (Burger-Menü)</h2>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminWebModulesTable">
+                <thead>
+                  <tr>
+                    <th>Menüpunkt</th><th>Route</th><th>Status</th><th>Sichtbarkeit Rolle</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/admin-board.js" defer></script>
+</Site>

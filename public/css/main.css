@@ -1,6 +1,8 @@
 :root{
   --bg: #0b1018;
   --panel: #141a24;
+  --surface: #141a24;
+  --surface-2: #1a2638;
   --text: #e8eaf0;
   --muted: rgba(232,234,240,.7);
   --line: rgba(220,228,241,.14);
@@ -27,6 +29,8 @@ body{
 body[data-app-theme="fcp_tactical"]{
   --bg: #e6decc;
   --panel: #f3efe5;
+  --surface: #f3efe5;
+  --surface-2: #ddd4c2;
   --text: #2f3328;
   --muted: rgba(108,112,91,.92);
   --line: rgba(108,112,91,.26);

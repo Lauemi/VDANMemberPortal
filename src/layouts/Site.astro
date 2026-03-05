@@ -36,10 +36,9 @@ const path = Astro.url.pathname.toLowerCase();
 const isScannerPath = path.startsWith("/app/ausweis/verifizieren/");
 const isAppPath = path.startsWith("/app/");
 const isTermsPath = path === "/nutzungsbedingungen.html/" || path === "/nutzungsbedingungen.html";
-const isHomePath = path === "/" || path === "/index.html/" || path === "/index.html";
 const showPortalTermsLink = isAppPath || isTermsPath;
 const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
-const showHeaderAuthCta = !(APP.theme === "vdan_default" && isHomePath);
+const showHeaderAuthCta = false;
 ---
 
 <!doctype html>

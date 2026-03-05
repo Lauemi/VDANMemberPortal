@@ -261,22 +261,22 @@ import { APP } from "../../../config/app";
   <script>
     const tableBody = document.getElementById("demoTableBody");
     if (tableBody) {
-      const rows = Array.from(tableBody.querySelectorAll("tr"));
-      const searchInput = document.getElementById("tableSearchInput");
-      const resetBtn = document.getElementById("resetFiltersBtn");
+      const rows = Array.from(tableBody.querySelectorAll<HTMLTableRowElement>("tr"));
+      const searchInput = document.getElementById("tableSearchInput") as HTMLInputElement | null;
+      const resetBtn = document.getElementById("resetFiltersBtn") as HTMLButtonElement | null;
       const activeFilterChip = document.getElementById("activeFilterChip");
-      const filterTriggers = Array.from(document.querySelectorAll("[data-filter-trigger]"));
-      const filterPanels = Array.from(document.querySelectorAll(".col-filter"));
-      const textInputs = Array.from(document.querySelectorAll("[data-text-filter]"));
-      const statusPanel = document.querySelector('.col-filter[data-col="status"]');
-      const statusChecks = statusPanel ? Array.from(statusPanel.querySelectorAll('input[type="checkbox"]')) : [];
-      const statusApply = statusPanel?.querySelector("[data-status-apply]");
-      const statusClear = statusPanel?.querySelector("[data-status-clear]");
-      const sortButtons = Array.from(document.querySelectorAll("[data-sort]"));
+      const filterTriggers = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-filter-trigger]"));
+      const filterPanels = Array.from(document.querySelectorAll<HTMLElement>(".col-filter"));
+      const textInputs = Array.from(document.querySelectorAll<HTMLInputElement>("[data-text-filter]"));
+      const statusPanel = document.querySelector<HTMLElement>('.col-filter[data-col="status"]');
+      const statusChecks = statusPanel ? Array.from(statusPanel.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')) : [];
+      const statusApply = statusPanel?.querySelector<HTMLButtonElement>("[data-status-apply]");
+      const statusClear = statusPanel?.querySelector<HTMLButtonElement>("[data-status-clear]");
+      const sortButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-sort]"));
       const cardList = document.getElementById("demoCardList");
-      const cards = cardList ? Array.from(cardList.querySelectorAll(".demo-data-card")) : [];
-      const viewButtons = Array.from(document.querySelectorAll("[data-view-mode]"));
-      const tableWrap = document.querySelector(".demo-table-wrap");
+      const cards = cardList ? Array.from(cardList.querySelectorAll<HTMLElement>(".demo-data-card")) : [];
+      const viewButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-view-mode]"));
+      const tableWrap = document.querySelector<HTMLElement>(".demo-table-wrap");
       const rowDialog = document.getElementById("demoRowDialog");
       const rowDialogTitle = document.getElementById("demoRowDialogTitle");
       const rowRole = document.getElementById("demoRowRole");
@@ -405,14 +405,15 @@ import { APP } from "../../../config/app";
       };
 
       searchInput?.addEventListener("input", (e) => {
-        state.search = String(e.target.value || "").trim().toLowerCase();
+        const input = e.currentTarget as HTMLInputElement;
+        state.search = String(input.value || "").trim().toLowerCase();
         applyFilters();
       });
 
       textInputs.forEach((input) => {
-        input.addEventListener("input", (e) => {
-          const key = String(e.target.getAttribute("data-text-filter"));
-          state.text[key] = String(e.target.value || "").trim().toLowerCase();
+        input.addEventListener("input", () => {
+          const key = String(input.getAttribute("data-text-filter"));
+          state.text[key] = String(input.value || "").trim().toLowerCase();
           const trigger = document.querySelector(`[data-filter-trigger="${key}"]`);
           trigger?.classList.toggle("has-filter", Boolean(state.text[key]));
           applyFilters();

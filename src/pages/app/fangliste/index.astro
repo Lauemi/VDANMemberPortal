@@ -73,6 +73,13 @@ import { APP } from "../../../config/app";
           <select id="tripWater" required></select>
         </label>
 
+        <div class="fangliste-full fangliste-water-favorites">
+          <div class="fangliste-water-favorites__actions">
+            <button type="button" id="tripWaterFavoriteToggle" class="feed-btn feed-btn--ghost" disabled>Als Favorit merken</button>
+          </div>
+          <div id="tripWaterFavorites" class="fangliste-water-chip-list" role="group" aria-label="Favoriten Gewässer"></div>
+        </div>
+
         <label class="fangliste-catch-only">
           <span>Fischart (optional)</span>
           <select id="tripFishSpecies"></select>

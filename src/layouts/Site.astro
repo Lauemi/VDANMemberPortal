@@ -127,6 +127,69 @@ const showHeaderAuthCta = false;
         <div id="portalQuickList" class="portal-quick-list"></div>
       </section>
     </div>
+    <section id="goFishingDialog" class="catch-dialog catch-dialog--panel hidden" data-guard-sheet="1" hidden>
+      <form id="goFishingDialogForm" class="catch-dialog__form portal-gofishing-dialog__form">
+        <input type="hidden" id="goFishingDraftState" name="goFishingDraftState" value="" />
+        <div class="portal-gofishing-dialog__content">
+          <div class="portal-gofishing-hero">
+            <div class="portal-gofishing-logo-wrap">
+              <picture class="portal-quick-logo-slot__picture portal-gofishing-logo" aria-hidden="true">
+                <source srcset="/Branding/FCP_GoFishing.svg" type="image/svg+xml" />
+                <img class="portal-quick-logo-slot__img" src="/Branding/FCP_GoFishing.svg" alt="GoFishing FCP" loading="eager" decoding="async" />
+              </picture>
+              {isBetaChannel && <span class="app-beta-badge portal-gofishing-beta" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+              {!isBetaChannel && <span class="app-beta-badge portal-gofishing-beta" aria-hidden="true">BETA</span>}
+            </div>
+            <p class="small portal-gofishing-start" id="goFishingSessionStartLabel" aria-live="polite">Sessionstart wird gesetzt...</p>
+          </div>
+
+          <div class="portal-gofishing-fields">
+            <div class="fangliste-form-grid portal-gofishing-form-grid">
+              <label class="fangliste-full">
+                <span>Gewässerquelle</span>
+                <select id="goFishingWaterMode" aria-label="Gewässerquelle">
+                  <option value="official" selected>Vereinsgewässer</option>
+                  <option value="member">Freies Gewässer</option>
+                </select>
+              </label>
+              <label class="fangliste-full">
+                <span>Vereinsgewässer suchen</span>
+                <input id="goFishingWaterSearch" type="search" placeholder="Gewässer filtern..." />
+              </label>
+              <label class="fangliste-full">
+                <span>Vereinsgewässer</span>
+                <select id="goFishingWater" required></select>
+              </label>
+              <div class="fangliste-full fangliste-water-favorites">
+                <p id="goFishingWaterQuickTitle" class="small">Meistgenutzt</p>
+                <div id="goFishingWaterFavorites" class="fangliste-water-chip-list" role="group" aria-label="Meistgenutzte Gewässer"></div>
+              </div>
+              <label class="fangliste-full hidden" id="goFishingMemberWaterNameWrap" hidden>
+                <span>Freies Gewässername</span>
+                <input id="goFishingMemberWaterName" type="text" placeholder="z. B. Baggersee Nord" maxlength="120" />
+              </label>
+              <label class="fangliste-full hidden" id="goFishingMemberWaterLocationWrap" hidden>
+                <span>Ort / Abschnitt (optional)</span>
+                <input id="goFishingMemberWaterLocation" type="text" placeholder="z. B. Lahr, Nordufer" maxlength="160" />
+              </label>
+              <label>
+                <span>Zielfisch hinzufügen</span>
+                <select id="goFishingFishSelect"></select>
+              </label>
+              <div class="portal-gofishing-add-wrap">
+                <button type="button" id="goFishingAddFishBtn" class="feed-btn feed-btn--ghost">Hinzufügen</button>
+              </div>
+            </div>
+            <div id="goFishingTargetList" class="portal-gofishing-target-list" role="group" aria-label="Zielfische Counter"></div>
+            <p id="goFishingMsg" class="small portal-gofishing-msg" aria-live="polite"></p>
+            <div class="catch-dialog__actions portal-gofishing-actions">
+              <button type="button" class="feed-btn" id="goFishingEndBtn">Session beenden</button>
+              <button type="button" class="feed-btn feed-btn--ghost" data-action="close-gofishing">Schließen</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
 
     <main class="main">
       <div class={containerClass}>
@@ -158,6 +221,7 @@ const showHeaderAuthCta = false;
     <script src="/js/header-auth-cta.js" defer></script>
     <script src="/js/nav-burger.js" defer></script>
     <script src="/js/portal-quick.js" defer></script>
+    <script src="/js/go-fishing.js" defer></script>
     <script src="/js/dialog-ux-guard.js" defer></script>
     <script src="/js/pwa-register.js" defer></script>
     <!-- <script src="/js/maintenance-gate.js" defer></script> -->

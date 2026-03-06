@@ -53,8 +53,8 @@ import { APP } from "../../../config/app";
     </div>
   </section>
 
-  <dialog id="tripCreateDialog" class="catch-dialog">
-    <form id="tripCreateForm" class="catch-dialog__form" method="dialog">
+  <section id="tripCreateDialog" class="catch-dialog catch-dialog--panel hidden" data-guard-sheet="1" hidden>
+    <form id="tripCreateForm" class="catch-dialog__form">
       <h3 id="tripCreateTitle">Eintrag erfassen</h3>
 
       <div class="fangliste-form-grid">
@@ -105,10 +105,10 @@ import { APP } from "../../../config/app";
       </div>
       <p id="tripCreateMsg" class="small" aria-live="polite"></p>
     </form>
-  </dialog>
+  </section>
 
-  <dialog id="tripDetailDialog" class="catch-dialog">
-    <form id="tripDetailForm" class="catch-dialog__form" method="dialog">
+  <section id="tripDetailDialog" class="catch-dialog catch-dialog--panel hidden" data-guard-sheet="1" hidden>
+    <form id="tripDetailForm" class="catch-dialog__form">
       <h3>Eintragsdetails</h3>
       <div id="tripDetailBody" class="catch-dialog__body"></div>
       <div class="catch-dialog__actions">
@@ -118,7 +118,7 @@ import { APP } from "../../../config/app";
       </div>
       <p id="tripDetailMsg" class="small" aria-live="polite"></p>
     </form>
-  </dialog>
+  </section>
 
   <script src="/js/catchlist.js" defer></script>
 </Site>

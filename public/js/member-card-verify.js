@@ -71,19 +71,70 @@
     return fn;
   }
 
-  function readQrByJsQr(video, jsQR) {
+  function readQrByJsQr(video, jsQR, frame = null) {
     const surface = ensureQrCanvas();
     if (!surface) return null;
     const { canvas, ctx } = surface;
     const w = Number(video.videoWidth || 0);
     const h = Number(video.videoHeight || 0);
     if (!w || !h) return null;
-    canvas.width = w;
-    canvas.height = h;
-    ctx.drawImage(video, 0, 0, w, h);
-    const image = ctx.getImageData(0, 0, w, h);
-    const out = jsQR(image.data, w, h, { inversionAttempts: "dontInvert" });
+    const crop = getScanCrop(video, frame);
+    const sx = crop?.sx ?? 0;
+    const sy = crop?.sy ?? 0;
+    const sw = crop?.sw ?? w;
+    const sh = crop?.sh ?? h;
+    canvas.width = sw;
+    canvas.height = sh;
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
+    const image = ctx.getImageData(0, 0, sw, sh);
+    const out = jsQR(image.data, sw, sh, { inversionAttempts: "dontInvert" });
     return out?.data ? String(out.data) : null;
+  }
+
+  function clampInt(value, min, max) {
+    const v = Math.round(Number(value || 0));
+    if (!Number.isFinite(v)) return min;
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function getScanCrop(video, frame) {
+    if (!video || !frame) return null;
+    const vw = Number(video.videoWidth || 0);
+    const vh = Number(video.videoHeight || 0);
+    if (!vw || !vh) return null;
+
+    const videoRect = video.getBoundingClientRect();
+    const frameRect = frame.getBoundingClientRect();
+    if (!videoRect.width || !videoRect.height) return null;
+
+    const leftRatio = (frameRect.left - videoRect.left) / videoRect.width;
+    const topRatio = (frameRect.top - videoRect.top) / videoRect.height;
+    const widthRatio = frameRect.width / videoRect.width;
+    const heightRatio = frameRect.height / videoRect.height;
+
+    const sx = clampInt(leftRatio * vw, 0, vw - 1);
+    const sy = clampInt(topRatio * vh, 0, vh - 1);
+    const sw = clampInt(widthRatio * vw, 1, vw - sx);
+    const sh = clampInt(heightRatio * vh, 1, vh - sy);
+    if (sw <= 0 || sh <= 0) return null;
+    return { sx, sy, sw, sh };
+  }
+
+  async function readQrByDetector(video, frame) {
+    if (!detector) return null;
+    const crop = getScanCrop(video, frame);
+    if (!crop) {
+      const codes = await detector.detect(video).catch(() => []);
+      return codes?.[0]?.rawValue ? String(codes[0].rawValue) : null;
+    }
+    const surface = ensureQrCanvas();
+    if (!surface) return null;
+    const { canvas, ctx } = surface;
+    canvas.width = crop.sw;
+    canvas.height = crop.sh;
+    ctx.drawImage(video, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, crop.sw, crop.sh);
+    const codes = await detector.detect(canvas).catch(() => []);
+    return codes?.[0]?.rawValue ? String(codes[0].rawValue) : null;
   }
 
   function setInlineStatus(text = "", state = "neutral") {
@@ -419,12 +470,12 @@
 
       scanTimer = window.setInterval(async () => {
         if (!video.videoWidth || !video.videoHeight) return;
+        const frame = document.querySelector(".scan-stage__frame");
         let val = null;
         if (detector) {
-          const codes = await detector.detect(video).catch(() => []);
-          val = codes?.[0]?.rawValue || null;
+          val = await readQrByDetector(video, frame);
         } else if (typeof window.jsQR === "function") {
-          val = readQrByJsQr(video, window.jsQR);
+          val = readQrByJsQr(video, window.jsQR, frame);
         }
         if (!val) return;
         if (Date.now() < scanReadyAt) return;

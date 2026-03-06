@@ -1,8 +1,11 @@
 ;(() => {
   function cfg() {
+    const body = document.body;
+    const bodyUrl = String(body?.getAttribute("data-supabase-url") || "").trim();
+    const bodyKey = String(body?.getAttribute("data-supabase-key") || "").trim();
     return {
-      url: String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, ""),
-      key: String(window.__APP_SUPABASE_KEY || "").trim(),
+      url: String(window.__APP_SUPABASE_URL || bodyUrl).trim().replace(/\/+$/, ""),
+      key: String(window.__APP_SUPABASE_KEY || bodyKey).trim(),
     };
   }
 

@@ -482,7 +482,7 @@
       <article class="card">
         <div class="card__body">
           <h3>${esc(r.title || "Task")}</h3>
-          <p class="small">Status: <strong>${esc(r.status || "-")}</strong></p>
+          <p class="small">Status: <strong>${esc(statusLabel(r.status || "-"))}</strong></p>
           <p class="small">Fällig: ${esc(fmtDate(r.due_date))}</p>
           ${r.status_note ? `<p class="small">Hinweis: ${esc(r.status_note)}</p>` : ""}
           <p class="small">Aktualisiert: ${esc(fmtTs(r.updated_at))}</p>
@@ -502,7 +502,7 @@
       <article class="card">
         <div class="card__body">
           <h3>${esc(r.title || "Arbeitseinsatz")}</h3>
-          <p class="small">Status: <strong>${esc(r.status || "-")}</strong></p>
+          <p class="small">Status: <strong>${esc(statusLabel(r.status || "-"))}</strong></p>
           <p class="small">Start: ${esc(fmtTs(r.starts_at))}</p>
           <p class="small">Ende: ${esc(fmtTs(r.ends_at))}</p>
           <p class="small">Ort: ${esc(r.location || "-")}</p>

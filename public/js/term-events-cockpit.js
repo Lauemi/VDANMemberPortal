@@ -75,6 +75,16 @@
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
+  function statusLabel(status) {
+    const map = {
+      draft: "Entwurf",
+      published: "Veröffentlicht",
+      cancelled: "Abgesagt",
+      archived: "Archiviert",
+    };
+    return map[String(status || "").toLowerCase()] || String(status || "-");
+  }
+
   async function loadRoles() {
     const uid = session()?.user?.id;
     if (!uid) return [];
@@ -186,12 +196,12 @@
       <div class="card__body">
         <h3>${escapeHtml(row.title)}</h3>
         <p class="small">${escapeHtml(fmt(row.starts_at))} - ${escapeHtml(fmt(row.ends_at))}</p>
-        <p class="small">${escapeHtml(row.location || "Ort offen")} | Status: ${escapeHtml(row.status)}</p>
+        <p class="small">${escapeHtml(row.location || "Ort offen")} | Status: ${escapeHtml(statusLabel(row.status))}</p>
         ${row.description ? `<p class="small">${escapeHtml(row.description)}</p>` : ""}
         <div class="work-actions">
-          <button class="feed-btn" type="button" data-publish="${row.id}" ${row.status === "draft" ? "" : "disabled"}>Publish</button>
-          <button class="feed-btn feed-btn--ghost" type="button" data-cancel="${row.id}" ${row.status === "published" ? "" : "disabled"}>Cancel</button>
-          <button class="feed-btn feed-btn--ghost" type="button" data-archive="${row.id}" ${row.status !== "archived" ? "" : "disabled"}>Archive</button>
+          <button class="feed-btn" type="button" data-publish="${row.id}" ${row.status === "draft" ? "" : "disabled"}>Veröffentlichen</button>
+          <button class="feed-btn feed-btn--ghost" type="button" data-cancel="${row.id}" ${row.status === "published" ? "" : "disabled"}>Absagen</button>
+          <button class="feed-btn feed-btn--ghost" type="button" data-archive="${row.id}" ${row.status !== "archived" ? "" : "disabled"}>Archivieren</button>
           <button class="feed-btn feed-btn--ghost" type="button" data-edit-toggle="${row.id}">Bearbeiten</button>
           <button class="feed-btn feed-btn--ghost" type="button" data-delete-event="${row.id}">Löschen</button>
         </div>

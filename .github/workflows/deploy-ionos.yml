@@ -23,8 +23,12 @@ jobs:
       - name: Ensure Rollup Linux binary
         run: npm install --no-save --no-audit --no-fund @rollup/rollup-linux-x64-gnu@4.57.1
 
+      - name: Set build version
+        run: echo "PUBLIC_APP_VERSION=deploy-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+
       - name: Build
         env:
+          PUBLIC_APP_VERSION: ${{ env.PUBLIC_APP_VERSION }}
           PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
           PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
@@ -61,7 +65,7 @@ jobs:
             echo "SUPABASE_ACCESS_TOKEN/SUPABASE_PROJECT_REF fehlt - Function-Deploy wird übersprungen."
             exit 0
           fi
-          npx --yes supabase functions deploy club-admin-setup --project-ref "$SUPABASE_PROJECT_REF"
+          npx --yes supabase functions deploy club-admin-setup --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
           npx --yes supabase functions deploy push-notify-update --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Install lftp

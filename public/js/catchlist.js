@@ -9,7 +9,7 @@
     { key: "trip_date", label: "Tag", visible: true },
     { key: "water", label: "Gewässer", visible: true },
     { key: "summary", label: "Fang", visible: true },
-    { key: "status", label: "Status", visible: true },
+    { key: "status", label: "Status", visible: false },
   ];
 
   let waters = [];
@@ -1356,6 +1356,32 @@
     });
   }
 
+  function isNativeDialog(el) {
+    return typeof HTMLDialogElement !== "undefined" && el instanceof HTMLDialogElement;
+  }
+
+  function openDialogOrPanel(el) {
+    if (!el) return;
+    if (isNativeDialog(el)) {
+      if (!el.open) el.showModal();
+      return;
+    }
+    el.removeAttribute("hidden");
+    el.classList.remove("hidden");
+    el.setAttribute("aria-hidden", "false");
+  }
+
+  function closeDialogOrPanel(el) {
+    if (!el) return;
+    if (isNativeDialog(el)) {
+      if (el.open) el.close();
+      return;
+    }
+    el.setAttribute("hidden", "");
+    el.classList.add("hidden");
+    el.setAttribute("aria-hidden", "true");
+  }
+
   function openCreateDialog(mode = "catch") {
     const dlg = document.getElementById("tripCreateDialog");
     const form = document.getElementById("tripCreateForm");
@@ -1369,12 +1395,20 @@
     setCreateMsg("");
     renderWaterOptions();
     renderFishSpeciesOptions();
-    if (!dlg.open) dlg.showModal();
+    openDialogOrPanel(dlg);
+    window.VDAN_DIALOG_GUARD?.restoreDraft?.(dlg);
   }
 
-  function closeCreateDialog() {
+  async function closeCreateDialog(force = false) {
     const dlg = document.getElementById("tripCreateDialog");
-    if (dlg?.open) dlg.close();
+    if (dlg && (isNativeDialog(dlg) ? dlg.open : !dlg.hasAttribute("hidden"))) {
+      if (!force && window.VDAN_DIALOG_GUARD?.requestClose) {
+        const closed = await window.VDAN_DIALOG_GUARD.requestClose(dlg);
+        if (!closed) return;
+      } else {
+        closeDialogOrPanel(dlg);
+      }
+    }
     setCreateMsg("");
   }
 
@@ -1468,12 +1502,20 @@
     } else {
       setDetailMsg("");
     }
-    if (!dlg.open) dlg.showModal();
+    openDialogOrPanel(dlg);
+    window.VDAN_DIALOG_GUARD?.restoreDraft?.(dlg);
   }
 
-  function closeDetailDialog() {
+  async function closeDetailDialog(force = false) {
     const dlg = document.getElementById("tripDetailDialog");
-    if (dlg?.open) dlg.close();
+    if (dlg && (isNativeDialog(dlg) ? dlg.open : !dlg.hasAttribute("hidden"))) {
+      if (!force && window.VDAN_DIALOG_GUARD?.requestClose) {
+        const closed = await window.VDAN_DIALOG_GUARD.requestClose(dlg);
+        if (!closed) return;
+      } else {
+        closeDialogOrPanel(dlg);
+      }
+    }
     activeTripId = null;
     setDetailMsg("");
   }
@@ -1562,7 +1604,7 @@
     if (!activeTripId) return;
     if (isLocalId(activeTripId)) {
       removeLocalQueuedByTripId(activeTripId);
-      closeDetailDialog();
+      await closeDetailDialog(true);
       renderTrips();
       await loadOwnStats().catch(() => {});
       setMsg("Lokaler Offline-Eintrag gelöscht.");
@@ -1576,7 +1618,7 @@
       method: "DELETE",
       headers: { Prefer: "return=minimal" },
     }, true);
-    closeDetailDialog();
+    await closeDetailDialog(true);
     await refreshAll();
     setMsg("Eintrag gelöscht.");
   }
@@ -1669,8 +1711,8 @@
     });
 
     document.getElementById("tripOpenCreate")?.addEventListener("click", openCreateDialog);
-    document.getElementById("tripCreateClose")?.addEventListener("click", closeCreateDialog);
-    document.getElementById("tripDetailClose")?.addEventListener("click", closeDetailDialog);
+    document.getElementById("tripCreateClose")?.addEventListener("click", () => { void closeCreateDialog(false); });
+    document.getElementById("tripDetailClose")?.addEventListener("click", () => { void closeDetailDialog(false); });
     document.getElementById("tripDeleteEntryBtn")?.addEventListener("click", async () => {
       const ok = window.confirm("Diesen Angeltag wirklich löschen?");
       if (!ok) return;
@@ -1736,7 +1778,7 @@
             }
           }
         }
-        closeCreateDialog();
+        await closeCreateDialog(true);
         if (!queued) {
           await refreshAll();
           setMsg(createMode === "no_catch" ? "Kein Fang gespeichert." : "Angeltag gespeichert.");

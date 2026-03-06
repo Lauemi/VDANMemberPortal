@@ -1,6 +1,7 @@
 ;(() => {
   const FALLBACK_KEY = "vdan_user_settings_fallback_v1";
   const UPDATE_NOTIFY_KEY = "vdan_notify_app_update_v1";
+  const RELOAD_HINT_KEY = "vdan_settings_reload_feedback_v1";
   const PUSH_SCOPE = "/";
 
   function cfg() {
@@ -63,6 +64,25 @@
     } catch {
       // ignore
     }
+  }
+
+  function normalizeHandedness(raw) {
+    const val = String(raw || "").trim().toLowerCase();
+    if (val === "left" || val === "right") return val;
+    return "right";
+  }
+
+  function applyHandednessLayout(raw) {
+    const handed = normalizeHandedness(raw);
+    const form = document.getElementById("settingsNotifyForm");
+    if (form) {
+      form.classList.toggle("settings-handed-left", handed === "left");
+      form.classList.toggle("settings-handed-right", handed !== "left");
+    }
+    document.querySelectorAll(".settings-actions-row").forEach((el) => {
+      el.classList.toggle("settings-handed-left", handed === "left");
+      el.classList.toggle("settings-handed-right", handed !== "left");
+    });
   }
 
   function vapidPublicKey() {
@@ -172,6 +192,7 @@
     const handed = String(state.nav_handedness || "right").toLowerCase();
     const handedEl = document.getElementById("setHandedness");
     if (handedEl) handedEl.value = handed === "left" || handed === "right" ? handed : "right";
+    applyHandednessLayout(handed);
   }
 
   function loadFallback() {
@@ -223,6 +244,16 @@
     }
 
     try {
+      const reloadHint = String(sessionStorage.getItem(RELOAD_HINT_KEY) || "").trim();
+      if (reloadHint) {
+        setMsg(reloadHint);
+        sessionStorage.removeItem(RELOAD_HINT_KEY);
+      }
+    } catch {
+      // ignore
+    }
+
+    try {
       const remote = await loadRemoteSettings();
       applyState(remote || {});
       setMsg("Einstellungen geladen.");
@@ -262,8 +293,19 @@
     const versionEl = document.getElementById("settingsAppVersion");
     if (versionEl) versionEl.textContent = String(document.body?.dataset?.appVersion || "unbekannt");
 
+    document.getElementById("setHandedness")?.addEventListener("change", (e) => {
+      applyHandednessLayout(String(e?.target?.value || "right"));
+    });
+
     document.getElementById("settingsReloadBtn")?.addEventListener("click", () => {
-      window.location.reload();
+      const msg = `Seite wird neu geladen (Version ${String(document.body?.dataset?.appVersion || "-")}).`;
+      setMsg(msg);
+      try {
+        sessionStorage.setItem(RELOAD_HINT_KEY, `Neu geladen. Aktive Version: ${String(document.body?.dataset?.appVersion || "-")}.`);
+      } catch {
+        // ignore
+      }
+      window.setTimeout(() => window.location.reload(), 120);
     });
 
     document.getElementById("settingsEnableNotifyBtn")?.addEventListener("click", async () => {
@@ -279,7 +321,9 @@
     });
 
     document.getElementById("settingsCheckUpdateBtn")?.addEventListener("click", async () => {
+      const btn = document.getElementById("settingsCheckUpdateBtn");
       try {
+        if (btn) btn.setAttribute("disabled", "disabled");
         if (!("serviceWorker" in navigator)) {
           setMsg("Service Worker nicht verfügbar.");
           return;
@@ -289,16 +333,39 @@
           setMsg("Keine SW-Registrierung gefunden.");
           return;
         }
-        setMsg("Prüfe Update...");
+        const currentVersion = String(document.body?.dataset?.appVersion || "unbekannt");
+        setMsg(`Prüfe Update... (aktuell ${currentVersion})`);
+        let controllerChanged = false;
+        const onControllerChange = () => {
+          controllerChanged = true;
+        };
+        navigator.serviceWorker.addEventListener("controllerchange", onControllerChange, { once: true });
         await reg.update();
         if (reg.waiting) {
           reg.waiting.postMessage("SKIP_WAITING");
           setMsg("Update bereit. Seite lädt neu.");
+          try {
+            sessionStorage.setItem(RELOAD_HINT_KEY, "Update übernommen und Seite neu geladen.");
+          } catch {
+            // ignore
+          }
+          window.setTimeout(() => window.location.reload(), 250);
           return;
         }
-        setMsg("Kein neues Update gefunden.");
+        if (controllerChanged) {
+          try {
+            sessionStorage.setItem(RELOAD_HINT_KEY, "Neues Update wurde übernommen.");
+          } catch {
+            // ignore
+          }
+          window.location.reload();
+          return;
+        }
+        setMsg(`Kein neues Update gefunden. Aktive Version: ${currentVersion}.`);
       } catch (err) {
         setMsg(err?.message || "Updateprüfung fehlgeschlagen.");
+      } finally {
+        if (btn) btn.removeAttribute("disabled");
       }
     });
   }

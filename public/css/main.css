@@ -1953,6 +1953,34 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
   border-radius:10px;
 }
 
+.portal-gofishing-brand--fcp{
+  --gofishing-brand-navy-1: #07152a;
+  --gofishing-brand-navy-2: #0e203e;
+  --gofishing-brand-gold-1: #d9bb6f;
+  --gofishing-brand-gold-2: #a8843d;
+  --gofishing-brand-line: rgba(217,187,111,.36);
+  --gofishing-brand-surface: rgba(9,22,44,.76);
+  --gofishing-brand-surface-soft: rgba(12,30,58,.58);
+}
+
+.portal-gofishing-brand--fcp .catch-dialog__form{
+  position:relative;
+  background:
+    radial-gradient(120% 65% at 50% 0%, rgba(217,187,111,.12) 0%, rgba(217,187,111,0) 55%),
+    linear-gradient(180deg, var(--gofishing-brand-navy-2) 0%, var(--gofishing-brand-navy-1) 100%);
+}
+
+.portal-gofishing-brand--fcp .catch-dialog__form::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:3px;
+  background:linear-gradient(90deg, rgba(217,187,111,.1) 0%, var(--gofishing-brand-gold-1) 50%, rgba(217,187,111,.1) 100%);
+  pointer-events:none;
+}
+
 .portal-gofishing-dialog__form{
   display:block;
   position:relative;
@@ -1970,9 +1998,9 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
 }
 
 .portal-gofishing-hero{
-  border:1px solid var(--line);
+  border:1px solid var(--gofishing-brand-line, var(--line));
   border-radius:16px;
-  background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.015));
+  background:linear-gradient(180deg, rgba(20,43,76,.52), var(--gofishing-brand-surface-soft, rgba(255,255,255,.015)));
   display:grid;
   justify-items:center;
   gap:8px;
@@ -1987,21 +2015,44 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
 
 .portal-gofishing-logo{
   width:min(100%, clamp(190px, 28vh, 310px));
+  filter:drop-shadow(0 8px 22px rgba(0,0,0,.42));
 }
 
 .portal-gofishing-start{
   margin:0;
-  color:var(--text);
+  color:var(--gofishing-brand-gold-1, var(--text));
   opacity:.9;
 }
 
 .portal-gofishing-fields{
-  border:1px solid var(--line);
+  border:1px solid var(--gofishing-brand-line, var(--line));
   border-radius:16px;
-  background:rgba(255,255,255,.03);
+  background:var(--gofishing-brand-surface, rgba(255,255,255,.03));
   display:grid;
   gap:10px;
   padding:12px;
+}
+
+.portal-gofishing-brand--fcp .portal-gofishing-fields label span,
+.portal-gofishing-brand--fcp .portal-gofishing-fields .small{
+  color:rgba(226,236,255,.84);
+}
+
+.portal-gofishing-brand--fcp .portal-gofishing-fields input,
+.portal-gofishing-brand--fcp .portal-gofishing-fields select{
+  border-color:rgba(128,165,218,.44);
+  background:rgba(6,17,34,.52);
+  color:#e8efff;
+}
+
+.portal-gofishing-brand--fcp .portal-gofishing-fields input::placeholder{
+  color:rgba(197,213,241,.65);
+}
+
+.portal-gofishing-brand--fcp .portal-gofishing-fields input:focus-visible,
+.portal-gofishing-brand--fcp .portal-gofishing-fields select:focus-visible{
+  outline:2px solid rgba(217,187,111,.72);
+  outline-offset:2px;
 }
 
 .portal-gofishing-form-grid{
@@ -2024,10 +2075,10 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
 }
 
 .portal-gofishing-target{
-  border:1px solid var(--line);
+  border:1px solid var(--gofishing-brand-line, var(--line));
   border-radius:12px;
   padding:8px 10px;
-  background:rgba(255,255,255,.03);
+  background:rgba(8,21,40,.62);
   display:grid;
   grid-template-columns:1fr auto auto auto;
   align-items:center;
@@ -2058,6 +2109,44 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
 .portal-gofishing-msg{
   min-height:1.25em;
   margin:0;
+}
+
+.portal-gofishing-brand--fcp .fangliste-water-chip{
+  border-color:rgba(128,165,218,.44);
+  background:rgba(8,21,40,.52);
+  color:#e8efff;
+}
+
+.portal-gofishing-brand--fcp .fangliste-water-chip:hover,
+.portal-gofishing-brand--fcp .fangliste-water-chip:focus-visible{
+  border-color:rgba(217,187,111,.65);
+  background:rgba(217,187,111,.22);
+  color:#fff4d2;
+}
+
+.portal-gofishing-brand--fcp .feed-btn{
+  border-color:rgba(217,187,111,.42);
+  background:linear-gradient(180deg, rgba(217,187,111,.3), rgba(11,29,56,.58));
+  color:#fff3cc;
+}
+
+.portal-gofishing-brand--fcp .feed-btn:hover,
+.portal-gofishing-brand--fcp .feed-btn:focus-visible{
+  border-color:rgba(217,187,111,.75);
+  background:linear-gradient(180deg, rgba(217,187,111,.46), rgba(16,37,70,.66));
+}
+
+.portal-gofishing-brand--fcp .feed-btn--ghost{
+  border-color:rgba(128,165,218,.44);
+  background:rgba(8,21,40,.44);
+  color:#e8efff;
+}
+
+.portal-gofishing-brand--fcp .feed-btn--ghost:hover,
+.portal-gofishing-brand--fcp .feed-btn--ghost:focus-visible{
+  border-color:rgba(217,187,111,.65);
+  background:rgba(217,187,111,.2);
+  color:#fff4d2;
 }
 
 .portal-gofishing-actions{

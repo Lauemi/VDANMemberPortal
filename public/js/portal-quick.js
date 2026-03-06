@@ -21,8 +21,8 @@
     group_superadmin: "Superadmin",
   };
   const FCP_LOGO = {
-    svg: "/Branding/FCP_GoFishing.svg",
-    png: "/Branding/FCP_GoFishing.svg",
+    svg: "/Branding/New_FCP_GoFishing.svg",
+    png: "/Branding/New_FCP_GoFishing.png",
     alt: "Fishing Club Portal",
   };
 

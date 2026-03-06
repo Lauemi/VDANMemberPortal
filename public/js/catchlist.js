@@ -5,11 +5,12 @@
   const OFFLINE_SCHEMA_VERSION = 1;
   const VIEW_KEY = "app:viewMode:fangliste:v1";
   const TABLE_KEY_PREFIX = "app:viewSettings:fangliste:user:v1";
+  const WATER_FAVORITES_KEY_PREFIX = "app:waterFavorites:fangliste:user:v1";
   const TRIP_COLUMNS_DEFAULT = [
     { key: "trip_date", label: "Tag", visible: true },
     { key: "water", label: "Gewässer", visible: true },
     { key: "summary", label: "Fang", visible: true },
-    { key: "status", label: "Status", visible: true },
+    { key: "status", label: "Status", visible: false },
   ];
 
   let waters = [];
@@ -31,6 +32,7 @@
   let queueMem = [];
   let conflictsMem = [];
   let cacheMem = null;
+  let favoriteWaterIds = [];
   const LEGACY_CATCH_CLEAR_MARKER = "vdan_catch_cleanup_v1_done";
   const TOUCH_RPC_DISABLED_KEY = "vdan_rpc_touch_user_disabled_v1";
   const OFFLINE_QUEUE_KEY_PREFIX = "vdan_trip_sync_queue_v1:";
@@ -116,6 +118,81 @@
     } catch {
       // ignore storage errors
     }
+  }
+
+  function waterFavoritesKey() {
+    return `${WATER_FAVORITES_KEY_PREFIX}:${uid() || "anon"}`;
+  }
+
+  function normalizeFavoriteWaterIds(input) {
+    const allowed = new Set((Array.isArray(waters) ? waters : []).map((w) => String(w.id || "")));
+    const items = Array.isArray(input) ? input : [];
+    const out = [];
+    items.forEach((idRaw) => {
+      const id = String(idRaw || "").trim();
+      if (!id || !allowed.has(id) || out.includes(id)) return;
+      out.push(id);
+    });
+    return out.slice(0, 10);
+  }
+
+  function loadWaterFavorites() {
+    const stored = readJsonSafe(waterFavoritesKey(), []);
+    favoriteWaterIds = Array.isArray(stored) ? stored.map((x) => String(x || "").trim()).filter(Boolean) : [];
+  }
+
+  function saveWaterFavorites() {
+    writeJsonSafe(waterFavoritesKey(), favoriteWaterIds);
+  }
+
+  function syncWaterFavoriteToggle() {
+    const btn = document.getElementById("tripWaterFavoriteToggle");
+    if (!btn) return;
+    const selected = selectedWaterId();
+    if (!selected) {
+      btn.disabled = true;
+      btn.textContent = "Als Favorit merken";
+      return;
+    }
+    btn.disabled = false;
+    const isFav = favoriteWaterIds.includes(selected);
+    btn.textContent = isFav ? "Favorit entfernen" : "Als Favorit merken";
+  }
+
+  function renderWaterFavoriteChips() {
+    const root = document.getElementById("tripWaterFavorites");
+    if (!root) return;
+    const chips = favoriteWaterIds
+      .map((id) => {
+        const w = waters.find((x) => String(x.id) === id);
+        if (!w) return null;
+        return `<button type="button" class="fangliste-water-chip" data-water-fav-id="${id}" title="${esc(w.name)}">${esc(w.name)}</button>`;
+      })
+      .filter(Boolean);
+    root.innerHTML = chips.join("");
+  }
+
+  function selectWaterByFavorite(idRaw) {
+    const id = String(idRaw || "").trim();
+    if (!id) return;
+    const search = document.getElementById("tripWaterSearch");
+    if (search) search.value = "";
+    renderWaterOptions();
+    const sel = document.getElementById("tripWater");
+    if (sel) sel.value = id;
+    syncWaterFavoriteToggle();
+  }
+
+  function toggleSelectedWaterFavorite() {
+    const selected = selectedWaterId();
+    if (!selected) return;
+    const idx = favoriteWaterIds.indexOf(selected);
+    if (idx >= 0) favoriteWaterIds.splice(idx, 1);
+    else favoriteWaterIds.push(selected);
+    favoriteWaterIds = normalizeFavoriteWaterIds(favoriteWaterIds);
+    saveWaterFavorites();
+    renderWaterFavoriteChips();
+    syncWaterFavoriteToggle();
   }
 
   function loadQueue() {
@@ -631,6 +708,8 @@
     } catch (err) {
       if (!waters.length) throw err;
     }
+    favoriteWaterIds = normalizeFavoriteWaterIds(favoriteWaterIds);
+    saveWaterFavorites();
     renderWaterOptions();
   }
 
@@ -650,8 +729,19 @@
     const q = String(document.getElementById("tripWaterSearch")?.value || "").trim().toLowerCase();
     if (!sel) return;
 
+    const selected = String(sel.value || "").trim();
     const filtered = waters.filter((w) => String(w.name || "").toLowerCase().includes(q));
-    sel.innerHTML = `<option value="">Bitte wählen</option>` + filtered.map((w) => `<option value="${w.id}">${esc(w.name)}</option>`).join("");
+    let html = `<option value="">Bitte wählen</option>` + filtered.map((w) => `<option value="${w.id}">${esc(w.name)}</option>`).join("");
+    if (selected && !filtered.some((w) => String(w.id) === selected)) {
+      const selectedWater = waters.find((w) => String(w.id) === selected);
+      if (selectedWater) {
+        html += `<option value="${selectedWater.id}">${esc(selectedWater.name)}</option>`;
+      }
+    }
+    sel.innerHTML = html;
+    if (selected) sel.value = selected;
+    syncWaterFavoriteToggle();
+    renderWaterFavoriteChips();
   }
 
   function renderFishSpeciesOptions() {
@@ -830,7 +920,15 @@
     const tripPayload = await sb("/rest/v1/fishing_trips", {
       method: "POST",
       headers: { Prefer: "return=representation" },
-      body: JSON.stringify({ user_id, trip_date, water_body_id, entry_type: "catch" }),
+      body: JSON.stringify({
+        user_id,
+        trip_date,
+        water_body_id,
+        entry_type: "catch",
+        water_source: "official",
+        mapping_status: "mapped",
+        water_name_raw: null,
+      }),
     }, true);
 
     const tripRow = parseReturnRow(tripPayload);
@@ -852,6 +950,9 @@
           fishing_trip_id: tripRow?.id || null,
           user_id,
           water_body_id,
+          water_source: "official",
+          mapping_status: "mapped",
+          water_name_raw: null,
           fish_species_id,
           caught_on: trip_date,
           quantity,
@@ -1356,6 +1457,32 @@
     });
   }
 
+  function isNativeDialog(el) {
+    return typeof HTMLDialogElement !== "undefined" && el instanceof HTMLDialogElement;
+  }
+
+  function openDialogOrPanel(el) {
+    if (!el) return;
+    if (isNativeDialog(el)) {
+      if (!el.open) el.showModal();
+      return;
+    }
+    el.removeAttribute("hidden");
+    el.classList.remove("hidden");
+    el.setAttribute("aria-hidden", "false");
+  }
+
+  function closeDialogOrPanel(el) {
+    if (!el) return;
+    if (isNativeDialog(el)) {
+      if (el.open) el.close();
+      return;
+    }
+    el.setAttribute("hidden", "");
+    el.classList.add("hidden");
+    el.setAttribute("aria-hidden", "true");
+  }
+
   function openCreateDialog(mode = "catch") {
     const dlg = document.getElementById("tripCreateDialog");
     const form = document.getElementById("tripCreateForm");
@@ -1369,12 +1496,20 @@
     setCreateMsg("");
     renderWaterOptions();
     renderFishSpeciesOptions();
-    if (!dlg.open) dlg.showModal();
+    openDialogOrPanel(dlg);
+    window.VDAN_DIALOG_GUARD?.restoreDraft?.(dlg);
   }
 
-  function closeCreateDialog() {
+  async function closeCreateDialog(force = false) {
     const dlg = document.getElementById("tripCreateDialog");
-    if (dlg?.open) dlg.close();
+    if (dlg && (isNativeDialog(dlg) ? dlg.open : !dlg.hasAttribute("hidden"))) {
+      if (!force && window.VDAN_DIALOG_GUARD?.requestClose) {
+        const closed = await window.VDAN_DIALOG_GUARD.requestClose(dlg);
+        if (!closed) return;
+      } else {
+        closeDialogOrPanel(dlg);
+      }
+    }
     setCreateMsg("");
   }
 
@@ -1468,12 +1603,20 @@
     } else {
       setDetailMsg("");
     }
-    if (!dlg.open) dlg.showModal();
+    openDialogOrPanel(dlg);
+    window.VDAN_DIALOG_GUARD?.restoreDraft?.(dlg);
   }
 
-  function closeDetailDialog() {
+  async function closeDetailDialog(force = false) {
     const dlg = document.getElementById("tripDetailDialog");
-    if (dlg?.open) dlg.close();
+    if (dlg && (isNativeDialog(dlg) ? dlg.open : !dlg.hasAttribute("hidden"))) {
+      if (!force && window.VDAN_DIALOG_GUARD?.requestClose) {
+        const closed = await window.VDAN_DIALOG_GUARD.requestClose(dlg);
+        if (!closed) return;
+      } else {
+        closeDialogOrPanel(dlg);
+      }
+    }
     activeTripId = null;
     setDetailMsg("");
   }
@@ -1562,7 +1705,7 @@
     if (!activeTripId) return;
     if (isLocalId(activeTripId)) {
       removeLocalQueuedByTripId(activeTripId);
-      closeDetailDialog();
+      await closeDetailDialog(true);
       renderTrips();
       await loadOwnStats().catch(() => {});
       setMsg("Lokaler Offline-Eintrag gelöscht.");
@@ -1576,7 +1719,7 @@
       method: "DELETE",
       headers: { Prefer: "return=minimal" },
     }, true);
-    closeDetailDialog();
+    await closeDetailDialog(true);
     await refreshAll();
     setMsg("Eintrag gelöscht.");
   }
@@ -1620,6 +1763,7 @@
     await hydratePersistentState();
     currentView = loadViewMode();
     loadTablePrefs();
+    loadWaterFavorites();
     const searchEl = document.getElementById("tripSearch");
     if (searchEl) searchEl.value = tripSearch;
     syncViewButtons();
@@ -1669,8 +1813,8 @@
     });
 
     document.getElementById("tripOpenCreate")?.addEventListener("click", openCreateDialog);
-    document.getElementById("tripCreateClose")?.addEventListener("click", closeCreateDialog);
-    document.getElementById("tripDetailClose")?.addEventListener("click", closeDetailDialog);
+    document.getElementById("tripCreateClose")?.addEventListener("click", () => { void closeCreateDialog(false); });
+    document.getElementById("tripDetailClose")?.addEventListener("click", () => { void closeDetailDialog(false); });
     document.getElementById("tripDeleteEntryBtn")?.addEventListener("click", async () => {
       const ok = window.confirm("Diesen Angeltag wirklich löschen?");
       if (!ok) return;
@@ -1695,6 +1839,17 @@
     });
 
     document.getElementById("tripWaterSearch")?.addEventListener("input", renderWaterOptions);
+    document.getElementById("tripWater")?.addEventListener("change", syncWaterFavoriteToggle);
+    document.getElementById("tripWaterFavoriteToggle")?.addEventListener("click", () => {
+      toggleSelectedWaterFavorite();
+    });
+    document.getElementById("tripWaterFavorites")?.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-water-fav-id]");
+      if (!btn) return;
+      const waterId = String(btn.getAttribute("data-water-fav-id") || "").trim();
+      if (!waterId) return;
+      selectWaterByFavorite(waterId);
+    });
 
     document.getElementById("tripQuickNoCatch")?.addEventListener("click", () => openCreateDialog("no_catch"));
 
@@ -1736,7 +1891,7 @@
             }
           }
         }
-        closeCreateDialog();
+        await closeCreateDialog(true);
         if (!queued) {
           await refreshAll();
           setMsg(createMode === "no_catch" ? "Kein Fang gespeichert." : "Angeltag gespeichert.");

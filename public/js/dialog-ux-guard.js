@@ -251,7 +251,23 @@
     restoreForm(form, draft.values);
   }
 
+  function shouldBypassDraftGuard(dialog) {
+    if (!(dialog instanceof HTMLElement)) return false;
+    return dialog.dataset.guardNoDraft === "1" || dialog.id === "goFishingDialog";
+  }
+
   async function requestClose(dialog) {
+    if (shouldBypassDraftGuard(dialog)) {
+      clearDraft(dialog);
+      if (isNativeDialog(dialog)) {
+        dialog.close();
+      } else {
+        dialog.setAttribute("hidden", "");
+        dialog.classList.add("hidden");
+        dialog.setAttribute("aria-hidden", "true");
+      }
+      return true;
+    }
     const form = getForm(dialog);
     const dirty = isDirty(form);
     if (dirty) {

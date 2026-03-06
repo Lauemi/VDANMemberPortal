@@ -28,6 +28,7 @@
     summary: "",
   };
   let tripStatusFilters = new Set();
+  let didAutoRecoverEmptyView = false;
   let syncInProgress = false;
   let queueMem = [];
   let conflictsMem = [];
@@ -1179,21 +1180,45 @@
     if (!user_id) return;
 
     try {
-      const [tripRows, catchRows] = await Promise.all([
-        sb(
-          `/rest/v1/fishing_trips?select=id,trip_date,entry_type,note,created_at,water_body_id,photo_data_url,photo_updated_at,water_bodies(name)&user_id=eq.${encodeURIComponent(user_id)}&order=trip_date.desc,created_at.desc&limit=500`,
-          { method: "GET" },
-          true
-        ),
-        sb(
-          `/rest/v1/catch_entries?select=id,fishing_trip_id,caught_on,water_body_id,fish_species_id,quantity,length_cm,weight_g,note,created_at,fish_species(name)&user_id=eq.${encodeURIComponent(user_id)}&order=caught_on.desc,created_at.desc&limit=1000`,
-          { method: "GET" },
-          true
-        ).catch(() => []),
-      ]);
+      let tripRows = [];
+      let catchRows = [];
+      try {
+        [tripRows, catchRows] = await Promise.all([
+          sb(
+            `/rest/v1/fishing_trips?select=id,trip_date,entry_type,note,created_at,water_body_id,photo_data_url,photo_updated_at,water_bodies(name)&user_id=eq.${encodeURIComponent(user_id)}&order=trip_date.desc,created_at.desc&limit=500`,
+            { method: "GET" },
+            true
+          ),
+          sb(
+            `/rest/v1/catch_entries?select=id,fishing_trip_id,caught_on,water_body_id,fish_species_id,quantity,length_cm,weight_g,note,created_at,fish_species(name)&user_id=eq.${encodeURIComponent(user_id)}&order=caught_on.desc,created_at.desc&limit=1000`,
+            { method: "GET" },
+            true
+          ).catch(() => []),
+        ]);
+      } catch {
+        // Fallback for projects where relation embedding is unavailable/broken.
+        [tripRows, catchRows] = await Promise.all([
+          sb(
+            `/rest/v1/fishing_trips?select=id,trip_date,entry_type,note,created_at,water_body_id,photo_data_url,photo_updated_at&user_id=eq.${encodeURIComponent(user_id)}&order=trip_date.desc,created_at.desc&limit=500`,
+            { method: "GET" },
+            true
+          ),
+          sb(
+            `/rest/v1/catch_entries?select=id,fishing_trip_id,caught_on,water_body_id,fish_species_id,quantity,length_cm,weight_g,note,created_at&user_id=eq.${encodeURIComponent(user_id)}&order=caught_on.desc,created_at.desc&limit=1000`,
+            { method: "GET" },
+            true
+          ).catch(() => []),
+        ]);
+      }
 
-      trips = Array.isArray(tripRows) ? tripRows : [];
-      catches = Array.isArray(catchRows) ? catchRows : [];
+      trips = (Array.isArray(tripRows) ? tripRows : []).map((t) => {
+        if (t?.water_bodies?.name || !t?.water_body_id) return t;
+        return { ...t, water_bodies: { name: waterNameById(t.water_body_id) } };
+      });
+      catches = (Array.isArray(catchRows) ? catchRows : []).map((c) => {
+        if (c?.fish_species?.name || !c?.fish_species_id) return c;
+        return { ...c, fish_species: { name: fishNameById(c.fish_species_id) } };
+      });
       saveOfflineCache();
     } catch (err) {
       if (!trips.length) loadOfflineCache();
@@ -1398,6 +1423,29 @@
     const root = document.getElementById("tripList");
     if (!root) return;
     const rows = filteredTripRows();
+
+    // Recovery: if backend data exists but persisted filters hide everything,
+    // reset once to avoid a "data is gone" impression.
+    if (!rows.length && trips.length > 0 && !didAutoRecoverEmptyView) {
+      didAutoRecoverEmptyView = true;
+      tripSearch = "";
+      tripFilters.trip_date = "";
+      tripFilters.water = "";
+      tripFilters.summary = "";
+      tripStatusFilters = new Set();
+      const noCatch = document.getElementById("tripOnlyNoCatch");
+      if (noCatch) noCatch.checked = false;
+      const search = document.getElementById("tripSearch");
+      if (search) search.value = "";
+      saveTablePrefs();
+      const recoveredRows = filteredTripRows();
+      if (recoveredRows.length) {
+        root.innerHTML = currentView === "karte" ? renderTripsCardView(recoveredRows) : renderTripsTableView(recoveredRows);
+        syncFilterMeta();
+        setMsg("Filter wurden zurückgesetzt, um vorhandene Einträge anzuzeigen.");
+        return;
+      }
+    }
 
     if (!rows.length) {
       root.innerHTML = `<p class="small">Noch keine Angeltage vorhanden.</p>`;

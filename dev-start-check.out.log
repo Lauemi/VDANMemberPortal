@@ -1,0 +1,17 @@
+
+> vdan-app-template@0.1.0 dev
+> astro dev --force
+
+[33m[1m13:15:03[22m [WARN] [content][39m data store cleared (force)
+[2m13:15:03[22m [34m[types][39m Generated [2m4ms[22m
+[2m13:15:03[22m [34m[content][39m Syncing content
+[2m13:15:03[22m [34m[content][39m Synced content
+[2m13:15:03[22m [34m[vite][39m Port 4321 is in use, trying another one...
+[2m13:15:03[22m [34m[vite][39m Port 4322 is in use, trying another one...
+[2m13:15:03[22m [34m[vite][39m Port 4323 is in use, trying another one...
+
+[42m[1m astro [22m[49m [32mv5.18.0[39m [2mready in[22m 1364 [2mms[22m
+
+[2m┃[22m Local    [36mhttp://127.0.0.1:4324/[39m
+
+[2m13:15:03[22m [32mwatching for file changes...[39m

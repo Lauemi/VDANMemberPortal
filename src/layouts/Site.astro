@@ -75,10 +75,20 @@ const showHeaderAuthCta = false;
     <header class="header">
       <div class="container">
         <nav class="nav" aria-label="Hauptnavigation">
-          <a class="logo" href="/" aria-label={APP.name}>
-            <img src="/Bilder/logo300x300.png" alt={APP.name} />
-          </a>
-          {isBetaChannel && <span class="app-beta-badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+          <div class="header-brand-row">
+            <a class="logo logo--vdan" href="/" aria-label={APP.name}>
+              <img src="/Bilder/logo300x300.png" alt={APP.name} />
+            </a>
+            <div class="header-brand-stack">
+              <a class="logo logo--gofishing" href="/" aria-label="GoFishing">
+                <picture>
+                  <source srcset="/Branding/NewLogoCamouFCP.svg" type="image/svg+xml" />
+                  <img src="/Branding/NewLogoCamouFCP.png" alt="GoFishing" loading="eager" decoding="async" />
+                </picture>
+              </a>
+              {isBetaChannel && <span class="app-beta-badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+            </div>
+          </div>
           <div class="nav-actions">
             <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
             {showHeaderAuthCta && <a id="headerAuthCta" class="header-auth-cta" href="/login/" data-ui-session-skip>Sign in</a>}
@@ -127,7 +137,7 @@ const showHeaderAuthCta = false;
         <div id="portalQuickList" class="portal-quick-list"></div>
       </section>
     </div>
-    <section id="goFishingDialog" class="catch-dialog catch-dialog--panel portal-gofishing-brand--fcp hidden" data-guard-sheet="1" hidden>
+    <section id="goFishingDialog" class="catch-dialog catch-dialog--panel portal-gofishing-brand--fcp hidden" data-guard-sheet="1" data-guard-no-draft="1" hidden>
       <form id="goFishingDialogForm" class="catch-dialog__form portal-gofishing-dialog__form">
         <input type="hidden" id="goFishingDraftState" name="goFishingDraftState" value="" />
         <div class="portal-gofishing-dialog__content">
@@ -140,7 +150,7 @@ const showHeaderAuthCta = false;
               {isBetaChannel && <span class="app-beta-badge portal-gofishing-beta" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
               {!isBetaChannel && <span class="app-beta-badge portal-gofishing-beta" aria-hidden="true">BETA</span>}
             </div>
-            <p class="small portal-gofishing-start" id="goFishingSessionStartLabel" aria-live="polite">Sessionstart wird gesetzt...</p>
+            <p class="small portal-gofishing-start" id="goFishingSessionStartLabel" aria-live="polite">Session noch nicht gestartet.</p>
           </div>
 
           <div class="portal-gofishing-fields">
@@ -183,6 +193,7 @@ const showHeaderAuthCta = false;
             <div id="goFishingTargetList" class="portal-gofishing-target-list" role="group" aria-label="Zielfische Counter"></div>
             <p id="goFishingMsg" class="small portal-gofishing-msg" aria-live="polite"></p>
             <div class="catch-dialog__actions portal-gofishing-actions">
+              <button type="button" class="feed-btn" id="goFishingStartBtn">Start</button>
               <button type="button" class="feed-btn" id="goFishingEndBtn">Session beenden</button>
               <button type="button" class="feed-btn feed-btn--ghost" data-action="close-gofishing">Schließen</button>
             </div>

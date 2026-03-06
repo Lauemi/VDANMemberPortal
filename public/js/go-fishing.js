@@ -7,6 +7,7 @@
   let topOfficialWaterIds = [];
   let fishSpecies = [];
   let sessionState = null;
+  let midnightAutoEndTimer = null;
 
   function cfg() {
     return {
@@ -170,6 +171,46 @@
     return String(input || "").trim() === "member" ? "member" : "official";
   }
 
+  function clearMidnightAutoEndTimer() {
+    if (midnightAutoEndTimer) {
+      window.clearTimeout(midnightAutoEndTimer);
+      midnightAutoEndTimer = null;
+    }
+  }
+
+  function hasStartedSession() {
+    return Boolean(sessionState?.active && sessionState?.started_at);
+  }
+
+  function cutoffFromStartedAtIso(startedAtIso) {
+    const started = new Date(String(startedAtIso || ""));
+    if (!Number.isFinite(started.getTime())) return null;
+    const cutoff = new Date(started);
+    cutoff.setHours(24, 0, 0, 0);
+    return cutoff;
+  }
+
+  function validateWaterSelectionFromState() {
+    const mode = normalizeWaterMode(sessionState?.water_mode);
+    const waterBodyId = String(sessionState?.water_body_id || "").trim();
+    const memberWaterName = String(sessionState?.member_water_name || "").trim();
+    if (mode !== "member" && !waterBodyId) return "Bitte Vereinsgewässer wählen.";
+    if (mode === "member" && !memberWaterName) return "Bitte freies Gewässer benennen.";
+    return "";
+  }
+
+  function scheduleMidnightAutoEnd() {
+    clearMidnightAutoEndTimer();
+    if (!hasStartedSession()) return;
+    const now = new Date();
+    const cutoff = new Date(now);
+    cutoff.setHours(24, 0, 0, 0);
+    const ms = Math.max(250, cutoff.getTime() - now.getTime());
+    midnightAutoEndTimer = window.setTimeout(() => {
+      void endSession({ auto: true, endedAtIso: new Date().toISOString() });
+    }, ms);
+  }
+
   function loadState() {
     const raw = readJsonSafe(sessionKey(), null);
     if (!raw || typeof raw !== "object") {
@@ -193,10 +234,10 @@
   }
 
   function ensureSession() {
-    if (sessionState?.active && sessionState.started_at) return;
+    if (sessionState && typeof sessionState === "object") return;
     sessionState = {
-      active: true,
-      started_at: new Date().toISOString(),
+      active: false,
+      started_at: "",
       water_mode: "official",
       water_body_id: "",
       member_water_name: "",
@@ -217,8 +258,8 @@
   function renderStartLabel() {
     const el = document.getElementById("goFishingSessionStartLabel");
     if (!el) return;
-    if (!sessionState?.started_at) {
-      el.textContent = "Sessionstart wird gesetzt...";
+    if (!hasStartedSession()) {
+      el.textContent = "Session noch nicht gestartet.";
       return;
     }
     el.textContent = `Start: ${startLabelFromIso(sessionState.started_at)}`;
@@ -393,8 +434,8 @@
     syncDraftSignal(false);
   }
 
-  function finalizePayloadFromState() {
-    const endedAt = new Date().toISOString();
+  function finalizePayloadFromState(options = {}) {
+    const endedAt = String(options?.endedAtIso || new Date().toISOString());
     const startedAt = String(sessionState?.started_at || new Date().toISOString());
     const tripDate = tripDateFromIso(startedAt);
     const waterMode = normalizeWaterMode(sessionState?.water_mode);
@@ -405,6 +446,28 @@
     const catches = targets.filter((t) => Number(t.count || 0) > 0);
     const durationMin = Math.max(0, Math.round((new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 60000));
     return { startedAt, endedAt, durationMin, tripDate, waterMode, waterBodyId, memberWaterName, memberWaterLocation, catches };
+  }
+
+  function startSession() {
+    ensureSession();
+    if (hasStartedSession()) {
+      renderStartLabel();
+      scheduleMidnightAutoEnd();
+      setMsg("Session läuft bereits im Hintergrund.");
+      return;
+    }
+    const waterError = validateWaterSelectionFromState();
+    if (waterError) {
+      setMsg(waterError);
+      return;
+    }
+    sessionState.active = true;
+    sessionState.started_at = new Date().toISOString();
+    saveState();
+    renderStartLabel();
+    scheduleMidnightAutoEnd();
+    syncDraftSignal(true);
+    setMsg("Session gestartet. Läuft im Hintergrund.");
   }
 
   function parseReturnRow(payload) {
@@ -524,28 +587,31 @@
     saveQueue(next);
   }
 
-  async function endSession() {
+  async function endSession(options = {}) {
     try {
-      const payload = finalizePayloadFromState();
-      if (payload.waterMode !== "member" && !payload.waterBodyId) throw new Error("Bitte Vereinsgewässer wählen.");
-      if (payload.waterMode === "member" && !payload.memberWaterName) throw new Error("Bitte freies Gewässer benennen.");
+      if (!hasStartedSession()) throw new Error("Bitte zuerst Session starten.");
+      const waterError = validateWaterSelectionFromState();
+      if (waterError) throw new Error(waterError);
+      const payload = finalizePayloadFromState(options);
+      const auto = Boolean(options?.auto);
       setMsg("Session wird gespeichert...");
       try {
         await persistCompletedSession(payload);
-        setMsg("Session beendet und Fangliste aktualisiert.");
+        setMsg(auto ? "Session automatisch um 00:00 beendet und gespeichert." : "Session beendet und Fangliste aktualisiert.");
       } catch (err) {
         if (!navigator.onLine || isNetworkError(err)) {
           const queue = loadQueue();
           queue.push({ id: `${Date.now()}:${Math.random().toString(36).slice(2, 8)}`, payload });
           saveQueue(queue);
-          setMsg("Offline gespeichert. Synchronisierung erfolgt automatisch.");
+          setMsg(auto ? "Session um 00:00 offline beendet. Synchronisierung erfolgt automatisch." : "Offline gespeichert. Synchronisierung erfolgt automatisch.");
         } else {
           throw err;
         }
       }
+      clearMidnightAutoEndTimer();
       sessionState = {
-        active: true,
-        started_at: new Date().toISOString(),
+        active: false,
+        started_at: "",
         water_mode: payload.waterMode,
         water_body_id: payload.waterBodyId,
         member_water_name: payload.memberWaterName,
@@ -560,7 +626,6 @@
       setMsg(err?.message || "Session konnte nicht beendet werden.");
     }
   }
-
   function syncWaterFromSelect() {
     ensureSession();
     if (!sessionState) return;
@@ -591,10 +656,17 @@
     if (!uid()) return;
     loadState();
     ensureSession();
+    if (hasStartedSession()) {
+      const cutoff = cutoffFromStartedAtIso(sessionState.started_at);
+      if (cutoff && Date.now() >= cutoff.getTime()) {
+        await endSession({ auto: true, endedAtIso: cutoff.toISOString() });
+      }
+    }
     sessionState.targets = normalizeTargets(sessionState.targets);
     sessionState.water_mode = normalizeWaterMode(sessionState.water_mode);
     saveState();
     renderStartLabel();
+    scheduleMidnightAutoEnd();
     await loadMasterData();
     sessionState.water_body_id = waters.some((w) => String(w.id) === String(sessionState.water_body_id || ""))
       ? String(sessionState.water_body_id)
@@ -618,6 +690,7 @@
     document.getElementById("goFishingWater")?.addEventListener("change", syncWaterFromSelect);
     document.getElementById("goFishingMemberWaterName")?.addEventListener("input", syncMemberWaterInputs);
     document.getElementById("goFishingMemberWaterLocation")?.addEventListener("input", syncMemberWaterInputs);
+    document.getElementById("goFishingStartBtn")?.addEventListener("click", startSession);
     document.getElementById("goFishingAddFishBtn")?.addEventListener("click", addSelectedFishTarget);
     document.getElementById("goFishingEndBtn")?.addEventListener("click", () => {
       void endSession();

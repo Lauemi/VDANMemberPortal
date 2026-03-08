@@ -41,6 +41,7 @@
     dragSource: null,
   };
   const pickPanels = { details: true, notes: true };
+  let selectedAuditComponentId = '';
 
   const COMPONENT_TEMPLATES = [
     { type: 'header-brand', title: 'Header Brand', hint: 'Logo / Markenbereich', slot: 'header', variant: 'logo', span: 4, minHeight: 56 },
@@ -116,12 +117,40 @@
     { re: /(beta|badge)/i, key: 'chips--beta-badge' },
   ];
   const SPLIT_WIDTH_KEY = 'templateStudio.controlsWidth';
+  const isDomElement = (node) => Boolean(node && node.nodeType === 1);
+  const LIBRARY_STORAGE_KEY = 'vdan_component_library_standards_v1';
+  const SPECIAL_MASK_CACHE_KEY = 'templateStudio.specialMasks.v1';
+  const specialMaskCache = new Set();
 
   function normalizeMaskPath(value) {
     const raw = String(value || '').trim();
     if (!raw) return FALLBACK_MASK_PATH;
     if (!raw.startsWith('/')) return FALLBACK_MASK_PATH;
     return raw.endsWith('/') ? raw : `${raw}/`;
+  }
+
+  function readSpecialMaskCache() {
+    specialMaskCache.clear();
+    try {
+      const raw = localStorage.getItem(SPECIAL_MASK_CACHE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return;
+      parsed
+        .map((entry) => normalizeMaskPath(entry))
+        .filter(Boolean)
+        .forEach((entry) => specialMaskCache.add(entry));
+    } catch {
+      // ignore malformed cache
+    }
+  }
+
+  function writeSpecialMaskCache() {
+    try {
+      localStorage.setItem(SPECIAL_MASK_CACHE_KEY, JSON.stringify([...specialMaskCache]));
+    } catch {
+      // ignore storage errors
+    }
   }
 
   function selectedMaskPath() {
@@ -325,7 +354,7 @@
   }
 
   function inferComponentType(el) {
-    if (!(el instanceof Element)) return 'section';
+    if (!isDomElement(el)) return 'section';
     const explicit = String(el.getAttribute('data-studio-component-type') || '').trim().toLowerCase();
     if (explicit) return explicit;
     if (el.hasAttribute('data-table-id') || el.matches('table, .catch-table, .fangliste-table, .work-part-table')) return 'table';
@@ -340,7 +369,7 @@
   }
 
   function inferComponentSlot(el) {
-    if (!(el instanceof Element)) return 'main';
+    if (!isDomElement(el)) return 'main';
     const explicit = String(el.getAttribute('data-studio-slot') || '').trim().toLowerCase();
     if (explicit) return explicit;
     if (el.closest('header, .header')) return 'header';
@@ -350,7 +379,7 @@
   }
 
   function elementLabel(el) {
-    if (!(el instanceof Element)) return '-';
+    if (!isDomElement(el)) return '-';
     const explicit =
       String(el.getAttribute('data-component-name') || '').trim() ||
       String(el.getAttribute('aria-label') || '').trim();
@@ -359,10 +388,13 @@
     return text || el.tagName.toLowerCase();
   }
 
-  function mapComponentToLibrary(id, type, label) {
+  function mapComponentToLibrary(id, type, label, preferred) {
     const idNorm = String(id || '').trim().toLowerCase();
     const typeNorm = String(type || '').trim().toLowerCase();
     const labelNorm = String(label || '').trim().toLowerCase();
+    const preferredNorm = String(preferred || '').trim().toLowerCase();
+
+    if (preferredNorm && COMPONENT_LIBRARY_KEYS.has(preferredNorm)) return preferredNorm;
 
     if (COMPONENT_LIBRARY_KEYS.has(idNorm)) return idNorm;
     for (const rule of COMPONENT_ID_LIBRARY_RULES) {
@@ -387,58 +419,134 @@
     return '';
   }
 
-  function renderComponentAudit(doc) {
-    const list = document.getElementById('templateComponentAuditList');
-    if (!(list instanceof HTMLElement)) return;
-    if (!doc?.body) {
-      list.innerHTML = '<li class="template-audit-list__empty">Noch keine Komponenten erkannt.</li>';
-      return;
+  function readLibraryComponentStandards() {
+    try {
+      const raw = localStorage.getItem(LIBRARY_STORAGE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      const components = parsed && typeof parsed === 'object' ? parsed.components : null;
+      return components && typeof components === 'object' ? components : {};
+    } catch {
+      return {};
     }
+  }
 
+  function pickSpecFields(fields) {
+    if (!fields || typeof fields !== 'object') return [];
+    const keyOrder = [
+      'height',
+      'width',
+      'padding',
+      'radius',
+      'font',
+      'icon',
+      'touch',
+      'states',
+      'colors',
+      'usage',
+      'patterns',
+    ];
+    return keyOrder
+      .filter((key) => String(fields[key] || '').trim())
+      .map((key) => ({ key, label: key.toUpperCase(), value: String(fields[key]).trim() }));
+  }
+
+  function collectAuditableComponents(doc) {
+    if (!doc?.body) return [];
     const candidates = [...doc.querySelectorAll('[data-studio-component-id], [data-component-id], [data-table-id], button, .card, section, article')];
     const seen = new Set();
     const rows = [];
+    let autoIdx = 0;
 
     candidates.forEach((el) => {
-      if (!(el instanceof Element)) return;
-      const id =
-        String(el.getAttribute('data-studio-component-id') || '').trim() ||
-        String(el.getAttribute('data-component-id') || '').trim() ||
-        (el.hasAttribute('data-table-id') ? `table-${String(el.getAttribute('data-table-id') || '').trim()}` : '');
-      if (!id) return;
-      if (seen.has(id)) return;
+      if (!isDomElement(el)) return;
+      const explicitStudioId = String(el.getAttribute('data-studio-component-id') || '').trim();
+      const explicitLegacyId = String(el.getAttribute('data-component-id') || '').trim();
+      const tableId = el.hasAttribute('data-table-id') ? String(el.getAttribute('data-table-id') || '').trim() : '';
+      const domId = String(el.id || '').trim();
+      let id = explicitStudioId || explicitLegacyId || (tableId ? `table-${tableId}` : '') || (domId ? `dom-${domId}` : '');
+      if (!id) {
+        const tag = el.tagName.toLowerCase();
+        if (tag === 'button' || tag === 'a' || tag === 'input' || tag === 'select' || tag === 'textarea') {
+          autoIdx += 1;
+          id = `auto-${tag}-${autoIdx}`;
+        }
+      }
+      if (!id || seen.has(id)) return;
       seen.add(id);
+
       const type = inferComponentType(el);
       const slot = inferComponentSlot(el);
-      const libraryId = mapComponentToLibrary(id, type, elementLabel(el));
+      const label = elementLabel(el);
+      const preferredLibraryId = String(el.getAttribute('data-studio-library-id') || '').trim();
+      const libraryId = mapComponentToLibrary(id, type, label, preferredLibraryId);
+      const exportable = Boolean(explicitStudioId && String(el.getAttribute('data-studio-component-type') || '').trim() && String(el.getAttribute('data-studio-slot') || '').trim());
       rows.push({
         id,
         type,
         slot,
-        label: elementLabel(el),
+        label,
         ok: Boolean(libraryId && COMPONENT_LIBRARY_KEYS.has(libraryId)),
         libraryId: libraryId || 'kein Mapping',
+        table: Boolean(tableId),
+        exportable,
       });
     });
+
+    return rows;
+  }
+
+  function renderComponentAudit(doc, state = 'ready') {
+    const list = document.getElementById('templateComponentAuditList');
+    if (!(list instanceof HTMLElement)) return;
+    if (state === 'loading') {
+      list.innerHTML = '<li class="template-audit-list__empty">Preview lädt noch… Komponenten werden gleich erkannt.</li>';
+      return;
+    }
+    if (!doc?.body) {
+      list.innerHTML = '<li class="template-audit-list__empty">Noch keine Komponenten erkannt.</li>';
+      return;
+    }
+    const rows = collectAuditableComponents(doc);
 
     if (!rows.length) {
       list.innerHTML = '<li class="template-audit-list__empty">Keine auswertbaren Komponenten mit ID auf der aktuellen Seite.</li>';
       return;
     }
 
+    const libraryState = readLibraryComponentStandards();
     list.innerHTML = rows
       .map((row) => {
-        const badge = row.ok ? '<span class="template-audit-item__ok">✅ standardisiert</span>' : '<span class="template-audit-item__fail">❌ nicht standardisiert</span>';
+        const lib = row.libraryId && row.libraryId !== 'kein Mapping' ? libraryState[row.libraryId] : null;
+        const specs = pickSpecFields(lib);
+        const specRows = specs.length
+          ? specs.map((entry) => `<div class="template-audit-item__meta"><strong>${esc(entry.label)}:</strong> ${esc(entry.value)}</div>`).join('')
+          : '<div class="template-audit-item__meta">Keine Standardwerte geladen (Component Library speichern).</div>';
+        const status = row.ok ? '<span class="template-audit-item__ok">Standard zugeordnet</span>' : '<span class="template-audit-item__fail">Kein Standard-Mapping</span>';
+        const isSelected = selectedAuditComponentId && selectedAuditComponentId === row.id;
         return [
-          '<li class="template-audit-item">',
-          `<div class="template-audit-item__head">${badge}<span>${esc(row.label)}</span></div>`,
+          `<li class="template-audit-item${isSelected ? ' is-selected' : ''}" data-audit-id="${esc(row.id)}">`,
+          `<div class="template-audit-item__head"><span>${esc(row.label)}</span></div>`,
           `<div class="template-audit-item__meta">ID: <code>${esc(row.id)}</code></div>`,
+          `<details class="template-audit-item__details">`,
+          '<summary>Details</summary>',
+          `<div class="template-audit-item__meta">STANDARD_ID: <code>${esc(row.libraryId)}</code></div>`,
           `<div class="template-audit-item__meta">TYPE: <code>${esc(row.type)}</code> · SLOT: <code>${esc(row.slot)}</code></div>`,
-          `<div class="template-audit-item__meta">LIB: <code>${esc(row.libraryId)}</code></div>`,
+          `<div class="template-audit-item__meta">${status}</div>`,
+          specRows,
+          '</details>',
           '</li>',
         ].join('');
       })
       .join('');
+  }
+
+  function focusAuditEntryById(id) {
+    const list = document.getElementById('templateComponentAuditList');
+    if (!(list instanceof HTMLElement)) return;
+    const entry = list.querySelector(`.template-audit-item[data-audit-id="${CSS.escape(String(id || ''))}"]`);
+    if (!(entry instanceof HTMLElement)) return;
+    entry.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
   }
 
   function updateStudioOverview() {
@@ -446,27 +554,49 @@
     const elComponents = document.getElementById('studioCountComponents');
     const elTables = document.getElementById('studioCountTables');
     const elExport = document.getElementById('studioCountExportable');
+    const elStandardized = document.getElementById('studioCountStandardized');
+    const elSpecial = document.getElementById('studioCountSpecial');
+    const elSpecialMasks = document.getElementById('studioCountSpecialMasks');
     if (!(elComponents instanceof HTMLElement) || !(elTables instanceof HTMLElement) || !(elExport instanceof HTMLElement)) return;
     try {
       const doc = frame instanceof HTMLIFrameElement ? frame.contentDocument : null;
-      if (!doc?.body) {
+      const href = String(doc?.location?.href || '');
+      const isAboutBlank = href === 'about:blank' || href.endsWith('/about:blank');
+      if (!doc?.body || isAboutBlank) {
         elComponents.textContent = '0';
         elTables.textContent = '0';
         elExport.textContent = '0';
+        if (elStandardized instanceof HTMLElement) elStandardized.textContent = '0';
+        if (elSpecial instanceof HTMLElement) elSpecial.textContent = '0';
+        if (elSpecialMasks instanceof HTMLElement) elSpecialMasks.textContent = String(specialMaskCache.size);
+        renderComponentAudit(null, 'loading');
         return;
       }
-      const components = doc.querySelectorAll('[data-studio-component-id]').length;
-      const tables = doc.querySelectorAll('[data-table-id]').length;
-      const exportable = doc.querySelectorAll('[data-studio-component-id][data-studio-component-type][data-studio-slot]').length;
+      const rows = collectAuditableComponents(doc);
+      const components = rows.length;
+      const tables = rows.filter((row) => row.table).length;
+      const exportable = rows.filter((row) => row.exportable).length;
+      const standardized = rows.filter((row) => row.ok).length;
+      const special = Math.max(0, components - standardized);
+      const maskPath = normalizeMaskPath(doc?.location?.pathname || selectedMaskPath());
+      if (special > 0) specialMaskCache.add(maskPath);
+      else specialMaskCache.delete(maskPath);
+      writeSpecialMaskCache();
       elComponents.textContent = String(components);
       elTables.textContent = String(tables);
       elExport.textContent = String(exportable);
+      if (elStandardized instanceof HTMLElement) elStandardized.textContent = String(standardized);
+      if (elSpecial instanceof HTMLElement) elSpecial.textContent = String(special);
+      if (elSpecialMasks instanceof HTMLElement) elSpecialMasks.textContent = String(specialMaskCache.size);
       renderComponentAudit(doc);
     } catch {
       elComponents.textContent = '0';
       elTables.textContent = '0';
       elExport.textContent = '0';
-      renderComponentAudit(null);
+      if (elStandardized instanceof HTMLElement) elStandardized.textContent = '0';
+      if (elSpecial instanceof HTMLElement) elSpecial.textContent = '0';
+      if (elSpecialMasks instanceof HTMLElement) elSpecialMasks.textContent = String(specialMaskCache.size);
+      renderComponentAudit(null, 'loading');
     }
   }
 
@@ -1039,8 +1169,11 @@
       const title = String(payload.component_name || 'Unbekannt');
       const selector = String(payload.selector || '-');
       const area = String(payload.area || 'Unbekannt');
+      selectedAuditComponentId = String(payload.component_id || '').trim();
       setPickInfo(pickInfoHtml(title, selector, area, rect));
       setPickLines(buildPickLinesFromPayload(payload));
+      updateStudioOverview();
+      focusAuditEntryById(selectedAuditComponentId);
       setPickDebug({
         last: 'click_selected',
         lastTarget: `${String(payload.tag || '-')} ${selector}`.slice(0, 120),
@@ -1874,7 +2007,9 @@
       }
       syncMaskSelects(next);
       applyMaskToPreview(next);
+      return;
     }
+
   });
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -1888,6 +2023,7 @@
     renderPickDebug();
     setNoteKind('task', false);
     setPickPanelVisibility(true, true);
+    readSpecialMaskCache();
 
     const frame = document.getElementById('templateLiveFrame');
     if (frame instanceof HTMLIFrameElement) {

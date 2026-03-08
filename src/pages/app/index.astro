@@ -17,124 +17,17 @@ import { APP } from "../../config/app";
 
       <div data-member-only hidden data-studio-component-id="app-home-member-header" data-studio-component-type="section" data-studio-slot="main">
         <h1>Fishing-Club-Portal</h1>
-        <p class="small">Wähle eine App.</p>
+        <p class="small">Diese Startmaske wird aktuell nicht mehr genutzt.</p>
         <p><a class="feed-btn feed-btn--ghost" href="/app/einstellungen/">Einstellungen öffnen</a></p>
-
-      <div class="app-grid" data-studio-component-id="app-home-app-grid" data-studio-component-type="list" data-studio-slot="main">
-        <div class="app-entry">
-          <a class="app-tile" href="/app/fangliste/"><span class="app-tile__icon">FL</span></a>
-          <span class="app-tile__title">Fangliste</span>
-          <span class="small app-tile__desc">Fänge erfassen</span>
-        </div>
-
-        <div class="app-entry">
-          <a class="app-tile" href="/app/arbeitseinsaetze/"><span class="app-tile__icon">AS</span></a>
-          <span class="app-tile__title">Arbeitseinsätze</span>
-          <span class="small app-tile__desc">Anmelden & Check-in</span>
-        </div>
-
-        <div class="app-entry">
-          <a class="app-tile" href="/app/ausweis/"><span class="app-tile__icon">ID</span></a>
-          <span class="app-tile__title">Mitgliedsausweis</span>
-          <span class="small app-tile__desc">Name, Nr. & Gültigkeit</span>
-        </div>
-
-        <div class="app-entry">
-          <a class="app-tile" href="/app/gewaesserkarte/"><span class="app-tile__icon">GK</span></a>
-          <span class="app-tile__title">Gewässerkarte</span>
-          <span class="small app-tile__desc">Erlaubt / Verboten</span>
-        </div>
-
-        <div class="app-entry hidden" data-manager-only hidden>
-          <a class="app-tile" href="/app/ausweis/verifizieren/"><span class="app-tile__icon">SC</span></a>
-          <span class="app-tile__title">Scanner</span>
-          <span class="small app-tile__desc">Ausweise live prüfen</span>
-        </div>
-
-        <div class="app-entry hidden" data-manager-only hidden>
-          <a class="app-tile" href="/app/arbeitseinsaetze/cockpit/"><span class="app-tile__icon">AC</span></a>
-          <span class="app-tile__title">AS Cockpit</span>
-          <span class="small app-tile__desc">Freigaben & History</span>
-        </div>
-
-        <div class="app-entry hidden" data-manager-only hidden>
-          <a class="app-tile" href="/app/sitzungen/"><span class="app-tile__icon">SI</span></a>
-          <span class="app-tile__title">Sitzungen</span>
-          <span class="small app-tile__desc">Maßnahmen & Aufgaben</span>
-        </div>
-
-        <div class="app-entry hidden" data-manager-only hidden>
-          <a class="app-tile" href="/app/termine/cockpit/"><span class="app-tile__icon">TC</span></a>
-          <span class="app-tile__title">Termine Cockpit</span>
-          <span class="small app-tile__desc">Termine pflegen</span>
-        </div>
-
-        <div class="app-entry hidden" data-member-only hidden>
-          <a class="app-tile" href="/app/zustaendigkeiten/"><span class="app-tile__icon">ZU</span></a>
-          <span class="app-tile__title">Zuständigkeiten</span>
-          <span class="small app-tile__desc">Meine Tasks & Leitungen</span>
-        </div>
-
-        <div class="app-entry hidden" data-member-only hidden>
-          <a class="app-tile" href="/app/einstellungen/"><span class="app-tile__icon">ES</span></a>
-          <span class="app-tile__title">Einstellungen</span>
-          <span class="small app-tile__desc">App, Konto, Hinweise</span>
-        </div>
-
-        <div class="app-entry hidden" data-admin-only hidden>
-          <a class="app-tile" href="/app/mitglieder/"><span class="app-tile__icon">MV</span></a>
-          <span class="app-tile__title">Mitglieder</span>
-          <span class="small app-tile__desc">Benutzer & Rollen</span>
-        </div>
-
-        <div class="app-entry hidden" data-superadmin-only hidden>
-          <a class="app-tile" href="/app/vereine/"><span class="app-tile__icon">VS</span></a>
-          <span class="app-tile__title">Vereins-Setup</span>
-          <span class="small app-tile__desc">Neuen Verein anlegen</span>
-        </div>
-
-        <div class="app-entry hidden" data-superadmin-only hidden>
-          <a class="app-tile" href="/app/ui-neumorph-demo/"><span class="app-tile__icon">UI</span></a>
-          <span class="app-tile__title">UI Demo</span>
-          <span class="small app-tile__desc">Neumorph Beispielmaske</span>
-        </div>
-
-        <div class="app-entry hidden" data-superadmin-only hidden>
-          <a class="app-tile" href="/app/admin-panel/"><span class="app-tile__icon">AB</span></a>
-          <span class="app-tile__title">Admin Board</span>
-          <span class="small app-tile__desc">Superadmin Steuerzentrale</span>
-        </div>
-
-        <div class="app-entry hidden" data-superadmin-only hidden>
-          <a class="app-tile" href="/app/component-library/"><span class="app-tile__icon">CL</span></a>
-          <span class="app-tile__title">Component Library</span>
-          <span class="small app-tile__desc">Verbindliche UI Referenz</span>
-        </div>
-
-        <div class="app-entry hidden" data-superadmin-only hidden>
-          <a class="app-tile" href="/app/template-studio/"><span class="app-tile__icon">TS</span></a>
-          <span class="app-tile__title">Template Studio</span>
-          <span class="small app-tile__desc">Standard-Maske als Miniansicht</span>
-        </div>
-
-        <div class="app-entry hidden" data-admin-only hidden>
-          <a class="app-tile" href="/app/fangliste/cockpit/"><span class="app-tile__icon">FC</span></a>
-          <span class="app-tile__title">Fangliste Cockpit</span>
-          <span class="small app-tile__desc">Gesamtübersicht Fänge</span>
-        </div>
-
-        <div class="app-entry hidden" data-manager-only hidden>
-          <a class="app-tile" href="/app/bewerbungen/"><span class="app-tile__icon">BW</span></a>
-          <span class="app-tile__title">Bewerbungen</span>
-          <span class="small app-tile__desc">Mitgliedsanträge prüfen</span>
-        </div>
-
-        <div class="app-entry hidden" data-manager-only hidden>
-          <a class="app-tile" href="/app/dokumente/"><span class="app-tile__icon">DV</span></a>
-          <span class="app-tile__title">Dokumente</span>
-          <span class="small app-tile__desc">Downloads pflegen</span>
-        </div>
       </div>
+
+      <div class="app-portal-guest app-portal-guest--member" data-member-only hidden data-studio-component-id="app-home-app-grid" data-studio-component-type="card" data-studio-slot="main">
+        <picture class="app-portal-guest__logo" aria-hidden="true">
+          <source srcset="/Branding/New_FCP_GoFishing.svg" type="image/svg+xml" />
+          <img src="/Branding/New_FCP_GoFishing.png" alt="" loading="eager" decoding="async" />
+        </picture>
+        <p class="app-portal-guest__message">Bitte logge dich ein.</p>
+        <a class="feed-btn" href="/login/?next=%2Fapp%2F">Zum Login</a>
       </div>
     </div>
   </section>

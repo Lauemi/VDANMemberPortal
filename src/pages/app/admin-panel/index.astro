@@ -170,12 +170,17 @@ import { APP } from "../../../config/app";
 
         <section class="admin-section" data-admin-panel="modules">
           <article class="admin-card">
-            <h2>Module</h2>
+            <h2>Module (Portal)</h2>
+            <div class="admin-actions">
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixSavePortal">Portal speichern</button>
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixResetPortal">Portal reset</button>
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixCopyPortal">Portal JSON</button>
+            </div>
             <div class="work-part-table-wrap">
               <table class="work-part-table" id="adminModulesTable">
                 <thead>
                   <tr>
-                    <th>Modul</th><th>Scope</th><th>Status</th><th>Abhängigkeiten</th><th>Aktion</th>
+                    <th>Seite</th><th>Route</th><th>Typ</th><th>Guest</th><th>Member</th><th>Manager</th><th>Admin</th><th>Superadmin</th><th>Aktion</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -187,11 +192,16 @@ import { APP } from "../../../config/app";
         <section class="admin-section" data-admin-panel="webmodules">
           <article class="admin-card">
             <h2>Modul Web (Burger-Menü)</h2>
+            <div class="admin-actions">
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixSaveWeb">Web speichern</button>
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixResetWeb">Web reset</button>
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixCopyWeb">Web JSON</button>
+            </div>
             <div class="work-part-table-wrap">
               <table class="work-part-table" id="adminWebModulesTable">
                 <thead>
                   <tr>
-                    <th>Menüpunkt</th><th>Route</th><th>Status</th><th>Sichtbarkeit Rolle</th>
+                    <th>Seite</th><th>Route</th><th>Typ</th><th>Guest</th><th>Member</th><th>Manager</th><th>Admin</th><th>Superadmin</th><th>Aktion</th>
                   </tr>
                 </thead>
                 <tbody></tbody>

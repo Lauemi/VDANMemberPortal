@@ -1036,49 +1036,53 @@ const categories = [
 
                   <div class="lib-meta">
                     <h3>{item.name}</h3>
-                    <p class="small">{item.description}</p>
+                    <p class="small lib-component-id">ID: <code>{`${category.id}--${toSlug(item.name)}`}</code></p>
                     <div class="lib-validation" data-validation hidden></div>
 
-                    <dl class="lib-specs">
-                      <dt>Typ</dt><dd><input class="lib-edit-input" data-field="type" data-default={item.type} value={item.type} /></dd>
-                      <dt>Hoehe</dt><dd><input class="lib-edit-input" data-field="height" data-default={item.height} value={item.height} /></dd>
-                      <dt>Breite / Verhalten</dt><dd><input class="lib-edit-input" data-field="width" data-default={item.width} value={item.width} /></dd>
-                      <dt>Padding</dt><dd><input class="lib-edit-input" data-field="padding" data-default={item.padding} value={item.padding} /></dd>
-                      <dt>Border-Radius</dt><dd><input class="lib-edit-input" data-field="radius" data-default={item.radius} value={item.radius} /></dd>
-                      <dt>Font-Size</dt><dd><input class="lib-edit-input" data-field="font" data-default={item.font} value={item.font} /></dd>
-                      <dt>Icon-Groesse</dt><dd><input class="lib-edit-input" data-field="icon" data-default={item.icon} value={item.icon} /></dd>
-                      <dt>Touch-Target</dt><dd><input class="lib-edit-input" data-field="touch" data-default={item.touch} value={item.touch} /></dd>
-                      <dt>Zustaende</dt><dd><input class="lib-edit-input" data-field="states" data-default={item.states} value={item.states} /></dd>
-                      <dt>Farben</dt><dd><input class="lib-edit-input" data-field="colors" data-default={item.colors || ""} value={item.colors || ""} placeholder="text:#E8EAF0, bg:#0B1220, border:#2A3550" /></dd>
-                      <dt>Verwendungszweck</dt><dd><input class="lib-edit-input" data-field="usage" data-default={item.usage} value={item.usage} /></dd>
-                      <dt>Funktionen</dt><dd><input class="lib-edit-input" data-field="features" data-default={item.features || ""} value={item.features || ""} /></dd>
-                      <dt>Checks / NOGO</dt><dd><input class="lib-edit-input" data-field="checks" data-default={item.checks || ""} value={item.checks || ""} /></dd>
-                    </dl>
+                    <details class="lib-meta-details">
+                      <summary>Details</summary>
+                      <p class="small">{item.description}</p>
+                      <dl class="lib-specs">
+                        <dt>Typ</dt><dd><input class="lib-edit-input" data-field="type" data-default={item.type} value={item.type} /></dd>
+                        <dt>Hoehe</dt><dd><input class="lib-edit-input" data-field="height" data-default={item.height} value={item.height} /></dd>
+                        <dt>Breite / Verhalten</dt><dd><input class="lib-edit-input" data-field="width" data-default={item.width} value={item.width} /></dd>
+                        <dt>Padding</dt><dd><input class="lib-edit-input" data-field="padding" data-default={item.padding} value={item.padding} /></dd>
+                        <dt>Border-Radius</dt><dd><input class="lib-edit-input" data-field="radius" data-default={item.radius} value={item.radius} /></dd>
+                        <dt>Font-Size</dt><dd><input class="lib-edit-input" data-field="font" data-default={item.font} value={item.font} /></dd>
+                        <dt>Icon-Groesse</dt><dd><input class="lib-edit-input" data-field="icon" data-default={item.icon} value={item.icon} /></dd>
+                        <dt>Touch-Target</dt><dd><input class="lib-edit-input" data-field="touch" data-default={item.touch} value={item.touch} /></dd>
+                        <dt>Zustaende</dt><dd><input class="lib-edit-input" data-field="states" data-default={item.states} value={item.states} /></dd>
+                        <dt>Farben</dt><dd><input class="lib-edit-input" data-field="colors" data-default={item.colors || ""} value={item.colors || ""} placeholder="text:#E8EAF0, bg:#0B1220, border:#2A3550" /></dd>
+                        <dt>Verwendungszweck</dt><dd><input class="lib-edit-input" data-field="usage" data-default={item.usage} value={item.usage} /></dd>
+                        <dt>Funktionen</dt><dd><input class="lib-edit-input" data-field="features" data-default={item.features || ""} value={item.features || ""} /></dd>
+                        <dt>Checks / NOGO</dt><dd><input class="lib-edit-input" data-field="checks" data-default={item.checks || ""} value={item.checks || ""} /></dd>
+                      </dl>
 
-                    <div class="lib-pattern-row">
-                      <label class="small" for={`pattern-${category.id}-${toSlug(item.name)}`}>Pattern / Klassen</label>
-                      <div class="lib-copy-wrap">
-                        <input
-                          id={`pattern-${category.id}-${toSlug(item.name)}`}
-                          class="lib-pattern-input lib-edit-input"
-                          data-field="patterns"
-                          data-default={item.patterns}
-                          value={item.patterns}
-                        />
-                        <button type="button" class="feed-btn feed-btn--ghost lib-copy-btn">FIX</button>
+                      <div class="lib-pattern-row">
+                        <label class="small" for={`pattern-${category.id}-${toSlug(item.name)}`}>Pattern / Klassen</label>
+                        <div class="lib-copy-wrap">
+                          <input
+                            id={`pattern-${category.id}-${toSlug(item.name)}`}
+                            class="lib-pattern-input lib-edit-input"
+                            data-field="patterns"
+                            data-default={item.patterns}
+                            value={item.patterns}
+                          />
+                          <button type="button" class="feed-btn feed-btn--ghost lib-copy-btn">FIX</button>
+                        </div>
                       </div>
-                    </div>
-                    <div class="lib-pattern-row">
-                      <label class="small" for={`notes-${category.id}-${toSlug(item.name)}`}>Bemerkungen / Anregungen</label>
-                      <textarea
-                        id={`notes-${category.id}-${toSlug(item.name)}`}
-                        class="lib-edit-input lib-note-input"
-                        data-field="notes"
-                        data-default={item.notes || ""}
-                        rows={3}
-                        placeholder="Konkreter Hinweis, Problem, gewünschtes Ziel..."
-                      >{item.notes || ""}</textarea>
-                    </div>
+                      <div class="lib-pattern-row">
+                        <label class="small" for={`notes-${category.id}-${toSlug(item.name)}`}>Bemerkungen / Anregungen</label>
+                        <textarea
+                          id={`notes-${category.id}-${toSlug(item.name)}`}
+                          class="lib-edit-input lib-note-input"
+                          data-field="notes"
+                          data-default={item.notes || ""}
+                          rows={3}
+                          placeholder="Konkreter Hinweis, Problem, gewünschtes Ziel..."
+                        >{item.notes || ""}</textarea>
+                      </div>
+                    </details>
                   </div>
                 </article>
               ))
@@ -1557,6 +1561,36 @@ const categories = [
 
     .lib-meta p{
       margin:0;
+    }
+
+    .lib-component-id{
+      font-size:.8rem;
+      color:var(--text-soft);
+    }
+
+    .lib-component-id code{
+      font-size:.78rem;
+    }
+
+    .lib-meta-details{
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:rgba(255,255,255,.02);
+      padding:8px;
+      display:grid;
+      gap:8px;
+    }
+
+    .lib-meta-details > summary{
+      cursor:pointer;
+      user-select:none;
+      font-size:.84rem;
+      color:var(--text-soft);
+      list-style-position:inside;
+    }
+
+    .lib-meta-details[open] > summary{
+      color:var(--text);
     }
 
     .lib-validation{

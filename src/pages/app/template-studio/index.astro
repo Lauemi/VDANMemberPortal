@@ -78,7 +78,14 @@ import { APP } from "../../../config/app";
                       <pre id="templatePickDebug" class="template-pick-debug" aria-live="polite">picker: init</pre>
                       <section id="templateStudioOverview" class="template-pick-info" aria-live="polite">
                         <p class="small"><strong>Studio Overview</strong></p>
-                        <p class="small">Components: <strong id="studioCountComponents">0</strong> · Tables: <strong id="studioCountTables">0</strong> · Exportable: <strong id="studioCountExportable">0</strong></p>
+                        <p class="small">
+                          Components: <strong id="studioCountComponents">0</strong> ·
+                          Tables: <strong id="studioCountTables">0</strong> ·
+                          Exportable: <strong id="studioCountExportable">0</strong> ·
+                          Standardisiert: <strong id="studioCountStandardized">0</strong> ·
+                          Spezial: <strong id="studioCountSpecial">0</strong> ·
+                          Masken mit Spezial: <strong id="studioCountSpecialMasks">0</strong>
+                        </p>
                       </section>
                     </div>
                   </details>
@@ -89,6 +96,10 @@ import { APP } from "../../../config/app";
                         <li class="template-audit-list__empty">Noch keine Komponenten erkannt.</li>
                       </ul>
                     </div>
+                  </details>
+                  <details id="templateRoleMatrixAccordion" class="template-accordion">
+                    <summary>Rollen / Seiten Matrix</summary>
+                    <div><p class="small">Diese Steuerung liegt jetzt im <strong>Admin Board</strong> unter „Module“ und „Modul Web“.</p></div>
                   </details>
                   <details id="templatePickNotesAccordion" class="template-accordion" open>
                     <summary>Notiz Toggle</summary>
@@ -142,7 +153,7 @@ import { APP } from "../../../config/app";
                       id="templateLiveFrame"
                       class="template-live-frame"
                       src="/app/"
-                      loading="lazy"
+                      loading="eager"
                       title="Standard Template Live"
                     ></iframe>
                   </div>
@@ -507,12 +518,18 @@ import { APP } from "../../../config/app";
 
     .template-audit-item{
       display:grid;
-      gap:2px;
+      gap:4px;
       border:1px solid var(--line);
       border-radius:8px;
       padding:6px 8px;
       background:rgba(255,255,255,.02);
       font-size:.8rem;
+    }
+
+    .template-audit-item.is-selected{
+      border-color:#ffc830;
+      box-shadow:0 0 0 1px rgba(255, 200, 48, .45) inset;
+      background:rgba(255, 200, 48, .08);
     }
 
     .template-audit-item__head{
@@ -521,6 +538,27 @@ import { APP } from "../../../config/app";
       align-items:center;
       flex-wrap:wrap;
       font-weight:700;
+    }
+
+    .template-audit-item__details{
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:8px;
+      padding:4px 6px;
+      background:rgba(255,255,255,.015);
+    }
+
+    .template-audit-item__details > summary{
+      cursor:pointer;
+      user-select:none;
+      font-size:.74rem;
+      color:var(--text-soft);
+      list-style-position:inside;
+      padding:1px 0;
+    }
+
+    .template-audit-item__details[open] > summary{
+      color:var(--text);
+      margin-bottom:4px;
     }
 
     .template-audit-item__ok{
@@ -542,6 +580,55 @@ import { APP } from "../../../config/app";
       padding:8px 10px;
       color:var(--text-soft);
       font-size:.8rem;
+    }
+
+    .template-role-matrix-wrap{
+      display:grid;
+      gap:8px;
+    }
+
+    .template-role-matrix-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+
+    .template-role-matrix-table-wrap{
+      border:1px solid var(--line);
+      border-radius:10px;
+      overflow:auto;
+      background:rgba(255,255,255,.015);
+    }
+
+    .template-role-matrix-table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:760px;
+      font-size:.78rem;
+    }
+
+    .template-role-matrix-table th,
+    .template-role-matrix-table td{
+      border-bottom:1px solid rgba(255,255,255,.09);
+      padding:6px 8px;
+      text-align:left;
+      vertical-align:middle;
+    }
+
+    .template-role-matrix-table th{
+      position:sticky;
+      top:0;
+      background:rgba(14, 24, 42, .96);
+      z-index:2;
+    }
+
+    .template-role-matrix-table td:nth-child(n+3){
+      text-align:center;
+    }
+
+    .template-role-matrix-empty{
+      color:var(--text-soft);
+      text-align:center !important;
     }
 
     #templatePickDetailsGroup,

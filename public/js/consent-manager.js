@@ -97,7 +97,7 @@
         <div class="consent-item">
           <div>
             <strong>Externe Medien & Karten</strong>
-            <p class="small">Google Maps Embed, Leaflet/OSM-Kartenkacheln und externe QR-Bilddienste.</p>
+            <p class="small">Google Maps Embed, Leaflet/OSM-Kartenkacheln, externer QR-Bilddienst und Spreadshirt-Shop-Einbettung.</p>
           </div>
           <label><input id="consentExternalMedia" type="checkbox" ${current.external_media ? "checked" : ""} /> Aktivieren</label>
         </div>
@@ -143,7 +143,7 @@
       <div class="consent-banner__text">
         <strong>Datenschutz-Hinweis</strong>
         <p class="small">
-          Wir verwenden technisch notwendige Speicherfunktionen. Externe Karten-/Mediendienste werden nur mit deiner Einwilligung geladen.
+          Wir verwenden technisch notwendige Speicherfunktionen. Externe Karten-/Mediendienste und Shop-Einbettungen werden nur mit deiner Einwilligung geladen.
           Details in <a href="/datenschutz.html/">Datenschutz</a>.
         </p>
       </div>

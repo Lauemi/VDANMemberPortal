@@ -52,6 +52,7 @@ const showHeaderAuthCta = false;
     <link rel="canonical" href={canonical} />
     <meta name="theme-color" content={themeColor} />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content={APP.brand} />
@@ -75,21 +76,19 @@ const showHeaderAuthCta = false;
     <header class="header">
       <div class="container">
         <nav class="nav" aria-label="Hauptnavigation">
-          <div class="header-brand-row">
-            <a class="logo logo--vdan" href="/" aria-label={APP.name}>
+          <div class="header-brand-vdan">
+            <a class="logo" href="/" aria-label={APP.name}>
               <img src="/Bilder/logo300x300.png" alt={APP.name} />
             </a>
-            <div class="header-brand-stack">
-              <a class="logo logo--gofishing" href="/" aria-label="GoFishing">
-                <picture>
-                  <source srcset="/Branding/NewLogoCamouFCP.svg" type="image/svg+xml" />
-                  <img src="/Branding/NewLogoCamouFCP.png" alt="GoFishing" loading="eager" decoding="async" />
-                </picture>
-              </a>
-              {isBetaChannel && <span class="app-beta-badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
-            </div>
           </div>
-          <div class="nav-actions">
+          <div class="header-brand-fcp" aria-label="FCP Marke">
+            <picture class="header-brand-fcp__logo" aria-hidden="true">
+              <source srcset="/Branding/NewLogoCamouFCP.svg" type="image/svg+xml" />
+              <img src="/Branding/NewLogoCamouFCP.png" alt="" loading="eager" decoding="async" />
+            </picture>
+            {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+          </div>
+          <div class="nav-actions header-menu">
             <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
             {showHeaderAuthCta && <a id="headerAuthCta" class="header-auth-cta" href="/login/" data-ui-session-skip>Sign in</a>}
             <div class="burger-menu" id="burgerMenu">
@@ -104,6 +103,7 @@ const showHeaderAuthCta = false;
                 <a href="/fischereipruefung.html/">Fischereiprüfung</a>
                 <a href="/anglerheim-ottenheim.html/">Anglerheim</a>
                 <a href="/downloads.html/">Downloads</a>
+                <a href="/vereinsshop.html/">Vereinsshop</a>
                 <a href="/kontakt.html/">Kontakt</a>
                 <a href="/datenschutz.html/">Datenschutz</a>
                 {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
@@ -227,11 +227,13 @@ const showHeaderAuthCta = false;
     <script src="/js/offline-sync.js" defer></script>
     <script src="/js/consent-manager.js" defer></script>
     <script src="/js/member-auth.js" defer></script>
+    <script src="/js/ui-standards-runtime.js" defer></script>
     {needsMemberGuard && <script src="/js/member-guard.js" defer></script>}
     <script src="/js/ui-session.js" defer></script>
     <script src="/js/header-auth-cta.js" defer></script>
     <script src="/js/nav-burger.js" defer></script>
     <script src="/js/portal-quick.js" defer></script>
+    <script src="/js/studio-inspector-bridge.js" defer></script>
     <script src="/js/go-fishing.js" defer></script>
     <script src="/js/dialog-ux-guard.js" defer></script>
     <script src="/js/pwa-register.js" defer></script>

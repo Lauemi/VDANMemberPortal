@@ -94,6 +94,13 @@
     return msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("load failed");
   }
 
+  function shouldDisableTouchRpc(err) {
+    const status = Number(err?.status || 0);
+    if (status === 400 || status === 401 || status === 403 || status === 404) return true;
+    const msg = String(err?.message || "").toLowerCase();
+    return msg.includes("bad request") || msg.includes("(400)") || msg.includes("(401)") || msg.includes("(403)") || msg.includes("(404)");
+  }
+
   function isConflictError(err) {
     if (!err) return false;
     if (isNetworkError(err)) return false;
@@ -476,7 +483,7 @@
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      const e = new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      const e = new Error(err?.message || err?.detail || err?.hint || err?.error_description || `Request failed (${res.status})`);
       e.status = res.status;
       throw e;
     }
@@ -691,7 +698,7 @@
         body: JSON.stringify({}),
       }, true);
     } catch (err) {
-      if (String(err?.message || "").includes("(404)")) {
+      if (shouldDisableTouchRpc(err)) {
         try {
           localStorage.setItem(TOUCH_RPC_DISABLED_KEY, "1");
         } catch {

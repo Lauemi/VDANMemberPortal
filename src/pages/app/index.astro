@@ -4,13 +4,23 @@ import { APP } from "../../config/app";
 ---
 
 <Site title={`Fishing-Club-Portal • ${APP.name}`} description="Memberbereich." robots="noindex">
-  <section class="card">
-    <div class="card__body app-portal">
-      <h1>Fishing-Club-Portal</h1>
-      <p class="small">Wähle eine App.</p>
-      <p><a class="feed-btn feed-btn--ghost" href="/app/einstellungen/">Einstellungen öffnen</a></p>
+  <section class="card" data-studio-component-id="app-home-shell" data-studio-component-type="section" data-studio-slot="main">
+    <div class="card__body app-portal" data-studio-component-id="app-home-content" data-studio-component-type="section" data-studio-slot="main">
+      <div class="app-portal-guest hidden" data-guest-only hidden data-studio-component-id="app-home-guest-hero" data-studio-component-type="card" data-studio-slot="main">
+        <picture class="app-portal-guest__logo" aria-hidden="true">
+          <source srcset="/Branding/New_FCP_GoFishing.svg" type="image/svg+xml" />
+          <img src="/Branding/New_FCP_GoFishing.svg" alt="" loading="eager" decoding="async" />
+        </picture>
+        <p class="app-portal-guest__message">{APP.guestLoginMessage}</p>
+        <a class="feed-btn" href="/login/?next=%2Fapp%2F">{APP.guestLoginCtaLabel}</a>
+      </div>
 
-      <div class="app-grid">
+      <div data-member-only hidden data-studio-component-id="app-home-member-header" data-studio-component-type="section" data-studio-slot="main">
+        <h1>Fishing-Club-Portal</h1>
+        <p class="small">Wähle eine App.</p>
+        <p><a class="feed-btn feed-btn--ghost" href="/app/einstellungen/">Einstellungen öffnen</a></p>
+
+      <div class="app-grid" data-studio-component-id="app-home-app-grid" data-studio-component-type="list" data-studio-slot="main">
         <div class="app-entry">
           <a class="app-tile" href="/app/fangliste/"><span class="app-tile__icon">FL</span></a>
           <span class="app-tile__title">Fangliste</span>
@@ -95,6 +105,18 @@ import { APP } from "../../config/app";
           <span class="small app-tile__desc">Superadmin Steuerzentrale</span>
         </div>
 
+        <div class="app-entry hidden" data-superadmin-only hidden>
+          <a class="app-tile" href="/app/component-library/"><span class="app-tile__icon">CL</span></a>
+          <span class="app-tile__title">Component Library</span>
+          <span class="small app-tile__desc">Verbindliche UI Referenz</span>
+        </div>
+
+        <div class="app-entry hidden" data-superadmin-only hidden>
+          <a class="app-tile" href="/app/template-studio/"><span class="app-tile__icon">TS</span></a>
+          <span class="app-tile__title">Template Studio</span>
+          <span class="small app-tile__desc">Standard-Maske als Miniansicht</span>
+        </div>
+
         <div class="app-entry hidden" data-admin-only hidden>
           <a class="app-tile" href="/app/fangliste/cockpit/"><span class="app-tile__icon">FC</span></a>
           <span class="app-tile__title">Fangliste Cockpit</span>
@@ -112,6 +134,7 @@ import { APP } from "../../config/app";
           <span class="app-tile__title">Dokumente</span>
           <span class="small app-tile__desc">Downloads pflegen</span>
         </div>
+      </div>
       </div>
     </div>
   </section>

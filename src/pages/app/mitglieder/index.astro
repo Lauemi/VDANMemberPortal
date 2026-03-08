@@ -4,13 +4,13 @@ import { APP } from "../../../config/app";
 ---
 
 <Site title={`Mitgliederverwaltung • ${APP.name}`} description="Admin: Benutzer und Rollen" robots="noindex">
-  <section class="card">
-    <div class="card__body">
+  <section class="card" data-studio-component-id="members-admin-shell" data-studio-component-type="section" data-studio-slot="main">
+    <div class="card__body" data-studio-component-id="members-admin-content" data-studio-component-type="section" data-studio-slot="main">
       <h1>Mitgliederverwaltung</h1>
       <p class="small">Nur für Admin. Übersicht aller Benutzer mit Rollen und Mitgliedsnummer.</p>
       <p id="membersAdminMsg" class="small" aria-live="polite"></p>
 
-      <div class="ui-container-toolbar">
+      <div class="ui-container-toolbar" data-studio-component-id="members-toolbar" data-studio-component-type="section" data-studio-slot="main">
         <div class="ui-view-toggle" role="group" aria-label="Ansicht">
           <button type="button" class="feed-btn" id="membersViewZeileBtn" data-ansicht="zeile">Ansicht Zeile</button>
           <button type="button" class="feed-btn feed-btn--ghost" id="membersViewKarteBtn" data-ansicht="karte">Ansicht Karte</button>
@@ -20,10 +20,13 @@ import { APP } from "../../../config/app";
           type="search"
           placeholder="Suche Name, E-Mail, Mitglieds-Nr."
           style="max-width:340px;width:100%;"
+          data-studio-component-id="members-search-input"
+          data-studio-component-type="input"
+          data-studio-slot="main"
         />
       </div>
 
-      <div id="membersTableWrap" class="catch-table">
+      <div id="membersTableWrap" class="catch-table" data-studio-component-id="members-main-table" data-studio-component-type="table" data-studio-slot="main" data-table-id="members" data-row-click="dialog">
         <div class="catch-table__head" style="grid-template-columns:2fr 1fr 1.2fr 1.6fr">
           <div class="members-filter-cell">
             <button type="button" class="members-filter-toggle" data-filter-toggle="name">Name / E-Mail</button>
@@ -69,7 +72,7 @@ import { APP } from "../../../config/app";
     </div>
   </section>
 
-  <dialog id="membersDetailDialog" class="catch-dialog">
+  <dialog id="membersDetailDialog" class="catch-dialog" data-studio-component-id="members-detail-dialog" data-studio-component-type="dialog" data-studio-slot="main">
     <form method="dialog" class="catch-dialog__form">
       <h2>Mitglied</h2>
       <p id="membersDetailMsg" class="small" aria-live="polite"></p>

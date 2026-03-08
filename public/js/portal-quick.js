@@ -46,6 +46,8 @@
     { id: "mitgliederverwaltung", href: "/app/mitgliederverwaltung/", label: "Mitglieder-Registry", short: "MR", access: "admin", group: "admin" },
     { id: "vereine_setup", href: "/app/vereine/", label: "Vereins-Setup", short: "VS", access: "superadmin", group: "superadmin" },
     { id: "ui_neumorph_demo", href: "/app/ui-neumorph-demo/", label: "UI Neumorph Demo", short: "UI", access: "superadmin", group: "superadmin" },
+    { id: "component_library", href: "/app/component-library/", label: "Component Library", short: "CL", access: "superadmin", group: "superadmin" },
+    { id: "template_studio", href: "/app/template-studio/", label: "Template Studio", short: "TS", access: "superadmin", group: "superadmin" },
     { id: "fangliste_cockpit", href: "/app/fangliste/cockpit/", label: "Fangliste Cockpit", short: "FC", access: "admin", group: "admin" },
   ];
 
@@ -218,7 +220,7 @@
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      throw new Error(err?.message || err?.detail || err?.hint || err?.error_description || `Request failed (${res.status})`);
     }
     return res.json().catch(() => []);
   }

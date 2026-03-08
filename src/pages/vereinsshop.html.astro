@@ -1,0 +1,55 @@
+---
+import Site from "../layouts/Site.astro";
+import { APP } from "../config/app";
+---
+
+<Site title={`Vereinsshop • ${APP.name}`} description="VDAN Vereinsshop mit Merchandise.">
+  <section class="card">
+    <div class="card__body">
+      <h1>VDAN Vereinsshop</h1>
+      <p class="small">
+        Hier findest du Vereins-Merchandise. Du kannst den Shop direkt hier ansehen
+        oder extern in einem neuen Tab öffnen. Die Einbettung wird erst nach
+        Freigabe externer Medien geladen.
+      </p>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 16px;">
+        <a
+          class="feed-btn"
+          href="https://vdan-vereisnshop.myspreadshop.de"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Shop extern öffnen
+        </a>
+        <button type="button" class="feed-btn feed-btn--ghost" data-open-consent-settings>
+          Datenschutz-Einstellungen
+        </button>
+      </div>
+
+      <div data-consent-placeholder class="external-media-lock">
+        <p class="small">
+          Der eingebettete Shop wird erst nach Freigabe externer Medien geladen.
+        </p>
+      </div>
+
+      <div id="myShop" class="card" style="min-height:420px;">
+        <div class="card__body">
+          <p class="small">
+            Shop wird geladen...
+            <a href="https://vdan-vereisnshop.myspreadshop.de" target="_blank" rel="noopener noreferrer">
+              Falls nicht: hier direkt öffnen
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/spreadshirt-shop.js" defer></script>
+  <script
+    type="text/javascript"
+    data-consent-category="external_media"
+    data-consent-src="https://vdan-vereisnshop.myspreadshop.de/shopfiles/shopclient/shopclient.nocache.js"
+  ></script>
+</Site>

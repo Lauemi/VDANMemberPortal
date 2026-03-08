@@ -1,0 +1,978 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site
+  title={`Template Studio • ${APP.name}`}
+  description="Superadmin: 1:1 Template Planung und Baukasten"
+  robots="noindex"
+  containerClass="container container--admin-wide"
+>
+  <section class="card">
+    <div class="card__body">
+      <h1>Template Studio</h1>
+      <p class="small">1:1 Planung pro Maske: Live-Vorschau, Funktionen, Freitext und ausleitbares JSON.</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__body template-studio">
+      <div class="template-studio__content">
+        <div class="template-global-selects">
+          <label class="template-mask-select">
+            <span class="small">Studio Bereich</span>
+            <select id="templateSectionSelect">
+              <option value="standard-template">Standard Template</option>
+              <option value="mask-editor">Masken Editor</option>
+            </select>
+          </label>
+          <label class="template-mask-select">
+            <span class="small">Viewport</span>
+            <select id="templateViewportSelect">
+              <option value="web">Web</option>
+              <option value="tablet">Tablet</option>
+              <option value="phone">Smartphone</option>
+            </select>
+          </label>
+          <label class="template-mask-select">
+            <span class="small">Maske im Preview</span>
+            <select id="templateMaskPath">
+              <option value="/app/">App Start</option>
+              <option value="/app/fangliste/">Fangliste</option>
+              <option value="/app/fangliste/cockpit/">Fangliste Cockpit</option>
+              <option value="/app/arbeitseinsaetze/">Arbeitseinsätze</option>
+              <option value="/app/arbeitseinsaetze/cockpit/">Arbeitseinsatz Cockpit</option>
+              <option value="/app/termine/cockpit/">Termine Cockpit</option>
+              <option value="/app/mitglieder/">Mitglieder</option>
+              <option value="/app/mitgliederverwaltung/">Mitglieder-Registry</option>
+              <option value="/app/dokumente/">Dokumente</option>
+              <option value="/app/component-library/">Component Library</option>
+            </select>
+          </label>
+          <label class="template-mask-select">
+            <span class="small">Rollen-/Live-Modus</span>
+            <select id="templateAudienceSelect" aria-label="Rollen-/Live-Modus">
+              <option value="live">Live</option>
+              <option value="guest">Gast</option>
+              <option value="member">Member</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Admin</option>
+              <option value="superadmin">Superadmin</option>
+            </select>
+          </label>
+        </div>
+        <section class="template-section is-active" data-template-panel="standard-template">
+          <article class="template-card">
+            <div class="template-standard-layout">
+              <div class="template-standard-controls">
+                <div class="template-pick-copy" aria-live="polite">
+                  <label class="small" for="templatePickLines">Copy-Zeilen für unsere Abstimmung</label>
+                  <details id="templatePickDetailsAccordion" class="template-accordion" open>
+                    <summary>Detail Toggle</summary>
+                    <div id="templatePickDetailsGroup">
+                      <textarea id="templatePickLines" rows={4} readonly placeholder="Komponente im Preview auswählen..."></textarea>
+                      <div id="templatePickInfo" class="template-pick-info" aria-live="polite">
+                        <p class="small">Auswahlmodus aus. Wähle eine Komponente, dann kannst du die Zeilen direkt kopieren und mir senden.</p>
+                      </div>
+                      <pre id="templatePickDebug" class="template-pick-debug" aria-live="polite">picker: init</pre>
+                      <section id="templateStudioOverview" class="template-pick-info" aria-live="polite">
+                        <p class="small"><strong>Studio Overview</strong></p>
+                        <p class="small">Components: <strong id="studioCountComponents">0</strong> · Tables: <strong id="studioCountTables">0</strong> · Exportable: <strong id="studioCountExportable">0</strong></p>
+                      </section>
+                    </div>
+                  </details>
+                  <details id="templateComponentAuditAccordion" class="template-accordion" open>
+                    <summary>Komponenten</summary>
+                    <div class="template-audit-wrap">
+                      <ul id="templateComponentAuditList" class="template-audit-list" aria-live="polite">
+                        <li class="template-audit-list__empty">Noch keine Komponenten erkannt.</li>
+                      </ul>
+                    </div>
+                  </details>
+                  <details id="templatePickNotesAccordion" class="template-accordion" open>
+                    <summary>Notiz Toggle</summary>
+                    <div id="templatePickNotesGroup">
+                      <p class="small">Auswahl + Eingabe für Handling-Notizen.</p>
+                      <label class="small" for="templatePickNotes">Notiz zur ausgewählten Komponente</label>
+                      <input id="templatePickNoteKind" type="hidden" value="task" />
+                      <label class="template-mask-select">
+                        <span class="small">Notiztyp</span>
+                        <select id="templateNoteKindSelect" aria-label="Notiztyp">
+                          <option value="task">Task</option>
+                          <option value="bug">Bug</option>
+                          <option value="behavior">Verhalten</option>
+                          <option value="uiux">UI/UX</option>
+                        </select>
+                      </label>
+                      <textarea id="templatePickNotes" rows={4} placeholder="z. B. Hover-Farbe zu schwach, Button 2px höher, Dialog-Trigger bleibt"></textarea>
+                    </div>
+                  </details>
+                  <div class="template-plan-actions">
+                    <button id="templateCopyPickLines" type="button" class="feed-btn feed-btn--ghost">Zeilen kopieren</button>
+                  </div>
+                </div>
+              </div>
+              <div id="templateSplitHandle" class="template-split-handle" role="separator" aria-label="Bereichsbreite anpassen" aria-orientation="vertical" tabindex="0"></div>
+              <div class="template-standard-preview">
+                <div class="template-live-stage" aria-label="Live Template Vorschau">
+                  <div class="template-live-actions" role="group" aria-label="Live Tools">
+                    <button
+                      id="templatePickBtn"
+                      type="button"
+                      class="template-live-action-btn template-pick-btn"
+                      aria-label="Komponente wählen"
+                      title="Komponente wählen"
+                    >
+                      <span class="template-pick-btn__icon" aria-hidden="true">⌖</span>
+                    </button>
+                    <button
+                      id="templateCopyShotBtn"
+                      type="button"
+                      class="template-live-action-btn template-shot-btn"
+                      aria-label="Live-Fenster als Screenshot kopieren"
+                      title="Live-Fenster als Screenshot kopieren"
+                    >
+                      <span class="template-pick-btn__icon" aria-hidden="true">⧉</span>
+                    </button>
+                  </div>
+                  <div id="templatePickOverlay" class="template-pick-overlay" hidden aria-hidden="true"></div>
+                  <div id="templateLiveShell" class="template-live-shell is-web">
+                    <iframe
+                      id="templateLiveFrame"
+                      class="template-live-frame"
+                      src="/app/"
+                      loading="lazy"
+                      title="Standard Template Live"
+                    ></iframe>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <details id="templatePlanPanel" class="template-plan-panel">
+              <summary>Masken-Planung</summary>
+              <div class="template-plan-inner">
+                <p class="small">Funktionen auswählen, Ergänzungen notieren und direkt als JSON kopieren.</p>
+                <div class="template-plan-grid">
+                  <label>
+                    <span class="small">Maskenname</span>
+                    <input id="templateMaskName" type="text" placeholder="z. B. Fangliste Detailmaske" />
+                  </label>
+
+                  <div class="template-fn-grid" role="group" aria-label="Funktionen">
+                    <label><input type="checkbox" data-template-fn="row_click_dialog" /> Row-Klick öffnet Dialog</label>
+                    <label><input type="checkbox" data-template-fn="row_filtering" /> Rows filtern</label>
+                    <label><input type="checkbox" data-template-fn="row_sorting" /> Rows sortieren</label>
+                    <label><input type="checkbox" data-template-fn="search" /> Suche</label>
+                    <label><input type="checkbox" data-template-fn="table_card_toggle" /> Tabelle/Karte Umschalter</label>
+                    <label><input type="checkbox" data-template-fn="sticky_actions" /> Sticky Actions unten</label>
+                  </div>
+
+                  <label>
+                    <span class="small">Freitext / Anforderungen</span>
+                    <textarea id="templateMaskNotes" rows={4} placeholder="Was soll die Maske können? Besonderheiten, Regeln, NOGOs..."></textarea>
+                  </label>
+
+                  <div class="template-plan-actions">
+                    <button id="templateCopyPlan" type="button" class="feed-btn">Planungs-JSON kopieren</button>
+                  </div>
+
+                  <label>
+                    <span class="small">Planungs-JSON</span>
+                    <textarea id="templatePlanJson" rows={8} readonly></textarea>
+                  </label>
+                </div>
+              </div>
+            </details>
+          </article>
+        </section>
+
+        <section class="template-section" data-template-panel="mask-editor">
+          <article class="template-card">
+            <h2>Masken Editor</h2>
+            <p class="small">Komponenten ziehen, in Slots anordnen und als einheitliches JSON exportieren.</p>
+            <div class="mask-editor-grid">
+              <aside class="mask-editor-panel">
+                <h3>Komponenten</h3>
+                <p class="small">Per Drag&amp;Drop in einen Slot ziehen.</p>
+                <div id="editorPalette" class="editor-palette" aria-label="Komponentenpalette"></div>
+              </aside>
+
+              <section class="mask-editor-canvas-wrap">
+                <div class="template-viewport-switch" role="group" aria-label="Editor Viewport wählen">
+                  <button type="button" class="template-vp-btn is-active" data-editor-viewport="web">Web</button>
+                  <button type="button" class="template-vp-btn" data-editor-viewport="tablet">Tablet</button>
+                  <button type="button" class="template-vp-btn" data-editor-viewport="phone">Smartphone</button>
+                </div>
+                <label class="template-mask-select">
+                  <span class="small">Maskenpfad</span>
+                  <select id="templateEditorMaskPath">
+                    <option value="/app/">App Start</option>
+                    <option value="/app/fangliste/">Fangliste</option>
+                    <option value="/app/fangliste/cockpit/">Fangliste Cockpit</option>
+                    <option value="/app/arbeitseinsaetze/">Arbeitseinsätze</option>
+                    <option value="/app/arbeitseinsaetze/cockpit/">Arbeitseinsatz Cockpit</option>
+                    <option value="/app/termine/cockpit/">Termine Cockpit</option>
+                    <option value="/app/mitglieder/">Mitglieder</option>
+                    <option value="/app/mitgliederverwaltung/">Mitglieder-Registry</option>
+                    <option value="/app/dokumente/">Dokumente</option>
+                    <option value="/app/component-library/">Component Library</option>
+                  </select>
+                </label>
+                <div id="editorCanvas" class="mask-editor-canvas is-web">
+                  <section class="editor-slot" data-slot-id="header">
+                    <header class="editor-slot__head">
+                      <h4>Header Slot</h4>
+                      <span class="small">Navigation, Marken, Header Actions</span>
+                    </header>
+                    <div class="editor-slot__items" data-slot-drop="header"></div>
+                  </section>
+                  <section class="editor-slot" data-slot-id="main">
+                    <header class="editor-slot__head">
+                      <h4>Main Slot</h4>
+                      <span class="small">Cards, Tabellen, Dialog Trigger, Formbereiche</span>
+                    </header>
+                    <div class="editor-slot__items" data-slot-drop="main"></div>
+                  </section>
+                  <section class="editor-slot" data-slot-id="footer">
+                    <header class="editor-slot__head">
+                      <h4>Footer Slot</h4>
+                      <span class="small">Bottom Actions, Meta-Infos, Systemstatus</span>
+                    </header>
+                    <div class="editor-slot__items" data-slot-drop="footer"></div>
+                  </section>
+                </div>
+              </section>
+
+              <aside class="mask-editor-panel">
+                <h3>Inspector</h3>
+                <p id="editorSelectionLabel" class="small">Keine Komponente ausgewählt.</p>
+                <div class="editor-form">
+                  <label>
+                    <span class="small">Label</span>
+                    <input id="editorFieldLabel" type="text" placeholder="z. B. Mitglieder Tabelle" />
+                  </label>
+                  <label>
+                    <span class="small">Variante</span>
+                    <input id="editorFieldVariant" type="text" placeholder="z. B. standard" />
+                  </label>
+                  <label>
+                    <span class="small">Span (1-12)</span>
+                    <input id="editorFieldSpan" type="number" min="1" max="12" step="1" />
+                  </label>
+                  <label>
+                    <span class="small">Min-Höhe (px)</span>
+                    <input id="editorFieldMinHeight" type="number" min="24" max="1200" step="1" />
+                  </label>
+                  <label>
+                    <span class="small">Bemerkung</span>
+                    <textarea id="editorFieldNotes" rows={3} placeholder="Spezielle Funktion, NOGO, Verhalten..."></textarea>
+                  </label>
+                  <div class="template-plan-actions">
+                    <button id="editorMoveUp" type="button" class="feed-btn feed-btn--ghost">Nach oben</button>
+                    <button id="editorMoveDown" type="button" class="feed-btn feed-btn--ghost">Nach unten</button>
+                  </div>
+                  <div class="template-plan-actions">
+                    <button id="editorDuplicate" type="button" class="feed-btn feed-btn--ghost">Duplizieren</button>
+                    <button id="editorDelete" type="button" class="feed-btn feed-btn--ghost">Entfernen</button>
+                  </div>
+                  <label>
+                    <span class="small">Masken-JSON</span>
+                    <textarea id="editorSchemaJson" rows={12} readonly></textarea>
+                  </label>
+                  <div class="template-plan-actions">
+                    <button id="editorCopyJson" type="button" class="feed-btn">JSON kopieren</button>
+                    <button id="editorLoadJson" type="button" class="feed-btn feed-btn--ghost">JSON laden</button>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </article>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/template-studio.js" defer></script>
+
+  <style>
+    .template-studio{
+      display:grid;
+      gap:10px;
+    }
+
+    .template-section[hidden]{
+      display:none !important;
+    }
+
+    .template-card{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px;
+      background:rgba(255,255,255,.02);
+      display:grid;
+      gap:10px;
+      margin-bottom:12px;
+    }
+
+    .template-card h2,
+    .template-card h3{
+      margin:0;
+    }
+
+    .template-global-selects{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0, 1fr));
+      gap:8px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:rgba(255,255,255,.02);
+      padding:8px;
+    }
+
+    .template-standard-layout{
+      display:grid;
+      grid-template-columns:minmax(280px, var(--template-controls-width, 420px)) 10px minmax(0, 1fr);
+      gap:0;
+      align-items:start;
+    }
+
+    .template-standard-controls{
+      display:grid;
+      gap:10px;
+      align-content:start;
+    }
+
+    .template-standard-preview{
+      min-width:0;
+      position:sticky;
+      top:92px;
+      align-self:start;
+      padding-left:10px;
+    }
+
+    .template-split-handle{
+      align-self:stretch;
+      min-height:620px;
+      cursor:col-resize;
+      border-left:1px dashed rgba(255,255,255,.24);
+      border-right:1px dashed rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border-radius:8px;
+      margin:0 2px;
+    }
+
+    .template-split-handle:hover,
+    .template-split-handle:focus-visible{
+      border-left-color:rgba(111,226,180,.52);
+      border-right-color:rgba(111,226,180,.28);
+      outline:none;
+    }
+
+    .template-viewport-switch{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .template-vp-btn{
+      min-height:40px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      padding:0 12px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .template-vp-btn.is-active{
+      border-color:rgba(111,226,180,.45);
+      background:rgba(111,226,180,.14);
+    }
+
+    .template-vp-btn.is-pick-active{
+      border-color:rgba(255, 200, 48, .5);
+      background:rgba(255, 200, 48, .16);
+    }
+
+    .template-mask-select{
+      display:grid;
+      gap:6px;
+      max-width:none;
+    }
+
+    .template-mask-select select{
+      min-height:40px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      font:inherit;
+      padding:0 10px;
+    }
+
+    .template-pick-info{
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:rgba(255,255,255,.02);
+      padding:8px 10px;
+    }
+
+    .template-pick-info p{
+      margin:0;
+      font-size:.88rem;
+    }
+
+    .template-pick-info code{
+      font-size:.8rem;
+    }
+
+    .template-pick-debug{
+      margin:0;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:rgba(255,255,255,.02);
+      padding:8px 10px;
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:.76rem;
+      line-height:1.35;
+      color:rgba(235,241,252,.92);
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    .template-pick-copy{
+      display:grid;
+      gap:6px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:rgba(255,255,255,.02);
+      padding:8px 10px;
+    }
+
+    .template-accordion{
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:rgba(255,255,255,.02);
+      overflow:hidden;
+    }
+
+    .template-accordion > summary{
+      min-height:38px;
+      display:flex;
+      align-items:center;
+      padding:0 10px;
+      cursor:pointer;
+      font-size:.84rem;
+      font-weight:700;
+      color:var(--text-soft);
+      border-bottom:1px solid transparent;
+      list-style:none;
+    }
+
+    .template-accordion > summary::-webkit-details-marker{
+      display:none;
+    }
+
+    .template-accordion[open] > summary{
+      color:#f6f8ff;
+      border-bottom-color:var(--line);
+      background:linear-gradient(180deg, rgba(24, 86, 62, .32), rgba(12, 40, 30, .2));
+    }
+
+    .template-accordion > div{
+      padding:8px 10px;
+      display:grid;
+      gap:8px;
+    }
+
+    .template-audit-wrap{
+      max-height:240px;
+      overflow:auto;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:rgba(255,255,255,.015);
+      padding:6px;
+    }
+
+    .template-audit-list{
+      list-style:none;
+      margin:0;
+      padding:0;
+      display:grid;
+      gap:6px;
+    }
+
+    .template-audit-item{
+      display:grid;
+      gap:2px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:6px 8px;
+      background:rgba(255,255,255,.02);
+      font-size:.8rem;
+    }
+
+    .template-audit-item__head{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      font-weight:700;
+    }
+
+    .template-audit-item__ok{
+      color:#74e3ac;
+    }
+
+    .template-audit-item__fail{
+      color:#ff8d8d;
+    }
+
+    .template-audit-item__meta{
+      color:var(--text-soft);
+      font-size:.76rem;
+    }
+
+    .template-audit-list__empty{
+      border:1px dashed var(--line);
+      border-radius:8px;
+      padding:8px 10px;
+      color:var(--text-soft);
+      font-size:.8rem;
+    }
+
+    #templatePickDetailsGroup,
+    #templatePickNotesGroup{
+      display:grid;
+      gap:8px;
+    }
+
+    .template-pick-copy textarea{
+      width:100%;
+      min-height:92px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:.8rem;
+      line-height:1.35;
+      padding:8px 10px;
+      resize:vertical;
+    }
+
+    .template-note-kind{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .template-note-kind__btn{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text-soft);
+      border-radius:10px;
+      padding:6px 10px;
+      font-size:.78rem;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .template-note-kind__btn.is-active{
+      color:#f6f8ff;
+      border-color:rgba(92, 190, 146, .7);
+      background:linear-gradient(180deg, rgba(24, 86, 62, .45), rgba(12, 40, 30, .5));
+      box-shadow:0 0 0 1px rgba(92, 190, 146, .2) inset;
+    }
+
+    .template-live-stage{
+      position:relative;
+      border:1px dashed rgba(255,255,255,.25);
+      border-radius:14px;
+      padding:4px;
+      background:radial-gradient(120% 140% at 10% 0%, rgba(34, 60, 100, .38), rgba(8, 12, 20, .7));
+      overflow:auto;
+      min-height:620px;
+      height:calc(100vh - 260px);
+    }
+
+    .template-pick-overlay{
+      position:absolute;
+      inset:4px;
+      z-index:20;
+      pointer-events:auto;
+      cursor:crosshair;
+      touch-action:none;
+      background:rgba(126, 200, 255, .04);
+      border:1px solid rgba(126, 200, 255, .35);
+      border-radius:10px;
+    }
+
+    .template-live-actions{
+      position:absolute;
+      top:4px;
+      left:50%;
+      transform:translateX(-50%);
+      z-index:30;
+      display:flex;
+      gap:6px;
+    }
+
+    .template-live-action-btn{
+      width:40px;
+      height:40px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      box-shadow:0 8px 18px rgba(0,0,0,.25);
+      transition:border-color .12s ease, background .12s ease, box-shadow .12s ease;
+    }
+
+    .template-pick-btn__icon{
+      font-size:1rem;
+      line-height:1;
+      pointer-events:none;
+    }
+
+    .template-live-action-btn:hover{
+      border-color:rgba(111,226,180,.5);
+      background:rgba(111,226,180,.12);
+    }
+
+    #templatePickBtn.is-pick-active{
+      border-color:rgba(255, 200, 48, .65);
+      background:rgba(255, 200, 48, .16);
+      box-shadow:0 0 0 2px rgba(255, 200, 48, .22), 0 8px 18px rgba(0,0,0,.25);
+    }
+
+    #templateCopyShotBtn.is-copy-ok{
+      border-color:rgba(111,226,180,.6);
+      background:rgba(111,226,180,.16);
+      box-shadow:0 0 0 2px rgba(111,226,180,.2), 0 8px 18px rgba(0,0,0,.25);
+    }
+
+    .template-live-shell{
+      width:100%;
+      height:100%;
+      margin:0;
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+      background:#0b1220;
+      box-shadow:0 12px 30px rgba(0,0,0,.35);
+    }
+
+    .template-live-shell.is-web{
+      width:100%;
+      height:100%;
+    }
+
+    .template-live-shell.is-tablet{
+      width:100%;
+      height:100%;
+    }
+
+    .template-live-shell.is-phone{
+      width:100%;
+      height:100%;
+      border-radius:20px;
+    }
+
+    .template-live-frame{
+      border:0;
+      transform-origin:top left;
+      display:block;
+      background:#0b1220;
+      width:100%;
+      height:100%;
+    }
+
+    .template-live-shell.is-web .template-live-frame{
+      transform:none;
+    }
+
+    .template-live-shell.is-tablet .template-live-frame{
+      width:834px;
+      height:1112px;
+      transform:scale(.62);
+    }
+
+    .template-live-shell.is-phone .template-live-frame{
+      width:390px;
+      height:844px;
+      transform:scale(.82);
+    }
+
+    .template-plan-panel{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:rgba(255,255,255,.02);
+      overflow:hidden;
+    }
+
+    .template-plan-panel > summary{
+      list-style:none;
+      cursor:pointer;
+      min-height:44px;
+      display:flex;
+      align-items:center;
+      padding:0 12px;
+      font-weight:700;
+      border-bottom:1px solid transparent;
+    }
+
+    .template-plan-panel > summary::-webkit-details-marker{
+      display:none;
+    }
+
+    .template-plan-panel[open] > summary{
+      border-bottom-color:var(--line);
+    }
+
+    .template-plan-inner{
+      padding:10px;
+    }
+
+    .template-plan-grid{
+      display:grid;
+      gap:10px;
+    }
+
+    .template-plan-grid input,
+    .template-plan-grid textarea{
+      width:100%;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      padding:8px 10px;
+      font:inherit;
+    }
+
+    .template-fn-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+      gap:8px;
+    }
+
+    .template-fn-grid label{
+      min-height:38px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:6px 10px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:.9rem;
+      background:rgba(255,255,255,.02);
+    }
+
+    .template-fn-grid input{
+      width:auto;
+      margin:0;
+      accent-color:#6fe2b4;
+    }
+
+    .template-plan-actions{
+      display:flex;
+      justify-content:flex-start;
+    }
+
+    .mask-editor-grid{
+      display:grid;
+      grid-template-columns:minmax(220px, 260px) minmax(0, 1fr) minmax(240px, 300px);
+      gap:10px;
+      align-items:start;
+    }
+
+    .mask-editor-panel{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px;
+      background:rgba(255,255,255,.02);
+      display:grid;
+      gap:8px;
+    }
+
+    .mask-editor-grid > .mask-editor-panel:last-of-type{
+      position:sticky;
+      top:92px;
+      max-height:calc(100dvh - 112px);
+      overflow:auto;
+      overscroll-behavior:contain;
+      align-self:start;
+    }
+
+    .mask-editor-panel h3,
+    .mask-editor-panel h4{
+      margin:0;
+    }
+
+    .editor-palette{
+      display:grid;
+      gap:8px;
+      max-height:68vh;
+      overflow:auto;
+      padding-right:2px;
+    }
+
+    .editor-palette-item{
+      min-height:42px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      display:grid;
+      align-items:center;
+      padding:8px 10px;
+      cursor:grab;
+      user-select:none;
+    }
+
+    .editor-palette-item strong{
+      font-size:.92rem;
+    }
+
+    .editor-palette-item span{
+      font-size:.78rem;
+      opacity:.78;
+    }
+
+    .mask-editor-canvas-wrap{
+      display:grid;
+      gap:8px;
+      min-width:0;
+    }
+
+    .mask-editor-canvas{
+      border:1px dashed rgba(255,255,255,.25);
+      border-radius:14px;
+      padding:10px;
+      background:radial-gradient(120% 140% at 10% 0%, rgba(34, 60, 100, .34), rgba(8, 12, 20, .66));
+      display:grid;
+      gap:10px;
+      min-height:68vh;
+    }
+
+    .mask-editor-canvas.is-web{ width:100%; }
+    .mask-editor-canvas.is-tablet{ max-width:860px; margin:0 auto; }
+    .mask-editor-canvas.is-phone{ max-width:430px; margin:0 auto; }
+
+    .editor-slot{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:rgba(255,255,255,.02);
+      padding:8px;
+      display:grid;
+      gap:8px;
+    }
+
+    .editor-slot__head{
+      display:grid;
+      gap:2px;
+    }
+
+    .editor-slot__head h4{
+      margin:0;
+      font-size:.95rem;
+    }
+
+    .editor-slot__items{
+      display:grid;
+      grid-template-columns:repeat(12, minmax(0, 1fr));
+      gap:8px;
+      min-height:64px;
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius:10px;
+      padding:8px;
+      transition:border-color .12s ease, background .12s ease;
+    }
+
+    .editor-slot__items.is-drop-target{
+      border-color:rgba(111,226,180,.55);
+      background:rgba(111,226,180,.08);
+    }
+
+    .editor-component{
+      grid-column:span 12;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:linear-gradient(145deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      padding:8px 10px;
+      min-height:48px;
+      cursor:grab;
+      display:grid;
+      gap:3px;
+    }
+
+    .editor-component.is-selected{
+      border-color:rgba(255,200,48,.6);
+      box-shadow:0 0 0 2px rgba(255,200,48,.2);
+    }
+
+    .editor-component__meta{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      font-size:.74rem;
+      opacity:.84;
+    }
+
+    .editor-form{
+      display:grid;
+      gap:8px;
+    }
+
+    .editor-form input,
+    .editor-form textarea{
+      width:100%;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      padding:8px 10px;
+      font:inherit;
+    }
+
+    @media (max-width: 900px){
+      .template-global-selects{
+        grid-template-columns:1fr;
+      }
+
+      .template-live-stage{
+        padding:8px;
+      }
+
+      .template-standard-layout{
+        grid-template-columns:1fr;
+        gap:10px;
+      }
+
+      .template-standard-preview{
+        position:static;
+        padding-left:0;
+      }
+
+      .template-split-handle{
+        display:none;
+      }
+
+      .mask-editor-grid{
+        grid-template-columns:1fr;
+      }
+
+      .mask-editor-grid > .mask-editor-panel:last-of-type{
+        position:static;
+        max-height:none;
+        overflow:visible;
+      }
+    }
+  </style>
+</Site>

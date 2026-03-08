@@ -5,6 +5,8 @@
   let createDialog = null;
   let featureFlags = { work_qr_enabled: false };
   let memberDirectory = [];
+  let listenersBound = false;
+  let initInProgress = false;
 
   function cfg() {
     return {
@@ -33,7 +35,7 @@
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      const e = new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      const e = new Error(err?.message || err?.detail || err?.hint || err?.error_description || `Request failed (${res.status})`);
       e.status = res.status;
       throw e;
     }
@@ -1031,6 +1033,9 @@
   }
 
   async function init() {
+    if (initInProgress) return;
+    initInProgress = true;
+    try {
     const { url, key } = cfg();
     createDialog = document.getElementById("workCreateDialog");
 
@@ -1052,59 +1057,61 @@
       return;
     }
 
-    document.getElementById("workCreateOpenTop")?.addEventListener("click", openCreateDialog);
-    document.getElementById("workCreateOpenFab")?.addEventListener("click", openCreateDialog);
-    document.getElementById("workCreateClose")?.addEventListener("click", closeCreateDialog);
-    document.getElementById("workIsYouthToggle")?.addEventListener("click", () => {
-      const youth = document.getElementById("workIsYouth");
-      const btn = document.getElementById("workIsYouthToggle");
-      if (!youth || !btn) return;
-      const next = String(youth.value) === "1" ? "0" : "1";
-      youth.value = next;
-      const active = next === "1";
-      btn.style.background = active ? "#1f7a3b" : "";
-      btn.style.borderColor = active ? "#1f7a3b" : "";
-      btn.style.color = active ? "#fff" : "";
-    });
+    if (!listenersBound) {
+      listenersBound = true;
+      document.getElementById("workCreateOpenTop")?.addEventListener("click", openCreateDialog);
+      document.getElementById("workCreateOpenFab")?.addEventListener("click", openCreateDialog);
+      document.getElementById("workCreateClose")?.addEventListener("click", closeCreateDialog);
+      document.getElementById("workIsYouthToggle")?.addEventListener("click", () => {
+        const youth = document.getElementById("workIsYouth");
+        const btn = document.getElementById("workIsYouthToggle");
+        if (!youth || !btn) return;
+        const next = String(youth.value) === "1" ? "0" : "1";
+        youth.value = next;
+        const active = next === "1";
+        btn.style.background = active ? "#1f7a3b" : "";
+        btn.style.borderColor = active ? "#1f7a3b" : "";
+        btn.style.color = active ? "#fff" : "";
+      });
 
-    document.getElementById("workCreateForm")?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      try {
-        setMsg("Einsatz wird erstellt...");
-        const startsAt = toIsoFromLocalInput(String(document.getElementById("workStartsAt")?.value || ""));
-        const endsAt = toIsoFromLocalInput(String(document.getElementById("workEndsAt")?.value || ""));
-        const maxRaw = String(document.getElementById("workMax")?.value || "").trim();
-        const maxParticipants = maxRaw ? Number(maxRaw) : null;
+      document.getElementById("workCreateForm")?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          setMsg("Einsatz wird erstellt...");
+          const startsAt = toIsoFromLocalInput(String(document.getElementById("workStartsAt")?.value || ""));
+          const endsAt = toIsoFromLocalInput(String(document.getElementById("workEndsAt")?.value || ""));
+          const maxRaw = String(document.getElementById("workMax")?.value || "").trim();
+          const maxParticipants = maxRaw ? Number(maxRaw) : null;
 
-        const title = String(document.getElementById("workTitle")?.value || "").trim();
-        const out = await createEvent({
-          p_title: title,
-          p_description: String(document.getElementById("workDescription")?.value || "").trim() || null,
-          p_location: String(document.getElementById("workLocation")?.value || "").trim() || null,
-          p_starts_at: startsAt,
-          p_ends_at: endsAt,
-          p_max_participants: Number.isFinite(maxParticipants) ? maxParticipants : null,
-          p_is_youth: String(document.getElementById("workIsYouth")?.value || "0") === "1",
-        });
-        let leadMsg = "";
-        if (!out?.queued) {
-          try {
-            const createdId = await resolveCreatedEventId(out, title, startsAt);
-            const ownId = String(currentUserId() || "").trim();
-            if (createdId && ownId) {
-              await saveEventLead(createdId, ownId, false);
+          const title = String(document.getElementById("workTitle")?.value || "").trim();
+          const out = await createEvent({
+            p_title: title,
+            p_description: String(document.getElementById("workDescription")?.value || "").trim() || null,
+            p_location: String(document.getElementById("workLocation")?.value || "").trim() || null,
+            p_starts_at: startsAt,
+            p_ends_at: endsAt,
+            p_max_participants: Number.isFinite(maxParticipants) ? maxParticipants : null,
+            p_is_youth: String(document.getElementById("workIsYouth")?.value || "0") === "1",
+          });
+          let leadMsg = "";
+          if (!out?.queued) {
+            try {
+              const createdId = await resolveCreatedEventId(out, title, startsAt);
+              const ownId = String(currentUserId() || "").trim();
+              if (createdId && ownId) {
+                await saveEventLead(createdId, ownId, false);
+              }
+            } catch {
+              leadMsg = " Hinweis: Zuständigkeit konnte nicht automatisch gesetzt werden.";
             }
-          } catch {
-            leadMsg = " Hinweis: Zuständigkeit konnte nicht automatisch gesetzt werden.";
           }
+          closeCreateDialog();
+          setMsg(out?.queued ? "Offline gespeichert. Einsatz wird bei Empfang übertragen." : `Einsatz erstellt.${leadMsg}`);
+          await refresh();
+        } catch (err) {
+          setMsg(err?.message || "Erstellen fehlgeschlagen");
         }
-        closeCreateDialog();
-        setMsg(out?.queued ? "Offline gespeichert. Einsatz wird bei Empfang übertragen." : `Einsatz erstellt.${leadMsg}`);
-        await refresh();
-      } catch (err) {
-        setMsg(err?.message || "Erstellen fehlgeschlagen");
-      }
-    });
+      });
 
     const onCockpitClick = async (e) => {
       const target = e.target;
@@ -1464,8 +1471,8 @@
       }
     };
 
-    document.getElementById("workCockpitEventsActive")?.addEventListener("click", onCockpitClick);
-    document.getElementById("workCockpitEventsHistory")?.addEventListener("click", onCockpitClick);
+      document.getElementById("workCockpitEventsActive")?.addEventListener("click", onCockpitClick);
+      document.getElementById("workCockpitEventsHistory")?.addEventListener("click", onCockpitClick);
     const onEditInput = (e) => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -1489,11 +1496,15 @@
       if (preview) preview.textContent = text;
       if (computed) computed.textContent = text;
     };
-    document.getElementById("workCockpitEventsActive")?.addEventListener("input", onEditInput);
-    document.getElementById("workCockpitEventsHistory")?.addEventListener("input", onEditInput);
+      document.getElementById("workCockpitEventsActive")?.addEventListener("input", onEditInput);
+      document.getElementById("workCockpitEventsHistory")?.addEventListener("input", onEditInput);
+    }
 
     await flushOfflineQueue().catch(() => {});
     await refresh().catch((err) => setMsg(err?.message || "Laden fehlgeschlagen"));
+    } finally {
+      initInProgress = false;
+    }
   }
 
   document.addEventListener("DOMContentLoaded", init);

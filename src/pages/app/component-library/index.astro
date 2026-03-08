@@ -1,0 +1,1727 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+
+const toSlug = (value) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+const statusClass = (status) => {
+  if (status === "Standard") return "is-standard";
+  if (status === "In Pruefung") return "is-review";
+  return "is-legacy";
+};
+
+const inputPreview = (variant): { type: "text" | "search"; value: string } => {
+  if (variant === "search") {
+    return { type: "search", value: "Mitglied suchen..." };
+  }
+  return { type: "text", value: "Demo Text" };
+};
+
+const splitCsv = (value) =>
+  String(value || "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+const functionsForItem = (item) => {
+  if (item.features) return splitCsv(item.features);
+  if (item.variant === "table") return ["Rows scanbar", "Header sortierbar", "Filterbar anbindbar"];
+  if (item.variant === "row") return ["Row klickbar", "Dialog oeffnet bei Row-Klick"];
+  if (item.variant === "view-toggle") return ["Umschalten Tabelle/Karte", "Aktiver Zustand sichtbar"];
+  return [];
+};
+
+const checksForItem = (item) => {
+  if (item.checks) return splitCsv(item.checks);
+  return [];
+};
+
+const DEFAULT_OPEN_CATEGORY = "buttons";
+const expandedState = (categoryId) => (categoryId === DEFAULT_OPEN_CATEGORY ? "true" : "false");
+
+const categories = [
+  {
+    id: "buttons",
+    title: "A. Buttons",
+    description: "Primare Interaktionspunkte. Fokus auf klare Klickbarkeit, Touch-Zone und konsistente Hohe.",
+    items: [
+      {
+        name: "Primary Button",
+        type: "Action",
+        status: "Standard",
+        description: "Hauptaktion pro Bereich, maximal eine Primary pro Action-Gruppe.",
+        height: "48px",
+        width: "Auto, min-content",
+        padding: "0 16px",
+        radius: "12px",
+        font: "16px / 700",
+        icon: "24px",
+        touch: "Mind. 48x48px",
+        states: "default, hover, active, disabled",
+        usage: "Save, Submit, Confirm, Start",
+        patterns: ".feed-btn, button.primary",
+        preview: "button",
+        variant: "primary",
+      },
+      {
+        name: "Secondary Button",
+        type: "Action",
+        status: "Standard",
+        description: "Sekundare Aktion, klare Alternative zur Hauptaktion.",
+        height: "48px",
+        width: "Auto",
+        padding: "0 16px",
+        radius: "12px",
+        font: "16px / 600",
+        icon: "20-24px",
+        touch: "Mind. 48x48px",
+        states: "default, hover, active, disabled",
+        usage: "Back, Cancel, Optional Step",
+        patterns: ".feed-btn.feed-btn--ghost",
+        preview: "button",
+        variant: "secondary",
+      },
+      {
+        name: "Ghost Button",
+        type: "Action",
+        status: "Standard",
+        description: "Niedrigere visuelle Prioritat in dichten Toolbars.",
+        height: "48px",
+        width: "Auto",
+        padding: "0 16px",
+        radius: "12px",
+        font: "15-16px / 600",
+        icon: "20px",
+        touch: "Mind. 48x48px",
+        states: "default, hover, active, disabled",
+        usage: "Close, Dismiss, Optional toggles",
+        patterns: ".feed-btn--ghost",
+        preview: "button",
+        variant: "ghost",
+      },
+      {
+        name: "Icon Button",
+        type: "Action",
+        status: "In Pruefung",
+        description: "Kompakte Aktion mit klarer Icon-Semantik und ARIA-Label.",
+        height: "48px",
+        width: "48px",
+        padding: "0",
+        radius: "12px",
+        font: "24px icon only",
+        icon: "24px",
+        touch: "48x48px fix",
+        states: "default, hover, active, disabled",
+        usage: "Menu, quick tools, context action",
+        patterns: ".burger-toggle, .portal-quick-toggle",
+        preview: "button",
+        variant: "icon",
+      },
+      {
+        name: "Danger Button",
+        type: "Action",
+        status: "In Pruefung",
+        description: "Destruktive Aktion, nur mit klarer Kontextwarnung einsetzen.",
+        height: "48px",
+        width: "Auto",
+        padding: "0 16px",
+        radius: "12px",
+        font: "16px / 700",
+        icon: "20px optional",
+        touch: "Mind. 48x48px",
+        states: "default, hover, active, disabled",
+        usage: "Delete, Reset, Revoke",
+        patterns: ".is-danger (planned utility)",
+        preview: "button",
+        variant: "danger",
+      },
+    ],
+  },
+  {
+    id: "inputs",
+    title: "B. Inputs",
+    description: "Form-Komponenten mit einheitlicher Hohe, Fokusrahmen und lesbarer Label-Hierarchie.",
+    items: [
+      {
+        name: "Text Input",
+        type: "Form",
+        status: "Standard",
+        description: "Standard-Eingabe fur kurze freie Texte.",
+        height: "48px",
+        width: "100%",
+        padding: "0 16px",
+        radius: "12px",
+        font: "16px",
+        icon: "20px optional",
+        touch: "Mind. 48px Hohe",
+        states: "default, focus-visible, disabled, error",
+        usage: "Name, Ort, E-Mail, IDs",
+        patterns: "input[type=text]",
+        preview: "input",
+        variant: "text",
+      },
+      {
+        name: "Select",
+        type: "Form",
+        status: "Standard",
+        description: "Gefuhrte Auswahl, fallback-freundlich auf Mobilgeraten.",
+        height: "48px",
+        width: "100%",
+        padding: "0 16px",
+        radius: "12px",
+        font: "16px",
+        icon: "System caret",
+        touch: "Mind. 48px Hohe",
+        states: "default, focus-visible, disabled",
+        usage: "Modus, Kategorie, Verein, Rolle",
+        patterns: "select",
+        preview: "input",
+        variant: "select",
+      },
+      {
+        name: "Search Input",
+        type: "Form",
+        status: "Standard",
+        description: "Schnellfilter fur Tabellen, Listen und Cockpit-Ansichten.",
+        height: "48px",
+        width: "100%",
+        padding: "0 16px",
+        radius: "12px",
+        font: "16px",
+        icon: "20px optional",
+        touch: "Mind. 48px Hohe",
+        states: "default, focus-visible, disabled",
+        usage: "Suche Name, Nummer, Status",
+        patterns: "input[type=search]",
+        preview: "input",
+        variant: "search",
+      },
+      {
+        name: "Textarea",
+        type: "Form",
+        status: "In Pruefung",
+        description: "Mehrzeilige Eingabe, vertikal skalierbar bei Bedarf.",
+        height: "Mind. 96px",
+        width: "100%",
+        padding: "8px 16px",
+        radius: "12px",
+        font: "16px",
+        icon: "-",
+        touch: "Mind. 48px initialer Eingabebereich",
+        states: "default, focus-visible, disabled",
+        usage: "Notizen, Beschreibung, Kommentar",
+        patterns: "textarea",
+        preview: "input",
+        variant: "textarea",
+      },
+      {
+        name: "Checkbox / Switch / Radio",
+        type: "Form",
+        status: "In Pruefung",
+        description: "Boolean- und Einzelwahl-Controls, klar gruppiert mit Label.",
+        height: "18-24px control, 48px row touch",
+        width: "Auto",
+        padding: "0",
+        radius: "6-999px je Typ",
+        font: "14-16px Label",
+        icon: "18-24px",
+        touch: "48px Reihenhohe empfohlen",
+        states: "default, checked, focus-visible, disabled",
+        usage: "Filter, Zustimmungen, Moduswechsel",
+        patterns: ".trip-inline-check, .feed-check, .toggle",
+        preview: "input",
+        variant: "checks",
+      },
+    ],
+  },
+  {
+    id: "chips",
+    title: "C. Chips / Tags / Badges",
+    description: "Kompakte Status- und Filterindikatoren mit klarer semantischer Farbe.",
+    items: [
+      {
+        name: "Status Badge",
+        type: "Indicator",
+        status: "Standard",
+        description: "Statuskommunikation fur Aktiv, Warnung, Kritisch.",
+        height: "24-30px",
+        width: "Auto",
+        padding: "4px 10px",
+        radius: "999px",
+        font: "12px / 700",
+        icon: "Optional 12px",
+        touch: "Nicht primar interaktiv",
+        states: "neutral, success, warning, danger",
+        usage: "Status in Tabellen, Cards, Dialogen",
+        patterns: ".chip, .chip-success, .chip-warning, .chip-danger",
+        preview: "chip",
+        variant: "status",
+      },
+      {
+        name: "Filter Chip",
+        type: "Filter",
+        status: "Standard",
+        description: "Interaktiver Toggle-Chip fur aktive Filterzustande.",
+        height: "34px",
+        width: "Auto",
+        padding: "7px 12px",
+        radius: "999px",
+        font: "14px / 600",
+        icon: "14-16px optional",
+        touch: ">=34px, ideal 40-48px on mobile",
+        states: "default, hover, active, focus-visible",
+        usage: "Filterbar, Quick-Filter, Facetten",
+        patterns: ".fangliste-water-chip",
+        preview: "chip",
+        variant: "filter",
+      },
+      {
+        name: "Info Tag",
+        type: "Indicator",
+        status: "In Pruefung",
+        description: "Kurzlabel fur Meta-Info ohne Aktion.",
+        height: "24px",
+        width: "Auto",
+        padding: "4px 8px",
+        radius: "999px",
+        font: "12px / 600",
+        icon: "Optional 12px",
+        touch: "Nicht interaktiv",
+        states: "default",
+        usage: "Meta-Infos in Toolbars und Cards",
+        patterns: ".trip-filter-meta",
+        preview: "chip",
+        variant: "info",
+      },
+      {
+        name: "Beta Badge",
+        type: "Indicator",
+        status: "Standard",
+        description: "Kennzeichnet Beta-Status kanalbezogen.",
+        height: "20-24px",
+        width: "Auto",
+        padding: "2px 8px",
+        radius: "999px",
+        font: "10-12px / 800",
+        icon: "-",
+        touch: "Nicht interaktiv",
+        states: "default",
+        usage: "Header, Produktlogo, Feature-Flag Hinweis",
+        patterns: ".app-beta-badge",
+        preview: "chip",
+        variant: "beta",
+      },
+    ],
+  },
+  {
+    id: "cards",
+    title: "D. Cards",
+    description: "Flachen fur Informationen und Aktionen mit konsistenten Radien, Rahmen und Paddings.",
+    items: [
+      {
+        name: "Standard Card",
+        type: "Surface",
+        status: "Standard",
+        description: "Universelle Containerflache fur Inhalte und Formblocket.",
+        height: "Auto",
+        width: "100%",
+        padding: "Card body: 16px",
+        radius: "12px",
+        font: "16px body",
+        icon: "24px optional",
+        touch: "Je Inhalt",
+        states: "default, hover optional",
+        usage: "Allgemeine Inhalte, Formgruppen",
+        patterns: ".card, .card__body",
+        preview: "card",
+        variant: "standard",
+      },
+      {
+        name: "Feed Card",
+        type: "Surface",
+        status: "Standard",
+        description: "Content-Karte fur Neuigkeiten mit Meta- und Media-Anteilen.",
+        height: "Auto",
+        width: "100%",
+        padding: "14-16px",
+        radius: "12px",
+        font: "15-16px",
+        icon: "Optional media glyphs",
+        touch: "Buttons >=48px",
+        states: "default, interactive child states",
+        usage: "News, Updates, Vereinskommunikation",
+        patterns: ".feed-post",
+        preview: "card",
+        variant: "feed",
+      },
+      {
+        name: "Info Card",
+        type: "Surface",
+        status: "In Pruefung",
+        description: "Kompakte Karte fur KPIs, Hinweise oder schmale Meta-Infos.",
+        height: "Auto",
+        width: "minmax(220px, 1fr)",
+        padding: "10-12px",
+        radius: "12px",
+        font: "14-16px",
+        icon: "20px optional",
+        touch: "Je Inhalt",
+        states: "default",
+        usage: "KPI Blöcke, Systemhinweise",
+        patterns: ".admin-kpi, .admin-api-item",
+        preview: "card",
+        variant: "info",
+      },
+      {
+        name: "Action Card",
+        type: "Surface",
+        status: "In Pruefung",
+        description: "Klickbare Karte als alternative Listenansicht.",
+        height: "Auto",
+        width: "100%",
+        padding: "10-14px",
+        radius: "12px",
+        font: "14-16px",
+        icon: "Optional",
+        touch: "Mind. 48px interaktive Zeile",
+        states: "default, hover, focus-visible, active",
+        usage: "Card-Liste statt Tabelle",
+        patterns: ".term-card, .ui-karte",
+        preview: "card",
+        variant: "action",
+      },
+    ],
+  },
+  {
+    id: "navigation",
+    title: "E. Navigation",
+    description: "Navigationsbausteine mit Fokus auf Einhandreichweite und klare Orientierung.",
+    items: [
+      {
+        name: "Header Elements",
+        type: "Navigation",
+        status: "Standard",
+        description: "VDAN/FCP Branding plus rechtseitige Aktionsebene.",
+        height: "Header row dynamic",
+        width: "3 Slot layout",
+        padding: "16px block",
+        radius: "12px controls",
+        font: "12-16px",
+        icon: "24px controls",
+        touch: "48x48 controls",
+        states: "default, hover, focus-visible",
+        usage: "Globale Orientierung und Primarnavigation",
+        patterns: ".nav, .header-brand-vdan, .header-brand-fcp, .header-menu",
+        preview: "nav",
+        variant: "header",
+      },
+      {
+        name: "Burger Button",
+        type: "Navigation",
+        status: "Standard",
+        description: "Einheitlicher Einstieg ins Hauptmenu.",
+        height: "48px",
+        width: "48px",
+        padding: "0",
+        radius: "12px",
+        font: "24px icon",
+        icon: "24px",
+        touch: "48x48 fix",
+        states: "default, hover, focus-visible, active",
+        usage: "Menu oeffnen/schliessen",
+        patterns: ".burger-toggle, .burger-popover",
+        preview: "nav",
+        variant: "burger",
+      },
+      {
+        name: "Tab Bar",
+        type: "Navigation",
+        status: "In Pruefung",
+        description: "Horizontale Bereichsumschaltung in Cockpits.",
+        height: "48px controls",
+        width: "Auto-wrap",
+        padding: "8px gap system",
+        radius: "12px",
+        font: "14-16px",
+        icon: "Optional 20px",
+        touch: "48px",
+        states: "default, active, disabled",
+        usage: "Abschnittswechsel ohne Seitenbruch",
+        patterns: ".ui-view-toggle, .admin-board__nav",
+        preview: "nav",
+        variant: "tab",
+      },
+      {
+        name: "Bottom Actions",
+        type: "Navigation",
+        status: "In Pruefung",
+        description: "Daumennahe Aktionen am unteren Rand, mobil priorisiert.",
+        height: "56-64px",
+        width: "Auto",
+        padding: "8-12px",
+        radius: "12-999px",
+        font: "14-16px",
+        icon: "24px",
+        touch: "Mind. 48x48",
+        states: "default, hover, active",
+        usage: "Schnellaktionen auf Mobilgeraten",
+        patterns: ".catch-fab-stack, .catch-add-btn--fab",
+        preview: "nav",
+        variant: "bottom",
+      },
+      {
+        name: "Quick Actions",
+        type: "Navigation",
+        status: "Standard",
+        description: "Portal Quick Toggle + Rail als schneller App-Einstieg.",
+        height: "56-64px toggle",
+        width: "Square + rail auto",
+        padding: "8px system",
+        radius: "12px",
+        font: "14px",
+        icon: "24px",
+        touch: ">=48x48",
+        states: "default, open, focus-visible",
+        usage: "Schnellzugriff auf Kernmodule",
+        patterns: ".portal-quick-toggle, .portal-rail, .portal-quick-panel",
+        preview: "nav",
+        variant: "quick",
+      },
+    ],
+  },
+  {
+    id: "dialogs",
+    title: "F. Dialoge / Sheets",
+    description: "Einheitliche Overlay-Logik fur Confirm-, Info-, Form- und Action-Flows.",
+    items: [
+      {
+        name: "Confirm Dialog",
+        type: "Overlay",
+        status: "In Pruefung",
+        description: "Kurze Entscheidung mit 1-2 klaren Aktionen.",
+        height: "Auto",
+        width: "min(460px, 100%)",
+        padding: "14-16px",
+        radius: "14px",
+        font: "15-16px",
+        icon: "Optional 20px",
+        touch: "Buttons 44-48px",
+        states: "default, open, dismiss",
+        usage: "Verwerfen, Loschen, Freigeben",
+        patterns: "#vdanDialogGuardSheet .sheet",
+        preview: "dialog",
+        variant: "confirm",
+      },
+      {
+        name: "Info Dialog",
+        type: "Overlay",
+        status: "In Pruefung",
+        description: "Informiert ohne komplexe Eingaben.",
+        height: "Auto",
+        width: "min(560px, 92vw)",
+        padding: "16px",
+        radius: "12px",
+        font: "14-16px",
+        icon: "Optional",
+        touch: ">=48px Close action",
+        states: "default, open",
+        usage: "Hinweise, Ergebnis, Kontextinformationen",
+        patterns: ".catch-dialog",
+        preview: "dialog",
+        variant: "info",
+      },
+      {
+        name: "Form Dialog",
+        type: "Overlay",
+        status: "Standard",
+        description: "Seitliches Sheet fur Formprozesse mit klaren Aktionen.",
+        height: "100dvh",
+        width: "min(92vw, 560px)",
+        padding: "16px (theme specific overrides)",
+        radius: "0 (sheet style)",
+        font: "16px input base",
+        icon: "24px action icons",
+        touch: ">=48px controls",
+        states: "closed, open, left/right rail variant",
+        usage: "Erfassung, Bearbeitung, Detailflows",
+        patterns: ".catch-dialog, .catch-dialog--panel, .catch-dialog__form",
+        preview: "dialog",
+        variant: "form",
+      },
+      {
+        name: "Bottom Sheet / Action Sheet",
+        type: "Overlay",
+        status: "In Pruefung",
+        description: "Daumennahe Kurzentscheidung auf Mobilgeraten.",
+        height: "Auto",
+        width: "100%",
+        padding: "10-16px",
+        radius: "14px top corners",
+        font: "15-16px",
+        icon: "20-24px optional",
+        touch: ">=48px actions",
+        states: "default, open, dismiss",
+        usage: "Schnelle Aktionen, Kontextmenus",
+        patterns: "Action sheet pattern (planned)",
+        preview: "dialog",
+        variant: "sheet",
+      },
+    ],
+  },
+  {
+    id: "lists",
+    title: "G. Listen / Tabellen",
+    description: "Datenstrukturen mit zwei Darstellungsformen: Tabelle und Kartenliste.",
+    items: [
+      {
+        name: "Standard Tabelle",
+        type: "Data Grid",
+        status: "Standard",
+        description: "Tabellarische Standardansicht mit Header, Zeilen und klarer Zellstruktur.",
+        height: "Auto (rows 44-52px)",
+        width: "100%",
+        padding: "12px container, 10-16px cells",
+        radius: "12px container",
+        font: "14px table base",
+        icon: "12-20px header actions",
+        touch: ">=44px je Zeile",
+        states: "default, hover row, selected row, sorted",
+        colors: "text:#E8EAF0, bg:#0F1728, border:#2A3550",
+        usage: "Listen mit vielen Datensaetzen und schneller Vergleichbarkeit",
+        patterns: ".catch-table, .work-part-table, .fangliste-table",
+        features: "Row-Klick oeffnet Detaildialog, Sortierung per Header, Zeilen filtern ueber Filterbar, Umschalter zu Kartenansicht, Zustand je Row (aktiv/pruefen/gesperrt)",
+        checks: "Zeilenoptik muss 1:1 zum Table-Row-Component passen, Hover und Selected muessen konsistent sein, Datumsspalte darf auf Mobile nicht umbrechen",
+        preview: "list",
+        variant: "table",
+      },
+      {
+        name: "Table Row",
+        type: "Data Row",
+        status: "Standard",
+        description: "Zeilenlayout fur schnelle Scanbarkeit und Sort/Filter-Logik.",
+        height: "44-52px",
+        width: "100%",
+        padding: "10-16px cells",
+        radius: "N/A row, 12px container",
+        font: "14px table base",
+        icon: "12-20px header actions",
+        touch: ">=44px",
+        states: "default, hover, selected, filtered",
+        colors: "text:#E8EAF0, bg:#0F1728, border:#2A3550",
+        usage: "Mitglieder, Termine, Cockpitdaten",
+        patterns: ".work-part-table, .fangliste-table, .catch-row",
+        features: "Row-Klick oeffnet Detaildialog, Header-Sortierung, Zeilenfiltern ueber Filterbar, Keyboard-Navigation Zeile fuer Zeile, Checkbox-Multiselect optional",
+        checks: "Rows muessen denselben Radius und dieselbe Zellstruktur wie in der echten Tabelle haben, Row-Klick darf keinen Inline-Button blockieren, Dialog muss den geklickten Datensatz eindeutig uebernehmen",
+        preview: "list",
+        variant: "row",
+      },
+      {
+        name: "Card List Item",
+        type: "Data Card",
+        status: "Standard",
+        description: "Fallback fur mobile oder kompakte Ansichten ohne breite Tabellen.",
+        height: "Auto",
+        width: "100%",
+        padding: "10-14px",
+        radius: "12px",
+        font: "14-16px",
+        icon: "Optional",
+        touch: ">=48px click area",
+        states: "default, hover, active, focus-visible",
+        colors: "text:#E8EAF0, bg:#111A2C, border:#2A3550",
+        usage: "Mobilansicht fur Datensatze",
+        patterns: ".ui-karte, .term-card, .demo-data-card",
+        features: "Kartenansicht statt Tabellenzeile, Primaraktion je Karte, Optional Swipe-Aktionen",
+        checks: "Datenfelder muessen der Tabellenansicht entsprechen, keine Information darf nur in einer Ansicht existieren",
+        preview: "list",
+        variant: "card-item",
+      },
+      {
+        name: "Toolbar",
+        type: "Data Controls",
+        status: "Standard",
+        description: "Suche, Filter, Ansicht und Aktionen in einem konsistenten Kopfblock.",
+        height: "Auto (controls 48px)",
+        width: "100%",
+        padding: "10px container",
+        radius: "12px",
+        font: "14-16px",
+        icon: "20px optional",
+        touch: ">=48px controls",
+        states: "default, active filter, focus-visible",
+        colors: "text:#E8EAF0, bg:#111A2C, border:#2A3550",
+        usage: "Tabellensteuerung und datennahe Aktionen",
+        patterns: ".trip-table-toolbar, .feed-toolbar, .ui-container-toolbar",
+        features: "Suchen in Rows, Filter aktivieren/zuruecksetzen, Export/Batch-Aktionen",
+        checks: "Filterstatus muss sichtbar bleiben, Reset muss alle Filter inkl. Suchfeld entfernen",
+        preview: "list",
+        variant: "toolbar",
+      },
+      {
+        name: "Ansichtsumschalter Tabelle/Karte",
+        type: "Data Controls",
+        status: "Standard",
+        description: "Einheitlicher Toggle zwischen Tabellen- und Kartenansicht.",
+        height: "48px Buttons",
+        width: "Auto",
+        padding: "0 16px pro Button",
+        radius: "12px",
+        font: "14-16px / 600",
+        icon: "Optional 16-20px",
+        touch: ">=48x48px",
+        states: "default, active, hover, disabled",
+        colors: "text:#E8EAF0, bg:#111A2C, border:#2A3550",
+        usage: "Datenansichten mit zwei Modi (Zeile/Karte)",
+        patterns: ".ui-view-toggle, [data-view-mode]",
+        features: "Toggle Tabelle/Karte, aktive Ansicht markieren, Ansicht im State merken",
+        checks: "Beim Umschalten darf keine Filter- oder Sort-Information verloren gehen",
+        preview: "list",
+        variant: "view-toggle",
+      },
+      {
+        name: "Filter Bar",
+        type: "Data Controls",
+        status: "In Pruefung",
+        description: "Schnellfilter fur mehrspaltige Datensichten.",
+        height: "Auto",
+        width: "100%",
+        padding: "8-10px",
+        radius: "10-12px",
+        font: "14px",
+        icon: "12-16px",
+        touch: ">=44px",
+        states: "default, filtered, clear",
+        colors: "text:#E8EAF0, bg:#111A2C, border:#2A3550",
+        usage: "Column filter, status toggles, quick refine",
+        patterns: ".members-filter-panel, .fangliste-col-filter",
+        features: "Rows nach Status filtern, Mehrfachfilter kombinieren, Clear-Filter in einem Klick",
+        checks: "Filter darf keine Rows permanent verstecken, aktivierte Filter muessen als Chip sichtbar sein",
+        preview: "list",
+        variant: "filterbar",
+      },
+    ],
+  },
+];
+---
+
+<Site
+  title={`Component Library • ${APP.name}`}
+  description="Superadmin: verbindliche UI-Referenzmaske"
+  robots="noindex"
+  containerClass="container container--admin-wide"
+>
+  <section class="card">
+    <div class="card__body lib-hero">
+      <h1>Component Library</h1>
+      <p class="small">
+        Verbindliche interne Referenzmaske fur wiederverwendbare UI-Bausteine.
+        Jede neue Maske soll sich an diesen Komponenten, Maßen und Interaktionsmustern orientieren.
+      </p>
+      <div class="lib-principles" role="list" aria-label="UX Leitlinien">
+        <span class="lib-principle" role="listitem">Einhand-Bedienung zuerst</span>
+        <span class="lib-principle" role="listitem">Klickbarkeit ist sofort erkennbar</span>
+        <span class="lib-principle" role="listitem">Maße bleiben konsistent</span>
+        <span class="lib-principle" role="listitem">Dialoge wirken aus einem Guss</span>
+        <span class="lib-principle" role="listitem">Flow statt Seitensammlung</span>
+      </div>
+      <div class="lib-editor-controls">
+        <button id="libSaveBtn" type="button" class="feed-btn">Standards lokal speichern</button>
+        <button id="libExportBtn" type="button" class="feed-btn feed-btn--ghost">JSON exportieren</button>
+        <button id="libImportBtn" type="button" class="feed-btn feed-btn--ghost">JSON importieren</button>
+        <button id="libApplyButtonsBtn" type="button" class="feed-btn">Buttons appweit anwenden</button>
+        <button id="libClearButtonsBtn" type="button" class="feed-btn feed-btn--ghost">Button-Override entfernen</button>
+        <button id="libResetBtn" type="button" class="feed-btn feed-btn--ghost">Reset</button>
+      </div>
+      <p id="libEditorStatus" class="small" aria-live="polite">Editor bereit. Änderungen können lokal gespeichert und als JSON exportiert werden.</p>
+      <label class="lib-export-row" for="libExportArea">
+        <span class="small">Export / Import JSON (hier kopieren und mir senden)</span>
+        <textarea id="libExportArea" rows={5} placeholder='{"version":"1.0","components":{...}}'></textarea>
+      </label>
+      <label class="lib-export-row" for="libSchemaArea">
+        <span class="small">Generator-Schema (Auto, nur lesen)</span>
+        <textarea id="libSchemaArea" rows={7} readonly></textarea>
+      </label>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__body">
+      <h2>Globale Tokens & Layers</h2>
+      <div class="lib-token-grid">
+        <article class="lib-token-card">
+          <h3>Farben</h3>
+          <p class="small"><code>--bg: #0B1220</code> · <code>--panel: #111A2C</code> · <code>--text: #E8EAF0</code> · <code>--line: #2A3550</code> · <code>--brand: #6C705B</code></p>
+        </article>
+        <article class="lib-token-card">
+          <h3>Spacing</h3>
+          <p class="small"><code>--space-1: 8px</code> · <code>--space-2: 16px</code> · <code>--space-3: 24px</code> · <code>--space-4: 32px</code></p>
+        </article>
+        <article class="lib-token-card">
+          <h3>Radius</h3>
+          <p class="small"><code>--radius-md: 12px</code> · Sheet/Confirm: <code>14px</code> bei Bedarf</p>
+        </article>
+        <article class="lib-token-card">
+          <h3>Typo</h3>
+          <p class="small">Body <code>16px</code> · Table <code>14px</code> · Secondary <code>14px</code></p>
+        </article>
+        <article class="lib-token-card">
+          <h3>Icons & Touch</h3>
+          <p class="small">Icon Standard <code>24px</code> · Minimum Touch-Target <code>48x48px</code></p>
+        </article>
+        <article class="lib-token-card">
+          <h3>Dialog-Breiten</h3>
+          <p class="small">Desktop <code>min(92vw, 560px)</code> · Tablet <code>min(88vw, 500px)</code> · Mobile <code>100vw</code></p>
+        </article>
+        <article class="lib-token-card">
+          <h3>Z-Index Layer</h3>
+          <p class="small">Header <code>1200</code> · Popover <code>1300</code> · Portal Quick <code>1490-1511</code> · Dialog <code>3000</code></p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  {
+    categories.map((category) => (
+      <section id={category.id} class="card lib-category">
+        <div class="card__body">
+          <header class="lib-cat-head">
+            <button
+              type="button"
+              class="lib-cat-toggle"
+              data-category={category.id}
+              aria-expanded={expandedState(category.id)}
+              aria-controls={"panel-" + category.id}
+            >
+              <span class="lib-cat-toggle__title">{category.title}</span>
+              <span class="lib-cat-toggle__meta">{category.items.length} Komponenten</span>
+              <span class="lib-cat-toggle__icon" aria-hidden="true">▾</span>
+            </button>
+            <p class="small">{category.description}</p>
+          </header>
+
+          <div id={`panel-${category.id}`} class="lib-category-panel" hidden={category.id !== DEFAULT_OPEN_CATEGORY}>
+            <div class="lib-component-grid">
+              {
+                category.items.map((item) => (
+                  <article class="lib-component-card" data-component-key={`${category.id}--${toSlug(item.name)}`}>
+                  <div class="lib-preview">
+                    <div class="lib-status-wrap">
+                      <span class={`lib-status ${statusClass(item.status)}`}>
+                        {item.status}
+                      </span>
+                      <label class="lib-enable-toggle">
+                        <input type="checkbox" class="lib-component-enabled" data-default="true" checked />
+                        <span>Komponente aktiv</span>
+                      </label>
+                    </div>
+
+                    {item.preview === "button" && (
+                      <div class="lib-preview-block lib-preview-buttons">
+                        {item.variant === "primary" && <button type="button" class="feed-btn">Primary Action</button>}
+                        {item.variant === "secondary" && <button type="button" class="feed-btn feed-btn--ghost">Secondary Action</button>}
+                        {item.variant === "ghost" && <button type="button" class="feed-btn feed-btn--ghost">Ghost Action</button>}
+                        {item.variant === "icon" && <button type="button" class="burger-toggle" aria-label="Icon Button">☰</button>}
+                        {item.variant === "danger" && <button type="button" class="lib-danger-btn">Delete</button>}
+                      </div>
+                    )}
+
+                    {item.preview === "input" && (
+                      <div class="lib-preview-block lib-preview-inputs">
+                        {(item.variant === "text" || item.variant === "search") && (
+                          <input type={inputPreview(item.variant).type} value={inputPreview(item.variant).value} aria-label={item.name} />
+                        )}
+                        {item.variant === "select" && (
+                          <select aria-label={item.name}>
+                            <option>Option A</option>
+                            <option>Option B</option>
+                          </select>
+                        )}
+                        {item.variant === "textarea" && <textarea rows={3} aria-label={item.name}>Mehrzeilige Eingabe</textarea>}
+                        {item.variant === "checks" && (
+                          <div class="lib-check-set">
+                            <label class="small"><input type="checkbox" checked /> Checkbox</label>
+                            <label class="small"><input type="radio" name="lib-radio" checked /> Radio</label>
+                            <button type="button" class="toggle" aria-pressed="true"><span /></button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {item.preview === "chip" && (
+                      <div class="lib-preview-block lib-preview-chips">
+                        {item.variant === "status" && (
+                          <div class="lib-chip-set">
+                            <span class="chip chip-success">Aktiv</span>
+                            <span class="chip chip-warning">Pruefen</span>
+                            <span class="chip chip-danger">Kritisch</span>
+                          </div>
+                        )}
+                        {item.variant === "filter" && (
+                          <div class="lib-chip-set">
+                            <button type="button" class="fangliste-water-chip">Filter A</button>
+                            <button type="button" class="fangliste-water-chip">Filter B</button>
+                          </div>
+                        )}
+                        {item.variant === "info" && <span class="trip-filter-meta">3 Filter aktiv</span>}
+                        {item.variant === "beta" && <span class="app-beta-badge">BETA</span>}
+                      </div>
+                    )}
+
+                    {item.preview === "card" && (
+                      <div class="lib-preview-block lib-preview-cards">
+                        <article class="card">
+                          <div class="card__body">
+                            <h3>{item.name}</h3>
+                            <p class="small">Kompakte Vorschau fur {item.type}.</p>
+                            {item.variant === "action" && <button type="button" class="feed-btn feed-btn--ghost">Open</button>}
+                          </div>
+                        </article>
+                      </div>
+                    )}
+
+                    {item.preview === "nav" && (
+                      <div class="lib-preview-block lib-preview-nav">
+                        {item.variant === "header" && (
+                          <div class="lib-mock-header">
+                            <span class="lib-mock-logo">VDAN</span>
+                            <span class="lib-mock-logo lib-mock-logo--fcp">FCP</span>
+                            <button type="button" class="burger-toggle" aria-label="Menu">☰</button>
+                          </div>
+                        )}
+                        {item.variant === "burger" && <button type="button" class="burger-toggle" aria-label="Menu">☰</button>}
+                        {item.variant === "tab" && (
+                          <div class="ui-view-toggle" role="group" aria-label="Tab Preview">
+                            <button type="button" class="feed-btn">Aktiv</button>
+                            <button type="button" class="feed-btn feed-btn--ghost">Sekundaer</button>
+                          </div>
+                        )}
+                        {item.variant === "bottom" && (
+                          <div class="lib-bottom-actions">
+                            <button type="button" class="feed-btn">Action</button>
+                            <button type="button" class="feed-btn feed-btn--ghost">More</button>
+                          </div>
+                        )}
+                        {item.variant === "quick" && (
+                          <div class="lib-quick-actions">
+                            <button type="button" class="portal-quick-toggle" aria-label="Portal">⌂</button>
+                            <div class="portal-rail__items">
+                              <span class="portal-rail__item">A</span>
+                              <span class="portal-rail__item">B</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {item.preview === "dialog" && (
+                      <div class="lib-preview-block lib-preview-dialog">
+                        <div class="lib-mock-dialog">
+                          <h3>{item.name}</h3>
+                          <p class="small">Dialog-Vorschau mit konsistenter Action-Zone.</p>
+                          <div class="catch-dialog__actions">
+                            <button type="button" class="feed-btn feed-btn--ghost">Cancel</button>
+                            <button type="button" class="feed-btn">Confirm</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {item.preview === "list" && (
+                      <div class="lib-preview-block lib-preview-list">
+                        {item.variant === "table" && (
+                          <div class="catch-table lib-real-table lib-real-table--fit">
+                            <div class="catch-table__head">
+                              <span class="lib-col-head">Mitglied <span class="lib-col-filter" aria-hidden="true">⇅</span></span>
+                              <span class="lib-col-head">Status <span class="lib-col-filter" aria-hidden="true">⇅</span></span>
+                              <span class="lib-col-head">Datum <span class="lib-col-filter" aria-hidden="true">⇅</span></span>
+                            </div>
+                            <div class="catch-table__row">
+                              <span>Max Mustermann</span>
+                              <span class="chip chip-success">Aktiv</span>
+                              <span>04.03.2026</span>
+                            </div>
+                            <div class="catch-table__row">
+                              <span>Anna Beispiel</span>
+                              <span class="chip chip-warning">Pruefen</span>
+                              <span>05.03.2026</span>
+                            </div>
+                          </div>
+                        )}
+                        {item.variant === "toolbar" && (
+                          <div class="trip-table-toolbar">
+                            <div class="trip-table-search">
+                              <input type="search" value="Mitglied suchen..." aria-label="Toolbar Suche" />
+                            </div>
+                            <div class="trip-table-toolbar__actions">
+                              <span class="trip-filter-meta">2 Filter</span>
+                              <button type="button" class="feed-btn feed-btn--ghost">Reset</button>
+                            </div>
+                          </div>
+                        )}
+                        {item.variant === "view-toggle" && (
+                          <div class="ui-view-toggle" role="group" aria-label="Ansicht umschalten">
+                            <button type="button" class="feed-btn">Tabelle</button>
+                            <button type="button" class="feed-btn feed-btn--ghost">Karte</button>
+                          </div>
+                        )}
+                        {(item.variant === "row" || item.variant === "card-item") && (
+                          <>
+                            {item.variant === "row" && (
+                              <div class="catch-table lib-real-table lib-real-table--single">
+                                <div class="catch-table__head">
+                                  <span>Mitglied</span>
+                                  <span>Status</span>
+                                  <span>Datum</span>
+                                </div>
+                                <div class="catch-table__row">
+                                  <span>Demo Mitglied</span>
+                                  <span class="chip">Aktiv</span>
+                                  <span>04.03.2026</span>
+                                </div>
+                              </div>
+                            )}
+                            {item.variant === "card-item" && (
+                              <div class="lib-mock-list-row">
+                                <span class="small">Demo Mitglied</span>
+                                <span class="chip">Aktiv</span>
+                                <span class="small">04.03.2026</span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                        {item.variant === "filterbar" && (
+                          <div class="members-filter-panel lib-filter-demo">
+                            <label class="small">Status</label>
+                            <select aria-label="Filter Status">
+                              <option>Alle</option>
+                              <option>Aktiv</option>
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {(functionsForItem(item).length > 0 || checksForItem(item).length > 0) && (
+                      <section class="lib-functions" aria-label="Funktionen und Checks">
+                        {functionsForItem(item).length > 0 && (
+                          <>
+                            <h4>Funktionen / Verhalten</h4>
+                            <ul class="lib-functions-list">
+                              {functionsForItem(item).map((fn) => (
+                                <li>
+                                  <label class="lib-function-toggle">
+                                    <input type="checkbox" class="lib-feature-toggle" data-feature-name={fn} data-default="true" checked />
+                                    <span>{fn}</span>
+                                  </label>
+                                </li>
+                              ))}
+                            </ul>
+                          </>
+                        )}
+                        {checksForItem(item).length > 0 && (
+                          <>
+                            <h4>Checks / NOGO</h4>
+                            <ul class="lib-functions-list lib-functions-list--warn">
+                              {checksForItem(item).map((check) => <li>{check}</li>)}
+                            </ul>
+                          </>
+                        )}
+                      </section>
+                    )}
+                  </div>
+
+                  <div class="lib-meta">
+                    <h3>{item.name}</h3>
+                    <p class="small">{item.description}</p>
+                    <div class="lib-validation" data-validation hidden></div>
+
+                    <dl class="lib-specs">
+                      <dt>Typ</dt><dd><input class="lib-edit-input" data-field="type" data-default={item.type} value={item.type} /></dd>
+                      <dt>Hoehe</dt><dd><input class="lib-edit-input" data-field="height" data-default={item.height} value={item.height} /></dd>
+                      <dt>Breite / Verhalten</dt><dd><input class="lib-edit-input" data-field="width" data-default={item.width} value={item.width} /></dd>
+                      <dt>Padding</dt><dd><input class="lib-edit-input" data-field="padding" data-default={item.padding} value={item.padding} /></dd>
+                      <dt>Border-Radius</dt><dd><input class="lib-edit-input" data-field="radius" data-default={item.radius} value={item.radius} /></dd>
+                      <dt>Font-Size</dt><dd><input class="lib-edit-input" data-field="font" data-default={item.font} value={item.font} /></dd>
+                      <dt>Icon-Groesse</dt><dd><input class="lib-edit-input" data-field="icon" data-default={item.icon} value={item.icon} /></dd>
+                      <dt>Touch-Target</dt><dd><input class="lib-edit-input" data-field="touch" data-default={item.touch} value={item.touch} /></dd>
+                      <dt>Zustaende</dt><dd><input class="lib-edit-input" data-field="states" data-default={item.states} value={item.states} /></dd>
+                      <dt>Farben</dt><dd><input class="lib-edit-input" data-field="colors" data-default={item.colors || ""} value={item.colors || ""} placeholder="text:#E8EAF0, bg:#0B1220, border:#2A3550" /></dd>
+                      <dt>Verwendungszweck</dt><dd><input class="lib-edit-input" data-field="usage" data-default={item.usage} value={item.usage} /></dd>
+                      <dt>Funktionen</dt><dd><input class="lib-edit-input" data-field="features" data-default={item.features || ""} value={item.features || ""} /></dd>
+                      <dt>Checks / NOGO</dt><dd><input class="lib-edit-input" data-field="checks" data-default={item.checks || ""} value={item.checks || ""} /></dd>
+                    </dl>
+
+                    <div class="lib-pattern-row">
+                      <label class="small" for={`pattern-${category.id}-${toSlug(item.name)}`}>Pattern / Klassen</label>
+                      <div class="lib-copy-wrap">
+                        <input
+                          id={`pattern-${category.id}-${toSlug(item.name)}`}
+                          class="lib-pattern-input lib-edit-input"
+                          data-field="patterns"
+                          data-default={item.patterns}
+                          value={item.patterns}
+                        />
+                        <button type="button" class="feed-btn feed-btn--ghost lib-copy-btn">FIX</button>
+                      </div>
+                    </div>
+                    <div class="lib-pattern-row">
+                      <label class="small" for={`notes-${category.id}-${toSlug(item.name)}`}>Bemerkungen / Anregungen</label>
+                      <textarea
+                        id={`notes-${category.id}-${toSlug(item.name)}`}
+                        class="lib-edit-input lib-note-input"
+                        data-field="notes"
+                        data-default={item.notes || ""}
+                        rows={3}
+                        placeholder="Konkreter Hinweis, Problem, gewünschtes Ziel..."
+                      >{item.notes || ""}</textarea>
+                    </div>
+                  </div>
+                </article>
+              ))
+            }
+            </div>
+          </div>
+        </div>
+      </section>
+    ))
+  }
+  <script src="/js/component-library.js" defer></script>
+
+
+  <style>
+    .lib-hero{
+      display:grid;
+      gap:10px;
+    }
+
+    .lib-principles{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .lib-editor-controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:4px;
+    }
+
+    .lib-export-row{
+      display:grid;
+      gap:6px;
+      margin:0;
+    }
+
+    .lib-export-row textarea{
+      width:100%;
+      min-height:110px;
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:.82rem;
+      line-height:1.4;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:8px 10px;
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+    }
+
+    .lib-principle{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:6px 10px;
+      background:rgba(255,255,255,.04);
+      font-size:.85rem;
+      color:var(--text);
+    }
+
+    .lib-token-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+      gap:10px;
+    }
+
+    .lib-token-card{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px;
+      background:rgba(255,255,255,.03);
+    }
+
+    .lib-token-card h3{
+      margin:0 0 6px;
+      font-size:1rem;
+      text-align:left;
+    }
+
+    .lib-token-card p{
+      margin:0;
+    }
+
+    .lib-section-head{
+      margin-bottom:12px;
+    }
+
+    .lib-section-head h2{
+      margin-bottom:6px;
+      text-align:left;
+    }
+
+    .lib-component-grid{
+      display:grid;
+      gap:12px;
+    }
+
+    .lib-component-card{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(255,255,255,.03);
+      overflow:visible;
+      display:grid;
+      grid-template-columns:minmax(260px, .95fr) minmax(280px, 1.05fr);
+    }
+
+    .lib-component-card.is-disabled{
+      opacity:.58;
+      filter:saturate(.68);
+    }
+
+    .lib-preview{
+      border-right:1px solid var(--line);
+      padding:10px;
+      display:grid;
+      gap:8px;
+      align-content:start;
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+    }
+
+    .lib-functions{
+      display:grid;
+      gap:6px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:10px;
+      background:rgba(255,255,255,.02);
+    }
+
+    .lib-functions h4{
+      margin:0;
+      font-size:.82rem;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+
+    .lib-functions-list{
+      margin:0;
+      padding-left:18px;
+      display:grid;
+      gap:4px;
+      font-size:.84rem;
+      line-height:1.35;
+    }
+
+    .lib-functions-list--warn li{
+      color:#ffd9a8;
+    }
+
+    .lib-function-toggle{
+      display:grid;
+      grid-template-columns:auto minmax(0, 1fr);
+      align-items:flex-start;
+      gap:6px;
+    }
+
+    .lib-function-toggle input{
+      margin-top:2px;
+      accent-color:#6fe2b4;
+    }
+
+    .lib-status-wrap{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+    }
+
+    .lib-enable-toggle{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:.76rem;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    .lib-enable-toggle input{
+      margin:0;
+      accent-color:#6fe2b4;
+    }
+
+    .lib-status{
+      display:inline-flex;
+      align-items:center;
+      border-radius:999px;
+      padding:4px 9px;
+      font-size:.72rem;
+      font-weight:700;
+      border:1px solid var(--line);
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+
+    .lib-status.is-standard{
+      background:rgba(58,212,91,.2);
+      border-color:rgba(58,212,91,.5);
+    }
+
+    .lib-status.is-review{
+      background:rgba(255,200,48,.2);
+      border-color:rgba(255,200,48,.5);
+    }
+
+    .lib-status.is-legacy{
+      background:rgba(255,118,118,.2);
+      border-color:rgba(255,118,118,.5);
+    }
+
+    .lib-preview-block{
+      min-height:110px;
+      border:1px dashed rgba(220,228,241,.24);
+      border-radius:12px;
+      padding:10px;
+      display:grid;
+      gap:8px;
+      align-content:center;
+      justify-items:start;
+    }
+
+    .lib-preview-buttons{
+      justify-items:flex-start;
+    }
+
+    .lib-danger-btn{
+      min-height:var(--touch-target-min);
+      border-radius:12px;
+      border:1px solid rgba(255,118,118,.6);
+      background:rgba(178,43,43,.42);
+      color:#fff;
+      padding:0 16px;
+      font-weight:700;
+    }
+
+    .lib-preview-inputs{
+      width:100%;
+    }
+
+    .lib-preview-inputs input,
+    .lib-preview-inputs select,
+    .lib-preview-inputs textarea{
+      width:100%;
+    }
+
+    .lib-check-set{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:10px;
+    }
+
+    .lib-preview-chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-content:flex-start;
+    }
+
+    .lib-preview-cards .card{
+      width:100%;
+      box-shadow:none;
+    }
+
+    .lib-preview-nav{
+      width:100%;
+    }
+
+    .lib-mock-header{
+      width:100%;
+      min-height:58px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:8px;
+      display:grid;
+      grid-template-columns:1fr 1fr auto;
+      align-items:center;
+      gap:8px;
+      background:rgba(255,255,255,.02);
+    }
+
+    .lib-mock-logo{
+      font-weight:700;
+      letter-spacing:.04em;
+    }
+
+    .lib-mock-logo--fcp{
+      opacity:.92;
+    }
+
+    .lib-bottom-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .lib-quick-actions{
+      display:grid;
+      gap:8px;
+      width:100%;
+    }
+
+    .lib-quick-actions .portal-quick-toggle{
+      position:static !important;
+      right:auto !important;
+      bottom:auto !important;
+      width:56px;
+      height:56px;
+      font-size:24px;
+    }
+
+    .lib-quick-actions .portal-rail__items{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:8px;
+      background:rgba(255,255,255,.03);
+      display:flex;
+      gap:8px;
+    }
+
+    .lib-quick-actions .portal-rail__item{
+      min-height:40px;
+      width:40px;
+    }
+
+    .lib-preview-dialog{
+      width:100%;
+    }
+
+    .lib-mock-dialog{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px;
+      background:rgba(255,255,255,.03);
+      display:grid;
+      gap:8px;
+    }
+
+    .lib-mock-dialog h3{
+      margin:0;
+      text-align:left;
+      font-size:1rem;
+    }
+
+    .lib-preview-list{
+      width:100%;
+    }
+
+    .lib-real-table{
+      width:100%;
+      margin:0;
+    }
+
+    .lib-real-table .catch-table__head,
+    .lib-real-table .catch-table__row{
+      grid-template-columns:minmax(0, 1fr) auto auto;
+    }
+
+    .lib-real-table--fit .catch-table__head,
+    .lib-real-table--fit .catch-table__row{
+      grid-template-columns:minmax(150px, 1.65fr) minmax(110px, 1fr) minmax(110px, 1fr);
+    }
+
+    .lib-real-table--fit .catch-table__head > span,
+    .lib-real-table--fit .catch-table__row > span{
+      min-width:0;
+    }
+
+    .lib-real-table--fit .catch-table__row:nth-of-type(odd){
+      background:rgba(18, 28, 44, .88) !important;
+    }
+
+    .lib-real-table--fit .catch-table__row:nth-of-type(even){
+      background:rgba(16, 24, 38, .72) !important;
+    }
+
+    .lib-col-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:6px;
+      min-width:0;
+    }
+
+    .lib-col-filter{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:14px;
+      font-size:.76rem;
+      color:rgba(215, 226, 243, .86);
+      line-height:1;
+    }
+
+    .lib-real-table--single .catch-table__head{
+      font-size:.76rem;
+    }
+
+    .lib-chip-set{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .lib-mock-table{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+      background:rgba(255,255,255,.02);
+      display:grid;
+    }
+
+    .lib-mock-table__head,
+    .lib-mock-table__row{
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) auto auto;
+      gap:8px;
+      align-items:center;
+      padding:10px 12px;
+    }
+
+    .lib-mock-table__head{
+      background:rgba(255,255,255,.05);
+      border-bottom:1px solid var(--line);
+      font-weight:700;
+      font-size:.82rem;
+      text-transform:uppercase;
+      letter-spacing:.02em;
+      color:var(--muted);
+    }
+
+    .lib-mock-table__row + .lib-mock-table__row{
+      border-top:1px solid var(--line);
+    }
+
+    .lib-mock-list-row{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px;
+      display:grid;
+      grid-template-columns:1fr auto auto;
+      gap:8px;
+      align-items:center;
+      background:rgba(255,255,255,.02);
+    }
+
+    .lib-filter-demo{
+      position:static;
+      display:grid;
+      min-width:0;
+      width:100%;
+      background:rgba(8, 12, 22, .96);
+    }
+
+    .lib-meta{
+      padding:10px;
+      display:grid;
+      gap:8px;
+      align-content:start;
+      position:sticky;
+      top:88px;
+      align-self:start;
+      max-height:calc(100dvh - 108px);
+      overflow:auto;
+      overscroll-behavior:contain;
+    }
+
+    .lib-meta h3{
+      margin:0;
+      text-align:left;
+      font-size:1rem;
+    }
+
+    .lib-meta p{
+      margin:0;
+    }
+
+    .lib-validation{
+      border:1px solid rgba(255, 180, 110, .5);
+      background:rgba(88, 44, 24, .34);
+      color:#ffd8b0;
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:.78rem;
+      line-height:1.35;
+      text-align:left;
+    }
+
+    .lib-component-card.has-validation-warning{
+      box-shadow:inset 0 0 0 1px rgba(255, 180, 110, .35);
+    }
+
+    .lib-specs{
+      margin:0;
+      display:grid;
+      grid-template-columns:minmax(110px, .9fr) minmax(0, 1.1fr);
+      gap:6px 10px;
+      font-size:.9rem;
+    }
+
+    .lib-specs dt{
+      margin:0;
+      color:var(--muted);
+    }
+
+    .lib-specs dd{
+      margin:0;
+      color:var(--text);
+    }
+
+    .lib-edit-input{
+      width:100%;
+      min-height:36px;
+      border:1px solid rgba(220,228,241,.24);
+      border-radius:8px;
+      padding:0 8px;
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      font-size:.86rem;
+    }
+
+    .lib-note-input{
+      min-height:86px;
+      resize:vertical;
+      padding:8px 10px;
+      line-height:1.35;
+    }
+
+    .lib-edit-wrap{
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) 88px;
+      gap:6px;
+      align-items:center;
+    }
+
+    .lib-edit-px{
+      width:100%;
+      min-height:36px;
+      border:1px solid rgba(220,228,241,.24);
+      border-radius:8px;
+      padding:0 8px;
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      font-size:.82rem;
+    }
+
+    .lib-pattern-row{
+      display:grid;
+      gap:6px;
+    }
+
+    .lib-copy-wrap{
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) auto;
+      gap:8px;
+      align-items:center;
+    }
+
+    .lib-pattern-input{
+      min-height:40px;
+      font-size:.86rem;
+      padding:0 10px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      width:100%;
+    }
+
+    .lib-copy-btn{
+      min-height:40px;
+      padding:0 12px;
+    }
+
+    @media (max-width: 980px){
+      .lib-component-card{
+        grid-template-columns:1fr;
+        overflow:hidden;
+      }
+
+      .lib-preview{
+        border-right:0;
+        border-bottom:1px solid var(--line);
+      }
+
+      .lib-meta{
+        position:static;
+        top:auto;
+        max-height:none;
+        overflow:visible;
+      }
+    }
+    .lib-category-panel[hidden]{
+      display:none !important;
+    }
+
+    .lib-cat-head{
+      display:grid;
+      gap:8px;
+      margin-bottom:8px;
+    }
+
+    .lib-cat-toggle{
+      width:100%;
+      min-height:56px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) auto auto;
+      align-items:center;
+      gap:10px;
+      padding:0 12px;
+      text-align:left;
+      font-size:1rem;
+      font-weight:700;
+    }
+
+    .lib-cat-toggle:hover{
+      background:rgba(255,255,255,.06);
+    }
+
+    .lib-cat-toggle__meta{
+      font-size:.8rem;
+      font-weight:600;
+      color:var(--muted);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:2px 8px;
+    }
+
+    .lib-cat-toggle__icon{
+      font-size:1rem;
+      line-height:1;
+      transition:transform .16s ease;
+    }
+
+    .lib-cat-toggle[aria-expanded="true"] .lib-cat-toggle__icon{
+      transform:rotate(180deg);
+    }
+  </style>
+</Site>

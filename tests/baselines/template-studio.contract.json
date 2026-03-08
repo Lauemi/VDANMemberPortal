@@ -1,0 +1,37 @@
+{
+  "componentTypes": [
+    "header-brand",
+    "header-menu",
+    "hero-card",
+    "table",
+    "card-grid",
+    "form-block",
+    "info-panel",
+    "action-row"
+  ],
+  "slots": [
+    "header",
+    "main",
+    "footer"
+  ],
+  "pickFields": [
+    "MASK_PATH",
+    "MASK_URL",
+    "MASK_TITLE",
+    "VIEWPORT",
+    "AREA",
+    "COMPONENT_NAME",
+    "COMPONENT_ID",
+    "SLOT_PATH",
+    "SELECTOR",
+    "NODE_PATH",
+    "TAG",
+    "ID",
+    "CLASSES",
+    "ROLE",
+    "ARIA_LABEL",
+    "DATA_ACTION",
+    "TEXT_SNIPPET"
+  ]
+}
+

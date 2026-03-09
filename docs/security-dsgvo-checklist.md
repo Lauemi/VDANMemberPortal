@@ -35,9 +35,11 @@
 - [ ] `user_roles` für eingeloggte Nutzer wieder lesbar (`roles_select_own` wirksam).
 - [ ] Keine unerwarteten `403/401` im Browser-Network auf Kernseiten.
 - [ ] Keine unnötigen `anon` Schreibrechte mehr vorhanden.
+  - Hardening-Patch verfügbar: `docs/supabase/87_anon_write_grant_hardening_member_waters.sql`
 
 ## 5) Empfohlene Governance
 
 - [ ] Vor jedem Release: Security + DSGVO Quick-Gate (10 Minuten).
+  - XSS-Guard lokal/CI ausführen: `npm run check:xss-guard`
 - [ ] Nach jedem DB-RLS-Change: Smoke-Test mit anon + authenticated + admin.
 - [ ] Quartalsweise: Rechte-Audit + Löschfristen-Audit + Runbook-Test.

@@ -4,16 +4,70 @@ import { APP } from "../config/app";
 
 const nextRaw = Astro.url.searchParams.get("next") ?? "/app/";
 const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
+const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
 ---
 
 <Site title={`Registrieren • ${APP.name}`} description="Auth-Account für das Portal erstellen." robots="noindex">
   <section class="card" style="max-width:560px;margin:0 auto;">
     <div class="card__body">
       <h1>Registrieren</h1>
-      <p class="small">Die Registrierung ist aktuell deaktiviert.</p>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <button class="primary" type="button" disabled aria-disabled="true">Coming soon</button>
-        <a class="feed-btn feed-btn--ghost" href={`/login/?next=${encodeURIComponent(nextTarget)}`}>Zur Anmeldung</a>
+      <p class="small" id="registerModeHint">
+        Registrierung mit oder ohne Vereinseinladung.
+      </p>
+      <p class="small" style="margin-top:8px;color:var(--danger);font-weight:700;">
+        WICHTIG: Zugangsnamen/Kürzel (z. B. <code>001</code>) sind Aktuell nicht Nutzbar.
+        Der Login kann nur noch über die Registrierte Emailadresse erfolgen.
+      </p>
+      <div class="small" style="margin-top:10px;border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:10px;">
+        <strong>Security-Baseline</strong><br />
+        - Auth nur über bestätigte E-Mail<br />
+        - Passwort mindestens 8 Zeichen<br />
+        - Rate-Limits für Auth-Endpunkte aktiv<br />
+        - Vereinsbeitritt nur über gültigen Invite-Flow
+      </div>
+
+      <form id="registerForm" data-next-target={nextTarget}>
+        <label>
+          <span>Mitgliedsnummer</span>
+          <input id="registerMemberNo" name="member_no" type="text" inputmode="text" autocomplete="username" />
+        </label>
+        <label>
+          <span>E-Mail</span>
+          <input id="registerEmail" name="email" type="email" autocomplete="email" />
+        </label>
+        <label>
+          <span>Vorname</span>
+          <input id="registerFirstName" name="first_name" type="text" autocomplete="given-name" required />
+        </label>
+        <label>
+          <span>Nachname</span>
+          <input id="registerLastName" name="last_name" type="text" autocomplete="family-name" required />
+        </label>
+        <label>
+          <span>Einladungs-Token</span>
+          <input id="registerInviteToken" name="invite_token" type="text" value={inviteToken} autocomplete="off" />
+        </label>
+        <label>
+          <span>Passwort</span>
+          <input id="registerPass" name="password" type="password" autocomplete="new-password" minlength="8" required />
+        </label>
+        <label>
+          <span>Passwort wiederholen</span>
+          <input id="registerPass2" name="password_repeat" type="password" autocomplete="new-password" minlength="8" required />
+        </label>
+        <label class="small" style="display:flex;gap:8px;align-items:flex-start;">
+          <input id="registerAccept" type="checkbox" required />
+          <span>Ich akzeptiere die Nutzungsbedingungen.</span>
+        </label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button class="primary" type="submit">Registrieren</button>
+          <a class="feed-btn feed-btn--ghost" href={`/login/?next=${encodeURIComponent(nextTarget)}`}>Zur Anmeldung</a>
+          <span id="registerMsg" class="small" aria-live="polite"></span>
+        </div>
+      </form>
+
+      <div class="small" style="margin-top:10px;">
+        Für Vereinsbeitritt: Invite-Link/Token vom Verein nutzen.
       </div>
     </div>
   </section>

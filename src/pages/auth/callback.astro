@@ -1,0 +1,17 @@
+---
+import Site from "../../layouts/Site.astro";
+import { APP } from "../../config/app";
+---
+
+<Site title={`Auth Callback • ${APP.name}`} description="Verarbeite Login-/Reset-Links." robots="noindex">
+  <section class="card" style="max-width:560px;margin:0 auto;">
+    <div class="card__body">
+      <h1>Authentifizierung wird verarbeitet</h1>
+      <p id="authCallbackMsg" class="small" aria-live="polite">Bitte kurz warten ...</p>
+      <p class="small"><a href="/login/">Zum Login</a></p>
+    </div>
+  </section>
+
+  <script src="/js/auth-callback.js" defer></script>
+</Site>
+

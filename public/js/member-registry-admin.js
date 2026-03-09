@@ -91,6 +91,15 @@
     return d.toLocaleString("de-DE");
   }
 
+  function toDateInputValue(v) {
+    const raw = String(v || "").trim();
+    if (!raw) return "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toISOString().slice(0, 10);
+  }
+
   function loadPrefs() {
     try {
       const cols = JSON.parse(localStorage.getItem(STORAGE_COLS) || "[]");
@@ -253,14 +262,19 @@
         <label><span>ClubID</span><input value="${esc(row.club_id || "-")}" disabled /></label>
         <label><span>Vorname</span><input id="mrFirstName" value="${esc(row.first_name || "")}" /></label>
         <label><span>Name</span><input id="mrLastName" value="${esc(row.last_name || "")}" /></label>
-        <label><span>Status</span><input id="mrStatus" value="${esc(row.status || "")}" /></label>
+        <label><span>Status</span>
+          <select id="mrStatus">
+            <option value="active" ${String(row.status || "").toLowerCase() === "active" ? "selected" : ""}>Aktiv</option>
+            <option value="inactive" ${String(row.status || "").toLowerCase() === "inactive" ? "selected" : ""}>Passiv</option>
+          </select>
+        </label>
         <label><span>Angelkarte</span><input id="mrFishingCard" value="${esc(row.fishing_card_type || "")}" /></label>
         <label><span>Straße</span><input id="mrStreet" value="${esc(row.street || "")}" /></label>
         <label><span>PLZ</span><input id="mrZip" value="${esc(row.zip || "")}" /></label>
         <label><span>Ort</span><input id="mrCity" value="${esc(row.city || "")}" /></label>
         <label><span>Tel</span><input id="mrPhone" value="${esc(row.phone || "")}" /></label>
         <label><span>Mobil</span><input id="mrMobile" value="${esc(row.mobile || "")}" /></label>
-        <label><span>Geburtstag</span><input value="${esc(row.birthdate || "-")}" disabled /></label>
+        <label><span>Geburtstag</span><input id="mrBirthdate" type="date" value="${esc(toDateInputValue(row.birthdate))}" /></label>
         <label><span>Bezugsperson (Mitglieds-Nr.)</span><input id="mrGuardian" value="${esc(row.guardian_member_no || "")}" /></label>
         <label><span>SEPA bestätigt</span>
           <select id="mrSepaApproved">
@@ -294,6 +308,7 @@
       p_guardian_member_no: String(document.getElementById("mrGuardian")?.value || "").trim(),
       p_sepa_approved: String(document.getElementById("mrSepaApproved")?.value || "true") === "true",
       p_iban: String(document.getElementById("mrIban")?.value || "").trim() || null,
+      p_birthdate: String(document.getElementById("mrBirthdate")?.value || "").trim() || null,
     };
     await sb("/rest/v1/rpc/admin_member_registry_update", { method: "POST", body: JSON.stringify(payload) }, true);
   }

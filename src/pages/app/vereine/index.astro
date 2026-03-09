@@ -48,6 +48,28 @@ import { APP } from "../../../config/app";
         </div>
       </form>
 
+      <hr style="margin:16px 0;" />
+
+      <h2>Invite-Link für bestehenden Verein</h2>
+      <p class="small">Erstellt einen neuen Registrierungslink für einen bereits bestehenden Verein (ohne Neuanlage).</p>
+      <form id="clubInviteCreateForm" class="resp-form-grid">
+        <label>
+          <span>Club-Code (AA00)</span>
+          <input id="clubInviteCreateCode" type="text" placeholder="z. B. FC01" required />
+        </label>
+        <label>
+          <span>Max. Nutzungen</span>
+          <input id="clubInviteCreateMaxUses" type="number" min="1" max="500" value="25" />
+        </label>
+        <label>
+          <span>Gültigkeit (Tage)</span>
+          <input id="clubInviteCreateDays" type="number" min="1" max="90" value="14" />
+        </label>
+        <div class="resp-full" style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;">
+          <button id="clubInviteCreateBtn" type="button" class="feed-btn feed-btn--ghost">Invite-Link erzeugen</button>
+        </div>
+      </form>
+
       <details style="margin-top:12px;">
         <summary>Antwortdetails</summary>
         <pre id="clubSetupResult" class="small" style="white-space:pre-wrap;"></pre>

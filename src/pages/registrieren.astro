@@ -11,14 +11,29 @@ const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
   <section class="card" style="max-width:560px;margin:0 auto;">
     <div class="card__body">
       <h1>Registrieren</h1>
-      <p class="small">
-        Registrierung ist nur mit Einladungs-Token (QR-Code aus Vereins-Setup) möglich.
+      <p class="small" id="registerModeHint">
+        Registrierung mit oder ohne Vereinseinladung.
       </p>
+      <p class="small" style="margin-top:8px;color:var(--danger);font-weight:700;">
+        WICHTIG: Zugangsnamen/Kürzel (z. B. <code>001</code>) sind Aktuell nicht Nutzbar.
+        Der Login kann nur noch über die Registrierte Emailadresse erfolgen.
+      </p>
+      <div class="small" style="margin-top:10px;border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:10px;">
+        <strong>Security-Baseline</strong><br />
+        - Auth nur über bestätigte E-Mail<br />
+        - Passwort mindestens 8 Zeichen<br />
+        - Rate-Limits für Auth-Endpunkte aktiv<br />
+        - Vereinsbeitritt nur über gültigen Invite-Flow
+      </div>
 
       <form id="registerForm" data-next-target={nextTarget}>
         <label>
           <span>Mitgliedsnummer</span>
-          <input id="registerMemberNo" name="member_no" type="text" inputmode="numeric" autocomplete="username" required />
+          <input id="registerMemberNo" name="member_no" type="text" inputmode="text" autocomplete="username" />
+        </label>
+        <label>
+          <span>E-Mail</span>
+          <input id="registerEmail" name="email" type="email" autocomplete="email" />
         </label>
         <label>
           <span>Vorname</span>
@@ -30,7 +45,7 @@ const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
         </label>
         <label>
           <span>Einladungs-Token</span>
-          <input id="registerInviteToken" name="invite_token" type="text" value={inviteToken} autocomplete="off" required />
+          <input id="registerInviteToken" name="invite_token" type="text" value={inviteToken} autocomplete="off" />
         </label>
         <label>
           <span>Passwort</span>
@@ -52,7 +67,7 @@ const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
       </form>
 
       <div class="small" style="margin-top:10px;">
-        Kein Token? Bitte Admin fragen und QR-Link aus dem Vereins-Setup nutzen.
+        Für Vereinsbeitritt: Invite-Link/Token vom Verein nutzen.
       </div>
     </div>
   </section>

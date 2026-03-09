@@ -62,6 +62,25 @@ Zusätzlich DB-seitig ausführen:
 
 ## Offene P0/P1 Punkte
 
+## Nachtrag 2026-03-09: Account-Self-Service in Einstellungen
+- Neue Account-Sektion in `/app/einstellungen`:
+  - Kontoansicht mit Stammdaten
+  - Button `Account bearbeiten`
+  - Edit-Form fuer Name, E-Mail, Adresse, Telefon, Mobil
+- Save-Flow:
+  - Stammdaten via neue RPC `self_member_profile_update(...)`
+  - E-Mail-Aenderung via Supabase Auth (`/auth/v1/user`) inkl. Verifikations-Hinweis
+- Fallback-Verhalten:
+  - Falls neue RPC in einer Umgebung noch nicht ausgerollt ist, bleibt mindestens Name/E-Mail-Ansicht ueber `profiles` nutzbar.
+
+Neue/angepasste Dateien:
+- `src/pages/app/einstellungen/index.astro`
+- `public/js/app-settings.js`
+- `docs/supabase/89_self_account_profile_settings.sql`
+
+DB-Rollout dafuer:
+- `docs/supabase/89_self_account_profile_settings.sql`
+
 ### Offen P0 (fachlich wichtig)
 - E-Mail-/Auth-Änderungsflow getrennt und sauber bedienbar machen (nicht über `members` mischen).
 - Rollen-/Mitgliederseite inhaltlich weiter konsolidieren (klare Trennung:
@@ -75,4 +94,3 @@ Zusätzlich DB-seitig ausführen:
 ### P2
 - Bulk-Import/Batch-Update für Stammdatenpflege.
 - Optional: dedizierter E-Mail-Change-Prozess mit Verifizierung und klarer Admin-Freigabe.
-

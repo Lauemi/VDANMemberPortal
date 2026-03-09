@@ -4,6 +4,8 @@
   const RELOAD_HINT_KEY = "vdan_settings_reload_feedback_v1";
   const PUSH_SCOPE = "/";
 
+  let accountState = null;
+
   function cfg() {
     return {
       url: String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, ""),
@@ -19,9 +21,36 @@
     return session()?.user?.id || null;
   }
 
+  function isAuthEmailChangeEnabled() {
+    return Boolean(window.__APP_AUTH_EMAIL_CHANGE_ENABLED === true);
+  }
+
   function setMsg(text = "") {
     const el = document.getElementById("settingsMsg");
     if (el) el.textContent = text;
+  }
+
+  function val(v) {
+    return String(v || "").trim();
+  }
+
+  function safeLabel(v) {
+    return val(v) || "-";
+  }
+
+  function setInputValue(id, value = "") {
+    const el = document.getElementById(id);
+    if (el) el.value = val(value);
+  }
+
+  async function readErrorPayload(res) {
+    const contentType = String(res.headers?.get?.("content-type") || "").toLowerCase();
+    if (contentType.includes("application/json")) {
+      const j = await res.json().catch(() => ({}));
+      return String(j?.error_description || j?.error || j?.message || j?.msg || "").trim();
+    }
+    const t = await res.text().catch(() => "");
+    return String(t || "").trim();
   }
 
   async function sb(path, init = {}, withAuth = false) {
@@ -32,8 +61,8 @@
     if (withAuth && session()?.access_token) headers.set("Authorization", `Bearer ${session().access_token}`);
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      const detail = await readErrorPayload(res);
+      throw new Error(detail || `Request failed (${res.status})`);
     }
     return res.json().catch(() => []);
   }
@@ -67,8 +96,8 @@
   }
 
   function normalizeHandedness(raw) {
-    const val = String(raw || "").trim().toLowerCase();
-    if (val === "left" || val === "right") return val;
+    const valRaw = String(raw || "").trim().toLowerCase();
+    if (valRaw === "left" || valRaw === "right") return valRaw;
     return "right";
   }
 
@@ -181,9 +210,9 @@
 
   function applyState(s) {
     const state = s || {};
-    const set = (id, value, fallback = true) => {
+    const set = (id, checked, fallback = true) => {
       const el = document.getElementById(id);
-      if (el) el.checked = value ?? fallback;
+      if (el) el.checked = checked ?? fallback;
     };
     set("setNotifyPosts", state.notify_new_post, true);
     set("setNotifyEvents", state.notify_new_event, true);
@@ -217,6 +246,208 @@
       || (msg.includes("column") && msg.includes("user_settings"));
   }
 
+  function looksLikeMissingAccountRpc(err) {
+    const msg = String(err?.message || "").toLowerCase();
+    return msg.includes("self_member_profile_get")
+      || msg.includes("self_member_profile_update")
+      || msg.includes("function") && msg.includes("does not exist");
+  }
+
+  function readAccountFormState() {
+    return {
+      first_name: val(document.getElementById("accountFirstName")?.value),
+      last_name: val(document.getElementById("accountLastName")?.value),
+      email: val(document.getElementById("accountEmail")?.value).toLowerCase(),
+      street: val(document.getElementById("accountStreet")?.value),
+      zip: val(document.getElementById("accountZip")?.value),
+      city: val(document.getElementById("accountCity")?.value),
+      phone: val(document.getElementById("accountPhone")?.value),
+      mobile: val(document.getElementById("accountMobile")?.value),
+    };
+  }
+
+  function applyAccountView(row = {}) {
+    setInputValue("accountViewMemberNo", safeLabel(row.member_no));
+    setInputValue("accountViewClubCode", safeLabel(row.club_code));
+    setInputValue("accountViewFirstName", safeLabel(row.first_name));
+    setInputValue("accountViewLastName", safeLabel(row.last_name));
+    setInputValue("accountViewEmail", safeLabel(row.email));
+    setInputValue("accountViewStreet", safeLabel(row.street));
+    setInputValue("accountViewZip", safeLabel(row.zip));
+    setInputValue("accountViewCity", safeLabel(row.city));
+    setInputValue("accountViewPhone", safeLabel(row.phone));
+    setInputValue("accountViewMobile", safeLabel(row.mobile));
+  }
+
+  function applyAccountForm(row = {}) {
+    setInputValue("accountMemberNo", row.member_no);
+    setInputValue("accountClubCode", row.club_code);
+    setInputValue("accountFirstName", row.first_name);
+    setInputValue("accountLastName", row.last_name);
+    setInputValue("accountEmail", row.email);
+    setInputValue("accountStreet", row.street);
+    setInputValue("accountZip", row.zip);
+    setInputValue("accountCity", row.city);
+    setInputValue("accountPhone", row.phone);
+    setInputValue("accountMobile", row.mobile);
+  }
+
+  function setAccountEditMode(active) {
+    const view = document.getElementById("settingsAccountView");
+    const form = document.getElementById("settingsAccountForm");
+    const enabled = Boolean(active);
+    if (view) {
+      view.hidden = enabled;
+      view.classList.toggle("hidden", enabled);
+    }
+    if (form) {
+      form.hidden = !enabled;
+      form.classList.toggle("hidden", !enabled);
+    }
+  }
+
+  async function loadAccountProfile() {
+    const rows = await sb("/rest/v1/rpc/self_member_profile_get", { method: "POST", body: "{}" }, true);
+    if (Array.isArray(rows) && rows[0]) return rows[0];
+    return null;
+  }
+
+  async function loadAccountFallback() {
+    const userId = uid();
+    if (!userId) return null;
+    const rows = await sb(`/rest/v1/profiles?select=member_no,first_name,last_name,email&limit=1&id=eq.${encodeURIComponent(userId)}`, { method: "GET" }, true);
+    const row = Array.isArray(rows) && rows[0] ? rows[0] : null;
+    if (!row) return null;
+    return {
+      member_no: row.member_no,
+      club_code: "",
+      first_name: row.first_name,
+      last_name: row.last_name,
+      email: row.email,
+      street: "",
+      zip: "",
+      city: "",
+      phone: "",
+      mobile: "",
+    };
+  }
+
+  async function updateAuthEmail(email) {
+    const nextEmail = val(email).toLowerCase();
+    if (!nextEmail || !nextEmail.includes("@")) throw new Error("Bitte eine gueltige E-Mail eingeben.");
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/app/einstellungen/")}`;
+    await sb("/auth/v1/user", {
+      method: "PUT",
+      body: JSON.stringify({ email: nextEmail, email_redirect_to: redirectTo }),
+    }, true);
+    await sb(`/rest/v1/profiles?id=eq.${encodeURIComponent(uid())}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ email: nextEmail }),
+    }, true);
+  }
+
+  async function updateProfileEmailOnly(email) {
+    const nextEmail = val(email).toLowerCase();
+    if (!nextEmail || !nextEmail.includes("@")) throw new Error("Bitte eine gueltige E-Mail eingeben.");
+    await sb(`/rest/v1/profiles?id=eq.${encodeURIComponent(uid())}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ email: nextEmail }),
+    }, true);
+  }
+
+  async function loadAndRenderAccount() {
+    try {
+      accountState = await loadAccountProfile();
+      applyAccountView(accountState || {});
+      applyAccountForm(accountState || {});
+      return;
+    } catch (err) {
+      if (!looksLikeMissingAccountRpc(err)) throw err;
+    }
+
+    accountState = await loadAccountFallback();
+    applyAccountView(accountState || {});
+    applyAccountForm(accountState || {});
+    setMsg("Account-RPC noch nicht ausgerollt. Name/E-Mail fallback aktiv.");
+  }
+
+  async function saveAccount() {
+    const next = readAccountFormState();
+    const prevEmail = val(accountState?.email).toLowerCase();
+    const nextEmail = val(next.email).toLowerCase();
+
+    const payload = {
+      p_first_name: next.first_name || null,
+      p_last_name: next.last_name || null,
+      p_street: next.street || null,
+      p_zip: next.zip || null,
+      p_city: next.city || null,
+      p_phone: next.phone || null,
+      p_mobile: next.mobile || null,
+    };
+
+    const rows = await sb("/rest/v1/rpc/self_member_profile_update", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }, true);
+    if (Array.isArray(rows) && rows[0]) accountState = rows[0];
+
+    let emailNote = "";
+    if (nextEmail && nextEmail !== prevEmail) {
+      try {
+        if (isAuthEmailChangeEnabled()) {
+          await updateAuthEmail(nextEmail);
+          emailNote = " E-Mail-Aenderung angestossen; bitte Verifizierungs-Mail bestaetigen.";
+        } else {
+          await updateProfileEmailOnly(nextEmail);
+          emailNote = " Kontakt-E-Mail gespeichert. Login bleibt weiterhin auf Mitgliedsnummer + Passwort.";
+        }
+      } catch (err) {
+        emailNote = ` E-Mail konnte nicht geaendert werden (${String(err?.message || "auth_error")}). Stammdaten wurden trotzdem gespeichert.`;
+      }
+    }
+
+    await loadAndRenderAccount();
+    setAccountEditMode(false);
+    setMsg(`Account gespeichert.${emailNote}`);
+  }
+
+  function bindAccountActions() {
+    const editBtn = document.getElementById("settingsEditAccountBtn");
+    const cancelBtn = document.getElementById("settingsCancelAccountBtn");
+    const accountForm = document.getElementById("settingsAccountForm");
+
+    if (editBtn && !editBtn.dataset.bound) {
+      editBtn.dataset.bound = "1";
+      editBtn.addEventListener("click", () => {
+        applyAccountForm(accountState || {});
+        setAccountEditMode(true);
+      });
+    }
+
+    if (cancelBtn && !cancelBtn.dataset.bound) {
+      cancelBtn.dataset.bound = "1";
+      cancelBtn.addEventListener("click", () => {
+        applyAccountForm(accountState || {});
+        setAccountEditMode(false);
+      });
+    }
+
+    if (accountForm && !accountForm.dataset.bound) {
+      accountForm.dataset.bound = "1";
+      accountForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          await saveAccount();
+        } catch (err) {
+          setMsg(err?.message || "Account konnte nicht gespeichert werden.");
+        }
+      });
+    }
+  }
+
   async function loadRemoteSettings() {
     const userId = uid();
     if (!userId) throw new Error("Bitte einloggen.");
@@ -238,6 +469,10 @@
   async function init() {
     const form = document.getElementById("settingsNotifyForm");
     if (!form) return;
+
+    bindAccountActions();
+    setAccountEditMode(false);
+
     if (!uid()) {
       setMsg("Bitte einloggen.");
       return;
@@ -254,120 +489,147 @@
     }
 
     try {
+      await loadAndRenderAccount();
+    } catch (err) {
+      setMsg(err?.message || "Konnte Accountdaten nicht laden.");
+    }
+
+    try {
       const remote = await loadRemoteSettings();
       applyState(remote || {});
-      setMsg("Einstellungen geladen.");
+      if (!String(document.getElementById("settingsMsg")?.textContent || "").trim()) {
+        setMsg("Einstellungen geladen.");
+      }
     } catch (err) {
       applyState(loadFallback());
       if (looksLikeMissingSettingsTable(err)) setMsg("DB-Setup fehlt. Lokaler Modus aktiv.");
       else setMsg(err?.message || "Konnte Einstellungen nicht laden.");
     }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const state = formState();
-      const wantsUpdateNotify = Boolean(document.getElementById("setNotifyAppUpdate")?.checked);
-      writeUpdateNotifyPref(wantsUpdateNotify);
-      try {
-        await saveRemoteSettings(state);
-        let pushWarning = "";
-        if (wantsUpdateNotify) {
-          try {
-            await enablePushNotifications();
-          } catch (err) {
-            pushWarning = ` Hinweis Push: ${String(err?.message || "Registrierung fehlgeschlagen.")}`;
+    if (!form.dataset.bound) {
+      form.dataset.bound = "1";
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const state = formState();
+        const wantsUpdateNotify = Boolean(document.getElementById("setNotifyAppUpdate")?.checked);
+        writeUpdateNotifyPref(wantsUpdateNotify);
+        try {
+          await saveRemoteSettings(state);
+          let pushWarning = "";
+          if (wantsUpdateNotify) {
+            try {
+              await enablePushNotifications();
+            } catch (err) {
+              pushWarning = ` Hinweis Push: ${String(err?.message || "Registrierung fehlgeschlagen.")}`;
+            }
+          } else {
+            await disablePushNotifications().catch(() => {});
           }
-        } else {
-          await disablePushNotifications().catch(() => {});
+          setMsg(`Gespeichert.${pushWarning}`);
+          document.dispatchEvent(new CustomEvent("vdan:portal-settings", { detail: { nav_handedness: state.nav_handedness } }));
+        } catch (err) {
+          saveFallback(state);
+          if (looksLikeMissingSettingsTable(err)) setMsg("DB-Setup fehlt. Lokal gespeichert.");
+          else setMsg(err?.message || "Speichern fehlgeschlagen.");
+          document.dispatchEvent(new CustomEvent("vdan:portal-settings", { detail: { nav_handedness: state.nav_handedness } }));
         }
-        setMsg(`Gespeichert.${pushWarning}`);
-        document.dispatchEvent(new CustomEvent("vdan:portal-settings", { detail: { nav_handedness: state.nav_handedness } }));
-      } catch (err) {
-        saveFallback(state);
-        if (looksLikeMissingSettingsTable(err)) setMsg("DB-Setup fehlt. Lokal gespeichert.");
-        else setMsg(err?.message || "Speichern fehlgeschlagen.");
-        document.dispatchEvent(new CustomEvent("vdan:portal-settings", { detail: { nav_handedness: state.nav_handedness } }));
-      }
-    });
+      });
+    }
 
     const versionEl = document.getElementById("settingsAppVersion");
     if (versionEl) versionEl.textContent = String(document.body?.dataset?.appVersion || "unbekannt");
 
-    document.getElementById("setHandedness")?.addEventListener("change", (e) => {
-      applyHandednessLayout(String(e?.target?.value || "right"));
-    });
+    const handednessEl = document.getElementById("setHandedness");
+    if (handednessEl && !handednessEl.dataset.bound) {
+      handednessEl.dataset.bound = "1";
+      handednessEl.addEventListener("change", (e) => {
+        applyHandednessLayout(String(e?.target?.value || "right"));
+      });
+    }
 
-    document.getElementById("settingsReloadBtn")?.addEventListener("click", () => {
-      const msg = `Seite wird neu geladen (Version ${String(document.body?.dataset?.appVersion || "-")}).`;
-      setMsg(msg);
-      try {
-        sessionStorage.setItem(RELOAD_HINT_KEY, `Neu geladen. Aktive Version: ${String(document.body?.dataset?.appVersion || "-")}.`);
-      } catch {
-        // ignore
-      }
-      window.setTimeout(() => window.location.reload(), 120);
-    });
-
-    document.getElementById("settingsEnableNotifyBtn")?.addEventListener("click", async () => {
-      try {
-        await enablePushNotifications();
-        const notifyToggle = document.getElementById("setNotifyAppUpdate");
-        if (notifyToggle) notifyToggle.checked = true;
-        writeUpdateNotifyPref(true);
-        setMsg("Benachrichtigungen erlaubt und registriert.");
-      } catch (err) {
-        setMsg(err?.message || "Benachrichtigung konnte nicht aktiviert werden.");
-      }
-    });
-
-    document.getElementById("settingsCheckUpdateBtn")?.addEventListener("click", async () => {
-      const btn = document.getElementById("settingsCheckUpdateBtn");
-      try {
-        if (btn) btn.setAttribute("disabled", "disabled");
-        if (!("serviceWorker" in navigator)) {
-          setMsg("Service Worker nicht verfügbar.");
-          return;
+    const reloadBtn = document.getElementById("settingsReloadBtn");
+    if (reloadBtn && !reloadBtn.dataset.bound) {
+      reloadBtn.dataset.bound = "1";
+      reloadBtn.addEventListener("click", () => {
+        const msg = `Seite wird neu geladen (Version ${String(document.body?.dataset?.appVersion || "-")}).`;
+        setMsg(msg);
+        try {
+          sessionStorage.setItem(RELOAD_HINT_KEY, `Neu geladen. Aktive Version: ${String(document.body?.dataset?.appVersion || "-")}.`);
+        } catch {
+          // ignore
         }
-        const reg = await navigator.serviceWorker.getRegistration("/");
-        if (!reg) {
-          setMsg("Keine SW-Registrierung gefunden.");
-          return;
+        window.setTimeout(() => window.location.reload(), 120);
+      });
+    }
+
+    const enableNotifyBtn = document.getElementById("settingsEnableNotifyBtn");
+    if (enableNotifyBtn && !enableNotifyBtn.dataset.bound) {
+      enableNotifyBtn.dataset.bound = "1";
+      enableNotifyBtn.addEventListener("click", async () => {
+        try {
+          await enablePushNotifications();
+          const notifyToggle = document.getElementById("setNotifyAppUpdate");
+          if (notifyToggle) notifyToggle.checked = true;
+          writeUpdateNotifyPref(true);
+          setMsg("Benachrichtigungen erlaubt und registriert.");
+        } catch (err) {
+          setMsg(err?.message || "Benachrichtigung konnte nicht aktiviert werden.");
         }
-        const currentVersion = String(document.body?.dataset?.appVersion || "unbekannt");
-        setMsg(`Prüfe Update... (aktuell ${currentVersion})`);
-        let controllerChanged = false;
-        const onControllerChange = () => {
-          controllerChanged = true;
-        };
-        navigator.serviceWorker.addEventListener("controllerchange", onControllerChange, { once: true });
-        await reg.update();
-        if (reg.waiting) {
-          reg.waiting.postMessage("SKIP_WAITING");
-          setMsg("Update bereit. Seite lädt neu.");
-          try {
-            sessionStorage.setItem(RELOAD_HINT_KEY, "Update übernommen und Seite neu geladen.");
-          } catch {
-            // ignore
+      });
+    }
+
+    const checkUpdateBtn = document.getElementById("settingsCheckUpdateBtn");
+    if (checkUpdateBtn && !checkUpdateBtn.dataset.bound) {
+      checkUpdateBtn.dataset.bound = "1";
+      checkUpdateBtn.addEventListener("click", async () => {
+        const btn = document.getElementById("settingsCheckUpdateBtn");
+        try {
+          if (btn) btn.setAttribute("disabled", "disabled");
+          if (!("serviceWorker" in navigator)) {
+            setMsg("Service Worker nicht verfügbar.");
+            return;
           }
-          window.setTimeout(() => window.location.reload(), 250);
-          return;
-        }
-        if (controllerChanged) {
-          try {
-            sessionStorage.setItem(RELOAD_HINT_KEY, "Neues Update wurde übernommen.");
-          } catch {
-            // ignore
+          const reg = await navigator.serviceWorker.getRegistration("/");
+          if (!reg) {
+            setMsg("Keine SW-Registrierung gefunden.");
+            return;
           }
-          window.location.reload();
-          return;
+          const currentVersion = String(document.body?.dataset?.appVersion || "unbekannt");
+          setMsg(`Prüfe Update... (aktuell ${currentVersion})`);
+          let controllerChanged = false;
+          const onControllerChange = () => {
+            controllerChanged = true;
+          };
+          navigator.serviceWorker.addEventListener("controllerchange", onControllerChange, { once: true });
+          await reg.update();
+          if (reg.waiting) {
+            reg.waiting.postMessage("SKIP_WAITING");
+            setMsg("Update bereit. Seite lädt neu.");
+            try {
+              sessionStorage.setItem(RELOAD_HINT_KEY, "Update übernommen und Seite neu geladen.");
+            } catch {
+              // ignore
+            }
+            window.setTimeout(() => window.location.reload(), 250);
+            return;
+          }
+          if (controllerChanged) {
+            try {
+              sessionStorage.setItem(RELOAD_HINT_KEY, "Neues Update wurde übernommen.");
+            } catch {
+              // ignore
+            }
+            window.location.reload();
+            return;
+          }
+          setMsg(`Kein neues Update gefunden. Aktive Version: ${currentVersion}.`);
+        } catch (err) {
+          setMsg(err?.message || "Updateprüfung fehlgeschlagen.");
+        } finally {
+          if (btn) btn.removeAttribute("disabled");
         }
-        setMsg(`Kein neues Update gefunden. Aktive Version: ${currentVersion}.`);
-      } catch (err) {
-        setMsg(err?.message || "Updateprüfung fehlgeschlagen.");
-      } finally {
-        if (btn) btn.removeAttribute("disabled");
-      }
-    });
+      });
+    }
   }
 
   document.addEventListener("DOMContentLoaded", init);

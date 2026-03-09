@@ -4,6 +4,7 @@
 
 - [ ] Least-Privilege Grants umgesetzt (`anon` nur explizit notwendige Rechte).
 - [ ] RLS auf allen club-relevanten Tabellen aktiv und tenant-scope getestet.
+- [ ] Auth-Source-of-Truth festgelegt: Login-Identifier ist Auth-E-Mail, nicht Kürzel/Anzeige-ID.
 - [ ] `public_active_club_id` ist gesetzt und dokumentiert (Betriebsprozess).
 - [ ] Secrets sauber verwaltet (Supabase Keys, Encryption Key, Rotation-Prozess).
 - [ ] Admin-Aktionen sind nachvollziehbar (Audit/Change-Protokoll).
@@ -20,6 +21,9 @@
 - [ ] Medien/Beiträge mit Personenbezug: Rechtsgrundlage/Einwilligung dokumentiert.
 - [ ] AVV/DPA zwischen Plattform und Verein abgeschlossen und versioniert.
 - [ ] TOM-Anlage abgestimmt (Plattform-TOM + vereinsseitige organisatorische TOMs).
+- [ ] Supabase DPA final abgeschlossen (nicht nur angefordert).
+- [ ] Supabase TIA heruntergeladen und im Compliance-Ordner archiviert.
+- [ ] IONOS AVV final abgeschlossen und dokumentiert.
 
 ## 3) Konkrete Soll-Zuordnung (wichtig)
 

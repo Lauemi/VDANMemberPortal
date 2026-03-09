@@ -4,24 +4,24 @@ import { APP } from "../../../config/app";
 ---
 
 <Site title={`Arbeitseinsaetze • ${APP.name}`} description="Arbeitseinsaetze im Memberbereich" robots="noindex">
-  <section class="card">
-    <div class="card__body">
+  <section class="card" data-studio-component-id="work-member-shell" data-studio-component-type="section" data-studio-slot="main">
+    <div class="card__body" data-studio-component-id="work-member-content" data-studio-component-type="section" data-studio-slot="main">
       <h1>Arbeitseinsätze</h1>
       <p class="small">Veröffentlichte Einsätze, Anmeldung und Check-in.</p>
 
-      <div id="workCheckinBlock" class="work-checkin-inline">
+      <div id="workCheckinBlock" class="work-checkin-inline" data-studio-component-id="work-checkin-block" data-studio-component-type="section" data-studio-slot="main">
         <label>
           <span>Check-in Token (vom QR)</span>
-          <input id="workCheckinToken" type="text" placeholder="Token eingeben oder aus QR übernehmen" />
+          <input id="workCheckinToken" type="text" placeholder="Token eingeben oder aus QR übernehmen" data-studio-component-id="work-checkin-token-input" data-studio-component-type="input" data-studio-slot="main" />
         </label>
-        <button type="button" id="workCheckinBtn" class="feed-btn">Check-in</button>
+        <button type="button" id="workCheckinBtn" class="feed-btn" data-studio-component-id="work-checkin-btn" data-studio-component-type="button" data-studio-slot="main">Check-in</button>
       </div>
 
       <p id="workMemberMsg" class="small" aria-live="polite"></p>
       <div class="ui-filter-row">
         <label>
           <span>Suche</span>
-          <input id="workMemberSearch" type="search" placeholder="Titel oder Ort durchsuchen" />
+          <input id="workMemberSearch" type="search" placeholder="Titel oder Ort durchsuchen" data-studio-component-id="work-search-input" data-studio-component-type="input" data-studio-slot="main" />
         </label>
         <label>
           <span>Ansicht</span>
@@ -34,7 +34,7 @@ import { APP } from "../../../config/app";
       <hr />
 
       <h2>Kommende Einsätze</h2>
-      <div id="workMemberUpcomingTableWrap" class="catch-table">
+      <div id="workMemberUpcomingTableWrap" class="catch-table" data-studio-component-id="work-upcoming-table" data-studio-component-type="table" data-studio-slot="main" data-table-id="work-upcoming" data-row-click="dialog">
         <div class="catch-table__head" style="grid-template-columns:1.5fr 1fr 1fr 1fr">
           <span>Titel</span>
           <span>Start</span>
@@ -47,7 +47,7 @@ import { APP } from "../../../config/app";
 
       <hr />
       <h2>Meine Einsätze</h2>
-      <div id="workMemberMineTableWrap" class="catch-table">
+      <div id="workMemberMineTableWrap" class="catch-table" data-studio-component-id="work-mine-table" data-studio-component-type="table" data-studio-slot="main" data-table-id="work-mine" data-row-click="dialog">
         <div class="catch-table__head" style="grid-template-columns:1.5fr 1fr 1fr 1fr">
           <span>Titel</span>
           <span>Von</span>
@@ -60,7 +60,7 @@ import { APP } from "../../../config/app";
     </div>
   </section>
 
-  <dialog id="workMemberDetailDialog" class="catch-dialog">
+  <dialog id="workMemberDetailDialog" class="catch-dialog" data-studio-component-id="work-member-detail-dialog" data-studio-component-type="dialog" data-studio-slot="main">
     <form method="dialog" class="catch-dialog__form">
       <h3>Details</h3>
       <div id="workMemberDetailBody" class="catch-dialog__body"></div>

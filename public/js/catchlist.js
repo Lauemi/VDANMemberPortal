@@ -5,6 +5,7 @@
   const OFFLINE_SCHEMA_VERSION = 1;
   const VIEW_KEY = "app:viewMode:fangliste:v1";
   const TABLE_KEY_PREFIX = "app:viewSettings:fangliste:user:v1";
+  const WATER_FAVORITES_KEY_PREFIX = "app:waterFavorites:fangliste:user:v1";
   const TRIP_COLUMNS_DEFAULT = [
     { key: "trip_date", label: "Tag", visible: true },
     { key: "water", label: "Gewässer", visible: true },
@@ -27,10 +28,12 @@
     summary: "",
   };
   let tripStatusFilters = new Set();
+  let didAutoRecoverEmptyView = false;
   let syncInProgress = false;
   let queueMem = [];
   let conflictsMem = [];
   let cacheMem = null;
+  let favoriteWaterIds = [];
   const LEGACY_CATCH_CLEAR_MARKER = "vdan_catch_cleanup_v1_done";
   const TOUCH_RPC_DISABLED_KEY = "vdan_rpc_touch_user_disabled_v1";
   const OFFLINE_QUEUE_KEY_PREFIX = "vdan_trip_sync_queue_v1:";
@@ -91,6 +94,13 @@
     return msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("load failed");
   }
 
+  function shouldDisableTouchRpc(err) {
+    const status = Number(err?.status || 0);
+    if (status === 400 || status === 401 || status === 403 || status === 404) return true;
+    const msg = String(err?.message || "").toLowerCase();
+    return msg.includes("bad request") || msg.includes("(400)") || msg.includes("(401)") || msg.includes("(403)") || msg.includes("(404)");
+  }
+
   function isConflictError(err) {
     if (!err) return false;
     if (isNetworkError(err)) return false;
@@ -116,6 +126,81 @@
     } catch {
       // ignore storage errors
     }
+  }
+
+  function waterFavoritesKey() {
+    return `${WATER_FAVORITES_KEY_PREFIX}:${uid() || "anon"}`;
+  }
+
+  function normalizeFavoriteWaterIds(input) {
+    const allowed = new Set((Array.isArray(waters) ? waters : []).map((w) => String(w.id || "")));
+    const items = Array.isArray(input) ? input : [];
+    const out = [];
+    items.forEach((idRaw) => {
+      const id = String(idRaw || "").trim();
+      if (!id || !allowed.has(id) || out.includes(id)) return;
+      out.push(id);
+    });
+    return out.slice(0, 10);
+  }
+
+  function loadWaterFavorites() {
+    const stored = readJsonSafe(waterFavoritesKey(), []);
+    favoriteWaterIds = Array.isArray(stored) ? stored.map((x) => String(x || "").trim()).filter(Boolean) : [];
+  }
+
+  function saveWaterFavorites() {
+    writeJsonSafe(waterFavoritesKey(), favoriteWaterIds);
+  }
+
+  function syncWaterFavoriteToggle() {
+    const btn = document.getElementById("tripWaterFavoriteToggle");
+    if (!btn) return;
+    const selected = selectedWaterId();
+    if (!selected) {
+      btn.disabled = true;
+      btn.textContent = "Als Favorit merken";
+      return;
+    }
+    btn.disabled = false;
+    const isFav = favoriteWaterIds.includes(selected);
+    btn.textContent = isFav ? "Favorit entfernen" : "Als Favorit merken";
+  }
+
+  function renderWaterFavoriteChips() {
+    const root = document.getElementById("tripWaterFavorites");
+    if (!root) return;
+    const chips = favoriteWaterIds
+      .map((id) => {
+        const w = waters.find((x) => String(x.id) === id);
+        if (!w) return null;
+        return `<button type="button" class="fangliste-water-chip" data-water-fav-id="${id}" title="${esc(w.name)}">${esc(w.name)}</button>`;
+      })
+      .filter(Boolean);
+    root.innerHTML = chips.join("");
+  }
+
+  function selectWaterByFavorite(idRaw) {
+    const id = String(idRaw || "").trim();
+    if (!id) return;
+    const search = document.getElementById("tripWaterSearch");
+    if (search) search.value = "";
+    renderWaterOptions();
+    const sel = document.getElementById("tripWater");
+    if (sel) sel.value = id;
+    syncWaterFavoriteToggle();
+  }
+
+  function toggleSelectedWaterFavorite() {
+    const selected = selectedWaterId();
+    if (!selected) return;
+    const idx = favoriteWaterIds.indexOf(selected);
+    if (idx >= 0) favoriteWaterIds.splice(idx, 1);
+    else favoriteWaterIds.push(selected);
+    favoriteWaterIds = normalizeFavoriteWaterIds(favoriteWaterIds);
+    saveWaterFavorites();
+    renderWaterFavoriteChips();
+    syncWaterFavoriteToggle();
   }
 
   function loadQueue() {
@@ -398,7 +483,7 @@
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      const e = new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      const e = new Error(err?.message || err?.detail || err?.hint || err?.error_description || `Request failed (${res.status})`);
       e.status = res.status;
       throw e;
     }
@@ -613,7 +698,7 @@
         body: JSON.stringify({}),
       }, true);
     } catch (err) {
-      if (String(err?.message || "").includes("(404)")) {
+      if (shouldDisableTouchRpc(err)) {
         try {
           localStorage.setItem(TOUCH_RPC_DISABLED_KEY, "1");
         } catch {
@@ -631,6 +716,8 @@
     } catch (err) {
       if (!waters.length) throw err;
     }
+    favoriteWaterIds = normalizeFavoriteWaterIds(favoriteWaterIds);
+    saveWaterFavorites();
     renderWaterOptions();
   }
 
@@ -650,8 +737,19 @@
     const q = String(document.getElementById("tripWaterSearch")?.value || "").trim().toLowerCase();
     if (!sel) return;
 
+    const selected = String(sel.value || "").trim();
     const filtered = waters.filter((w) => String(w.name || "").toLowerCase().includes(q));
-    sel.innerHTML = `<option value="">Bitte wählen</option>` + filtered.map((w) => `<option value="${w.id}">${esc(w.name)}</option>`).join("");
+    let html = `<option value="">Bitte wählen</option>` + filtered.map((w) => `<option value="${w.id}">${esc(w.name)}</option>`).join("");
+    if (selected && !filtered.some((w) => String(w.id) === selected)) {
+      const selectedWater = waters.find((w) => String(w.id) === selected);
+      if (selectedWater) {
+        html += `<option value="${selectedWater.id}">${esc(selectedWater.name)}</option>`;
+      }
+    }
+    sel.innerHTML = html;
+    if (selected) sel.value = selected;
+    syncWaterFavoriteToggle();
+    renderWaterFavoriteChips();
   }
 
   function renderFishSpeciesOptions() {
@@ -830,7 +928,15 @@
     const tripPayload = await sb("/rest/v1/fishing_trips", {
       method: "POST",
       headers: { Prefer: "return=representation" },
-      body: JSON.stringify({ user_id, trip_date, water_body_id, entry_type: "catch" }),
+      body: JSON.stringify({
+        user_id,
+        trip_date,
+        water_body_id,
+        entry_type: "catch",
+        water_source: "official",
+        mapping_status: "mapped",
+        water_name_raw: null,
+      }),
     }, true);
 
     const tripRow = parseReturnRow(tripPayload);
@@ -852,6 +958,9 @@
           fishing_trip_id: tripRow?.id || null,
           user_id,
           water_body_id,
+          water_source: "official",
+          mapping_status: "mapped",
+          water_name_raw: null,
           fish_species_id,
           caught_on: trip_date,
           quantity,
@@ -1078,21 +1187,45 @@
     if (!user_id) return;
 
     try {
-      const [tripRows, catchRows] = await Promise.all([
-        sb(
-          `/rest/v1/fishing_trips?select=id,trip_date,entry_type,note,created_at,water_body_id,photo_data_url,photo_updated_at,water_bodies(name)&user_id=eq.${encodeURIComponent(user_id)}&order=trip_date.desc,created_at.desc&limit=500`,
-          { method: "GET" },
-          true
-        ),
-        sb(
-          `/rest/v1/catch_entries?select=id,fishing_trip_id,caught_on,water_body_id,fish_species_id,quantity,length_cm,weight_g,note,created_at,fish_species(name)&user_id=eq.${encodeURIComponent(user_id)}&order=caught_on.desc,created_at.desc&limit=1000`,
-          { method: "GET" },
-          true
-        ).catch(() => []),
-      ]);
+      let tripRows = [];
+      let catchRows = [];
+      try {
+        [tripRows, catchRows] = await Promise.all([
+          sb(
+            `/rest/v1/fishing_trips?select=id,trip_date,entry_type,note,created_at,water_body_id,photo_data_url,photo_updated_at,water_bodies(name)&user_id=eq.${encodeURIComponent(user_id)}&order=trip_date.desc,created_at.desc&limit=500`,
+            { method: "GET" },
+            true
+          ),
+          sb(
+            `/rest/v1/catch_entries?select=id,fishing_trip_id,caught_on,water_body_id,fish_species_id,quantity,length_cm,weight_g,note,created_at,fish_species(name)&user_id=eq.${encodeURIComponent(user_id)}&order=caught_on.desc,created_at.desc&limit=1000`,
+            { method: "GET" },
+            true
+          ).catch(() => []),
+        ]);
+      } catch {
+        // Fallback for projects where relation embedding is unavailable/broken.
+        [tripRows, catchRows] = await Promise.all([
+          sb(
+            `/rest/v1/fishing_trips?select=id,trip_date,entry_type,note,created_at,water_body_id,photo_data_url,photo_updated_at&user_id=eq.${encodeURIComponent(user_id)}&order=trip_date.desc,created_at.desc&limit=500`,
+            { method: "GET" },
+            true
+          ),
+          sb(
+            `/rest/v1/catch_entries?select=id,fishing_trip_id,caught_on,water_body_id,fish_species_id,quantity,length_cm,weight_g,note,created_at&user_id=eq.${encodeURIComponent(user_id)}&order=caught_on.desc,created_at.desc&limit=1000`,
+            { method: "GET" },
+            true
+          ).catch(() => []),
+        ]);
+      }
 
-      trips = Array.isArray(tripRows) ? tripRows : [];
-      catches = Array.isArray(catchRows) ? catchRows : [];
+      trips = (Array.isArray(tripRows) ? tripRows : []).map((t) => {
+        if (t?.water_bodies?.name || !t?.water_body_id) return t;
+        return { ...t, water_bodies: { name: waterNameById(t.water_body_id) } };
+      });
+      catches = (Array.isArray(catchRows) ? catchRows : []).map((c) => {
+        if (c?.fish_species?.name || !c?.fish_species_id) return c;
+        return { ...c, fish_species: { name: fishNameById(c.fish_species_id) } };
+      });
       saveOfflineCache();
     } catch (err) {
       if (!trips.length) loadOfflineCache();
@@ -1297,6 +1430,29 @@
     const root = document.getElementById("tripList");
     if (!root) return;
     const rows = filteredTripRows();
+
+    // Recovery: if backend data exists but persisted filters hide everything,
+    // reset once to avoid a "data is gone" impression.
+    if (!rows.length && trips.length > 0 && !didAutoRecoverEmptyView) {
+      didAutoRecoverEmptyView = true;
+      tripSearch = "";
+      tripFilters.trip_date = "";
+      tripFilters.water = "";
+      tripFilters.summary = "";
+      tripStatusFilters = new Set();
+      const noCatch = document.getElementById("tripOnlyNoCatch");
+      if (noCatch) noCatch.checked = false;
+      const search = document.getElementById("tripSearch");
+      if (search) search.value = "";
+      saveTablePrefs();
+      const recoveredRows = filteredTripRows();
+      if (recoveredRows.length) {
+        root.innerHTML = currentView === "karte" ? renderTripsCardView(recoveredRows) : renderTripsTableView(recoveredRows);
+        syncFilterMeta();
+        setMsg("Filter wurden zurückgesetzt, um vorhandene Einträge anzuzeigen.");
+        return;
+      }
+    }
 
     if (!rows.length) {
       root.innerHTML = `<p class="small">Noch keine Angeltage vorhanden.</p>`;
@@ -1662,6 +1818,7 @@
     await hydratePersistentState();
     currentView = loadViewMode();
     loadTablePrefs();
+    loadWaterFavorites();
     const searchEl = document.getElementById("tripSearch");
     if (searchEl) searchEl.value = tripSearch;
     syncViewButtons();
@@ -1737,6 +1894,17 @@
     });
 
     document.getElementById("tripWaterSearch")?.addEventListener("input", renderWaterOptions);
+    document.getElementById("tripWater")?.addEventListener("change", syncWaterFavoriteToggle);
+    document.getElementById("tripWaterFavoriteToggle")?.addEventListener("click", () => {
+      toggleSelectedWaterFavorite();
+    });
+    document.getElementById("tripWaterFavorites")?.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-water-fav-id]");
+      if (!btn) return;
+      const waterId = String(btn.getAttribute("data-water-fav-id") || "").trim();
+      if (!waterId) return;
+      selectWaterByFavorite(waterId);
+    });
 
     document.getElementById("tripQuickNoCatch")?.addEventListener("click", () => openCreateDialog("no_catch"));
 

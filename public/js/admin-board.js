@@ -1,23 +1,48 @@
 ;(() => {
-  const MODULE_ROWS = [
-    { name: "Mitgliederverwaltung", scope: "Admin", status: "aktiv", deps: "admin role" },
-    { name: "Ausweis", scope: "Member", status: "aktiv", deps: "login" },
-    { name: "Fangliste", scope: "Member", status: "aktiv", deps: "login" },
-    { name: "Arbeitseinsätze", scope: "Member", status: "aktiv", deps: "login" },
-    { name: "Helferplan", scope: "Member", status: "geplant", deps: "club membership" },
-    { name: "Vereins-Setup", scope: "Superadmin", status: "aktiv", deps: "fixed user binding" },
-    { name: "UI Demo", scope: "Superadmin", status: "aktiv", deps: "fixed user binding" },
-    { name: "Admin Board", scope: "Superadmin", status: "aktiv", deps: "fixed user binding" },
-  ];
-
-  const WEB_MODULE_ROWS = [
-    { label: "Start", route: "/", status: "aktiv", role: "Alle" },
-    { label: "Termine", route: "/termine.html/", status: "aktiv", role: "Alle" },
-    { label: "Downloads", route: "/downloads.html/", status: "aktiv", role: "Alle" },
-    { label: "Kontakt", route: "/kontakt.html/", status: "aktiv", role: "Alle" },
-    { label: "Datenschutz", route: "/datenschutz.html/", status: "aktiv", role: "Alle" },
-    { label: "Impressum", route: "/impressum.html/", status: "aktiv", role: "Alle" },
-    { label: "Portal-Module", route: "/app/*", status: "aktiv", role: "Member/Manager/Admin" },
+  const ROLE_MATRIX_STORAGE_KEY = "vdan_role_page_matrix_v1";
+  const ROLE_KEYS = ["guest", "member", "manager", "admin", "superadmin"];
+  const PAGE_INDEX = [
+    { route: "/app/", kind: "PORTAL", label: "App Start" },
+    { route: "/app/admin-panel/", kind: "PORTAL", label: "Admin Board" },
+    { route: "/app/arbeitseinsaetze/", kind: "PORTAL", label: "Arbeitseinsätze" },
+    { route: "/app/arbeitseinsaetze/cockpit", kind: "PORTAL", label: "Arbeitseinsätze Cockpit" },
+    { route: "/app/ausweis/", kind: "PORTAL", label: "Ausweis" },
+    { route: "/app/ausweis/verifizieren", kind: "PORTAL", label: "Ausweis Verifizieren" },
+    { route: "/app/bewerbungen/", kind: "PORTAL", label: "Bewerbungen" },
+    { route: "/app/component-library/", kind: "PORTAL", label: "Component Library" },
+    { route: "/app/dokumente/", kind: "PORTAL", label: "Dokumente" },
+    { route: "/app/einstellungen/", kind: "PORTAL", label: "Einstellungen" },
+    { route: "/app/fangliste/", kind: "PORTAL", label: "Fangliste" },
+    { route: "/app/fangliste/cockpit", kind: "PORTAL", label: "Fangliste Cockpit" },
+    { route: "/app/gewaesserkarte/", kind: "PORTAL", label: "Gewässerkarte" },
+    { route: "/app/mitglieder/", kind: "PORTAL", label: "Mitglieder" },
+    { route: "/app/mitgliederverwaltung/", kind: "PORTAL", label: "Mitgliederverwaltung" },
+    { route: "/app/notes/", kind: "PORTAL", label: "Notes" },
+    { route: "/app/passwort-aendern/", kind: "PORTAL", label: "Passwort ändern" },
+    { route: "/app/sitzungen/", kind: "PORTAL", label: "Sitzungen" },
+    { route: "/app/template-studio/", kind: "PORTAL", label: "Template Studio" },
+    { route: "/app/termine/cockpit", kind: "PORTAL", label: "Termine Cockpit" },
+    { route: "/app/ui-neumorph-demo/", kind: "PORTAL", label: "UI Neumorph Demo" },
+    { route: "/app/vereine/", kind: "PORTAL", label: "Vereine" },
+    { route: "/app/zustaendigkeiten/", kind: "PORTAL", label: "Zuständigkeiten" },
+    { route: "/", kind: "WEB", label: "Startseite" },
+    { route: "/anglerheim-ottenheim", kind: "WEB", label: "Anglerheim Ottenheim" },
+    { route: "/datenschutz", kind: "WEB", label: "Datenschutz" },
+    { route: "/docs", kind: "WEB", label: "Docs" },
+    { route: "/downloads", kind: "WEB", label: "Downloads" },
+    { route: "/fischereipruefung", kind: "WEB", label: "Fischereiprüfung" },
+    { route: "/impressum", kind: "WEB", label: "Impressum" },
+    { route: "/kontakt", kind: "WEB", label: "Kontakt" },
+    { route: "/login", kind: "WEB", label: "Login" },
+    { route: "/mitglied-werden", kind: "WEB", label: "Mitglied werden" },
+    { route: "/nutzungsbedingungen", kind: "WEB", label: "Nutzungsbedingungen" },
+    { route: "/offline", kind: "WEB", label: "Offline" },
+    { route: "/passwort-vergessen", kind: "WEB", label: "Passwort vergessen" },
+    { route: "/registrieren", kind: "WEB", label: "Registrieren" },
+    { route: "/termine", kind: "WEB", label: "Termine" },
+    { route: "/vdan-jugend", kind: "WEB", label: "VDAN Jugend" },
+    { route: "/veranstaltungen", kind: "WEB", label: "Veranstaltungen" },
+    { route: "/vereinsshop", kind: "WEB", label: "Vereinsshop" },
   ];
 
   const state = {
@@ -29,6 +54,7 @@
     sources: [],
     diagnostics: [],
   };
+  let rolePageMatrix = {};
 
   function cfg() {
     const body = document.body;
@@ -75,6 +101,93 @@
 
   function esc(value) {
     return String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  }
+
+  function roleMatrixDefaultFor(route, kind) {
+    const r = String(route || "");
+    if (kind === "WEB") return { guest: true, member: true, manager: true, admin: true, superadmin: true };
+    if (r === "/app/") return { guest: false, member: true, manager: true, admin: true, superadmin: true };
+    if (/\/app\/(component-library|template-studio|admin-panel|vereine)\//.test(r)) return { guest: false, member: false, manager: false, admin: false, superadmin: true };
+    if (/\/app\/(mitglieder|dokumente|fangliste\/cockpit)/.test(r)) return { guest: false, member: false, manager: true, admin: true, superadmin: true };
+    if (/\/cockpit/.test(r)) return { guest: false, member: false, manager: true, admin: true, superadmin: true };
+    return { guest: false, member: true, manager: true, admin: true, superadmin: true };
+  }
+
+  function buildDefaultRoleMatrix() {
+    const out = {};
+    PAGE_INDEX.forEach((page) => {
+      out[page.route] = roleMatrixDefaultFor(page.route, page.kind);
+    });
+    return out;
+  }
+
+  function loadRoleMatrix() {
+    const fallback = buildDefaultRoleMatrix();
+    try {
+      const raw = localStorage.getItem(ROLE_MATRIX_STORAGE_KEY);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return fallback;
+      PAGE_INDEX.forEach((page) => {
+        const row = parsed[page.route];
+        if (!row || typeof row !== "object") {
+          parsed[page.route] = fallback[page.route];
+          return;
+        }
+        ROLE_KEYS.forEach((role) => {
+          parsed[page.route][role] = Boolean(row[role]);
+        });
+      });
+      return parsed;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function saveRoleMatrix() {
+    try {
+      localStorage.setItem(ROLE_MATRIX_STORAGE_KEY, JSON.stringify(rolePageMatrix));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function roleMatrixAsJson(kind) {
+    const pages = PAGE_INDEX.filter((page) => page.kind === kind).reduce((acc, page) => {
+      acc[page.route] = rolePageMatrix[page.route] || roleMatrixDefaultFor(page.route, page.kind);
+      return acc;
+    }, {});
+    return JSON.stringify(
+      {
+        version: "1.0",
+        kind,
+        generated_at: new Date().toISOString(),
+        pages,
+      },
+      null,
+      2,
+    );
+  }
+
+  async function copyText(button, text, okText) {
+    const payload = String(text || "");
+    if (!payload) return;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(payload);
+      } else {
+        window.prompt("JSON kopieren:", payload);
+      }
+    } catch {
+      window.prompt("JSON kopieren:", payload);
+    }
+    if (!(button instanceof HTMLButtonElement)) return;
+    const prev = button.textContent;
+    button.textContent = okText;
+    window.setTimeout(() => {
+      button.textContent = prev || "Kopieren";
+    }, 900);
   }
 
   async function sb(path, init = {}, withAuth = false) {
@@ -318,26 +431,31 @@
   function renderModulesTables() {
     const moduleBody = document.querySelector("#adminModulesTable tbody");
     const webBody = document.querySelector("#adminWebModulesTable tbody");
+    const renderRows = (kind) =>
+      PAGE_INDEX.filter((page) => page.kind === kind)
+        .map((page) => {
+          const row = rolePageMatrix[page.route] || roleMatrixDefaultFor(page.route, page.kind);
+          const cells = ROLE_KEYS.map((role) => {
+            const checked = row[role] ? "checked" : "";
+            return `<td><input type="checkbox" data-role-matrix-route="${esc(page.route)}" data-role-matrix-role="${role}" ${checked} /></td>`;
+          }).join("");
+          return `
+            <tr>
+              <td>${esc(page.label)}</td>
+              <td><code>${esc(page.route)}</code></td>
+              <td>${esc(page.kind)}</td>
+              ${cells}
+              <td><a class="feed-btn feed-btn--ghost" href="${esc(page.route)}">Öffnen</a></td>
+            </tr>
+          `;
+        })
+        .join("");
+
     if (moduleBody) {
-      moduleBody.innerHTML = MODULE_ROWS.map((m) => `
-        <tr>
-          <td>${esc(m.name)}</td>
-          <td>${esc(m.scope)}</td>
-          <td>${esc(m.status)}</td>
-          <td>${esc(m.deps)}</td>
-          <td><button type="button" class="feed-btn feed-btn--ghost" disabled>Schalten</button></td>
-        </tr>
-      `).join("");
+      moduleBody.innerHTML = renderRows("PORTAL");
     }
     if (webBody) {
-      webBody.innerHTML = WEB_MODULE_ROWS.map((m) => `
-        <tr>
-          <td>${esc(m.label)}</td>
-          <td>${esc(m.route)}</td>
-          <td>${esc(m.status)}</td>
-          <td>${esc(m.role)}</td>
-        </tr>
-      `).join("");
+      webBody.innerHTML = renderRows("WEB");
     }
   }
 
@@ -560,6 +678,7 @@
 
   async function init() {
     state.diagnostics = [];
+    rolePageMatrix = loadRoleMatrix();
     renderModulesTables();
     if (!hasRuntimeConfig()) {
       setMsg("Preflight: Supabase Runtime-Config fehlt oder ist Platzhalter. Admin-Board läuft im Readiness-Modus (kein Live-Connect).", true);
@@ -577,6 +696,63 @@
 
     document.getElementById("adminMemberSearch")?.addEventListener("input", applyMemberFilter);
     document.getElementById("adminMemberFilter")?.addEventListener("change", applyMemberFilter);
+    document.querySelector("#adminModulesTable tbody")?.addEventListener("change", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      if (!target.matches('input[type="checkbox"][data-role-matrix-route][data-role-matrix-role]')) return;
+      const route = String(target.getAttribute("data-role-matrix-route") || "").trim();
+      const role = String(target.getAttribute("data-role-matrix-role") || "").trim();
+      const page = PAGE_INDEX.find((p) => p.route === route);
+      if (!page || !ROLE_KEYS.includes(role)) return;
+      if (!rolePageMatrix[route] || typeof rolePageMatrix[route] !== "object") {
+        rolePageMatrix[route] = roleMatrixDefaultFor(route, page.kind);
+      }
+      rolePageMatrix[route][role] = Boolean(target.checked);
+      saveRoleMatrix();
+    });
+    document.querySelector("#adminWebModulesTable tbody")?.addEventListener("change", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      if (!target.matches('input[type="checkbox"][data-role-matrix-route][data-role-matrix-role]')) return;
+      const route = String(target.getAttribute("data-role-matrix-route") || "").trim();
+      const role = String(target.getAttribute("data-role-matrix-role") || "").trim();
+      const page = PAGE_INDEX.find((p) => p.route === route);
+      if (!page || !ROLE_KEYS.includes(role)) return;
+      if (!rolePageMatrix[route] || typeof rolePageMatrix[route] !== "object") {
+        rolePageMatrix[route] = roleMatrixDefaultFor(route, page.kind);
+      }
+      rolePageMatrix[route][role] = Boolean(target.checked);
+      saveRoleMatrix();
+    });
+
+    document.getElementById("adminRoleMatrixSavePortal")?.addEventListener("click", async (event) => {
+      const ok = saveRoleMatrix();
+      await copyText(event.currentTarget, roleMatrixAsJson("PORTAL"), ok ? "Portal gespeichert+kopiert" : "Portal JSON kopiert");
+    });
+    document.getElementById("adminRoleMatrixSaveWeb")?.addEventListener("click", async (event) => {
+      const ok = saveRoleMatrix();
+      await copyText(event.currentTarget, roleMatrixAsJson("WEB"), ok ? "Web gespeichert+kopiert" : "Web JSON kopiert");
+    });
+    document.getElementById("adminRoleMatrixCopyPortal")?.addEventListener("click", async (event) => {
+      await copyText(event.currentTarget, roleMatrixAsJson("PORTAL"), "Portal JSON kopiert");
+    });
+    document.getElementById("adminRoleMatrixCopyWeb")?.addEventListener("click", async (event) => {
+      await copyText(event.currentTarget, roleMatrixAsJson("WEB"), "Web JSON kopiert");
+    });
+    document.getElementById("adminRoleMatrixResetPortal")?.addEventListener("click", () => {
+      PAGE_INDEX.filter((page) => page.kind === "PORTAL").forEach((page) => {
+        rolePageMatrix[page.route] = roleMatrixDefaultFor(page.route, page.kind);
+      });
+      saveRoleMatrix();
+      renderModulesTables();
+    });
+    document.getElementById("adminRoleMatrixResetWeb")?.addEventListener("click", () => {
+      PAGE_INDEX.filter((page) => page.kind === "WEB").forEach((page) => {
+        rolePageMatrix[page.route] = roleMatrixDefaultFor(page.route, page.kind);
+      });
+      saveRoleMatrix();
+      renderModulesTables();
+    });
 
     setMsg("Admin-Board lädt...");
     await loadCoreData();

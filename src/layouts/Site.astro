@@ -52,6 +52,7 @@ const showHeaderAuthCta = false;
     <link rel="canonical" href={canonical} />
     <meta name="theme-color" content={themeColor} />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content={APP.brand} />
@@ -75,11 +76,19 @@ const showHeaderAuthCta = false;
     <header class="header">
       <div class="container">
         <nav class="nav" aria-label="Hauptnavigation">
-          <a class="logo" href="/" aria-label={APP.name}>
-            <img src="/Bilder/logo300x300.png" alt={APP.name} />
-          </a>
-          {isBetaChannel && <span class="app-beta-badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
-          <div class="nav-actions">
+          <div class="header-brand-vdan">
+            <a class="logo" href="/" aria-label={APP.name}>
+              <img src="/Bilder/logo300x300.png" alt={APP.name} />
+            </a>
+          </div>
+          <div class="header-brand-fcp" aria-label="FCP Marke">
+            <picture class="header-brand-fcp__logo" aria-hidden="true">
+              <source srcset="/Branding/NewLogoCamouFCP.svg" type="image/svg+xml" />
+              <img src="/Branding/NewLogoCamouFCP.png" alt="" loading="eager" decoding="async" />
+            </picture>
+            {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+          </div>
+          <div class="nav-actions header-menu">
             <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
             {showHeaderAuthCta && <a id="headerAuthCta" class="header-auth-cta" href="/login/" data-ui-session-skip>Sign in</a>}
             <div class="burger-menu" id="burgerMenu">
@@ -94,6 +103,7 @@ const showHeaderAuthCta = false;
                 <a href="/fischereipruefung.html/">Fischereiprüfung</a>
                 <a href="/anglerheim-ottenheim.html/">Anglerheim</a>
                 <a href="/downloads.html/">Downloads</a>
+                <a href="/vereinsshop.html/">Vereinsshop</a>
                 <a href="/kontakt.html/">Kontakt</a>
                 <a href="/datenschutz.html/">Datenschutz</a>
                 {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
@@ -127,6 +137,70 @@ const showHeaderAuthCta = false;
         <div id="portalQuickList" class="portal-quick-list"></div>
       </section>
     </div>
+    <section id="goFishingDialog" class="catch-dialog catch-dialog--panel portal-gofishing-brand--fcp hidden" data-guard-sheet="1" data-guard-no-draft="1" hidden>
+      <form id="goFishingDialogForm" class="catch-dialog__form portal-gofishing-dialog__form">
+        <input type="hidden" id="goFishingDraftState" name="goFishingDraftState" value="" />
+        <div class="portal-gofishing-dialog__content">
+          <div class="portal-gofishing-hero">
+            <div class="portal-gofishing-logo-wrap">
+              <picture class="portal-quick-logo-slot__picture portal-gofishing-logo" aria-hidden="true">
+                <source srcset="/Branding/New_FCP_GoFishing.svg" type="image/svg+xml" />
+                <img class="portal-quick-logo-slot__img" src="/Branding/New_FCP_GoFishing.svg" alt="GoFishing FCP" loading="eager" decoding="async" />
+              </picture>
+              {isBetaChannel && <span class="app-beta-badge portal-gofishing-beta" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+              {!isBetaChannel && <span class="app-beta-badge portal-gofishing-beta" aria-hidden="true">BETA</span>}
+            </div>
+            <p class="small portal-gofishing-start" id="goFishingSessionStartLabel" aria-live="polite">Session noch nicht gestartet.</p>
+          </div>
+
+          <div class="portal-gofishing-fields">
+            <div class="fangliste-form-grid portal-gofishing-form-grid">
+              <label class="fangliste-full">
+                <span>Gewässerquelle</span>
+                <select id="goFishingWaterMode" aria-label="Gewässerquelle">
+                  <option value="official" selected>Vereinsgewässer</option>
+                  <option value="member">Freies Gewässer</option>
+                </select>
+              </label>
+              <label class="fangliste-full">
+                <span>Vereinsgewässer suchen</span>
+                <input id="goFishingWaterSearch" type="search" placeholder="Gewässer filtern..." />
+              </label>
+              <label class="fangliste-full">
+                <span>Vereinsgewässer</span>
+                <select id="goFishingWater" required></select>
+              </label>
+              <div class="fangliste-full fangliste-water-favorites">
+                <p id="goFishingWaterQuickTitle" class="small">Meistgenutzt</p>
+                <div id="goFishingWaterFavorites" class="fangliste-water-chip-list" role="group" aria-label="Meistgenutzte Gewässer"></div>
+              </div>
+              <label class="fangliste-full hidden" id="goFishingMemberWaterNameWrap" hidden>
+                <span>Freies Gewässername</span>
+                <input id="goFishingMemberWaterName" type="text" placeholder="z. B. Baggersee Nord" maxlength="120" />
+              </label>
+              <label class="fangliste-full hidden" id="goFishingMemberWaterLocationWrap" hidden>
+                <span>Ort / Abschnitt (optional)</span>
+                <input id="goFishingMemberWaterLocation" type="text" placeholder="z. B. Lahr, Nordufer" maxlength="160" />
+              </label>
+              <label>
+                <span>Zielfisch hinzufügen</span>
+                <select id="goFishingFishSelect"></select>
+              </label>
+              <div class="portal-gofishing-add-wrap">
+                <button type="button" id="goFishingAddFishBtn" class="feed-btn feed-btn--ghost">Hinzufügen</button>
+              </div>
+            </div>
+            <div id="goFishingTargetList" class="portal-gofishing-target-list" role="group" aria-label="Zielfische Counter"></div>
+            <p id="goFishingMsg" class="small portal-gofishing-msg" aria-live="polite"></p>
+            <div class="catch-dialog__actions portal-gofishing-actions">
+              <button type="button" class="feed-btn" id="goFishingStartBtn">Start</button>
+              <button type="button" class="feed-btn" id="goFishingEndBtn">Session beenden</button>
+              <button type="button" class="feed-btn feed-btn--ghost" data-action="close-gofishing">Schließen</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
 
     <main class="main">
       <div class={containerClass}>
@@ -153,11 +227,14 @@ const showHeaderAuthCta = false;
     <script src="/js/offline-sync.js" defer></script>
     <script src="/js/consent-manager.js" defer></script>
     <script src="/js/member-auth.js" defer></script>
+    <script src="/js/ui-standards-runtime.js" defer></script>
     {needsMemberGuard && <script src="/js/member-guard.js" defer></script>}
     <script src="/js/ui-session.js" defer></script>
     <script src="/js/header-auth-cta.js" defer></script>
     <script src="/js/nav-burger.js" defer></script>
     <script src="/js/portal-quick.js" defer></script>
+    <script src="/js/studio-inspector-bridge.js" defer></script>
+    <script src="/js/go-fishing.js" defer></script>
     <script src="/js/dialog-ux-guard.js" defer></script>
     <script src="/js/pwa-register.js" defer></script>
     <!-- <script src="/js/maintenance-gate.js" defer></script> -->

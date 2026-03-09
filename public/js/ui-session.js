@@ -29,6 +29,11 @@
     }
   }
 
+  function shouldDisableTouchRpcStatus(status) {
+    const code = Number(status || 0);
+    return code === 400 || code === 401 || code === 403 || code === 404;
+  }
+
   async function sb(path, withAuth = false, method = "GET", body = null) {
     const { url, key } = cfg();
     if (!url || !key) return [];
@@ -85,7 +90,7 @@
         headers,
         body: JSON.stringify({}),
       });
-      if (res.status === 404) {
+      if (shouldDisableTouchRpcStatus(res.status)) {
         disableTouchRpc();
         if (touchTimer) {
           clearInterval(touchTimer);
@@ -148,6 +153,13 @@
     });
   }
 
+  function setAdminOrSuperadminState(enabled) {
+    document.querySelectorAll("[data-admin-or-superadmin-only]").forEach((el) => {
+      el.classList.toggle("hidden", !enabled);
+      el.toggleAttribute("hidden", !enabled);
+    });
+  }
+
   function setFeatureState(featureKey, enabled) {
     document.querySelectorAll(`[data-feature-${featureKey}]`).forEach((el) => {
       el.classList.toggle("hidden", !enabled);
@@ -166,6 +178,7 @@
       setManagerState(false);
       setAdminState(false);
       setSuperadminState(false);
+      setAdminOrSuperadminState(false);
       setFeatureState("work-qr", false);
       return;
     }
@@ -178,6 +191,7 @@
     setManagerState(isManager);
     setAdminState(isAdmin);
     setSuperadminState(isSuperadmin);
+    setAdminOrSuperadminState(isAdmin || isSuperadmin);
 
     if (!isManager) {
       setFeatureState("work-qr", false);

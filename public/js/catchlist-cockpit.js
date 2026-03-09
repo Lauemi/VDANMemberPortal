@@ -168,10 +168,10 @@
 
   async function loadStats() {
     try {
-      const rows = await sb("/rest/v1/v_admin_member_catch_stats?select=user_id,member_name,display_name,email,member_no,trips_total,no_catch_days,catches_total,last_entry_at", { method: "GET" }, true);
+      const rows = await sb("/rest/v1/rpc/admin_catch_member_stats", { method: "POST", body: JSON.stringify({}) }, true);
       return Array.isArray(rows) ? rows : [];
     } catch {
-      const rows = await sb("/rest/v1/rpc/admin_catch_member_stats", { method: "POST", body: JSON.stringify({}) }, true);
+      const rows = await sb("/rest/v1/v_admin_member_catch_stats?select=user_id,member_name,display_name,email,member_no,trips_total,no_catch_days,catches_total,last_entry_at", { method: "GET" }, true);
       return Array.isArray(rows) ? rows : [];
     }
   }

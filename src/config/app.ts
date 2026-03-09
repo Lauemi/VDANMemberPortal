@@ -18,5 +18,7 @@ export const APP = {
   brand: appBrand,
   theme: appTheme,
   supportEmail: envText(metaEnv.PUBLIC_SUPPORT_EMAIL, "m.lauenroth@lauemi.de"),
+  guestLoginMessage: envText(metaEnv.PUBLIC_APP_GUEST_LOGIN_MESSAGE, "Bitte logge dich ein."),
+  guestLoginCtaLabel: envText(metaEnv.PUBLIC_APP_GUEST_LOGIN_CTA_LABEL, "Zum Login"),
   superAdminUserIds,
 };

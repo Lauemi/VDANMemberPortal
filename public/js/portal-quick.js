@@ -20,6 +20,11 @@
     group_admin: "Admin",
     group_superadmin: "Superadmin",
   };
+  const FCP_LOGO = {
+    svg: "/Branding/New_FCP_GoFishing.svg",
+    png: "/Branding/New_FCP_GoFishing.png",
+    alt: "Fishing Club Portal",
+  };
 
   const MODULES = [
     { id: "fangliste", href: "/app/fangliste/", label: "Fangliste", short: "FL", access: "member", group: "member" },
@@ -41,6 +46,8 @@
     { id: "mitgliederverwaltung", href: "/app/mitgliederverwaltung/", label: "Mitglieder-Registry", short: "MR", access: "admin", group: "admin" },
     { id: "vereine_setup", href: "/app/vereine/", label: "Vereins-Setup", short: "VS", access: "superadmin", group: "superadmin" },
     { id: "ui_neumorph_demo", href: "/app/ui-neumorph-demo/", label: "UI Neumorph Demo", short: "UI", access: "superadmin", group: "superadmin" },
+    { id: "component_library", href: "/app/component-library/", label: "Component Library", short: "CL", access: "superadmin", group: "superadmin" },
+    { id: "template_studio", href: "/app/template-studio/", label: "Template Studio", short: "TS", access: "superadmin", group: "superadmin" },
     { id: "fangliste_cockpit", href: "/app/fangliste/cockpit/", label: "Fangliste Cockpit", short: "FC", access: "admin", group: "admin" },
   ];
 
@@ -213,7 +220,7 @@
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      throw new Error(err?.message || err?.detail || err?.hint || err?.error_description || `Request failed (${res.status})`);
     }
     return res.json().catch(() => []);
   }
@@ -370,7 +377,17 @@
     const actions = document.createElement("div");
     actions.className = "portal-quick-actions";
     if (state.loggedIn) {
-      actions.innerHTML = `<button type="button" class="feed-btn" data-action="create-post">${LABELS.createPost}</button>`;
+      actions.innerHTML = `
+        <div class="portal-quick-actions__row">
+          <button type="button" class="feed-btn" data-action="create-post">${LABELS.createPost}</button>
+          <button type="button" class="portal-quick-logo-slot" data-action="open-gofishing" data-ui-slot="fcp-logo" aria-label="GoFishing öffnen">
+            <picture class="portal-quick-logo-slot__picture">
+              <source srcset="${FCP_LOGO.svg}" type="image/svg+xml" />
+              <img class="portal-quick-logo-slot__img" src="${FCP_LOGO.png}" alt="${FCP_LOGO.alt}" loading="lazy" decoding="async" />
+            </picture>
+          </button>
+        </div>
+      `;
       root.appendChild(actions);
     }
 
@@ -412,6 +429,29 @@
   function applySide() {
     const side = resolvedSide(normalizeHandedness(state.settings.nav_handedness));
     document.body.setAttribute("data-portal-rail-side", side);
+  }
+
+  function openGoFishingDialog() {
+    const dlg = document.getElementById("goFishingDialog");
+    if (!dlg) return;
+    dlg.removeAttribute("hidden");
+    dlg.classList.remove("hidden");
+    dlg.setAttribute("aria-hidden", "false");
+    window.VDAN_DIALOG_GUARD?.restoreDraft?.(dlg);
+    document.dispatchEvent(new CustomEvent("vdan:open-gofishing"));
+  }
+
+  async function closeGoFishingDialog(force = false) {
+    const dlg = document.getElementById("goFishingDialog");
+    if (!dlg || dlg.hasAttribute("hidden")) return;
+    if (!force && window.VDAN_DIALOG_GUARD?.requestClose) {
+      const closed = await window.VDAN_DIALOG_GUARD.requestClose(dlg);
+      if (!closed) return;
+      return;
+    }
+    dlg.setAttribute("hidden", "");
+    dlg.classList.add("hidden");
+    dlg.setAttribute("aria-hidden", "true");
   }
 
   function setDrawerOpen(open, options = {}) {
@@ -563,6 +603,21 @@
           // ignore
         }
         window.location.assign("/?compose=1");
+        return;
+      }
+
+      const goFishingOpenBtn = e.target.closest("[data-action='open-gofishing']");
+      if (goFishingOpenBtn) {
+        e.preventDefault();
+        setDrawerOpen(false, { immediate: true });
+        openGoFishingDialog();
+        return;
+      }
+
+      const goFishingCloseBtn = e.target.closest("[data-action='close-gofishing']");
+      if (goFishingCloseBtn) {
+        e.preventDefault();
+        void closeGoFishingDialog(false);
         return;
       }
 

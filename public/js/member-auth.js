@@ -120,6 +120,10 @@
     return String(value || "").includes("@");
   }
 
+  function isLegacyMemberLoginAllowed() {
+    return window.__APP_AUTH_ALLOW_LEGACY_MEMBER_LOGIN !== false;
+  }
+
   function pageTarget(defaultTarget = "/") {
     const loginForm = document.getElementById("loginForm");
     const registerForm = document.getElementById("registerForm");
@@ -233,7 +237,15 @@
 
   async function loginWithPassword(identifier, password) {
     const input = String(identifier || "").trim();
-    const email = input.includes("@") ? input.toLowerCase() : memberNoToEmail(input);
+    let email = "";
+    if (input.includes("@")) {
+      email = input.toLowerCase();
+    } else {
+      if (!isLegacyMemberLoginAllowed()) {
+        throw new Error("Login mit Mitgliedsnummer ist deaktiviert. Bitte Auth-E-Mail verwenden.");
+      }
+      email = memberNoToEmail(input);
+    }
     if (!email) {
       throw new Error("Bitte Mitgliedsnummer eingeben.");
     }
@@ -356,7 +368,15 @@
 
   async function requestPasswordReset(identifier, redirectTo = "") {
     const input = String(identifier || "").trim();
-    const email = input.includes("@") ? input.toLowerCase() : memberNoToEmail(input);
+    let email = "";
+    if (input.includes("@")) {
+      email = input.toLowerCase();
+    } else {
+      if (!isLegacyMemberLoginAllowed()) {
+        throw new Error("Passwort-Reset mit Mitgliedsnummer ist deaktiviert. Bitte Auth-E-Mail verwenden.");
+      }
+      email = memberNoToEmail(input);
+    }
     if (!email) throw new Error("Bitte Mitgliedsnummer oder E-Mail eingeben.");
     const body = { email };
     const rt = String(redirectTo || "").trim();

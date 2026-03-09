@@ -3,8 +3,12 @@ Stand: 2026-03-09
 
 ## 1. Zielbild
 - Technische Authentifizierung über Supabase Auth.
-- Source of truth für Login ist die Auth-E-Mail.
+- Source of truth für Login ist langfristig die Auth-E-Mail.
 - Vereinskennungen (Mitgliedsnummer, Kürzel wie `VD01598`) sind Funktions-/Anzeigeattribute, kein primärer Auth-Identifier.
+- Aktuell läuft ein Übergangsbetrieb:
+  - Legacy-Mitgliedsnummern können teilweise weiterhin für Login genutzt werden.
+  - Diese werden intern auf Pseudo-Mails (`member_<nr>@members...`) abgebildet.
+  - Ziel ist die schrittweise Migration auf echte Auth-E-Mail-Adressen.
 
 ## 2. Aktueller Login-Mechanismus
 - Login-Endpunkt: Supabase Password Grant (`/auth/v1/token?grant_type=password`).
@@ -38,8 +42,13 @@ Stand: 2026-03-09
 
 ## 6. Betriebsentscheidungen
 - `profile-bootstrap` läuft stabil mit interner User-Prüfung (`auth.getUser()`).
+- Die Function ist aktuell mit deaktivierter Gateway-JWT-Verifikation deployed (`--no-verify-jwt`).
+- Der JWT wird innerhalb der Function geprüft:
+  1. Client sendet `Authorization: Bearer <JWT>`
+  2. Function übernimmt Header in den Supabase-Client
+  3. `auth.getUser()` validiert Token und liefert User-Kontext
 - Unautorisierte Aufrufe liefern `401` (bestätigt).
-- `identity_dialog_force` aktuell `false` (kein harter globaler Lock).
+- `identity_dialog_force` aktuell `false` (kein harter globaler Lock, Pilotmodus aktiv).
 
 ## 7. Offene operative Punkte
 - Supabase URL Configuration vollständig pflegen (Prod + Local Callback URLs).
@@ -47,6 +56,6 @@ Stand: 2026-03-09
 - Restliche Legacy-Auth-Mails (`@members...`) in Wellen migrieren.
 
 ## 8. Release-Statement
-- Technisch ist der Login-Stack für Main/Deploy freigegeben.
-- Empfehlung: kontrollierter Rollout der Pflichtverifikation, kein Big-Bang.
-
+- Der Login-Stack ist technisch stabil und deployfähig.
+- Freigabe erfolgt unter der Voraussetzung, dass die offenen operativen Punkte aus Abschnitt 7 kontrolliert umgesetzt werden.
+- Empfehlung: kontrollierter, phasenweiser Rollout der Pflichtverifikation mit Monitoring; kein Big-Bang.

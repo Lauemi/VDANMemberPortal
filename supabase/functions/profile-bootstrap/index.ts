@@ -43,7 +43,12 @@ async function sbServiceFetch(path: string, init: RequestInit = {}) {
   const res = await fetch(`${base}${path}`, { ...init, headers });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`supabase_request_failed_${res.status}:${body}`);
+    console.error("profile-bootstrap service request failed", {
+      path,
+      status: res.status,
+      body: body.slice(0, 500),
+    });
+    throw new Error(`supabase_request_failed_${res.status}`);
   }
   return res;
 }
@@ -186,8 +191,9 @@ Deno.serve(async (req: Request) => {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "unexpected_error";
-    const status = message === "unauthorized" ? 401 : 400;
-    return new Response(JSON.stringify({ ok: false, error: message }), {
+    const status = message === "unauthorized" ? 401 : 500;
+    const safeError = message === "unauthorized" ? "unauthorized" : "bootstrap_failed";
+    return new Response(JSON.stringify({ ok: false, error: safeError }), {
       status,
       headers: { ...headers, "Content-Type": "application/json" },
     });

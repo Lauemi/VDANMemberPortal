@@ -15,8 +15,16 @@ function uniqSorted(values) {
 }
 
 function extractMaskPathsFromAstro(astro) {
-  const matches = [...astro.matchAll(/<option\s+value="([^"]+)"/g)].map((m) => m[1]);
-  return uniqSorted(matches);
+  const sections = [
+    ...astro.matchAll(/<select\s+id="templateMaskPath"[\s\S]*?>([\s\S]*?)<\/select>/g),
+    ...astro.matchAll(/<select\s+id="templateEditorMaskPath"[\s\S]*?>([\s\S]*?)<\/select>/g),
+  ];
+
+  const values = sections.flatMap((section) =>
+    [...section[1].matchAll(/<option\s+value="([^"]+)"/g)].map((m) => m[1])
+  );
+
+  return uniqSorted(values);
 }
 
 function extractDefaultLayoutFromJs(js) {
@@ -52,4 +60,3 @@ test("Snapshot: Default-Layout im Editor entspricht Baseline", () => {
   const actual = extractDefaultLayoutFromJs(js);
   assert.deepEqual(actual, baseline);
 });
-

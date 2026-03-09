@@ -8,8 +8,8 @@ function text(path) {
 
 test("Template Studio hat die erforderlichen Bereiche und IDs", () => {
   const astro = text("src/pages/app/template-studio/index.astro");
-  assert.match(astro, /data-template-section="standard-template"/);
-  assert.match(astro, /data-template-section="mask-editor"/);
+  assert.match(astro, /data-template-panel="standard-template"/);
+  assert.match(astro, /data-template-panel="mask-editor"/);
   assert.match(astro, /id="templateMaskPath"/);
   assert.match(astro, /id="templateEditorMaskPath"/);
   assert.match(astro, /id="templateLiveFrame"/);
@@ -43,4 +43,3 @@ test("Template Studio kann Editor-JSON laden/kopieren", () => {
   assert.match(js, /window\.prompt\('Masken-JSON einfügen'\)/);
   assert.match(js, /JSON\.parse\(incoming\)/);
 });
-

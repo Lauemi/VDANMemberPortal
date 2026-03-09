@@ -4,8 +4,8 @@
 
 begin;
 
-revoke insert, update, delete on table public.member_waters from anon;
-revoke insert, update, delete on table public.member_water_mappings from anon;
+revoke insert, update, delete, truncate, references, trigger on table public.member_waters from anon;
+revoke insert, update, delete, truncate, references, trigger on table public.member_water_mappings from anon;
 
 commit;
 

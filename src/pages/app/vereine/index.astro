@@ -52,6 +52,32 @@ import { APP } from "../../../config/app";
         <summary>Antwortdetails</summary>
         <pre id="clubSetupResult" class="small" style="white-space:pre-wrap;"></pre>
       </details>
+
+      <section id="clubInvitePanel" class="card hidden" hidden style="margin-top:12px;">
+        <div class="card__body">
+          <h2>Registrierungs-QR</h2>
+          <p class="small">Nur Personen mit diesem Token können sich registrieren.</p>
+          <div style="display:grid;gap:10px;grid-template-columns:220px minmax(0,1fr);align-items:start;">
+            <img id="clubInviteQr" alt="Registrierungs-QR" width="220" height="220" loading="lazy" />
+            <div style="display:grid;gap:8px;">
+              <label>
+                <span class="small">Invite-Token</span>
+                <input id="clubInviteToken" type="text" readonly />
+              </label>
+              <label>
+                <span class="small">Registrierungs-Link</span>
+                <input id="clubInviteUrl" type="text" readonly />
+              </label>
+              <p id="clubInviteExpires" class="small"></p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button id="clubInviteCopyToken" type="button" class="feed-btn feed-btn--ghost">Token kopieren</button>
+                <button id="clubInviteCopyUrl" type="button" class="feed-btn feed-btn--ghost">Link kopieren</button>
+                <a id="clubInviteOpenUrl" class="feed-btn" href="#" target="_blank" rel="noopener noreferrer">Link öffnen</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </section>
 

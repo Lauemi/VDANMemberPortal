@@ -1,5 +1,6 @@
 ;(() => {
   const SESSION_KEY = "vdan_member_session_v1";
+  const INVITE_PENDING_KEY = "vdan_invite_claim_pending_v1";
   const EXPIRY_SKEW_MS = 30_000;
   const MEMBER_EMAIL_DOMAIN = "members.vdan.local";
 
@@ -57,6 +58,26 @@
     return fetch(full, { ...init, headers });
   }
 
+  async function callEdgeFunction(functionName, payload = {}, accessToken = "") {
+    const { url, key } = cfg();
+    const endpoint = `${url.replace(/\/+$/,"")}/functions/v1/${functionName}`;
+    const headers = new Headers({
+      apikey: key,
+      "Content-Type": "application/json",
+    });
+    if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload || {}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data?.ok === false) {
+      throw new Error(String(data?.error || `function_${functionName}_failed_${res.status}`));
+    }
+    return data;
+  }
+
   function memberNoToEmail(rawMemberNo) {
     const memberNo = String(rawMemberNo || "").trim();
     if (!memberNo) return "";
@@ -66,10 +87,70 @@
 
   function pageTarget(defaultTarget = "/") {
     const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
     const pwForm = document.getElementById("passwordChangeForm");
-    const direct = String(loginForm?.dataset?.nextTarget || pwForm?.dataset?.nextTarget || "").trim();
+    const direct = String(loginForm?.dataset?.nextTarget || registerForm?.dataset?.nextTarget || pwForm?.dataset?.nextTarget || "").trim();
     if (direct.startsWith("/")) return direct;
     return defaultTarget;
+  }
+
+  function readPendingInvite() {
+    try {
+      const raw = localStorage.getItem(INVITE_PENDING_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return null;
+      return {
+        invite_token: String(parsed.invite_token || "").trim(),
+        member_no: String(parsed.member_no || "").trim().toUpperCase(),
+        first_name: String(parsed.first_name || "").trim(),
+        last_name: String(parsed.last_name || "").trim(),
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  function writePendingInvite(data) {
+    localStorage.setItem(INVITE_PENDING_KEY, JSON.stringify({
+      invite_token: String(data?.invite_token || "").trim(),
+      member_no: String(data?.member_no || "").trim().toUpperCase(),
+      first_name: String(data?.first_name || "").trim(),
+      last_name: String(data?.last_name || "").trim(),
+      saved_at: new Date().toISOString(),
+    }));
+  }
+
+  function clearPendingInvite() {
+    localStorage.removeItem(INVITE_PENDING_KEY);
+  }
+
+  async function verifyInviteToken(inviteToken) {
+    return callEdgeFunction("club-invite-verify", { invite_token: String(inviteToken || "").trim() });
+  }
+
+  async function claimInviteToken(claimPayload, accessToken) {
+    const token = String(accessToken || "").trim();
+    if (!token) throw new Error("login_required_for_invite_claim");
+    const inviteToken = String(claimPayload?.invite_token || "").trim();
+    const memberNo = String(claimPayload?.member_no || "").trim().toUpperCase();
+    if (!inviteToken || !memberNo) throw new Error("invite_claim_payload_invalid");
+    return callEdgeFunction("club-invite-claim", {
+      invite_token: inviteToken,
+      member_no: memberNo,
+      first_name: String(claimPayload?.first_name || "").trim(),
+      last_name: String(claimPayload?.last_name || "").trim(),
+    }, token);
+  }
+
+  async function claimPendingInviteIfPresent(accessToken = "") {
+    const pending = readPendingInvite();
+    if (!pending?.invite_token || !pending?.member_no) return null;
+    const token = String(accessToken || "").trim() || String(loadSession()?.access_token || "").trim();
+    if (!token) return null;
+    const claimed = await claimInviteToken(pending, token);
+    clearPendingInvite();
+    return claimed;
   }
 
   async function loginWithPassword(identifier, password) {
@@ -260,6 +341,8 @@
     updatePassword,
     requestPasswordReset,
     memberNoToEmail,
+    verifyInviteToken,
+    claimPendingInviteIfPresent,
     logout,
     SESSION_KEY,
   };
@@ -296,7 +379,8 @@
         ).trim();
         const password = String(document.getElementById("loginPass")?.value || "");
         try {
-          await loginWithPassword(memberNo, password);
+          const sessionData = await loginWithPassword(memberNo, password);
+          await claimPendingInviteIfPresent(sessionData?.access_token || "");
           const profile = await getOwnProfile();
           if (msg) msg.textContent = "Login ok.";
           document.dispatchEvent(new CustomEvent("vdan:session", { detail: { loggedIn: true } }));
@@ -317,7 +401,8 @@
       registerForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         if (regMsg) regMsg.textContent = "…";
-        const email = String(document.getElementById("registerEmail")?.value || "").trim();
+        const memberNo = String(document.getElementById("registerMemberNo")?.value || "").trim().toUpperCase();
+        const inviteToken = String(document.getElementById("registerInviteToken")?.value || "").trim();
         const pass = String(document.getElementById("registerPass")?.value || "");
         const pass2 = String(document.getElementById("registerPass2")?.value || "");
         const firstName = String(document.getElementById("registerFirstName")?.value || "").trim();
@@ -332,18 +417,38 @@
           if (regMsg) regMsg.textContent = "Passwörter stimmen nicht überein.";
           return;
         }
+        if (!memberNo) {
+          if (regMsg) regMsg.textContent = "Bitte Mitgliedsnummer eingeben.";
+          return;
+        }
+        if (!inviteToken) {
+          if (regMsg) regMsg.textContent = "Einladungs-Token fehlt.";
+          return;
+        }
         try {
-          const result = await signUpWithPassword(email, pass, {
+          const verify = await verifyInviteToken(inviteToken);
+          const email = memberNoToEmail(memberNo);
+          const claimPayload = {
+            invite_token: inviteToken,
+            member_no: memberNo,
             first_name: firstName,
             last_name: lastName,
+          };
+          const result = await signUpWithPassword(email, pass, {
+            ...claimPayload,
+            club_code: String(verify?.club_code || "").trim(),
+            club_name: String(verify?.club_name || "").trim(),
           });
+          writePendingInvite(claimPayload);
           if (result?.access_token) {
+            await claimInviteToken(claimPayload, result.access_token);
             if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Du bist angemeldet.";
+            clearPendingInvite();
             const next = pageTarget("/app/");
             window.location.assign(next);
             return;
           }
-          if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Bitte E-Mail bestätigen und danach einloggen.";
+          if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Bitte E-Mail bestätigen und danach einloggen. Die Vereinszuordnung erfolgt automatisch beim ersten Login.";
         } catch (err) {
           if (regMsg) regMsg.textContent = err?.message || "Registrierung fehlgeschlagen.";
         }

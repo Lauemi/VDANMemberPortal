@@ -35,6 +35,50 @@
     el.textContent = data ? JSON.stringify(data, null, 2) : "";
   }
 
+  async function copyText(value) {
+    const text = String(value || "").trim();
+    if (!text) return;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+    } catch {
+      // fallback below
+    }
+    window.prompt("Bitte kopieren:", text);
+  }
+
+  function setInviteResult(data) {
+    const panel = document.getElementById("clubInvitePanel");
+    const qr = document.getElementById("clubInviteQr");
+    const tokenInput = document.getElementById("clubInviteToken");
+    const urlInput = document.getElementById("clubInviteUrl");
+    const expiresEl = document.getElementById("clubInviteExpires");
+    const openLink = document.getElementById("clubInviteOpenUrl");
+    const copyTokenBtn = document.getElementById("clubInviteCopyToken");
+    const copyUrlBtn = document.getElementById("clubInviteCopyUrl");
+
+    if (!panel || !qr || !tokenInput || !urlInput || !expiresEl || !openLink || !copyTokenBtn || !copyUrlBtn) return;
+
+    const inviteToken = String(data?.invite_token || "").trim();
+    const inviteUrl = String(data?.invite_register_url || "").trim();
+    const inviteQr = String(data?.invite_qr_url || "").trim();
+    const expiresRaw = String(data?.invite_expires_at || "").trim();
+    const expires = expiresRaw ? new Date(expiresRaw).toLocaleString("de-DE") : "-";
+
+    panel.classList.remove("hidden");
+    panel.removeAttribute("hidden");
+    qr.setAttribute("src", inviteQr);
+    tokenInput.value = inviteToken;
+    urlInput.value = inviteUrl;
+    expiresEl.textContent = `Gültig bis: ${expires}`;
+    openLink.setAttribute("href", inviteUrl || "#");
+
+    copyTokenBtn.onclick = async () => copyText(inviteToken);
+    copyUrlBtn.onclick = async () => copyText(inviteUrl);
+  }
+
   function lines(raw) {
     return String(raw || "")
       .split(/\r?\n/)
@@ -49,6 +93,11 @@
   async function submitSetup() {
     setMsg("Vereins-Setup läuft ...");
     setResult(null);
+    const panel = document.getElementById("clubInvitePanel");
+    if (panel) {
+      panel.classList.add("hidden");
+      panel.setAttribute("hidden", "");
+    }
 
     try {
       const { url, key } = cfg();
@@ -98,6 +147,7 @@
       const codeInput = document.getElementById("clubSetupCode");
       if (codeInput && data?.club_code) codeInput.value = String(data.club_code);
       setResult(data);
+      setInviteResult(data);
     } catch (err) {
       const code = err instanceof Error ? err.message : "unexpected_error";
       const msg =

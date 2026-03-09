@@ -26,30 +26,12 @@ import { APP } from "../config/app";
           Datenschutz-Einstellungen
         </button>
       </div>
-
-      <div data-consent-placeholder class="external-media-lock">
-        <p class="small">
-          Der eingebettete Shop wird erst nach Freigabe externer Medien geladen.
-        </p>
-      </div>
-
-      <div id="myShop" class="card" style="min-height:420px;">
-        <div class="card__body">
-          <p class="small">
-            Shop wird geladen...
-            <a href="https://vdan-vereisnshop.myspreadshop.de" target="_blank" rel="noopener noreferrer">
-              Falls nicht: hier direkt öffnen
-            </a>
-          </p>
-        </div>
-      </div>
+      <p class="small">
+        Hinweis: Die Shop-Einbettung ist ein externer Dienst und wird erst nach deiner Einwilligung geladen.
+      </p>
+      <div id="myShop" class="card" style="min-height:420px;"></div>
     </div>
   </section>
 
   <script src="/js/spreadshirt-shop.js" defer></script>
-  <script
-    type="text/javascript"
-    data-consent-category="external_media"
-    data-consent-src="https://vdan-vereisnshop.myspreadshop.de/shopfiles/shopclient/shopclient.nocache.js"
-  ></script>
 </Site>

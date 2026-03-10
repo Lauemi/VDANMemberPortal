@@ -25,6 +25,18 @@
     png: "/Branding/New_FCP_GoFishing.png",
     alt: "Fishing Club Portal",
   };
+  const FCP_ONLY_MODULES = new Set(["feedback", "lizenzen"]);
+
+  function siteMode() {
+    return String(window.__APP_SITE_MODE || "").trim().toLowerCase();
+  }
+
+  function isModuleAllowedBySiteMode(moduleId) {
+    const mode = siteMode();
+    if (mode === "fcp") return moduleId !== "gewaesserkarte";
+    if (mode === "vdan") return !FCP_ONLY_MODULES.has(moduleId);
+    return !FCP_ONLY_MODULES.has(moduleId);
+  }
 
   const MODULES = [
     { id: "fangliste", href: "/app/fangliste/", label: "Fangliste", short: "FL", access: "member", group: "member" },
@@ -37,11 +49,14 @@
     { id: "scanner", href: "/app/ausweis/verifizieren/", label: "Scanner", short: "SC", access: "manager", group: "manager" },
     { id: "as_cockpit", href: "/app/arbeitseinsaetze/cockpit/", label: "Arbeitseinsatz Cockpit", short: "AC", access: "manager", group: "manager" },
     { id: "termine_cockpit", href: "/app/termine/cockpit/", label: "Termine Cockpit", short: "TC", access: "manager", group: "manager" },
+    { id: "feedback", href: "/app/feedback/", label: "Feedback", short: "FB", access: "member", group: "manager" },
     { id: "sitzungen", href: "/app/sitzungen/", label: "Sitzungen", short: "SI", access: "manager", group: "manager" },
     { id: "bewerbungen", href: "/app/bewerbungen/", label: "Bewerbungen", short: "BW", access: "manager", group: "manager" },
     { id: "dokumente", href: "/app/dokumente/", label: "Dokumente", short: "DV", access: "manager", group: "manager" },
 
     { id: "mitglieder", href: "/app/mitglieder/", label: "Mitglieder", short: "MV", access: "admin", group: "admin" },
+    { id: "feedback_cockpit", href: "/app/feedback/cockpit/", label: "Feedback Cockpit", short: "BC", access: "admin", group: "admin" },
+    { id: "lizenzen", href: "/app/lizenzen/", label: "Wetter & Radar", short: "WR", access: "admin", group: "admin" },
     { id: "admin_board", href: "/app/admin-panel/", label: "Admin Board", short: "AB", access: "superadmin", group: "superadmin" },
     { id: "mitgliederverwaltung", href: "/app/mitgliederverwaltung/", label: "Mitglieder-Registry", short: "MR", access: "admin", group: "admin" },
     { id: "vereine_setup", href: "/app/vereine/", label: "Vereins-Setup", short: "VS", access: "superadmin", group: "superadmin" },
@@ -775,11 +790,3 @@
     applySide();
   });
 })();
-  function siteMode() {
-    return String(window.__APP_SITE_MODE || "").trim().toLowerCase();
-  }
-
-  function isModuleAllowedBySiteMode(moduleId) {
-    if (siteMode() === "fcp" && moduleId === "gewaesserkarte") return false;
-    return true;
-  }

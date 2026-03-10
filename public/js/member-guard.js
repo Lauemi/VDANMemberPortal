@@ -10,6 +10,7 @@
     "/app/ausweis/verifizieren/",
   ];
   const MEMBER_ALWAYS_PATHS = ["/app/einstellungen/"];
+  const FCP_ONLY_PATHS = ["/app/lizenzen/", "/app/feedback/"];
 
   function onReady(fn){ if (document.readyState !== "loading") fn(); else document.addEventListener("DOMContentLoaded", fn); }
 
@@ -39,6 +40,14 @@
 
   function needsMemberOnly(path) {
     return MEMBER_ALWAYS_PATHS.some((x) => path.startsWith(x));
+  }
+
+  function siteMode() {
+    return String(document.body?.getAttribute("data-site-mode") || window.__APP_SITE_MODE || "").trim().toLowerCase();
+  }
+
+  function isFcpOnlyPath(path) {
+    return FCP_ONLY_PATHS.some((x) => path.startsWith(x));
   }
 
   function allowOfflineWithoutSession(path) {
@@ -83,6 +92,10 @@
       const { VDAN_AUTH } = window;
       if (!VDAN_AUTH?.loadSession) return;
       const path = currentPath();
+      if (siteMode() !== "fcp" && isFcpOnlyPath(path)) {
+        forbid();
+        return;
+      }
       let session = VDAN_AUTH.loadSession();
       if (!session && navigator.onLine && VDAN_AUTH.refreshSession) {
         session = await VDAN_AUTH.refreshSession().catch(() => null);

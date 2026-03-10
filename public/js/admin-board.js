@@ -12,9 +12,12 @@
     { route: "/app/component-library/", kind: "PORTAL", label: "Component Library" },
     { route: "/app/dokumente/", kind: "PORTAL", label: "Dokumente" },
     { route: "/app/einstellungen/", kind: "PORTAL", label: "Einstellungen" },
+    { route: "/app/feedback/", kind: "PORTAL", label: "Feedback" },
+    { route: "/app/feedback/cockpit", kind: "PORTAL", label: "Feedback Cockpit" },
     { route: "/app/fangliste/", kind: "PORTAL", label: "Fangliste" },
     { route: "/app/fangliste/cockpit", kind: "PORTAL", label: "Fangliste Cockpit" },
     { route: "/app/gewaesserkarte/", kind: "PORTAL", label: "Gewässerkarte" },
+    { route: "/app/lizenzen/", kind: "PORTAL", label: "Wetter & Karten API" },
     { route: "/app/mitglieder/", kind: "PORTAL", label: "Mitglieder" },
     { route: "/app/mitgliederverwaltung/", kind: "PORTAL", label: "Mitgliederverwaltung" },
     { route: "/app/notes/", kind: "PORTAL", label: "Notes" },
@@ -50,7 +53,9 @@
   }
 
   const PAGE_INDEX = PAGE_INDEX_BASE.filter((page) => {
-    if (siteMode() === "fcp" && page.route === "/app/gewaesserkarte/") return false;
+    const mode = siteMode();
+    if (mode === "fcp" && page.route === "/app/gewaesserkarte/") return false;
+    if (mode === "vdan" && (page.route === "/app/lizenzen/" || page.route === "/app/feedback/" || page.route === "/app/feedback/cockpit")) return false;
     return true;
   });
 

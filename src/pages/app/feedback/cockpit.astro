@@ -1,0 +1,58 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+const isFcpMode = APP.siteMode === "fcp";
+---
+
+<Site title={`Fehler-Cockpit • ${APP.name}`} description="Admin-Cockpit für Fehlerbearbeitung" robots="noindex">
+  <section class="card">
+    <div class="card__body">
+      <h1>Fehler-Cockpit</h1>
+      {isFcpMode ? (
+        <>
+          <p class="small">Nur für Admin/Vorstand. Meldungen priorisieren, Rückfragen stellen, als erledigt markieren.</p>
+          <p id="bugAdminMsg" class="small" aria-live="polite"></p>
+          <div class="ui-filter-row">
+            <label>
+              <span>Status</span>
+              <select id="bugAdminStatus">
+                <option value="all">Alle</option>
+                <option value="open">Open</option>
+                <option value="in_progress">In Progress</option>
+                <option value="needs_info">Needs Info</option>
+                <option value="fixed">Fixed</option>
+                <option value="closed">Closed</option>
+              </select>
+            </label>
+            <label>
+              <span>Priorität</span>
+              <select id="bugAdminPriority">
+                <option value="all">Alle</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="normal">Normal</option>
+                <option value="low">Low</option>
+              </select>
+            </label>
+            <button id="bugAdminReload" type="button" class="feed-btn feed-btn--ghost">Neu laden</button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p class="small">Dieses Modul ist nur im FCP-Modus verfügbar.</p>
+          <p class="small"><a href="/app/">Zurück zum Portal</a></p>
+        </>
+      )}
+    </div>
+  </section>
+
+  {isFcpMode && (
+    <section class="card">
+      <div class="card__body">
+        <div id="bugAdminList" class="grid" style="gap:10px;"></div>
+      </div>
+    </section>
+  )}
+
+  {isFcpMode && <script src="/js/feedback-admin.js" defer></script>}
+</Site>

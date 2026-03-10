@@ -57,7 +57,12 @@ const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
         </label>
         <label class="small" style="display:flex;gap:8px;align-items:flex-start;">
           <input id="registerAccept" type="checkbox" required />
-          <span>Ich akzeptiere die Nutzungsbedingungen.</span>
+          <span>
+            Ich akzeptiere die
+            <a href="/nutzungsbedingungen.html/" target="_blank" rel="noopener noreferrer">Nutzungsbedingungen</a>
+            und die
+            <a href="/datenschutz.html/" target="_blank" rel="noopener noreferrer">Datenschutzerklärung</a>.
+          </span>
         </label>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <button class="primary" type="submit">Registrieren</button>

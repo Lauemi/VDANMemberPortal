@@ -20,13 +20,13 @@ import { APP } from "../config/app";
         VDAN (Verein der Angler und Naturfreunde Ottenheim 1957 e.V.)
       </p>
       <p>
-        Ansprechpartner und operative Portalverantwortung: Michael Lauenroth
+        Operativer technischer Portalbetrieb: Michael Lauenroth
       </p>
       <p>
-        Kontakt für Portalbetrieb: <a href="mailto:m.lauenroth@lauemi.de">m.lauenroth@lauemi.de</a>
+        Kontakt für technische Portalfragen: <a href="mailto:m.lauenroth@lauemi.de">m.lauenroth@lauemi.de</a>
       </p>
       <p>
-        Rechtsverbindliche Anbieterangaben ergeben sich im Zweifel aus dem jeweils aktuellen Impressum.
+        Rechtsverbindliche Anbieterangaben ergeben sich aus dem jeweils aktuellen Impressum.
       </p>
 
       <h2>3. Eigentum, Rechte und Nutzungsumfang</h2>
@@ -34,12 +34,13 @@ import { APP } from "../config/app";
         <li>Das Fishing-Club-Portal ist ein eigenständiges Produkt von Michael Lauenroth.</li>
         <li>Eigentums-, Urheber- und Verwertungsrechte verbleiben vollständig beim Entwickler.</li>
         <li>Der Verein erhält ein einfaches, nicht übertragbares Nutzungsrecht für den internen Vereinsbetrieb.</li>
+        <li>Eine Weitergabe, Kopie oder Nutzung des Systems durch Dritte ist ohne Zustimmung des Rechteinhabers nicht zulässig.</li>
         <li>Es besteht kein Anspruch auf Quellcode, Miturheberrechte oder Verwertungsbeteiligung.</li>
       </ol>
 
       <h2>4. Pilot- und Übergangsstatus</h2>
       <ol>
-        <li>Die aktuelle Nutzung erfolgt als Pilot-/Testbetrieb und derzeit unentgeltlich.</li>
+        <li>Die aktuelle Nutzung erfolgt als Pilot- und Testbetrieb und derzeit freiwillig unentgeltlich.</li>
         <li>Die aktuelle Kostenübernahme für Provider/Hosting durch Michael Lauenroth erfolgt freiwillig und begründet keinen Anspruch auf dauerhafte Kostenfreiheit.</li>
         <li>Mit offizieller Markteinführung werden formelle Nutzungs- und Auftragsverarbeitungsvereinbarungen ergänzt.</li>
       </ol>
@@ -58,11 +59,21 @@ import { APP } from "../config/app";
         <li>Soweit Inhalte durch Vereinsorgane oder beauftragte Vereinsnutzer eingestellt werden, verbleibt die inhaltliche Verantwortung beim Verein.</li>
       </ol>
 
+      <h2>5b. Datenschutzrollen (Controller/Processor)</h2>
+      <ol>
+        <li>VDAN ist Verantwortlicher im Sinne der DSGVO für die durch Vereinsorgane oder Mitglieder im Portal verarbeiteten personenbezogenen Daten.</li>
+        <li>Das Fishing-Club-Portal stellt die technische Plattform für Speicherung, Verarbeitung und Zugriff bereit und handelt insoweit als technischer Plattformbetreiber.</li>
+        <li>Die Verarbeitung erfolgt ausschließlich zur Bereitstellung und zum Betrieb der Plattformfunktionen.</li>
+        <li>Mit offizieller Markteinführung oder Nutzung durch weitere Vereine werden entsprechende Auftragsverarbeitungsvereinbarungen (Art. 28 DSGVO) geschlossen.</li>
+        <li>Die Plattform ist so konzipiert, dass Daten verschiedener Vereine technisch voneinander getrennt verarbeitet werden.</li>
+      </ol>
+
       <h2>6. Registrierung und Zugang</h2>
       <ol>
         <li>Geschützte Bereiche dürfen nur von berechtigten Nutzern verwendet werden.</li>
         <li>Der technische Login-Identifier ist die im Auth-System geführte E-Mail-Adresse.</li>
-        <li>Mitgliedsnummern und Kürzel (z. B. 001) dienen primär der Vereinslogik/Anzeige und sind nicht zwingend ein direkter Login-Name.</li>
+        <li>Mitgliedsnummern und Kürzel dienen ausschließlich der vereinsinternen Zuordnung und Anzeige.</li>
+        <li>In Übergangsphasen kann eine Anmeldung technisch auch über Mitgliedskennungen erfolgen, die intern auf Auth-E-Mail-Identitäten abgebildet werden.</li>
         <li>Zugangsdaten sind geheim zu halten und vor dem Zugriff Dritter zu schützen.</li>
         <li>Bei Verdacht auf Missbrauch sind Zugangsdaten unverzüglich zu ändern und der Verein zu informieren.</li>
       </ol>
@@ -128,7 +139,7 @@ import { APP } from "../config/app";
       <h2>16. Beendigung der Nutzung (Exit-Regelung)</h2>
       <ol>
         <li>Die Nutzung kann durch Vorstandsbeschluss beendet werden.</li>
-        <li>Im Beendigungsfall erfolgen Einstellung des Betriebs, datenschutzkonforme Löschung vereinsbezogener Daten und Dokumentation der Löschung.</li>
+        <li>Im Beendigungsfall erfolgen die Einstellung des Portalbetriebs, die datenschutzkonforme Löschung vereinsbezogener Daten, ein optionaler Export vereinsrelevanter Daten zur Übergabe an den Verein und die Dokumentation der Löschung.</li>
       </ol>
 
       <h2>17. Schlussbestimmungen</h2>
@@ -137,6 +148,11 @@ import { APP } from "../config/app";
         <li>Zwingende Verbraucherschutzvorschriften bleiben unberührt.</li>
         <li>Sollten einzelne Bestimmungen unwirksam sein oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.</li>
       </ol>
+
+      <p class="small">
+        © Fishing-Club-Portal - Software von Michael Lauenroth<br />
+        Portalbetrieb für VDAN Ottenheim
+      </p>
     </div>
   </section>
 </Site>

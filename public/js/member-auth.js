@@ -483,6 +483,54 @@
     return true;
   }
 
+  async function loadLegalAcceptanceState(accessToken = "") {
+    const token = String(accessToken || "").trim() || String(loadSession()?.access_token || "").trim();
+    if (!token) return null;
+    const res = await sbFetch("/rest/v1/rpc/legal_acceptance_state", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: "{}",
+    });
+    if (!res.ok) return null;
+    const rows = await res.json().catch(() => []);
+    return Array.isArray(rows) && rows[0] ? rows[0] : null;
+  }
+
+  async function acceptCurrentLegal(accessToken = "") {
+    const token = String(accessToken || "").trim() || String(loadSession()?.access_token || "").trim();
+    if (!token) return null;
+    const userAgent = String(navigator?.userAgent || "").slice(0, 255);
+    const res = await sbFetch("/rest/v1/rpc/accept_current_legal", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        p_terms: true,
+        p_privacy: true,
+        p_user_agent: userAgent,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.message || err?.error || "accept_current_legal_failed");
+    }
+    const rows = await res.json().catch(() => []);
+    return Array.isArray(rows) && rows[0] ? rows[0] : null;
+  }
+
+  async function enforceLegalAcceptanceIfNeeded(accessToken = "", redirectTarget = "") {
+    const path = String(window.location.pathname || "");
+    if (!path.startsWith("/app/")) return false;
+    if (path.startsWith("/app/passwort-aendern/")) return false;
+    if (path.startsWith("/app/zugang-pruefen/")) return false;
+    if (path.startsWith("/app/rechtliches-bestaetigen/")) return false;
+
+    const state = await loadLegalAcceptanceState(accessToken);
+    if (!state?.needs_acceptance) return false;
+    const next = encodeURIComponent(String(redirectTarget || (path + window.location.search) || "/app/"));
+    window.location.replace(`/app/rechtliches-bestaetigen/?next=${next}`);
+    return true;
+  }
+
   async function logout() {
     const session = loadSession() || loadStoredSession();
     if (!session) {
@@ -521,6 +569,8 @@
     consumeAuthCallbackFromUrl,
     memberNoToEmail,
     ensureProfileBootstrap,
+    loadLegalAcceptanceState,
+    acceptCurrentLegal,
     verifyInviteToken,
     claimPendingInviteIfPresent,
     logout,
@@ -573,6 +623,7 @@
             return;
           }
           if (await enforceIdentityVerificationIfNeeded(sessionData?.access_token || "", target)) return;
+          if (await enforceLegalAcceptanceIfNeeded(sessionData?.access_token || "", target)) return;
           window.location.assign(target);
         } catch (err) {
           if (msg) msg.textContent = err?.message || "Login fehlgeschlagen";
@@ -606,7 +657,7 @@
         const accepted = Boolean(document.getElementById("registerAccept")?.checked);
 
         if (!accepted) {
-          if (regMsg) regMsg.textContent = "Bitte Nutzungsbedingungen bestätigen.";
+          if (regMsg) regMsg.textContent = "Bitte Nutzungsbedingungen und Datenschutzerklärung bestätigen.";
           return;
         }
         if (pass !== pass2) {
@@ -634,13 +685,14 @@
               first_name: firstName,
               last_name: lastName,
             };
-            const result = await signUpWithPassword(inviteEmail, pass, {
+          const result = await signUpWithPassword(inviteEmail, pass, {
               ...claimPayload,
               club_code: clubCode,
               club_name: String(verify?.club_name || "").trim(),
             });
             writePendingInvite(claimPayload);
             if (result?.access_token) {
+              await acceptCurrentLegal(result.access_token);
               await ensureProfileBootstrap(result.access_token, {
                 preferred_member_no: effectiveMemberNo,
                 first_name: firstName,
@@ -669,6 +721,7 @@
             registration_mode: "self",
           });
           if (result?.access_token) {
+            await acceptCurrentLegal(result.access_token);
             await ensureProfileBootstrap(result.access_token, {
               preferred_member_no: memberNo,
               first_name: firstName,
@@ -717,6 +770,7 @@
       (async () => {
         await enforcePasswordChangeIfNeeded().catch(() => {});
         await enforceIdentityVerificationIfNeeded(active?.access_token || "").catch(() => {});
+        await enforceLegalAcceptanceIfNeeded(active?.access_token || "").catch(() => {});
       })();
     }
   });

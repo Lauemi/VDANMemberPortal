@@ -37,11 +37,13 @@ const appChannel = String(import.meta.env.PUBLIC_APP_CHANNEL ?? "beta").trim().t
 const isBetaChannel = appChannel === "beta";
 const resolvedSiteMode = resolveSiteMode(Astro.url.hostname, APP.siteMode);
 const isFcpMode = resolvedSiteMode === "fcp";
+const runtimeSiteName = isFcpMode ? "Fishing-Club-Portal" : "VDAN Ottenheim";
 const effectiveAppTheme = isFcpMode ? "fcp_tactical" : "vdan_default";
 const themeColor = isFcpMode ? "#2f352a" : "#0b1220";
+const normalizedTitle = String(title || runtimeSiteName).replace(APP.name, runtimeSiteName);
 const displayTitle = isBetaChannel && !String(title).toLowerCase().includes("beta")
-  ? `${title} · BETA`
-  : title;
+  ? `${normalizedTitle} · BETA`
+  : normalizedTitle;
 const host = Astro.url.hostname.toLowerCase();
 const isFcpSchema =
   isFcpMode ||
@@ -66,7 +68,7 @@ const schemaWebsite = {
   "@type": "WebSite",
   "@id": `${schemaBaseUrl}#website`,
   url: schemaBaseUrl,
-  name: APP.name,
+  name: runtimeSiteName,
   publisher: {
     "@id": `${schemaBaseUrl}#organization`,
   },
@@ -85,6 +87,9 @@ const schemaGraphJson = JSON.stringify({
   "@context": "https://schema.org",
   "@graph": [schemaOrganization, schemaWebsite, schemaWebPage],
 });
+const favicon192 = isFcpMode ? "/Branding/NewLogoCamouFCP.png" : "/icon-192.png";
+const favicon512 = isFcpMode ? "/Branding/NewLogoCamouFCP.png" : "/icon-512.png";
+const appleTouch = isFcpMode ? "/Branding/NewLogoCamouFCP.png" : "/apple-touch-icon.png";
 
 // Guard member area paths:
 const path = Astro.url.pathname.toLowerCase();
@@ -131,11 +136,12 @@ const publicMenuLinks = isFcpMode
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content={APP.brand} />
+    <meta name="apple-mobile-web-app-title" content={runtimeSiteName} />
     <script type="application/ld+json" set:html={schemaGraphJson}></script>
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href={favicon192} />
+    <link rel="icon" type="image/png" sizes="512x512" href={favicon512} />
+    <link rel="shortcut icon" type="image/png" href={favicon192} />
+    <link rel="apple-touch-icon" sizes="180x180" href={appleTouch} />
     <link rel="stylesheet" href="/css/ui-standards.css" />
     <link rel="stylesheet" href="/css/main.css" />
     <link rel="stylesheet" href="/css/consent-manager.css" />

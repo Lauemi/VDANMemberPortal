@@ -34,9 +34,12 @@ jobs:
           PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
           PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.PUBLIC_VAPID_PUBLIC_KEY }}
           PUBLIC_MEMBER_CARD_VERIFY_PUBKEY: ${{ secrets.PUBLIC_MEMBER_CARD_VERIFY_PUBKEY }}
-          PUBLIC_APP_NAME: ${{ secrets.PUBLIC_APP_NAME }}
-          PUBLIC_APP_BRAND: ${{ secrets.PUBLIC_APP_BRAND }}
-          PUBLIC_APP_THEME: ${{ secrets.PUBLIC_APP_THEME }}
+          # VDAN deploy path is intentionally hard-pinned to VDAN surface defaults.
+          # FCP branding/theme is handled in the separate Vercel deployment path.
+          PUBLIC_SITE_MODE: vdan
+          PUBLIC_APP_NAME: VDAN Ottenheim
+          PUBLIC_APP_BRAND: VDAN
+          PUBLIC_APP_THEME: vdan_default
           PUBLIC_SUPERADMIN_USER_IDS: ${{ secrets.PUBLIC_SUPERADMIN_USER_IDS }}
         run: npm run build
 

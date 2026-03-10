@@ -3,11 +3,16 @@ import "../styles/app-shell.css";
 import { APP } from "../config/app";
 import pkg from "../../package.json";
 
+function envText(value: unknown, fallback: string) {
+  const text = String(value ?? "").trim();
+  return text || fallback;
+}
+
 const {
   title = APP.name,
   description = "",
   robots = "index",
-  canonical = Astro.url.href,
+  canonical: canonicalProp,
   containerClass = "container",
 } = Astro.props as {
   title?: string;
@@ -30,6 +35,49 @@ const themeColor = APP.theme === "fcp_tactical" ? "#2f352a" : "#0b1220";
 const displayTitle = isBetaChannel && !String(title).toLowerCase().includes("beta")
   ? `${title} · BETA`
   : title;
+const host = Astro.url.hostname.toLowerCase();
+const isFcpSchema =
+  APP.theme === "fcp_tactical" ||
+  APP.brand.toLowerCase().includes("fcp") ||
+  host.includes("fishing-club-portal.de");
+const defaultSiteUrl = envText(
+  import.meta.env.PUBLIC_SITE_URL,
+  isFcpSchema ? "https://www.fishing-club-portal.de/" : "https://www.vdan-ottenheim.com/",
+);
+const canonical = canonicalProp || new URL(Astro.url.pathname, defaultSiteUrl).href;
+const schemaBaseUrl = new URL(defaultSiteUrl).origin;
+const schemaOrganization = {
+  "@type": "Organization",
+  "@id": `${schemaBaseUrl}#organization`,
+  name: isFcpSchema
+    ? "Fishing-Club-Portal"
+    : "VDAN (Verein der Angler und Naturfreunde Ottenheim 1957 e.V.)",
+  url: isFcpSchema ? "https://www.fishing-club-portal.de/" : "https://www.vdan-ottenheim.com/",
+  email: APP.supportEmail,
+};
+const schemaWebsite = {
+  "@type": "WebSite",
+  "@id": `${schemaBaseUrl}#website`,
+  url: schemaBaseUrl,
+  name: APP.name,
+  publisher: {
+    "@id": `${schemaBaseUrl}#organization`,
+  },
+};
+const schemaWebPage = {
+  "@type": "WebPage",
+  "@id": `${canonical}#webpage`,
+  url: canonical,
+  name: displayTitle,
+  description,
+  isPartOf: {
+    "@id": `${schemaBaseUrl}#website`,
+  },
+};
+const schemaGraphJson = JSON.stringify({
+  "@context": "https://schema.org",
+  "@graph": [schemaOrganization, schemaWebsite, schemaWebPage],
+});
 const isDevRuntime = import.meta.env.DEV === true;
 const siteLockdownFlag = String(import.meta.env.PUBLIC_SITE_LOCKDOWN ?? "true").trim().toLowerCase() === "true";
 const siteLockdown = isDevRuntime ? false : siteLockdownFlag;
@@ -54,10 +102,12 @@ const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
     <link rel="canonical" href={canonical} />
     <meta name="theme-color" content={themeColor} />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content={APP.brand} />
+    <script type="application/ld+json" set:html={schemaGraphJson}></script>
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />

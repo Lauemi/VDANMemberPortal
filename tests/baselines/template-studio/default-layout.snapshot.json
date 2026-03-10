@@ -1,0 +1,14 @@
+{
+  "header": [
+    "header-brand",
+    "header-menu"
+  ],
+  "main": [
+    "hero-card",
+    "table"
+  ],
+  "footer": [
+    "action-row"
+  ]
+}
+

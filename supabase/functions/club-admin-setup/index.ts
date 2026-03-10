@@ -1,3 +1,10 @@
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+  serve(handler: (req: Request) => Response | Promise<Response>): void;
+};
+
 type SetupBody = {
   club_name: string;
   club_code?: string;
@@ -7,6 +14,20 @@ type SetupBody = {
   waters?: string[];
   make_public_active?: boolean;
   assign_creator_roles?: boolean;
+};
+
+type InviteRecord = {
+  version: 1;
+  status: "active" | "exhausted" | "revoked";
+  club_id: string;
+  club_code: string;
+  club_name: string;
+  created_at: string;
+  created_by: string;
+  expires_at: string;
+  max_uses: number;
+  used_count: number;
+  used_user_ids: string[];
 };
 
 function cors(req: Request) {
@@ -206,6 +227,17 @@ function autoMemberNo(clubId: string, userId: string) {
   return `MID-${clubPart}-${userPart}`;
 }
 
+function generateInviteToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(18));
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sha256Hex(value: string) {
+  const enc = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", enc);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 async function ensureCreatorProfileBinding(actor: Record<string, unknown>, userId: string, clubId: string) {
   const profileRes = await sbServiceFetch(
     `/rest/v1/profiles?select=id,club_id,member_no&limit=1&id=eq.${encodeURIComponent(userId)}`,
@@ -249,7 +281,7 @@ async function ensureCreatorProfileBinding(actor: Record<string, unknown>, userI
   });
 }
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   const headers = cors(req);
   if (req.method === "OPTIONS") return new Response("ok", { headers });
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers });
@@ -300,6 +332,9 @@ Deno.serve(async (req) => {
 
     const clubId = crypto.randomUUID();
     const createdAt = new Date().toISOString();
+    const inviteToken = generateInviteToken();
+    const inviteTokenHash = await sha256Hex(inviteToken);
+    const inviteExpiresAt = new Date(Date.now() + (14 * 24 * 60 * 60 * 1000)).toISOString();
 
     const meta = {
       club_id: clubId,
@@ -316,6 +351,21 @@ Deno.serve(async (req) => {
     await upsertSetting(`club_name:${clubId}`, clubName);
     await upsertSetting(`club_code_map:${clubCode}`, clubId);
     await upsertSetting(`club_cards:${clubId}`, JSON.stringify(cards));
+    const inviteRecord: InviteRecord = {
+      version: 1,
+      status: "active",
+      club_id: clubId,
+      club_code: clubCode,
+      club_name: clubName,
+      created_at: createdAt,
+      created_by: String(actor.id),
+      expires_at: inviteExpiresAt,
+      max_uses: 25,
+      used_count: 0,
+      used_user_ids: [],
+    };
+    await upsertSetting(`club_invite_token:${inviteTokenHash}`, JSON.stringify(inviteRecord));
+    await upsertSetting(`club_invite_active:${clubId}`, inviteTokenHash);
 
     if (makePublicActive) {
       await upsertSetting("public_active_club_id", clubId);
@@ -328,6 +378,12 @@ Deno.serve(async (req) => {
     }
     await ensureCreatorProfileBinding(actor, String(actor.id), clubId);
 
+    const reqOrigin = txt(req.headers.get("origin"));
+    const registerUrl = reqOrigin
+      ? `${reqOrigin.replace(/\/+$/, "")}/registrieren/?invite=${encodeURIComponent(inviteToken)}`
+      : `/registrieren/?invite=${encodeURIComponent(inviteToken)}`;
+    const inviteQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(registerUrl)}`;
+
     return new Response(
       JSON.stringify({
         ok: true,
@@ -339,6 +395,10 @@ Deno.serve(async (req) => {
         waters_created: waters,
         public_active_set: makePublicActive,
         creator_roles_assigned: assignCreatorRoles,
+        invite_token: inviteToken,
+        invite_expires_at: inviteExpiresAt,
+        invite_register_url: registerUrl,
+        invite_qr_url: inviteQrUrl,
       }),
       { status: 200, headers: { ...headers, "Content-Type": "application/json" } },
     );

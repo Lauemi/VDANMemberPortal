@@ -7,7 +7,10 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "test": "node --test"
+    "test": "node --test",
+    "check:xss-guard": "node scripts/check-xss-guard.mjs",
+    "check:studio-contract": "node scripts/check-studio-contract.mjs",
+    "report:role-matrix": "node scripts/generate-role-page-matrix-report.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.6.0",

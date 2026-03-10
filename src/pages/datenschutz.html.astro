@@ -3,25 +3,17 @@ import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
 ---
 
-<Site title={`Datenschutz • ${APP.name}`} description="Datenschutzhinweise für Fishing-Club-Portal und angebundene Vereinsauftritte.">
+<Site title={`Datenschutz • ${APP.name}`} description="Datenschutzhinweise für die Website und das Mitgliederportal des VDAN Ottenheim.">
   <section class="card" style="max-width:980px;margin:0 auto;">
     <div class="card__body">
       <h1>Datenschutzerklärung</h1>
-      <p class="small">Stand: 4. März 2026</p>
+      <p class="small">Stand: 9. März 2026</p>
 
-      <h2>1. Verantwortlicher und Geltungsbereich</h2>
+      <h2>1. Verantwortlicher</h2>
       <p>
-        Diese Datenschutzerklärung gilt für den Betrieb der Plattform <strong>Fishing-Club-Portal</strong> unter den
-        zugehörigen Domains/Subdomains (inkl. Vereinsauftritte und Mitgliederportal).
-      </p>
-      <p>
-        Plattform-Betrieb / technische Verantwortung:<br />
-        Michael Lauenroth<br />
-        E-Mail: <a href="mailto:m.lauenroth@lauemi.de">m.lauenroth@lauemi.de</a>
-      </p>
-      <p>
-        Für vereinsbezogene Inhalte und fachliche Entscheidungen im jeweiligen Vereinsauftritt bleibt der jeweilige Verein
-        verantwortlich. Die rechtsverbindlichen Anbieterangaben finden sich im Impressum.
+        Verein der Angler und Naturfreunde Ottenheim 1957 e.V.<br />
+        Georgenstr. 33, 77963 Schwanau<br />
+        E-Mail: <a href="mailto:vdan.ottenheim@freenet.de">vdan.ottenheim@freenet.de</a>
       </p>
 
       <h2>2. Gegenstand dieser Erklärung</h2>
@@ -61,8 +53,12 @@ import { APP } from "../config/app";
         Verträge zur Auftragsverarbeitung gemäß Art. 28 DSGVO abgeschlossen.
       </p>
       <p>
-        Rollenklärung: Der jeweilige Verein ist Verantwortlicher für die inhaltliche Verarbeitung der Vereinsdaten.
-        Technische Plattformleistungen erfolgen als Auftragsverarbeitung.
+        Rollenklärung: Der Verein ist Verantwortlicher für die inhaltliche Verarbeitung der Vereinsdaten. Technische
+        Plattformleistungen erfolgen als Auftragsverarbeitung.
+      </p>
+      <p>
+        Die Plattform ist so konzipiert, dass Daten verschiedener Vereine technisch voneinander getrennt verarbeitet
+        werden (tenant-scope / mandantenbezogene Trennung).
       </p>
 
       <h2>6. Datenübermittlung in Drittländer</h2>
@@ -96,9 +92,9 @@ import { APP } from "../config/app";
         rollenbasiert auf Basis technischer Zugriffskontrollen und Berechtigungsregeln.
       </p>
       <p>
-        Für mandantenfähige Vereinsstrukturen wird der Datenzugriff technisch nach Vereinskontext getrennt
-        (Tenant-/`club_id`-Prinzip). Ein bereichsübergreifender Zugriff erfolgt nur, wenn dies technisch und rechtlich
-        zulässig konfiguriert ist.
+        Für die technische Authentifizierung ist die im Auth-System hinterlegte E-Mail-Adresse maßgeblich. Vereinsinterne
+        Kennungen (z. B. Mitgliedsnummern/Kürzel) können als Funktions- oder Anzeigeattribute genutzt werden, sind aber
+        nicht zwingend der primäre Login-Identifier.
       </p>
 
       <h2>10. Online-Bewerbung „Mitglied werden“</h2>
@@ -122,7 +118,7 @@ import { APP } from "../config/app";
         entgegenstehen.
       </p>
 
-      <h2>11. Kontaktformular und Missbrauchsschutz</h2>
+      <h2>11. Kontaktformular / Spam-Schutz</h2>
       <p>
         Das Kontaktformular wird serverseitig verarbeitet. Zur Missbrauchsabwehr setzen wir technische
         Schutzmechanismen ein (u. a. Turnstile/Bot-Prüfung, Honeypot, Plausibilitätsprüfungen und Rate-Limits).
@@ -149,10 +145,19 @@ import { APP } from "../config/app";
         <li>Google Maps Embed (Seite „Anglerheim Ottenheim“)</li>
         <li>Leaflet CDN (`unpkg.com`) und OpenStreetMap-Kacheln (Gewässerkarte)</li>
         <li>Externer QR-Code-Bilddienst (`api.qrserver.com`)</li>
+        <li>Spreadshirt Shop-Client (Seite „Vereinsshop“)</li>
       </ul>
       <p>
         Die Steuerung erfolgt über das Consent-Banner bzw. über „Datenschutz-Einstellungen“. Rechtsgrundlage für diese
         optionalen externen Inhalte ist Ihre Einwilligung (Art. 6 Abs. 1 lit. a DSGVO).
+      </p>
+      <p>
+        Auf der Seite „Vereinsshop“ steht zusätzlich ein externer Direktlink zum Shop zur Verfügung. Beim Aufruf des
+        externen Shops gelten ergänzend die Datenschutz- und Cookie-Regelungen des Shop-Anbieters.
+      </p>
+      <p>
+        Soweit über externe Inhalte eine Übermittlung in Drittländer erfolgt, basiert diese auf den in Abschnitt 6
+        genannten Garantien nach Art. 44 ff. DSGVO.
       </p>
       <p>
         Erteilte Einwilligungen können jederzeit mit Wirkung für die Zukunft widerrufen werden. Die Rechtmäßigkeit
@@ -183,7 +188,7 @@ import { APP } from "../config/app";
       <h2>17. Kontakt Datenschutz</h2>
       <p>
         Bei Fragen zum Datenschutz wenden Sie sich bitte an:<br />
-        <a href="mailto:m.lauenroth@lauemi.de">m.lauenroth@lauemi.de</a>
+        <a href="mailto:vdan.ottenheim@freenet.de">vdan.ottenheim@freenet.de</a>
       </p>
     </div>
   </section>

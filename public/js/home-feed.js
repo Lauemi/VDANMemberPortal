@@ -21,6 +21,7 @@
   let canManage = false;
   let managerProfiles = [];
   let pendingPosts = [];
+  let initInProgress = false;
   const forcedCategory = String(document.querySelector("[data-feed-category]")?.getAttribute("data-feed-category") || "").trim().toLowerCase() || "";
   const isForcedCategory = Boolean(forcedCategory);
   const isYouthFeed = forcedCategory === "jugend";
@@ -78,7 +79,7 @@
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      const e = new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      const e = new Error(err?.message || err?.detail || err?.hint || err?.error_description || `Request failed (${res.status})`);
       e.status = res.status;
       throw e;
     }
@@ -1522,6 +1523,9 @@
   }
 
   async function init() {
+    if (initInProgress) return;
+    initInProgress = true;
+    try {
     const btn = document.getElementById("feedNewPost");
     if (!btn) return;
 
@@ -1552,6 +1556,9 @@
     if (canManage && consumeOpenComposerIntent()) mountNewComposer();
 
     await refresh();
+    } finally {
+      initInProgress = false;
+    }
   }
 
   document.addEventListener("DOMContentLoaded", init);

@@ -3,6 +3,8 @@
   const OFFLINE_NS = "term_cockpit";
   let createDialog = null;
   let isManager = false;
+  let listenersBound = false;
+  let initInProgress = false;
 
   function cfg() {
     return {
@@ -25,7 +27,7 @@
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      const e = new Error(err?.message || err?.hint || `Request failed (${res.status})`);
+      const e = new Error(err?.message || err?.detail || err?.hint || `Request failed (${res.status})`);
       e.status = res.status;
       throw e;
     }
@@ -73,6 +75,16 @@
     if (Number.isNaN(d.getTime())) return "";
     const pad = (n) => String(n).padStart(2, "0");
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function statusLabel(status) {
+    const map = {
+      draft: "Entwurf",
+      published: "Veröffentlicht",
+      cancelled: "Abgesagt",
+      archived: "Archiviert",
+    };
+    return map[String(status || "").toLowerCase()] || String(status || "-");
   }
 
   async function loadRoles() {
@@ -182,20 +194,22 @@
   }
 
   function eventCardHtml(row) {
+    const rowId = String(row?.id || "").trim();
+    const rowSuffix = rowId || "unknown";
     return `
-      <div class="card__body">
+      <div class="card__body" data-studio-component-id="term-cockpit-event-body-${rowSuffix}" data-studio-component-type="section" data-studio-slot="main">
         <h3>${escapeHtml(row.title)}</h3>
         <p class="small">${escapeHtml(fmt(row.starts_at))} - ${escapeHtml(fmt(row.ends_at))}</p>
-        <p class="small">${escapeHtml(row.location || "Ort offen")} | Status: ${escapeHtml(row.status)}</p>
+        <p class="small">${escapeHtml(row.location || "Ort offen")} | Status: ${escapeHtml(statusLabel(row.status))}</p>
         ${row.description ? `<p class="small">${escapeHtml(row.description)}</p>` : ""}
-        <div class="work-actions">
-          <button class="feed-btn" type="button" data-publish="${row.id}" ${row.status === "draft" ? "" : "disabled"}>Publish</button>
-          <button class="feed-btn feed-btn--ghost" type="button" data-cancel="${row.id}" ${row.status === "published" ? "" : "disabled"}>Cancel</button>
-          <button class="feed-btn feed-btn--ghost" type="button" data-archive="${row.id}" ${row.status !== "archived" ? "" : "disabled"}>Archive</button>
-          <button class="feed-btn feed-btn--ghost" type="button" data-edit-toggle="${row.id}">Bearbeiten</button>
-          <button class="feed-btn feed-btn--ghost" type="button" data-delete-event="${row.id}">Löschen</button>
+        <div class="work-actions" data-studio-component-id="term-cockpit-event-actions-${rowSuffix}" data-studio-component-type="section" data-studio-slot="main">
+          <button class="feed-btn" type="button" data-publish="${row.id}" data-studio-component-id="term-cockpit-publish-btn-${rowSuffix}" data-studio-component-type="button" data-studio-slot="main" data-component-name="Veröffentlichen" ${row.status === "draft" ? "" : "disabled"}>Veröffentlichen</button>
+          <button class="feed-btn feed-btn--ghost" type="button" data-cancel="${row.id}" data-studio-component-id="term-cockpit-cancel-btn-${rowSuffix}" data-studio-component-type="button" data-studio-slot="main" data-component-name="Absagen" ${row.status === "published" ? "" : "disabled"}>Absagen</button>
+          <button class="feed-btn feed-btn--ghost" type="button" data-archive="${row.id}" data-studio-component-id="term-cockpit-archive-btn-${rowSuffix}" data-studio-component-type="button" data-studio-slot="main" data-component-name="Archivieren" ${row.status !== "archived" ? "" : "disabled"}>Archivieren</button>
+          <button class="feed-btn feed-btn--ghost" type="button" data-edit-toggle="${row.id}" data-studio-component-id="term-cockpit-edit-toggle-btn-${rowSuffix}" data-studio-component-type="button" data-studio-slot="main" data-component-name="Bearbeiten">Bearbeiten</button>
+          <button class="feed-btn feed-btn--ghost" type="button" data-delete-event="${row.id}" data-studio-component-id="term-cockpit-delete-btn-${rowSuffix}" data-studio-component-type="button" data-studio-slot="main" data-component-name="Löschen">Löschen</button>
         </div>
-        <div class="hidden" data-edit-panel="${row.id}">
+        <div class="hidden" data-edit-panel="${row.id}" data-studio-component-id="term-cockpit-edit-panel-${rowSuffix}" data-studio-component-type="dialog" data-studio-slot="main">
           <div class="grid cols2">
             <label><span>Titel</span><input type="text" maxlength="160" value="${escapeHtml(row.title || "")}" data-edit-title="${row.id}" /></label>
             <label><span>Ort</span><input type="text" maxlength="180" value="${escapeHtml(row.location || "")}" data-edit-location="${row.id}" /></label>
@@ -203,7 +217,7 @@
             <label><span>Ende</span><input type="datetime-local" value="${escapeHtml(toLocalInput(row.ends_at))}" data-edit-end="${row.id}" /></label>
             <label style="grid-column:1/-1"><span>Beschreibung</span><textarea rows="2" data-edit-description="${row.id}">${escapeHtml(row.description || "")}</textarea></label>
           </div>
-          <div style="margin-top:8px;"><button class="feed-btn" type="button" data-save-edit="${row.id}">Änderungen speichern</button></div>
+          <div style="margin-top:8px;"><button class="feed-btn" type="button" data-save-edit="${row.id}" data-studio-component-id="term-cockpit-save-edit-btn-${rowSuffix}" data-studio-component-type="button" data-studio-slot="main" data-component-name="Änderungen speichern">Änderungen speichern</button></div>
         </div>
       </div>
     `;
@@ -227,6 +241,10 @@
       list.forEach((row) => {
         const item = document.createElement("article");
         item.className = "card term-card";
+        item.setAttribute("data-studio-component-id", `term-cockpit-event-card-${String(row?.id || "unknown")}`);
+        item.setAttribute("data-studio-component-type", "card");
+        item.setAttribute("data-studio-slot", "main");
+        item.setAttribute("data-component-name", String(row?.title || "Termin Karte"));
         item.innerHTML = eventCardHtml(row);
         root.appendChild(item);
       });
@@ -307,6 +325,9 @@
   }
 
   async function init() {
+    if (initInProgress) return;
+    initInProgress = true;
+    try {
     const { url, key } = cfg();
     createDialog = document.getElementById("termCreateDialog");
 
@@ -322,28 +343,30 @@
       return;
     }
 
-    document.getElementById("termCreateOpenTop")?.addEventListener("click", openDialog);
-    document.getElementById("termCreateOpenFab")?.addEventListener("click", openDialog);
-    document.getElementById("termCreateClose")?.addEventListener("click", closeDialog);
+    if (!listenersBound) {
+      listenersBound = true;
+      document.getElementById("termCreateOpenTop")?.addEventListener("click", openDialog);
+      document.getElementById("termCreateOpenFab")?.addEventListener("click", openDialog);
+      document.getElementById("termCreateClose")?.addEventListener("click", closeDialog);
 
-    document.getElementById("termCreateForm")?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      try {
-        setMsg("Termin wird erstellt...");
-        const out = await createEvent({
-          p_title: String(document.getElementById("termTitle")?.value || "").trim(),
-          p_description: String(document.getElementById("termDescription")?.value || "").trim() || null,
-          p_location: String(document.getElementById("termLocation")?.value || "").trim() || null,
-          p_starts_at: toIso(String(document.getElementById("termStartsAt")?.value || "")),
-          p_ends_at: toIso(String(document.getElementById("termEndsAt")?.value || "")),
-        });
-        closeDialog();
-        setMsg(out?.queued ? "Offline gespeichert. Termin wird bei Empfang übertragen." : "Termin erstellt.");
-        await refresh();
-      } catch (err) {
-        setMsg(err?.message || "Erstellen fehlgeschlagen");
-      }
-    });
+      document.getElementById("termCreateForm")?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          setMsg("Termin wird erstellt...");
+          const out = await createEvent({
+            p_title: String(document.getElementById("termTitle")?.value || "").trim(),
+            p_description: String(document.getElementById("termDescription")?.value || "").trim() || null,
+            p_location: String(document.getElementById("termLocation")?.value || "").trim() || null,
+            p_starts_at: toIso(String(document.getElementById("termStartsAt")?.value || "")),
+            p_ends_at: toIso(String(document.getElementById("termEndsAt")?.value || "")),
+          });
+          closeDialog();
+          setMsg(out?.queued ? "Offline gespeichert. Termin wird bei Empfang übertragen." : "Termin erstellt.");
+          await refresh();
+        } catch (err) {
+          setMsg(err?.message || "Erstellen fehlgeschlagen");
+        }
+      });
 
     const onListClick = async (e) => {
       const t = e.target;
@@ -356,11 +379,15 @@
       }
     };
 
-    document.getElementById("termCockpitActive")?.addEventListener("click", onListClick);
-    document.getElementById("termCockpitHistory")?.addEventListener("click", onListClick);
+      document.getElementById("termCockpitActive")?.addEventListener("click", onListClick);
+      document.getElementById("termCockpitHistory")?.addEventListener("click", onListClick);
+    }
 
     await flushOfflineQueue().catch(() => {});
     await refresh();
+    } finally {
+      initInProgress = false;
+    }
   }
 
   document.addEventListener("DOMContentLoaded", init);

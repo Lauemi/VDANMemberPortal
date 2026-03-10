@@ -3,10 +3,12 @@ function envText(value: unknown, fallback: string) {
   return text || fallback;
 }
 
-const appName = envText(import.meta.env.PUBLIC_APP_NAME, "Fishing-Club-Portal");
-const appBrand = envText(import.meta.env.PUBLIC_APP_BRAND, "FCP");
-const appTheme = envText(import.meta.env.PUBLIC_APP_THEME, "fcp_tactical");
-const superAdminUserIds = envText(import.meta.env.PUBLIC_SUPERADMIN_USER_IDS, "")
+const metaEnv = (import.meta as ImportMeta & { env: Record<string, unknown> }).env;
+
+const appName = envText(metaEnv.PUBLIC_APP_NAME, "Fishing-Club-Portal");
+const appBrand = envText(metaEnv.PUBLIC_APP_BRAND, "FCP");
+const appTheme = envText(metaEnv.PUBLIC_APP_THEME, "vdan_default");
+const superAdminUserIds = envText(metaEnv.PUBLIC_SUPERADMIN_USER_IDS, "")
   .split(",")
   .map((value) => value.trim())
   .filter(Boolean);
@@ -15,6 +17,8 @@ export const APP = {
   name: appName,
   brand: appBrand,
   theme: appTheme,
-  supportEmail: envText(import.meta.env.PUBLIC_SUPPORT_EMAIL, "m.lauenroth@lauemi.de"),
+  supportEmail: envText(metaEnv.PUBLIC_SUPPORT_EMAIL, "m.lauenroth@lauemi.de"),
+  guestLoginMessage: envText(metaEnv.PUBLIC_APP_GUEST_LOGIN_MESSAGE, "Bitte logge dich ein."),
+  guestLoginCtaLabel: envText(metaEnv.PUBLIC_APP_GUEST_LOGIN_CTA_LABEL, "Zum Login"),
   superAdminUserIds,
 };

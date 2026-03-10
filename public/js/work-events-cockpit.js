@@ -5,6 +5,8 @@
   let createDialog = null;
   let featureFlags = { work_qr_enabled: false };
   let memberDirectory = [];
+  let listenersBound = false;
+  let initInProgress = false;
 
   function cfg() {
     return {
@@ -33,7 +35,7 @@
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      const e = new Error(err?.message || err?.hint || err?.error_description || `Request failed (${res.status})`);
+      const e = new Error(err?.message || err?.detail || err?.hint || err?.error_description || `Request failed (${res.status})`);
       e.status = res.status;
       throw e;
     }
@@ -103,6 +105,36 @@
       no_show: "Nicht erschienen",
     };
     return map[status] || status;
+  }
+
+  function hasPendingParticipationChecks(rows) {
+    const pendingStates = new Set(["registered", "checked_in", "submitted"]);
+    return (Array.isArray(rows) ? rows : []).some((r) => pendingStates.has(String(r?.status || "").toLowerCase()));
+  }
+
+  function pendingDecision(status) {
+    const value = String(status || "").toLowerCase();
+    return value === "registered" || value === "checked_in" || value === "submitted";
+  }
+
+  async function resolveCreatedEventId(createResult, expectedTitle = "", expectedStartIso = "") {
+    const direct = String(
+      createResult?.id
+      || createResult?.event_id
+      || createResult?.p_event_id
+      || createResult?.work_event_id
+      || ""
+    ).trim();
+    if (direct) return direct;
+    const rows = await listEvents();
+    const titleNorm = String(expectedTitle || "").trim().toLowerCase();
+    const startNorm = String(expectedStartIso || "").trim();
+    const hit = rows.find((r) => {
+      const sameTitle = String(r?.title || "").trim().toLowerCase() === titleNorm;
+      const sameStart = String(r?.starts_at || "").trim() === startNorm;
+      return sameTitle && sameStart;
+    });
+    return String(hit?.id || "").trim();
   }
 
   function setMsg(text = "") {
@@ -719,7 +751,16 @@
         const minutesLabel = minutesCalculated == null ? "-" : `${minutesCalculated} min`;
         const minutesVal = row.minutes_approved ?? minutesCalculated ?? row.minutes_reported ?? 0;
         return `
-        <tr class="work-part-row ${rowStateClass}">
+        <tr class="work-part-row ${rowStateClass}" data-edit-toggle-row="${row.id}">
+          <td class="work-part-col work-part-col--select">
+            <input
+              type="checkbox"
+              data-bulk-item="${eventId}"
+              data-part-id="${row.id}"
+              data-part-status="${escapeHtml(String(row.status || ""))}"
+              ${pendingDecision(row.status) ? "" : "disabled"}
+            />
+          </td>
           <td class="work-part-col work-part-col--name">
             <div class="work-name-line">
               <strong>${escapeHtml(displayUser(row.auth_uid))}</strong>
@@ -736,7 +777,6 @@
               <label class="small">Freigabe-Minuten
                 <input type="number" min="0" step="1" value="${minutesVal}" data-min="${row.id}" style="max-width:110px;" />
               </label>
-              <button class="feed-btn feed-btn--ghost" type="button" data-edit-toggle="${row.id}">Bearbeiten</button>
               <button class="feed-btn feed-btn--ghost hidden" type="button" data-save-time="${row.id}">Speichern</button>
               <button class="feed-btn" type="button" data-approve="${row.id}">Freigeben</button>
               <button class="feed-btn feed-btn--ghost" type="button" data-reject="${row.id}">Ablehnen</button>
@@ -875,9 +915,18 @@
         </div>
       </div>
       <div class="work-part-table-wrap">
+        <div class="work-bulk-actions">
+          <label class="small">
+            <input type="checkbox" data-bulk-select-all="${eventId}" />
+            Alle offenen auswählen
+          </label>
+          <button class="feed-btn" type="button" data-bulk-approve="${eventId}">Mehrfach freigeben</button>
+          <button class="feed-btn feed-btn--ghost" type="button" data-bulk-reject="${eventId}">Mehrfach ablehnen</button>
+        </div>
         <table class="work-part-table work-part-table--admin">
           <thead>
             <tr>
+              <th class="work-part-col work-part-col--select">✓</th>
               <th class="work-part-col work-part-col--name">Teilnehmer</th>
               <th class="work-part-col work-part-col--from">Von</th>
               <th class="work-part-col work-part-col--to">Bis</th>
@@ -914,9 +963,8 @@
       return;
     }
 
-    const now = Date.now();
-    const activeRows = rows.filter((r) => new Date(r.ends_at).getTime() >= now && r.status !== "archived");
-    const historyRows = rows.filter((r) => new Date(r.ends_at).getTime() < now || r.status === "archived");
+    const activeRows = rows.filter((r) => String(r.status || "").toLowerCase() !== "archived");
+    const historyRows = rows.filter((r) => String(r.status || "").toLowerCase() === "archived");
     const leadsByEvent = await loadLeadMap(rows.map((r) => r.id)).catch(() => new Map());
     const leadUserIds = [...new Set([].concat(...[...leadsByEvent.values()]))];
     const leadProfileMap = await loadProfileMap(leadUserIds);
@@ -928,7 +976,8 @@
       }
       list.forEach((row) => {
         const item = document.createElement("article");
-        item.className = "card work-card";
+        item.className = "card work-card work-card--click-edit";
+        item.setAttribute("data-card-edit-id", String(row.id));
         const leadIds = leadsByEvent.get(row.id) || [];
         const leadId = leadIds[0] || "";
         const leadName = leadId ? (leadProfileMap.get(leadId)?.label || leadId) : "";
@@ -943,10 +992,10 @@
               <button class="feed-btn" type="button" data-publish="${row.id}" ${row.status === "draft" ? "" : "disabled"}>Veröffentlichen</button>
               <button class="feed-btn feed-btn--ghost" type="button" data-cancel="${row.id}" ${row.status === "published" ? "" : "disabled"}>Absagen</button>
               <button class="feed-btn feed-btn--ghost" type="button" data-archive="${row.id}" ${row.status !== "archived" ? "" : "disabled"}>Archivieren</button>
-              <button class="feed-btn feed-btn--ghost" type="button" data-edit-event-toggle="${row.id}">Bearbeiten</button>
-              <button class="feed-btn feed-btn--ghost" type="button" data-delete-event="${row.id}">Löschen</button>
+              <button class="feed-btn feed-btn--danger work-delete-btn" type="button" data-delete-event="${row.id}" aria-label="Einsatz löschen" title="Einsatz löschen">🗑</button>
               <button class="feed-btn feed-btn--ghost" type="button" data-participants="${row.id}" data-event-title="${escapeHtml(row.title)}" data-event-start="${escapeHtml(String(row.starts_at || ""))}" data-event-end="${escapeHtml(String(row.ends_at || ""))}" data-event-lead="${escapeHtml(leadId)}">Teilnehmer</button>
             </div>
+            <p class="small">Tipp: Klick auf die Karte öffnet die Bearbeitung.</p>
             <div class="hidden" data-edit-event-panel="${row.id}">
               <div class="grid cols2">
                 <label><span>Titel</span><input type="text" maxlength="120" value="${escapeHtml(row.title || "")}" data-edit-event-title="${row.id}" /></label>
@@ -984,6 +1033,9 @@
   }
 
   async function init() {
+    if (initInProgress) return;
+    initInProgress = true;
+    try {
     const { url, key } = cfg();
     createDialog = document.getElementById("workCreateDialog");
 
@@ -1005,50 +1057,90 @@
       return;
     }
 
-    document.getElementById("workCreateOpenTop")?.addEventListener("click", openCreateDialog);
-    document.getElementById("workCreateOpenFab")?.addEventListener("click", openCreateDialog);
-    document.getElementById("workCreateClose")?.addEventListener("click", closeCreateDialog);
-    document.getElementById("workIsYouthToggle")?.addEventListener("click", () => {
-      const youth = document.getElementById("workIsYouth");
-      const btn = document.getElementById("workIsYouthToggle");
-      if (!youth || !btn) return;
-      const next = String(youth.value) === "1" ? "0" : "1";
-      youth.value = next;
-      const active = next === "1";
-      btn.style.background = active ? "#1f7a3b" : "";
-      btn.style.borderColor = active ? "#1f7a3b" : "";
-      btn.style.color = active ? "#fff" : "";
-    });
+    if (!listenersBound) {
+      listenersBound = true;
+      document.getElementById("workCreateOpenTop")?.addEventListener("click", openCreateDialog);
+      document.getElementById("workCreateOpenFab")?.addEventListener("click", openCreateDialog);
+      document.getElementById("workCreateClose")?.addEventListener("click", closeCreateDialog);
+      document.getElementById("workIsYouthToggle")?.addEventListener("click", () => {
+        const youth = document.getElementById("workIsYouth");
+        const btn = document.getElementById("workIsYouthToggle");
+        if (!youth || !btn) return;
+        const next = String(youth.value) === "1" ? "0" : "1";
+        youth.value = next;
+        const active = next === "1";
+        btn.style.background = active ? "#1f7a3b" : "";
+        btn.style.borderColor = active ? "#1f7a3b" : "";
+        btn.style.color = active ? "#fff" : "";
+      });
 
-    document.getElementById("workCreateForm")?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      try {
-        setMsg("Einsatz wird erstellt...");
-        const startsAt = toIsoFromLocalInput(String(document.getElementById("workStartsAt")?.value || ""));
-        const endsAt = toIsoFromLocalInput(String(document.getElementById("workEndsAt")?.value || ""));
-        const maxRaw = String(document.getElementById("workMax")?.value || "").trim();
-        const maxParticipants = maxRaw ? Number(maxRaw) : null;
+      document.getElementById("workCreateForm")?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          setMsg("Einsatz wird erstellt...");
+          const startsAt = toIsoFromLocalInput(String(document.getElementById("workStartsAt")?.value || ""));
+          const endsAt = toIsoFromLocalInput(String(document.getElementById("workEndsAt")?.value || ""));
+          const maxRaw = String(document.getElementById("workMax")?.value || "").trim();
+          const maxParticipants = maxRaw ? Number(maxRaw) : null;
 
-        const out = await createEvent({
-          p_title: String(document.getElementById("workTitle")?.value || "").trim(),
-          p_description: String(document.getElementById("workDescription")?.value || "").trim() || null,
-          p_location: String(document.getElementById("workLocation")?.value || "").trim() || null,
-          p_starts_at: startsAt,
-          p_ends_at: endsAt,
-          p_max_participants: Number.isFinite(maxParticipants) ? maxParticipants : null,
-          p_is_youth: String(document.getElementById("workIsYouth")?.value || "0") === "1",
-        });
-        closeCreateDialog();
-        setMsg(out?.queued ? "Offline gespeichert. Einsatz wird bei Empfang übertragen." : "Einsatz erstellt.");
-        await refresh();
-      } catch (err) {
-        setMsg(err?.message || "Erstellen fehlgeschlagen");
-      }
-    });
+          const title = String(document.getElementById("workTitle")?.value || "").trim();
+          const out = await createEvent({
+            p_title: title,
+            p_description: String(document.getElementById("workDescription")?.value || "").trim() || null,
+            p_location: String(document.getElementById("workLocation")?.value || "").trim() || null,
+            p_starts_at: startsAt,
+            p_ends_at: endsAt,
+            p_max_participants: Number.isFinite(maxParticipants) ? maxParticipants : null,
+            p_is_youth: String(document.getElementById("workIsYouth")?.value || "0") === "1",
+          });
+          let leadMsg = "";
+          if (!out?.queued) {
+            try {
+              const createdId = await resolveCreatedEventId(out, title, startsAt);
+              const ownId = String(currentUserId() || "").trim();
+              if (createdId && ownId) {
+                await saveEventLead(createdId, ownId, false);
+              }
+            } catch {
+              leadMsg = " Hinweis: Zuständigkeit konnte nicht automatisch gesetzt werden.";
+            }
+          }
+          closeCreateDialog();
+          setMsg(out?.queued ? "Offline gespeichert. Einsatz wird bei Empfang übertragen." : `Einsatz erstellt.${leadMsg}`);
+          await refresh();
+        } catch (err) {
+          setMsg(err?.message || "Erstellen fehlgeschlagen");
+        }
+      });
 
     const onCockpitClick = async (e) => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
+
+      const eventCard = target.closest("[data-card-edit-id]");
+      if (eventCard instanceof HTMLElement) {
+        const cardId = String(eventCard.getAttribute("data-card-edit-id") || "").trim();
+        const ignore = target.closest(
+          "button,a,input,select,textarea,label,summary,details,.work-actions,.work-participants,.work-qr-box,.external-media-lock,[data-edit-event-panel]"
+        );
+        if (cardId && !ignore) {
+          document.querySelector(`[data-edit-event-panel="${cardId}"]`)?.classList.toggle("hidden");
+          return;
+        }
+      }
+
+      const editRow = target.closest("tr[data-edit-toggle-row]");
+      if (editRow instanceof HTMLElement) {
+        const editRowId = String(editRow.getAttribute("data-edit-toggle-row") || "").trim();
+        const interactive = target.closest("button,a,input,select,textarea,label");
+        if (editRowId && !interactive) {
+          const panel = document.querySelector(`[data-edit-panel="${editRowId}"]`);
+          const saveBtn = document.querySelector(`[data-save-time="${editRowId}"]`);
+          if (panel) panel.classList.toggle("hidden");
+          if (saveBtn) saveBtn.classList.toggle("hidden");
+          return;
+        }
+      }
 
       const publishId = target.getAttribute("data-publish");
       if (publishId) {
@@ -1079,6 +1171,11 @@
       const archiveId = target.getAttribute("data-archive");
       if (archiveId) {
         try {
+          const parts = await listParticipations(archiveId).catch(() => []);
+          if (hasPendingParticipationChecks(parts)) {
+            setMsg("Archivieren gesperrt: Erst alle Teilnehmer prüfen/freigeben/ablehnen.");
+            return;
+          }
           setMsg("Archiviert...");
           const out = await patchEventStatus(archiveId, "archived");
           setMsg(out?.queued ? "Offline gespeichert. Archivierung folgt bei Empfang." : "Einsatz archiviert.");
@@ -1249,6 +1346,73 @@
         return;
       }
 
+      const bulkSelectAllEvent = target.getAttribute("data-bulk-select-all");
+      if (bulkSelectAllEvent) {
+        const enabledRows = [...document.querySelectorAll(`input[data-bulk-item="${bulkSelectAllEvent}"]:not(:disabled)`)];
+        const checked = Boolean(target.checked);
+        enabledRows.forEach((cb) => {
+          cb.checked = checked;
+        });
+        return;
+      }
+
+      const bulkApproveEvent = target.getAttribute("data-bulk-approve");
+      if (bulkApproveEvent) {
+        const selected = [...document.querySelectorAll(`input[data-bulk-item="${bulkApproveEvent}"]:checked`)];
+        if (!selected.length) {
+          setMsg("Bitte erst Einträge für die Mehrfachfreigabe auswählen.");
+          return;
+        }
+        const ok = window.confirm(`${selected.length} Teilnahme(n) wirklich freigeben?`);
+        if (!ok) return;
+        let queuedAny = false;
+        try {
+          setMsg("Mehrfachfreigabe läuft...");
+          for (const cb of selected) {
+            const partId = String(cb.getAttribute("data-part-id") || "").trim();
+            if (!partId) continue;
+            const minutesEl = document.querySelector(`[data-min="${partId}"]`);
+            const minutes = Number(minutesEl?.value || 0);
+            const out = await approveParticipation(partId, minutes);
+            if (out?.queued) queuedAny = true;
+          }
+          setMsg(queuedAny ? "Bulk-Freigabe offline vorgemerkt." : "Ausgewählte Teilnahmen freigegeben.");
+          const host = document.getElementById(`parts-${bulkApproveEvent}`);
+          if (host?.dataset.open === "1") await renderParticipations(bulkApproveEvent, host, { membersOpen: host.dataset.membersOpen === "1" });
+        } catch (err) {
+          setMsg(err?.message || "Mehrfachfreigabe fehlgeschlagen.");
+        }
+        return;
+      }
+
+      const bulkRejectEvent = target.getAttribute("data-bulk-reject");
+      if (bulkRejectEvent) {
+        const selected = [...document.querySelectorAll(`input[data-bulk-item="${bulkRejectEvent}"]:checked`)];
+        if (!selected.length) {
+          setMsg("Bitte erst Einträge für die Mehrfachablehnung auswählen.");
+          return;
+        }
+        const note = (window.prompt("Grund für die Mehrfachablehnung (optional):", "") || "").trim();
+        const ok = window.confirm(`${selected.length} Teilnahme(n) wirklich ablehnen?`);
+        if (!ok) return;
+        let queuedAny = false;
+        try {
+          setMsg("Mehrfachablehnung läuft...");
+          for (const cb of selected) {
+            const partId = String(cb.getAttribute("data-part-id") || "").trim();
+            if (!partId) continue;
+            const out = await rejectParticipation(partId, note);
+            if (out?.queued) queuedAny = true;
+          }
+          setMsg(queuedAny ? "Bulk-Ablehnung offline vorgemerkt." : "Ausgewählte Teilnahmen abgelehnt.");
+          const host = document.getElementById(`parts-${bulkRejectEvent}`);
+          if (host?.dataset.open === "1") await renderParticipations(bulkRejectEvent, host, { membersOpen: host.dataset.membersOpen === "1" });
+        } catch (err) {
+          setMsg(err?.message || "Mehrfachablehnung fehlgeschlagen.");
+        }
+        return;
+      }
+
       const approveId = target.getAttribute("data-approve");
       if (approveId) {
         const minutesEl = document.querySelector(`[data-min="${approveId}"]`);
@@ -1307,8 +1471,8 @@
       }
     };
 
-    document.getElementById("workCockpitEventsActive")?.addEventListener("click", onCockpitClick);
-    document.getElementById("workCockpitEventsHistory")?.addEventListener("click", onCockpitClick);
+      document.getElementById("workCockpitEventsActive")?.addEventListener("click", onCockpitClick);
+      document.getElementById("workCockpitEventsHistory")?.addEventListener("click", onCockpitClick);
     const onEditInput = (e) => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -1332,11 +1496,15 @@
       if (preview) preview.textContent = text;
       if (computed) computed.textContent = text;
     };
-    document.getElementById("workCockpitEventsActive")?.addEventListener("input", onEditInput);
-    document.getElementById("workCockpitEventsHistory")?.addEventListener("input", onEditInput);
+      document.getElementById("workCockpitEventsActive")?.addEventListener("input", onEditInput);
+      document.getElementById("workCockpitEventsHistory")?.addEventListener("input", onEditInput);
+    }
 
     await flushOfflineQueue().catch(() => {});
     await refresh().catch((err) => setMsg(err?.message || "Laden fehlgeschlagen"));
+    } finally {
+      initInProgress = false;
+    }
   }
 
   document.addEventListener("DOMContentLoaded", init);

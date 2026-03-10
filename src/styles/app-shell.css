@@ -30,6 +30,41 @@
   width: 100%;
 }
 
+.fangliste-water-favorites {
+  display: grid;
+  gap: 8px;
+}
+
+.fangliste-water-favorites__actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.fangliste-water-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 34px;
+}
+
+.fangliste-water-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 12px;
+  color: var(--text);
+  background: rgba(255, 255, 255, .03);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.fangliste-water-chip:hover,
+.fangliste-water-chip:focus-visible {
+  border-color: rgba(95, 153, 220, .65);
+  background: rgba(95, 153, 220, .18);
+}
+
 .fangliste-actions {
   display: flex;
   flex-wrap: wrap;

@@ -1,0 +1,89 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Zugang prüfen • ${APP.name}`} description="Pflichtprüfung der Kontodaten" robots="noindex">
+  <section class="card" style="max-width:720px;margin:0 auto;">
+    <div class="card__body">
+      <h1>Zugang prüfen</h1>
+      <p class="small" id="identityModeHint">Bitte prüfe und bestätige jetzt deine Kontodaten.</p>
+      <p id="identityMsg" class="small" aria-live="polite"></p>
+
+      <div class="resp-form-grid" id="identitySummary">
+        <label class="resp-half">
+          <span>Zugangsname</span>
+          <input id="identityAccessName" value="-" disabled />
+        </label>
+        <label class="resp-half">
+          <span>Mitgliedsnummer</span>
+          <input id="identityMemberNo" value="-" disabled />
+        </label>
+        <label class="resp-half">
+          <span>Verein</span>
+          <input id="identityClubCode" value="-" disabled />
+        </label>
+        <label class="resp-half">
+          <span>Vorname</span>
+          <input id="identityFirstName" value="-" disabled />
+        </label>
+        <label class="resp-half">
+          <span>Nachname</span>
+          <input id="identityLastName" value="-" disabled />
+        </label>
+        <label class="resp-full">
+          <span>Auth-E-Mail</span>
+          <input id="identityAuthEmail" value="-" disabled />
+        </label>
+        <label class="resp-full">
+          <span>Kontakt-E-Mail (Profil)</span>
+          <input id="identityProfileEmail" value="-" disabled />
+        </label>
+      </div>
+
+      <form id="identityEmailForm" class="resp-form-grid" style="margin-top:10px;">
+        <label class="resp-full">
+          <span>Neue Auth-E-Mail (falls falsch/ungültig)</span>
+          <input id="identityNewEmail" type="email" autocomplete="email" placeholder="name@domain.tld" />
+        </label>
+        <div class="resp-full" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" id="identitySendEmailBtn" class="feed-btn feed-btn--ghost">Verifizierungs-Mail senden</button>
+          <button type="button" id="identityRefreshBtn" class="feed-btn feed-btn--ghost">Status aktualisieren</button>
+          <a href="/app/einstellungen/" class="feed-btn feed-btn--ghost">Einstellungen öffnen</a>
+        </div>
+      </form>
+
+      <div id="legacyLoginBox" class="resp-form-grid" style="margin-top:10px;display:none;">
+        <label class="resp-full">
+          <span>Mitgliedsnummer zur Bestätigung erneut eingeben</span>
+          <input id="identityMemberNoConfirm" type="text" inputmode="text" autocomplete="off" placeholder="z. B. 598" />
+        </label>
+        <p class="small resp-full" style="color:var(--danger);margin:0;">
+          Hinweis: Aktuell ist bei deinem Konto noch der Legacy-Login mit Mitgliedsnummer aktiv.
+        </p>
+      </div>
+
+      <div id="authOnlyBox" class="resp-form-grid" style="margin-top:10px;display:none;">
+        <label class="resp-full">
+          <span>Gültiger Login-Name (nur E-Mail)</span>
+          <input id="identityAuthLoginOnly" value="-" disabled />
+        </label>
+        <p class="small resp-full" style="margin:0;">
+          Kürzel/Zugangsnamen sind Features zur Anzeige, aber kein direkter Login-Identifier.
+        </p>
+      </div>
+
+      <label class="small" style="display:flex;gap:8px;align-items:flex-start;margin-top:12px;">
+        <input id="identityConfirmCheck" type="checkbox" />
+        <span>Ich habe meine Daten geprüft und die E-Mail-Verifizierung abgeschlossen.</span>
+      </label>
+
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;">
+        <button id="identityCompleteBtn" type="button" class="feed-btn">Prüfung abschließen</button>
+        <span id="identityEmailStatus" class="small"></span>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/identity-check.js" defer></script>
+</Site>

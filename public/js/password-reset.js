@@ -9,7 +9,8 @@
   }
 
   function resetRedirectUrl() {
-    return `${window.location.origin}/login/`;
+    const next = encodeURIComponent("/app/");
+    return `${window.location.origin}/auth/callback?next=${next}`;
   }
 
   function bind() {

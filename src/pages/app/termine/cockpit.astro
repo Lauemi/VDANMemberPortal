@@ -4,28 +4,28 @@ import { APP } from "../../../config/app";
 ---
 
 <Site title={`Termine Cockpit • ${APP.name}`} description="Verwaltung Vereinstermine" robots="noindex">
-  <section class="card">
-    <div class="card__body">
-      <div class="catch-table-toolbar">
+  <section class="card" data-studio-component-id="term-cockpit-shell" data-studio-component-type="section" data-studio-slot="main">
+    <div class="card__body" data-studio-component-id="term-cockpit-content" data-studio-component-type="section" data-studio-slot="main">
+      <div class="catch-table-toolbar" data-studio-component-id="term-cockpit-toolbar" data-studio-component-type="section" data-studio-slot="main">
         <h1>Termine Cockpit</h1>
-        <button type="button" id="termCreateOpenTop" class="catch-add-btn catch-add-btn--top" aria-label="Termin erstellen">+</button>
+        <button type="button" id="termCreateOpenTop" class="catch-add-btn catch-add-btn--top" aria-label="Termin erstellen" data-studio-component-id="term-cockpit-create-top-btn" data-studio-component-type="button" data-studio-slot="main">+</button>
       </div>
       <p class="small">Nur für Vorstand/Admin. Diese Termine erscheinen gemeinsam mit Arbeitseinsätzen auf der Seite Termine.</p>
-      <p id="termCockpitMsg" class="small" aria-live="polite"></p>
+      <p id="termCockpitMsg" class="small" aria-live="polite" data-studio-component-id="term-cockpit-status-msg" data-studio-component-type="section" data-studio-slot="main"></p>
 
       <h2>Aktive Termine</h2>
-      <div id="termCockpitActive" class="grid"></div>
+      <div id="termCockpitActive" class="grid" data-studio-component-id="term-cockpit-active-list" data-studio-component-type="list" data-studio-slot="main"></div>
       <hr />
       <h2>History</h2>
-      <div id="termCockpitHistory" class="grid"></div>
+      <div id="termCockpitHistory" class="grid" data-studio-component-id="term-cockpit-history-list" data-studio-component-type="list" data-studio-slot="main"></div>
     </div>
   </section>
 
   <div class="catch-fab-stack">
-    <button type="button" id="termCreateOpenFab" class="catch-add-btn catch-add-btn--fab" aria-label="Termin erstellen">+</button>
+    <button type="button" id="termCreateOpenFab" class="catch-add-btn catch-add-btn--fab" aria-label="Termin erstellen" data-studio-component-id="term-cockpit-create-fab-btn" data-studio-component-type="button" data-studio-slot="main">+</button>
   </div>
 
-  <dialog id="termCreateDialog" class="catch-dialog">
+  <dialog id="termCreateDialog" class="catch-dialog" data-studio-component-id="term-cockpit-create-dialog" data-studio-component-type="dialog" data-studio-slot="main">
     <form id="termCreateForm" class="catch-dialog__form" method="dialog">
       <h3>Termin erstellen</h3>
       <div class="grid cols2">
@@ -51,8 +51,8 @@ import { APP } from "../../../config/app";
         </label>
       </div>
       <div class="catch-dialog__actions">
-        <button type="submit" class="feed-btn">Erstellen</button>
-        <button type="button" id="termCreateClose" class="feed-btn feed-btn--ghost">Schließen</button>
+        <button type="submit" class="feed-btn" data-studio-component-id="term-cockpit-create-submit-btn" data-studio-component-type="button" data-studio-slot="main">Erstellen</button>
+        <button type="button" id="termCreateClose" class="feed-btn feed-btn--ghost" data-studio-component-id="term-cockpit-create-close-btn" data-studio-component-type="button" data-studio-slot="main">Schließen</button>
       </div>
     </form>
   </dialog>

@@ -525,6 +525,11 @@
       return;
     }
 
+    state.ansicht = loadView();
+    const filter = loadFilter();
+    const searchEl = document.getElementById("workMemberSearch");
+    if (searchEl && filter?.search) searchEl.value = String(filter.search);
+
     featureFlags = { work_qr_enabled: false, ...(await loadFeatureFlags()) };
     const checkinBlock = document.getElementById("workCheckinBlock");
     if (checkinBlock) {
@@ -714,7 +719,3 @@
     flushOfflineQueue().then(() => refresh()).catch(() => {});
   });
 })();
-    state.ansicht = loadView();
-    const filter = loadFilter();
-    const searchEl = document.getElementById("workMemberSearch");
-    if (searchEl && filter?.search) searchEl.value = String(filter.search);

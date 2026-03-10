@@ -167,7 +167,7 @@
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.message || err?.hint || err?.error_description || `Anfrage fehlgeschlagen (${res.status})`);
+      throw new Error(err?.message || err?.detail || err?.hint || err?.error_description || `Anfrage fehlgeschlagen (${res.status})`);
     }
     return res.json().catch(() => ({}));
   }
@@ -332,22 +332,22 @@
     state.columns.forEach((col, idx) => {
       const v = document.createElement("label");
       v.className = "ui-column-item";
-      v.innerHTML = `<span>${col.label}</span><input type="checkbox" data-col-visible="${col.key}" ${col.visible ? "checked" : ""} />`;
+      v.innerHTML = `<span>${esc(col.label)}</span><input type="checkbox" data-col-visible="${esc(col.key)}" ${col.visible ? "checked" : ""} />`;
       visRoot.appendChild(v);
 
       const o = document.createElement("div");
       o.className = "ui-column-item";
       o.innerHTML = `
-        <span>${col.label}</span>
+        <span>${esc(col.label)}</span>
         <div class="ui-column-item__actions">
-          <button type="button" class="feed-btn feed-btn--ghost" data-col-move="up" data-col-key="${col.key}" ${idx > 0 ? "" : "disabled"}>Nach oben</button>
-          <button type="button" class="feed-btn feed-btn--ghost" data-col-move="down" data-col-key="${col.key}" ${idx < state.columns.length - 1 ? "" : "disabled"}>Nach unten</button>
+          <button type="button" class="feed-btn feed-btn--ghost" data-col-move="up" data-col-key="${esc(col.key)}" ${idx > 0 ? "" : "disabled"}>Nach oben</button>
+          <button type="button" class="feed-btn feed-btn--ghost" data-col-move="down" data-col-key="${esc(col.key)}" ${idx < state.columns.length - 1 ? "" : "disabled"}>Nach unten</button>
         </div>
       `;
       orderRoot.appendChild(o);
 
       const fWrap = document.createElement("label");
-      fWrap.innerHTML = `<span class="small">Filter ${col.label}</span>`;
+      fWrap.innerHTML = `<span class="small">Filter ${esc(col.label)}</span>`;
       let control = "";
       if (col.key === "source") {
         control = `
@@ -369,7 +369,7 @@
       } else if (col.key === "updated_at") {
         control = `<input type="date" data-col-filter="updated_at" value="${esc(state.columnFilter.updated_at)}" />`;
       } else {
-        control = `<input type="text" data-col-filter="${col.key}" value="${esc(state.columnFilter[col.key] || "")}" />`;
+        control = `<input type="text" data-col-filter="${esc(col.key)}" value="${esc(state.columnFilter[col.key] || "")}" />`;
       }
       fWrap.insertAdjacentHTML("beforeend", control);
       filterRoot.appendChild(fWrap);

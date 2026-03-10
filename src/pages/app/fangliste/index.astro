@@ -4,28 +4,28 @@ import { APP } from "../../../config/app";
 ---
 
 <Site title={`Fangliste • ${APP.name}`} description="Digitale Fangliste" robots="noindex">
-  <section class="card">
-    <div class="card__body">
+  <section class="card" data-studio-component-id="fangliste-header-card" data-studio-component-type="card" data-studio-slot="main">
+    <div class="card__body" data-studio-component-id="fangliste-header-content" data-studio-component-type="section" data-studio-slot="main">
       <h1>Fangliste / Angeltage</h1>
       <p class="small">Klicke auf eine Zeile für Details. Bilder können im Dialog hinterlegt werden.</p>
 
-      <div class="fangliste-actions">
-        <button type="button" id="tripOpenCreate" class="feed-btn feed-btn--ghost">Eintrag erfassen</button>
-        <button type="button" id="tripQuickNoCatch" class="feed-btn">Kein Fang</button>
+      <div class="fangliste-actions" data-studio-component-id="fangliste-actions" data-studio-component-type="section" data-studio-slot="main">
+        <button type="button" id="tripOpenCreate" class="feed-btn feed-btn--ghost" data-studio-component-id="fangliste-open-create-btn" data-studio-component-type="button" data-studio-slot="main">Eintrag erfassen</button>
+        <button type="button" id="tripQuickNoCatch" class="feed-btn" data-studio-component-id="fangliste-no-catch-btn" data-studio-component-type="button" data-studio-slot="main">Kein Fang</button>
       </div>
 
       <p id="tripMsg" class="small" aria-live="polite"></p>
     </div>
   </section>
 
-  <section class="card">
-    <div class="card__body">
+  <section class="card" data-studio-component-id="fangliste-main-card" data-studio-component-type="card" data-studio-slot="main">
+    <div class="card__body" data-studio-component-id="fangliste-main-content" data-studio-component-type="section" data-studio-slot="main">
       <h2>Meine Angeltage</h2>
 
-      <div class="trip-table-toolbar" role="region" aria-label="Tabellensteuerung">
+      <div class="trip-table-toolbar" role="region" aria-label="Tabellensteuerung" data-studio-component-id="fangliste-table-toolbar" data-studio-component-type="section" data-studio-slot="main">
         <label class="trip-table-search">
           <span class="visually-hidden">Suche in der Fangliste</span>
-          <input id="tripSearch" type="search" placeholder="Suche Tag, Gewässer, Fang, Status..." />
+          <input id="tripSearch" type="search" placeholder="Suche Tag, Gewässer, Fang, Status..." data-studio-component-id="fangliste-search-input" data-studio-component-type="input" data-studio-slot="main" />
         </label>
         <div class="trip-table-toolbar__actions">
           <span id="tripActiveFilterCount" class="trip-filter-meta hidden" aria-live="polite">0 Filter aktiv</span>
@@ -40,12 +40,22 @@ import { APP } from "../../../config/app";
         </div>
       </div>
 
-      <div id="tripList" class="fangliste-list" style="margin-top:10px"></div>
+      <div
+        id="tripList"
+        class="fangliste-list"
+        style="margin-top:10px"
+        data-studio-component-id="fangliste-list-table"
+        data-studio-component-type="table"
+        data-studio-slot="main"
+        data-studio-library-id="lists--standard-tabelle"
+        data-table-id="fangliste"
+        data-row-click="dialog"
+      ></div>
     </div>
   </section>
 
-  <section class="card">
-    <div class="card__body">
+  <section class="card" data-studio-component-id="fangliste-stats-card" data-studio-component-type="card" data-studio-slot="main">
+    <div class="card__body" data-studio-component-id="fangliste-stats-content" data-studio-component-type="section" data-studio-slot="main">
       <h2>Meine Stats</h2>
       <p class="small">Deine Angeltage, Kein-Fang-Tage, Gesamtfänge und letzter Eintrag.</p>
       <p id="tripStatsMsg" class="small" aria-live="polite"></p>
@@ -53,8 +63,8 @@ import { APP } from "../../../config/app";
     </div>
   </section>
 
-  <dialog id="tripCreateDialog" class="catch-dialog">
-    <form id="tripCreateForm" class="catch-dialog__form" method="dialog">
+  <section id="tripCreateDialog" class="catch-dialog catch-dialog--panel hidden" data-guard-sheet="1" hidden data-studio-component-id="fangliste-create-dialog" data-studio-component-type="dialog" data-studio-slot="main">
+    <form id="tripCreateForm" class="catch-dialog__form">
       <h3 id="tripCreateTitle">Eintrag erfassen</h3>
 
       <div class="fangliste-form-grid">
@@ -72,6 +82,13 @@ import { APP } from "../../../config/app";
           <span>Gewässer</span>
           <select id="tripWater" required></select>
         </label>
+
+        <div class="fangliste-full fangliste-water-favorites">
+          <div class="fangliste-water-favorites__actions">
+            <button type="button" id="tripWaterFavoriteToggle" class="feed-btn feed-btn--ghost" disabled>Als Favorit merken</button>
+          </div>
+          <div id="tripWaterFavorites" class="fangliste-water-chip-list" role="group" aria-label="Favoriten Gewässer"></div>
+        </div>
 
         <label class="fangliste-catch-only">
           <span>Fischart (optional)</span>
@@ -105,10 +122,10 @@ import { APP } from "../../../config/app";
       </div>
       <p id="tripCreateMsg" class="small" aria-live="polite"></p>
     </form>
-  </dialog>
+  </section>
 
-  <dialog id="tripDetailDialog" class="catch-dialog">
-    <form id="tripDetailForm" class="catch-dialog__form" method="dialog">
+  <section id="tripDetailDialog" class="catch-dialog catch-dialog--panel hidden" data-guard-sheet="1" hidden data-studio-component-id="fangliste-detail-dialog" data-studio-component-type="dialog" data-studio-slot="main">
+    <form id="tripDetailForm" class="catch-dialog__form">
       <h3>Eintragsdetails</h3>
       <div id="tripDetailBody" class="catch-dialog__body"></div>
       <div class="catch-dialog__actions">
@@ -118,7 +135,7 @@ import { APP } from "../../../config/app";
       </div>
       <p id="tripDetailMsg" class="small" aria-live="polite"></p>
     </form>
-  </dialog>
+  </section>
 
   <script src="/js/catchlist.js" defer></script>
 </Site>

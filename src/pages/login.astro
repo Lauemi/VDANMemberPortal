@@ -12,28 +12,26 @@ const enablePasswordReset = String(import.meta.env.PUBLIC_ENABLE_PASSWORD_RESET 
   <section class="card" style="max-width:520px;margin:0 auto;">
     <div class="card__body">
       <h1>Login</h1>
-      <p class="small">Bitte Mitgliedsnummer zum login verwenden. Das Passwort Erstpasswort wird vom Vorstand bei Fortschritt der Tests ausgegeben. 
+      <p class="small">Login mit E-Mail oder (nur bei Legacy-Accounts) Mitgliedsnummer. Das Passwort Erstpasswort wird vom Vorstand bei Fortschritt der Tests ausgegeben. 
+      </p>
+      <p class="small" style="margin-top:8px;color:var(--danger);font-weight:700;">
+        WICHTIG: Zugangsnamen wie <code>001</code> funktionieren aktuell nicht als Login.
+        Login erfolgt über Auth-E-Mail (oder Legacy-Mitgliedsnummer-Flow, solange vorhanden).
       </p>
 
       <form id="loginForm" data-next-target={nextTarget}>
         <label>
-          <span>Mitgliedsnummer</span>
-          <input id="loginMemberNo" name="member_no" type="text" inputmode="numeric" autocomplete="username" required />
+          <span>Mitgliedsnummer oder E-Mail</span>
+          <input id="loginMemberNo" name="identifier" type="text" inputmode="email" autocomplete="username" placeholder="z. B. m.lauenroth@lauemi.de oder 598" required />
         </label>
         <label>
           <span>Passwort</span>
           <input id="loginPass" name="password" type="password" autocomplete="current-password" required />
         </label>
-        <label>
-          <span>
-            <input id="loginRemember" name="remember" type="checkbox" checked />
-            Angemeldet bleiben
-          </span>
-        </label>
 
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="primary" type="submit">Einloggen</button>
-          <a class="feed-btn feed-btn--ghost" href={`/registrieren/?next=${encodeURIComponent(nextTarget)}`}>Noch nicht registriert?</a>
+          <button class="feed-btn feed-btn--ghost" type="button" disabled aria-disabled="true">Coming soon</button>
           <span id="loginMsg" class="small" aria-live="polite"></span>
         </div>
       </form>
@@ -45,7 +43,8 @@ const enablePasswordReset = String(import.meta.env.PUBLIC_ENABLE_PASSWORD_RESET 
       </p>
 
       <p class="small" style="margin-top:8px;">
-        Noch kein Zugang? <a href={`/registrieren/?next=${encodeURIComponent(nextTarget)}`}>Registrierung starten</a>.
+        Registrierung:
+        <a href="/registrieren/">Zur Registrierung</a>.
       </p>
       <p class="small" style="margin-top:8px;">
         Du willst dem Verein beitreten? <a href="/mitglied-werden.html/">Mitglied werden</a>.

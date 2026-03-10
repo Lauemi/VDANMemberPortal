@@ -1,8 +1,9 @@
 ---
 import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
+import { resolveSiteMode } from "../config/site-mode";
 
-const isFcp = APP.siteMode === "fcp";
+const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
 ---
 
 <Site title={`Datenschutz • ${APP.name}`} description="Datenschutzhinweise für die Website und das Mitgliederportal des VDAN Ottenheim.">

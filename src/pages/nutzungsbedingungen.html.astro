@@ -1,8 +1,9 @@
 ---
 import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
+import { resolveSiteMode } from "../config/site-mode";
 
-const isFcp = APP.siteMode === "fcp";
+const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
 ---
 
 <Site title={`Nutzungsbedingungen • ${APP.name}`} description="Nutzungsbedingungen für das VDAN Fishing-Club-Portal.">

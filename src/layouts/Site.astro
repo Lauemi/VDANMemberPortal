@@ -1,6 +1,7 @@
 ---
 import "../styles/app-shell.css";
 import { APP } from "../config/app";
+import { resolveSiteMode } from "../config/site-mode";
 import pkg from "../../package.json";
 
 function envText(value: unknown, fallback: string) {
@@ -34,15 +35,16 @@ const pkgVersion = String(pkg?.version || "0.1.0").trim();
 const appVersion = appVersionEnv && appVersionEnv !== "dev-local" ? appVersionEnv : `v${pkgVersion}-beta.dev`;
 const appChannel = String(import.meta.env.PUBLIC_APP_CHANNEL ?? "beta").trim().toLowerCase();
 const isBetaChannel = appChannel === "beta";
-const isFcpMode = APP.siteMode === "fcp";
-const themeColor = APP.theme === "fcp_tactical" || isFcpMode ? "#2f352a" : "#0b1220";
+const resolvedSiteMode = resolveSiteMode(Astro.url.hostname, APP.siteMode);
+const isFcpMode = resolvedSiteMode === "fcp";
+const effectiveAppTheme = isFcpMode ? "fcp_tactical" : "vdan_default";
+const themeColor = isFcpMode ? "#2f352a" : "#0b1220";
 const displayTitle = isBetaChannel && !String(title).toLowerCase().includes("beta")
   ? `${title} · BETA`
   : title;
 const host = Astro.url.hostname.toLowerCase();
 const isFcpSchema =
   isFcpMode ||
-  APP.theme === "fcp_tactical" ||
   APP.brand.toLowerCase().includes("fcp") ||
   host.includes("fishing-club-portal.de");
 const defaultSiteUrl = envText(
@@ -148,8 +150,8 @@ const publicMenuLinks = isFcpMode
     data-auth-allow-legacy-member-login={authAllowLegacyMemberLogin ? "1" : "0"}
     data-app-version={appVersion}
     data-app-channel={appChannel}
-    data-app-theme={APP.theme}
-    data-site-mode={APP.siteMode}
+    data-app-theme={effectiveAppTheme}
+    data-site-mode={resolvedSiteMode}
     data-superadmin-user-ids={APP.superAdminUserIds.join(",")}
   >
     <header class="header">

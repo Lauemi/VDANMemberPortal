@@ -1,7 +1,9 @@
 ---
 import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
-const isVdanMode = APP.siteMode === "vdan";
+import { resolveSiteMode } from "../../../config/site-mode";
+
+const isVdanMode = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "vdan";
 ---
 
 <Site title={`Gewässerkarte • ${APP.name}`} description="Karte mit Mitglieds-Berechtigungen." robots="noindex">

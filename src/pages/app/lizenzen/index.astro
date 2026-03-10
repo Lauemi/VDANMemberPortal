@@ -1,7 +1,9 @@
 ---
 import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
-const isFcpMode = APP.siteMode === "fcp";
+import { resolveSiteMode } from "../../../config/site-mode";
+
+const isFcpMode = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
 ---
 
 <Site title={`Wetter & Karten API • ${APP.name}`} description="Adminbereich für lizenzfreie API-Anbindungen." robots="noindex">

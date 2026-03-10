@@ -1,6 +1,9 @@
 ;(() => {
   let reloadingForSw = false;
   const UPDATE_NOTIFY_KEY = "vdan_notify_app_update_v1";
+  const isFcp = String(document.body?.dataset?.siteMode || "").trim().toLowerCase() === "fcp";
+  const notifyTitle = isFcp ? "Fishing-Club-Portal" : "VDAN APP";
+  const notifyIcon = isFcp ? "/Branding/NewLogoCamouFCP.png" : "/Bilder/logo300x300.png";
 
   function updateNotifyEnabled() {
     try {
@@ -16,18 +19,18 @@
     if (Notification.permission !== "granted") return;
     try {
       if (reg?.showNotification) {
-        await reg.showNotification("VDAN APP", {
+        await reg.showNotification(notifyTitle, {
           body: "Neue Version verfügbar. Die App wird aktualisiert.",
-          icon: "/icon-192.png",
-          badge: "/icon-192.png",
+          icon: notifyIcon,
+          badge: notifyIcon,
           tag: "vdan-app-update",
           renotify: true,
         });
         return;
       }
-      new Notification("VDAN APP", {
+      new Notification(notifyTitle, {
         body: "Neue Version verfügbar. Die App wird aktualisiert.",
-        icon: "/icon-192.png",
+        icon: notifyIcon,
         tag: "vdan-app-update",
       });
     } catch {

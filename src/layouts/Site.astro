@@ -87,9 +87,10 @@ const schemaGraphJson = JSON.stringify({
   "@context": "https://schema.org",
   "@graph": [schemaOrganization, schemaWebsite, schemaWebPage],
 });
-const favicon192 = isFcpMode ? "/Branding/NewLogoCamouFCP.png" : "/icon-192.png";
-const favicon512 = isFcpMode ? "/Branding/NewLogoCamouFCP.png" : "/icon-512.png";
-const appleTouch = isFcpMode ? "/Branding/NewLogoCamouFCP.png" : "/apple-touch-icon.png";
+const manifestPath = isFcpMode ? "/manifest-fcp.webmanifest" : "/manifest-vdan.webmanifest";
+const favicon192 = isFcpMode ? "/Branding/NewLogoCamouFCP.png" : "/Bilder/logo300x300.png";
+const favicon512 = isFcpMode ? "/Branding/NewLogoCamouFCP.png" : "/Bilder/logo300x300.png";
+const appleTouch = isFcpMode ? "/Branding/NewLogoCamouFCP.png" : "/Bilder/logo300x300.png";
 
 // Guard member area paths:
 const path = Astro.url.pathname.toLowerCase();
@@ -132,7 +133,7 @@ const publicMenuLinks = isFcpMode
     <meta name="robots" content={`${robots},follow`} />
     <link rel="canonical" href={canonical} />
     <meta name="theme-color" content={themeColor} />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="manifest" href={manifestPath} />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />

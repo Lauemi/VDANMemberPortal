@@ -1,0 +1,32 @@
+{
+  "name": "Fishing-Club-Portal",
+  "short_name": "FCP",
+  "start_url": "/app/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#2f352a",
+  "theme_color": "#2f352a",
+  "description": "Fishing-Club-Portal mit Multi-Club-Betrieb und sicherer Offline-/Online-Synchronisierung.",
+  "icons": [
+    {
+      "src": "/Branding/NewLogoCamouFCP.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Portal",
+      "short_name": "Portal",
+      "url": "/app/",
+      "icons": [
+        {
+          "src": "/Branding/NewLogoCamouFCP.png",
+          "sizes": "1024x1024",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

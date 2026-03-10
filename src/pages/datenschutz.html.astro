@@ -1,9 +1,26 @@
 ---
 import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
+
+const isFcp = APP.siteMode === "fcp";
 ---
 
 <Site title={`Datenschutz • ${APP.name}`} description="Datenschutzhinweise für die Website und das Mitgliederportal des VDAN Ottenheim.">
+  {isFcp ? (
+    <section class="card" style="max-width:980px;margin:0 auto;">
+      <div class="card__body">
+        <h1>Datenschutz</h1>
+        <p class="small">FCP-Modus aktiv.</p>
+        <p>
+          Diese Datenschutzhinweise werden für das Fishing-Club-Portal separat finalisiert und veröffentlicht.
+        </p>
+        <p>
+          Kontakt für Datenschutz- und Plattformfragen:
+          <a href={`mailto:${APP.supportEmail}`}> {APP.supportEmail}</a>
+        </p>
+      </div>
+    </section>
+  ) : (
   <section class="card" style="max-width:980px;margin:0 auto;">
     <div class="card__body">
       <h1>Datenschutzerklärung</h1>
@@ -192,4 +209,5 @@ import { APP } from "../config/app";
       </p>
     </div>
   </section>
+  )}
 </Site>

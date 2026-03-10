@@ -1,73 +1,60 @@
 ---
 import Site from "../layouts/Site.astro";
+import { APP } from "../config/app";
+
+const isFcp = APP.siteMode === "fcp";
 ---
 
-<Site title="Fishing-Club-Portal" description="Fishing-Club-Portal - hier entsteht die neue Plattform.">
-  <section class="coming-soon" aria-labelledby="comingSoonTitle">
-    <div class="coming-soon__card">
-      <picture class="coming-soon__logo-wrap">
-        <source srcset="/Branding/WEBSVGLogo-Fishing-Club-Portal.svg" type="image/svg+xml" />
-        <img
-          class="coming-soon__logo"
-          src="/Branding/WEBLOGOPNGLogo-Fishing-Club-Portal.png"
-          alt="Fishing-Club-Portal"
-          loading="eager"
-        />
-      </picture>
-      <p class="coming-soon__eyebrow">Fishing-Club-Portal</p>
-      <h1 id="comingSoonTitle">Hier entsteht die neue Plattform</h1>
-      <p class="small">
-        Wir bauen den nächsten Ausbaustand für Vereine. Die öffentliche Seite wird aktuell vorbereitet.
-      </p>
-      <p class="small">Für Rückfragen: <a href="mailto:info@fishing-club-portal.de">info@fishing-club-portal.de</a></p>
+<Site title={APP.name} description="Neuigkeiten aus dem Verein">
+  {isFcp ? (
+    <section class="card" style="max-width:980px;margin:0 auto;">
+      <div class="card__body prose">
+        <h1>Fishing-Club-Portal</h1>
+        <p><strong>FCP-Webseite im Aufbau.</strong></p>
+        <p>
+          Das Portal ist bereits nutzbar. Die öffentlichen FCP-Inhaltsseiten werden schrittweise aufgebaut.
+        </p>
+        <p>
+          Bitte verwende für den Zugang zum Portal den Login.
+        </p>
+      </div>
+    </section>
+  ) : (
+  <section class="home-hero-slider" aria-label="Vereinsimpressionen">
+    <div class="home-hero-slider__track">
+      <figure class="home-hero-slider__slide">
+        <img src="/Bilder/headbanner.jpg" alt="VDAN Ottenheim am Gewässer" loading="eager" />
+        <figcaption>VDAN Ottenheim</figcaption>
+      </figure>
+      <figure class="home-hero-slider__slide">
+        <img src="/Bilder/20201026_165446.jpg" alt="Abendstimmung am Vereinsgewässer" loading="lazy" />
+        <figcaption>Gemeinschaft am Wasser</figcaption>
+      </figure>
+      <figure class="home-hero-slider__slide">
+        <img src="/Bilder/20201026_165447.jpg" alt="Natur und Angelbereich im Verein" loading="lazy" />
+        <figcaption>Natur. Verein. Leidenschaft.</figcaption>
+      </figure>
+      <figure class="home-hero-slider__slide">
+        <img src="/Bilder/20201026_165436.jpg" alt="Uferbereich des Vereins" loading="lazy" />
+        <figcaption>Willkommen beim VDAN</figcaption>
+      </figure>
     </div>
   </section>
 
-  <style>
-    .coming-soon {
-      min-height: clamp(60vh, 70vh, 76vh);
-      display: grid;
-      place-items: center;
-      padding: clamp(16px, 4vw, 32px);
-    }
+  <section class="feed-shell">
+    <div class="feed-toolbar">
+      <div>
+        <h1>Neuigkeiten</h1>
+        <p class="small">Aktuelle Beiträge aus dem Verein als Feed.</p>
+      </div>
+      <button id="feedNewPost" class="feed-btn hidden" type="button" hidden>Neuer Post</button>
+    </div>
 
-    .coming-soon__card {
-      width: min(760px, 100%);
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: clamp(18px, 4vw, 40px);
-      text-align: center;
-      background:
-        radial-gradient(circle at top, rgba(95, 153, 220, 0.2), transparent 50%),
-        linear-gradient(180deg, rgba(20, 26, 36, 0.96), rgba(11, 16, 24, 0.96));
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-    }
+    <div id="feedComposerHost"></div>
+    <div id="feedList" class="feed-list"></div>
+    <p id="feedMsg" class="small" aria-live="polite"></p>
+  </section>
 
-    .coming-soon__logo-wrap {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 14px;
-    }
-
-    .coming-soon__logo {
-      display: block;
-      width: min(420px, 82%);
-      min-width: 100px;
-      height: auto;
-      object-fit: contain;
-    }
-
-    .coming-soon__eyebrow {
-      margin: 0 0 8px;
-      color: var(--muted);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      font-size: 0.78rem;
-      font-weight: 700;
-    }
-
-    .coming-soon h1 {
-      margin-bottom: 10px;
-    }
-  </style>
+  <script src="/js/home-feed.js" defer></script>
+  )}
 </Site>

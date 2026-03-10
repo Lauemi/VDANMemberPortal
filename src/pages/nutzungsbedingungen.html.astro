@@ -1,9 +1,27 @@
 ---
 import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
+
+const isFcp = APP.siteMode === "fcp";
 ---
 
 <Site title={`Nutzungsbedingungen • ${APP.name}`} description="Nutzungsbedingungen für das VDAN Fishing-Club-Portal.">
+  {isFcp ? (
+    <section class="card">
+      <div class="card__body prose">
+        <h1>Nutzungsbedingungen</h1>
+        <p class="small">FCP-Modus aktiv.</p>
+        <p>
+          Diese Nutzungsbedingungen werden für das Fishing-Club-Portal separat geführt.
+          Bis zur finalen Veröffentlichung gilt der aktuelle Projekt- und Pilotbetrieb.
+        </p>
+        <p>
+          Technischer Portalbetrieb: Michael Lauenroth<br />
+          Kontakt: <a href={`mailto:${APP.supportEmail}`}>{APP.supportEmail}</a>
+        </p>
+      </div>
+    </section>
+  ) : (
   <section class="card">
     <div class="card__body prose">
       <h1>Nutzungsbedingungen</h1>
@@ -150,9 +168,10 @@ import { APP } from "../config/app";
       </ol>
 
       <p class="small">
-        © Fishing-Club-Portal - Software von Michael Lauenroth<br />
-        Portalbetrieb für VDAN Ottenheim
+        © VDAN Ottenheim<br />
+        Plattform: Fishing-Club-Portal - Software von Michael Lauenroth
       </p>
     </div>
   </section>
+  )}
 </Site>

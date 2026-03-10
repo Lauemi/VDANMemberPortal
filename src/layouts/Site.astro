@@ -26,17 +26,22 @@ const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
 const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
 const memberCardVerifyPubKey = import.meta.env.PUBLIC_MEMBER_CARD_VERIFY_PUBKEY ?? "";
 const vapidPublicKey = import.meta.env.PUBLIC_VAPID_PUBLIC_KEY ?? "";
+const authEmailChangeEnabled = String(import.meta.env.PUBLIC_AUTH_EMAIL_CHANGE_ENABLED ?? "false").trim().toLowerCase() === "true";
+const openSelfRegistrationEnabled = String(import.meta.env.PUBLIC_OPEN_SELF_REGISTRATION_ENABLED ?? "false").trim().toLowerCase() === "true";
+const authAllowLegacyMemberLogin = String(import.meta.env.PUBLIC_AUTH_ALLOW_LEGACY_MEMBER_LOGIN ?? "true").trim().toLowerCase() === "true";
 const appVersionEnv = String(import.meta.env.PUBLIC_APP_VERSION ?? "").trim();
 const pkgVersion = String(pkg?.version || "0.1.0").trim();
 const appVersion = appVersionEnv && appVersionEnv !== "dev-local" ? appVersionEnv : `v${pkgVersion}-beta.dev`;
 const appChannel = String(import.meta.env.PUBLIC_APP_CHANNEL ?? "beta").trim().toLowerCase();
 const isBetaChannel = appChannel === "beta";
-const themeColor = APP.theme === "fcp_tactical" ? "#2f352a" : "#0b1220";
+const isFcpMode = APP.siteMode === "fcp";
+const themeColor = APP.theme === "fcp_tactical" || isFcpMode ? "#2f352a" : "#0b1220";
 const displayTitle = isBetaChannel && !String(title).toLowerCase().includes("beta")
   ? `${title} · BETA`
   : title;
 const host = Astro.url.hostname.toLowerCase();
 const isFcpSchema =
+  isFcpMode ||
   APP.theme === "fcp_tactical" ||
   APP.brand.toLowerCase().includes("fcp") ||
   host.includes("fishing-club-portal.de");
@@ -78,9 +83,6 @@ const schemaGraphJson = JSON.stringify({
   "@context": "https://schema.org",
   "@graph": [schemaOrganization, schemaWebsite, schemaWebPage],
 });
-const isDevRuntime = import.meta.env.DEV === true;
-const siteLockdownFlag = String(import.meta.env.PUBLIC_SITE_LOCKDOWN ?? "true").trim().toLowerCase() === "true";
-const siteLockdown = isDevRuntime ? false : siteLockdownFlag;
 
 // Guard member area paths:
 const path = Astro.url.pathname.toLowerCase();
@@ -89,6 +91,28 @@ const isAppPath = path.startsWith("/app/");
 const isTermsPath = path === "/nutzungsbedingungen.html/" || path === "/nutzungsbedingungen.html";
 const showPortalTermsLink = isAppPath || isTermsPath;
 const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
+const showHeaderAuthCta = false;
+const publicMenuLinks = isFcpMode
+  ? [
+      { href: "/", label: "Start" },
+      { href: "/kontakt.html/", label: "Kontakt" },
+      { href: "/datenschutz.html/", label: "Datenschutz" },
+      { href: "/nutzungsbedingungen.html/", label: "Nutzungsbedingungen" },
+      { href: "/impressum.html/", label: "Impressum" },
+    ]
+  : [
+      { href: "/", label: "Start" },
+      { href: "/termine.html/", label: "Termine" },
+      { href: "/vdan-jugend.html/", label: "Jugend" },
+      { href: "/mitglied-werden.html/", label: "Mitglied werden" },
+      { href: "/fischereipruefung.html/", label: "Fischereiprüfung" },
+      { href: "/anglerheim-ottenheim.html/", label: "Anglerheim" },
+      { href: "/downloads.html/", label: "Downloads" },
+      { href: "/vereinsshop.html/", label: "Vereinsshop" },
+      { href: "/kontakt.html/", label: "Kontakt" },
+      { href: "/datenschutz.html/", label: "Datenschutz" },
+      { href: "/impressum.html/", label: "Impressum" },
+    ];
 ---
 
 <!doctype html>
@@ -103,7 +127,6 @@ const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
     <meta name="theme-color" content={themeColor} />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content={APP.brand} />
@@ -120,168 +143,180 @@ const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
     data-supabase-key={supabaseKey}
     data-member-card-verify-pubkey={memberCardVerifyPubKey}
     data-vapid-public-key={vapidPublicKey}
+    data-auth-email-change-enabled={authEmailChangeEnabled ? "1" : "0"}
+    data-open-self-registration-enabled={openSelfRegistrationEnabled ? "1" : "0"}
+    data-auth-allow-legacy-member-login={authAllowLegacyMemberLogin ? "1" : "0"}
     data-app-version={appVersion}
     data-app-channel={appChannel}
     data-app-theme={APP.theme}
     data-superadmin-user-ids={APP.superAdminUserIds.join(",")}
   >
-    {siteLockdown ? (
-      <main class="lockdown" aria-labelledby="lockdownTitle">
-        <section class="lockdown__card">
-          <picture class="lockdown__brand">
-            <source srcset="/Branding/WEBSVGLogo-Fishing-Club-Portal.svg" type="image/svg+xml" />
-            <img src="/Branding/WEBLOGOPNGLogo-Fishing-Club-Portal.png" alt="Fishing-Club-Portal" />
-          </picture>
-          <p class="lockdown__badge">Fishing-Club-Portal</p>
-          <h1 id="lockdownTitle">Hier entsteht etwas Neues</h1>
-          <p class="small">Die Plattform wird aktuell aufgebaut. Bitte später wieder vorbeischauen.</p>
-        </section>
-      </main>
-    ) : (
-      <>
-        <header class="header">
-          <div class="container">
-            <nav class="nav" aria-label="Hauptnavigation">
+    <header class="header">
+      <div class="container">
+        <nav class="nav" aria-label="Hauptnavigation">
+          {isFcpMode ? (
+            <div class="header-brand-fcp" aria-label="FCP Marke">
               <a class="logo" href="/" aria-label={APP.name}>
-                <picture>
-                  <source srcset="/Branding/WEBSVGLogo-Fishing-Club-Portal.svg" type="image/svg+xml" />
-                  <img src="/Branding/WEBLOGOPNGLogo-Fishing-Club-Portal.png" alt={APP.name} />
+                <picture class="header-brand-fcp__logo" aria-hidden="true">
+                  <source srcset="/Branding/NewLogoCamouFCP.svg" type="image/svg+xml" />
+                  <img src="/Branding/NewLogoCamouFCP.png" alt="" loading="eager" decoding="async" />
                 </picture>
               </a>
-              {isBetaChannel && <span class="app-beta-badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
-              <div class="nav-actions">
-                <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
-                <a id="headerAuthCta" class="header-auth-cta" href="/login/" data-ui-session-skip>Sign in</a>
-                <div class="burger-menu" id="burgerMenu">
-                  <button type="button" id="burgerToggle" class="burger-toggle" aria-label="Menü">
-                    <span>☰</span>
-                  </button>
-                  <div id="burgerPopover" class="burger-popover hidden" hidden>
-                    <a href="/">Start</a>
-                    <a href="/termine.html/">Termine</a>
-                    <a href="/vdan-jugend.html/">Jugend</a>
-                    <a href="/mitglied-werden.html/">Mitglied werden</a>
-                    <a href="/fischereipruefung.html/">Fischereiprüfung</a>
-                    <a href="/anglerheim-ottenheim.html/">Anglerheim</a>
-                    <a href="/downloads.html/">Downloads</a>
-                    <a href="/kontakt.html/">Kontakt</a>
-                    <a href="/datenschutz.html/">Datenschutz</a>
-                    {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
-                    <a href="/impressum.html/">Impressum</a>
-                  </div>
-                </div>
-              </div>
-            </nav>
-          </div>
-        </header>
-        <button
-          type="button"
-          id="portalQuickToggle"
-          class="portal-quick-toggle"
-          data-ui-session-skip
-          aria-label="Portal öffnen"
-        >
-          <span aria-hidden="true">⌂</span>
-          <span id="portalQuickUserBadge" class="portal-quick-user-badge hidden" hidden aria-hidden="true"></span>
-        </button>
-        {isAppPath && (
-          <a href="/app/feedback/" class="feedback-fab" aria-label="Fehler melden">
-            <span aria-hidden="true">!</span> Fehler melden
-          </a>
-        )}
-        <aside id="portalRail" class="portal-rail hidden" hidden data-ui-session-skip aria-label="Portal-Kurzmenü">
-          <div id="portalRailItems" class="portal-rail__items"></div>
-        </aside>
-        <div id="portalQuickDrawer" class="portal-quick-drawer hidden" hidden data-ui-session-skip>
-          <section id="portalQuickPanel" class="portal-quick-panel" aria-label="Portal Kurzmenü">
-            <div class="portal-quick-panel__head">
-              <h2>Fishing-Club-Portal</h2>
-              <button type="button" id="portalQuickClose" class="portal-quick-close" aria-label="Portal schließen">✕</button>
+              {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
             </div>
-            <p class="small">Schnellzugriff für deine Favoriten.</p>
-            <div id="portalQuickList" class="portal-quick-list"></div>
-          </section>
+          ) : (
+            <div class="header-brand-vdan">
+              <a class="logo" href="/" aria-label={APP.name}>
+                <img src="/Bilder/logo300x300.png" alt={APP.name} />
+              </a>
+              {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+            </div>
+          )}
+          <div class="nav-actions header-menu">
+            <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
+            {showHeaderAuthCta && <a id="headerAuthCta" class="header-auth-cta" href="/login/" data-ui-session-skip>Sign in</a>}
+            <div class="burger-menu" id="burgerMenu">
+              <button type="button" id="burgerToggle" class="burger-toggle" aria-label="Menü">
+                <span>☰</span>
+              </button>
+              <div id="burgerPopover" class="burger-popover hidden" hidden>
+                {publicMenuLinks.map((link) => (
+                  (link.label === "Nutzungsbedingungen" && !showPortalTermsLink)
+                    ? null
+                    : <a href={link.href}>{link.label}</a>
+                ))}
+              </div>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </header>
+    <button
+      type="button"
+      id="portalQuickToggle"
+      class="portal-quick-toggle"
+      data-ui-session-skip
+      aria-label="Portal öffnen"
+    >
+      <span aria-hidden="true">⌂</span>
+      <span id="portalQuickUserBadge" class="portal-quick-user-badge hidden" hidden aria-hidden="true"></span>
+    </button>
+    <aside id="portalRail" class="portal-rail hidden" hidden data-ui-session-skip aria-label="Portal-Kurzmenü">
+      <div id="portalRailItems" class="portal-rail__items"></div>
+    </aside>
+    <div id="portalQuickDrawer" class="portal-quick-drawer hidden" hidden data-ui-session-skip>
+      <section id="portalQuickPanel" class="portal-quick-panel" aria-label="Portal Kurzmenü">
+        <div class="portal-quick-panel__head">
+          <h2>Fishing-Club-Portal</h2>
+          <button type="button" id="portalQuickClose" class="portal-quick-close" aria-label="Portal schließen">✕</button>
         </div>
-
-        <main class="main">
-          <div class={containerClass}>
-            <slot />
+        <p class="small">Schnellzugriff für deine Favoriten.</p>
+        <div id="portalQuickList" class="portal-quick-list"></div>
+      </section>
+    </div>
+    <section id="goFishingDialog" class="catch-dialog catch-dialog--panel portal-gofishing-brand--fcp hidden" data-guard-sheet="1" data-guard-no-draft="1" hidden>
+      <form id="goFishingDialogForm" class="catch-dialog__form portal-gofishing-dialog__form">
+        <input type="hidden" id="goFishingDraftState" name="goFishingDraftState" value="" />
+        <div class="portal-gofishing-dialog__content">
+          <div class="portal-gofishing-hero">
+            <div class="portal-gofishing-logo-wrap">
+              <picture class="portal-quick-logo-slot__picture portal-gofishing-logo" aria-hidden="true">
+                <source srcset="/Branding/New_FCP_GoFishing.svg" type="image/svg+xml" />
+                <img class="portal-quick-logo-slot__img" src="/Branding/New_FCP_GoFishing.svg" alt="GoFishing FCP" loading="eager" decoding="async" />
+              </picture>
+              {isBetaChannel && <span class="app-beta-badge portal-gofishing-beta" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+              {!isBetaChannel && <span class="app-beta-badge portal-gofishing-beta" aria-hidden="true">BETA</span>}
+            </div>
+            <p class="small portal-gofishing-start" id="goFishingSessionStartLabel" aria-live="polite">Session noch nicht gestartet.</p>
           </div>
-        </main>
 
-        <footer class="site-footer">
-          <div class="container site-footer__inner">
-            <p class="small">© VDAN Ottenheim</p>
-            <nav class="site-footer__links" aria-label="Rechtliche Links">
-              <a href="/kontakt.html/">Kontakt</a>
-              <a href="/datenschutz.html/">Datenschutz</a>
-              {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
-              <a href="/impressum.html/">Impressum</a>
-              <a href="#" data-open-consent-settings>Datenschutz-Einstellungen</a>
-            </nav>
+          <div class="portal-gofishing-fields">
+            <div class="fangliste-form-grid portal-gofishing-form-grid">
+              <label class="fangliste-full">
+                <span>Gewässerquelle</span>
+                <select id="goFishingWaterMode" aria-label="Gewässerquelle">
+                  <option value="official" selected>Vereinsgewässer</option>
+                  <option value="member">Freies Gewässer</option>
+                </select>
+              </label>
+              <label class="fangliste-full">
+                <span>Vereinsgewässer suchen</span>
+                <input id="goFishingWaterSearch" type="search" placeholder="Gewässer filtern..." />
+              </label>
+              <label class="fangliste-full">
+                <span>Vereinsgewässer</span>
+                <select id="goFishingWater" required></select>
+              </label>
+              <div class="fangliste-full fangliste-water-favorites">
+                <p id="goFishingWaterQuickTitle" class="small">Meistgenutzt</p>
+                <div id="goFishingWaterFavorites" class="fangliste-water-chip-list" role="group" aria-label="Meistgenutzte Gewässer"></div>
+              </div>
+              <label class="fangliste-full hidden" id="goFishingMemberWaterNameWrap" hidden>
+                <span>Freies Gewässername</span>
+                <input id="goFishingMemberWaterName" type="text" placeholder="z. B. Baggersee Nord" maxlength="120" />
+              </label>
+              <label class="fangliste-full hidden" id="goFishingMemberWaterLocationWrap" hidden>
+                <span>Ort / Abschnitt (optional)</span>
+                <input id="goFishingMemberWaterLocation" type="text" placeholder="z. B. Lahr, Nordufer" maxlength="160" />
+              </label>
+              <label>
+                <span>Zielfisch hinzufügen</span>
+                <select id="goFishingFishSelect"></select>
+              </label>
+              <div class="portal-gofishing-add-wrap">
+                <button type="button" id="goFishingAddFishBtn" class="feed-btn feed-btn--ghost">Hinzufügen</button>
+              </div>
+            </div>
+            <div id="goFishingTargetList" class="portal-gofishing-target-list" role="group" aria-label="Zielfische Counter"></div>
+            <p id="goFishingMsg" class="small portal-gofishing-msg" aria-live="polite"></p>
+            <div class="catch-dialog__actions portal-gofishing-actions">
+              <button type="button" class="feed-btn" id="goFishingStartBtn">Start</button>
+              <button type="button" class="feed-btn" id="goFishingEndBtn">Session beenden</button>
+              <button type="button" class="feed-btn feed-btn--ghost" data-action="close-gofishing">Schließen</button>
+            </div>
           </div>
-        </footer>
+        </div>
+      </form>
+    </section>
 
-        <script is:inline src="/js/runtime-guard.js"></script>
-        <script src="/js/app-env.js" defer></script>
-        <script src="/js/offline-data-store.js" defer></script>
-        <script src="/js/offline-sync.js" defer></script>
-        <script src="/js/consent-manager.js" defer></script>
-        <script src="/js/member-auth.js" defer></script>
-        {needsMemberGuard && <script src="/js/member-guard.js" defer></script>}
-        <script src="/js/ui-session.js" defer></script>
-        <script src="/js/header-auth-cta.js" defer></script>
-        <script src="/js/nav-burger.js" defer></script>
-        <script src="/js/portal-quick.js" defer></script>
-        <script src="/js/pwa-register.js" defer></script>
-        <!-- <script src="/js/maintenance-gate.js" defer></script> -->
-      </>
-    )}
-    {siteLockdown && (
-      <style>
-        .lockdown {
-          min-height: 100vh;
-          display: grid;
-          place-items: center;
-          padding: clamp(16px, 4vw, 40px);
-          background:
-            radial-gradient(circle at top, rgba(95, 153, 220, 0.24), transparent 48%),
-            linear-gradient(180deg, #0a1019 0%, #090e16 100%);
-        }
+    <main class="main">
+      <div class={containerClass}>
+        <slot />
+      </div>
+    </main>
 
-        .lockdown__card {
-          width: min(760px, 100%);
-          border: 1px solid var(--line);
-          border-radius: 20px;
-          padding: clamp(20px, 5vw, 44px);
-          text-align: center;
-          background: linear-gradient(180deg, rgba(20, 26, 36, 0.96), rgba(11, 16, 24, 0.96));
-          box-shadow: 0 16px 42px rgba(0, 0, 0, 0.45);
-        }
+    <footer class="site-footer">
+      <div class="container site-footer__inner">
+        <p class="small">
+          © VDAN Ottenheim<br />
+          Plattform: Fishing-Club-Portal - Software von Michael Lauenroth
+        </p>
+        <nav class="site-footer__links" aria-label="Rechtliche Links">
+          <a href="/kontakt.html/">Kontakt</a>
+          <a href="/datenschutz.html/">Datenschutz</a>
+          {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
+          <a href="/impressum.html/">Impressum</a>
+          <a href="#" data-open-consent-settings>Datenschutz-Einstellungen</a>
+        </nav>
+      </div>
+    </footer>
 
-        .lockdown__brand {
-          display: flex;
-          justify-content: center;
-          margin-bottom: 14px;
-        }
-
-        .lockdown__brand img {
-          width: min(430px, 82%);
-          min-width: 100px;
-          height: auto;
-          object-fit: contain;
-          display: block;
-        }
-
-        .lockdown__badge {
-          margin: 0 0 10px;
-          color: var(--muted);
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-          font-size: 0.78rem;
-          font-weight: 700;
-        }
-      </style>
-    )}
+    <script is:inline src="/js/runtime-guard.js"></script>
+    <script src="/js/app-env.js" defer></script>
+    <script src="/js/offline-data-store.js" defer></script>
+    <script src="/js/offline-sync.js" defer></script>
+    <script src="/js/consent-manager.js" defer></script>
+    <script src="/js/member-auth.js" defer></script>
+    <script src="/js/ui-standards-runtime.js" defer></script>
+    {needsMemberGuard && <script src="/js/member-guard.js" defer></script>}
+    <script src="/js/ui-session.js" defer></script>
+    <script src="/js/header-auth-cta.js" defer></script>
+    <script src="/js/nav-burger.js" defer></script>
+    <script src="/js/portal-quick.js" defer></script>
+    <script src="/js/studio-inspector-bridge.js" defer></script>
+    <script src="/js/go-fishing.js" defer></script>
+    <script src="/js/dialog-ux-guard.js" defer></script>
+    <script src="/js/pwa-register.js" defer></script>
+    <!-- <script src="/js/maintenance-gate.js" defer></script> -->
   </body>
 </html>

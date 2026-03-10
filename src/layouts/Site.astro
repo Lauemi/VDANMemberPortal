@@ -3,11 +3,16 @@ import "../styles/app-shell.css";
 import { APP } from "../config/app";
 import pkg from "../../package.json";
 
+function envText(value: unknown, fallback: string) {
+  const text = String(value ?? "").trim();
+  return text || fallback;
+}
+
 const {
   title = APP.name,
   description = "",
   robots = "index",
-  canonical = Astro.url.href,
+  canonical: canonicalProp,
   containerClass = "container",
 } = Astro.props as {
   title?: string;
@@ -29,10 +34,55 @@ const pkgVersion = String(pkg?.version || "0.1.0").trim();
 const appVersion = appVersionEnv && appVersionEnv !== "dev-local" ? appVersionEnv : `v${pkgVersion}-beta.dev`;
 const appChannel = String(import.meta.env.PUBLIC_APP_CHANNEL ?? "beta").trim().toLowerCase();
 const isBetaChannel = appChannel === "beta";
-const themeColor = APP.theme === "fcp_tactical" ? "#2f352a" : "#0b1220";
+const isFcpMode = APP.siteMode === "fcp";
+const themeColor = APP.theme === "fcp_tactical" || isFcpMode ? "#2f352a" : "#0b1220";
 const displayTitle = isBetaChannel && !String(title).toLowerCase().includes("beta")
   ? `${title} · BETA`
   : title;
+const host = Astro.url.hostname.toLowerCase();
+const isFcpSchema =
+  isFcpMode ||
+  APP.theme === "fcp_tactical" ||
+  APP.brand.toLowerCase().includes("fcp") ||
+  host.includes("fishing-club-portal.de");
+const defaultSiteUrl = envText(
+  import.meta.env.PUBLIC_SITE_URL,
+  isFcpSchema ? "https://www.fishing-club-portal.de/" : "https://www.vdan-ottenheim.com/",
+);
+const canonical = canonicalProp || new URL(Astro.url.pathname, defaultSiteUrl).href;
+const schemaBaseUrl = new URL(defaultSiteUrl).origin;
+const schemaOrganization = {
+  "@type": "Organization",
+  "@id": `${schemaBaseUrl}#organization`,
+  name: isFcpSchema
+    ? "Fishing-Club-Portal"
+    : "VDAN (Verein der Angler und Naturfreunde Ottenheim 1957 e.V.)",
+  url: isFcpSchema ? "https://www.fishing-club-portal.de/" : "https://www.vdan-ottenheim.com/",
+  email: APP.supportEmail,
+};
+const schemaWebsite = {
+  "@type": "WebSite",
+  "@id": `${schemaBaseUrl}#website`,
+  url: schemaBaseUrl,
+  name: APP.name,
+  publisher: {
+    "@id": `${schemaBaseUrl}#organization`,
+  },
+};
+const schemaWebPage = {
+  "@type": "WebPage",
+  "@id": `${canonical}#webpage`,
+  url: canonical,
+  name: displayTitle,
+  description,
+  isPartOf: {
+    "@id": `${schemaBaseUrl}#website`,
+  },
+};
+const schemaGraphJson = JSON.stringify({
+  "@context": "https://schema.org",
+  "@graph": [schemaOrganization, schemaWebsite, schemaWebPage],
+});
 
 // Guard member area paths:
 const path = Astro.url.pathname.toLowerCase();
@@ -42,6 +92,27 @@ const isTermsPath = path === "/nutzungsbedingungen.html/" || path === "/nutzungs
 const showPortalTermsLink = isAppPath || isTermsPath;
 const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
 const showHeaderAuthCta = false;
+const publicMenuLinks = isFcpMode
+  ? [
+      { href: "/", label: "Start" },
+      { href: "/kontakt.html/", label: "Kontakt" },
+      { href: "/datenschutz.html/", label: "Datenschutz" },
+      { href: "/nutzungsbedingungen.html/", label: "Nutzungsbedingungen" },
+      { href: "/impressum.html/", label: "Impressum" },
+    ]
+  : [
+      { href: "/", label: "Start" },
+      { href: "/termine.html/", label: "Termine" },
+      { href: "/vdan-jugend.html/", label: "Jugend" },
+      { href: "/mitglied-werden.html/", label: "Mitglied werden" },
+      { href: "/fischereipruefung.html/", label: "Fischereiprüfung" },
+      { href: "/anglerheim-ottenheim.html/", label: "Anglerheim" },
+      { href: "/downloads.html/", label: "Downloads" },
+      { href: "/vereinsshop.html/", label: "Vereinsshop" },
+      { href: "/kontakt.html/", label: "Kontakt" },
+      { href: "/datenschutz.html/", label: "Datenschutz" },
+      { href: "/impressum.html/", label: "Impressum" },
+    ];
 ---
 
 <!doctype html>
@@ -59,6 +130,7 @@ const showHeaderAuthCta = false;
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content={APP.brand} />
+    <script type="application/ld+json" set:html={schemaGraphJson}></script>
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -77,23 +149,30 @@ const showHeaderAuthCta = false;
     data-app-version={appVersion}
     data-app-channel={appChannel}
     data-app-theme={APP.theme}
+    data-site-mode={APP.siteMode}
     data-superadmin-user-ids={APP.superAdminUserIds.join(",")}
   >
     <header class="header">
       <div class="container">
         <nav class="nav" aria-label="Hauptnavigation">
-          <div class="header-brand-vdan">
-            <a class="logo" href="/" aria-label={APP.name}>
-              <img src="/Bilder/logo300x300.png" alt={APP.name} />
-            </a>
-          </div>
-          <div class="header-brand-fcp" aria-label="FCP Marke">
-            <picture class="header-brand-fcp__logo" aria-hidden="true">
-              <source srcset="/Branding/NewLogoCamouFCP.svg" type="image/svg+xml" />
-              <img src="/Branding/NewLogoCamouFCP.png" alt="" loading="eager" decoding="async" />
-            </picture>
-            {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
-          </div>
+          {isFcpMode ? (
+            <div class="header-brand-fcp" aria-label="FCP Marke">
+              <a class="logo" href="/" aria-label={APP.name}>
+                <picture class="header-brand-fcp__logo" aria-hidden="true">
+                  <source srcset="/Branding/NewLogoCamouFCP.svg" type="image/svg+xml" />
+                  <img src="/Branding/NewLogoCamouFCP.png" alt="" loading="eager" decoding="async" />
+                </picture>
+              </a>
+              {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+            </div>
+          ) : (
+            <div class="header-brand-vdan">
+              <a class="logo" href="/" aria-label={APP.name}>
+                <img src="/Bilder/logo300x300.png" alt={APP.name} />
+              </a>
+              {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+            </div>
+          )}
           <div class="nav-actions header-menu">
             <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
             {showHeaderAuthCta && <a id="headerAuthCta" class="header-auth-cta" href="/login/" data-ui-session-skip>Sign in</a>}
@@ -102,18 +181,11 @@ const showHeaderAuthCta = false;
                 <span>☰</span>
               </button>
               <div id="burgerPopover" class="burger-popover hidden" hidden>
-                <a href="/">Start</a>
-                <a href="/termine.html/">Termine</a>
-                <a href="/vdan-jugend.html/">Jugend</a>
-                <a href="/mitglied-werden.html/">Mitglied werden</a>
-                <a href="/fischereipruefung.html/">Fischereiprüfung</a>
-                <a href="/anglerheim-ottenheim.html/">Anglerheim</a>
-                <a href="/downloads.html/">Downloads</a>
-                <a href="/vereinsshop.html/">Vereinsshop</a>
-                <a href="/kontakt.html/">Kontakt</a>
-                <a href="/datenschutz.html/">Datenschutz</a>
-                {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
-                <a href="/impressum.html/">Impressum</a>
+                {publicMenuLinks.map((link) => (
+                  (link.label === "Nutzungsbedingungen" && !showPortalTermsLink)
+                    ? null
+                    : <a href={link.href}>{link.label}</a>
+                ))}
               </div>
             </div>
           </div>
@@ -216,7 +288,10 @@ const showHeaderAuthCta = false;
 
     <footer class="site-footer">
       <div class="container site-footer__inner">
-        <p class="small">© VDAN Ottenheim</p>
+        <p class="small">
+          © VDAN Ottenheim<br />
+          Plattform: Fishing-Club-Portal - Software von Michael Lauenroth
+        </p>
         <nav class="site-footer__links" aria-label="Rechtliche Links">
           <a href="/kontakt.html/">Kontakt</a>
           <a href="/datenschutz.html/">Datenschutz</a>

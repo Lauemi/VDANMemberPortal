@@ -1,4 +1,8 @@
 ;(() => {
+  function isVdanSiteMode() {
+    return String(window.__APP_SITE_MODE || "").trim().toLowerCase() === "vdan";
+  }
+
   function update() {
     const cta = document.getElementById("headerAuthCta");
     if (!cta) return;
@@ -11,7 +15,7 @@
     }
 
     const current = `${window.location.pathname || "/"}${window.location.search || ""}`;
-    const next = current.startsWith("/login/") ? "/app/" : current;
+    const next = isVdanSiteMode() ? "/app/" : (current.startsWith("/login/") ? "/app/" : current);
     cta.textContent = "Sign in";
     cta.setAttribute("href", `/login/?next=${encodeURIComponent(next)}`);
     cta.setAttribute("aria-label", "Anmelden");

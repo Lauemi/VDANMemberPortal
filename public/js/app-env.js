@@ -7,4 +7,5 @@
   window.__APP_AUTH_EMAIL_CHANGE_ENABLED = String(body.dataset.authEmailChangeEnabled || "0").trim() === "1";
   window.__APP_OPEN_SELF_REGISTRATION_ENABLED = String(body.dataset.openSelfRegistrationEnabled || "0").trim() === "1";
   window.__APP_AUTH_ALLOW_LEGACY_MEMBER_LOGIN = String(body.dataset.authAllowLegacyMemberLogin || "1").trim() === "1";
+  window.__APP_SITE_MODE = String(body.dataset.siteMode || "").trim().toLowerCase();
 })();

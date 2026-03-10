@@ -1,9 +1,25 @@
 ---
 import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
+
+const isFcp = APP.siteMode === "fcp";
 ---
 
 <Site title={APP.name} description="Neuigkeiten aus dem Verein">
+  {isFcp ? (
+    <section class="card" style="max-width:980px;margin:0 auto;">
+      <div class="card__body prose">
+        <h1>Fishing-Club-Portal</h1>
+        <p><strong>FCP-Webseite im Aufbau.</strong></p>
+        <p>
+          Das Portal ist bereits nutzbar. Die öffentlichen FCP-Inhaltsseiten werden schrittweise aufgebaut.
+        </p>
+        <p>
+          Bitte verwende für den Zugang zum Portal den Login.
+        </p>
+      </div>
+    </section>
+  ) : (
   <section class="home-hero-slider" aria-label="Vereinsimpressionen">
     <div class="home-hero-slider__track">
       <figure class="home-hero-slider__slide">
@@ -40,4 +56,5 @@ import { APP } from "../config/app";
   </section>
 
   <script src="/js/home-feed.js" defer></script>
+  )}
 </Site>

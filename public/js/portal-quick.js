@@ -104,7 +104,7 @@
 
   function moduleForHref(href) {
     const path = normalizePath(new URL(href, window.location.origin).pathname);
-    return MODULES.find((m) => normalizePath(m.href) === path) || null;
+    return MODULES.find((m) => normalizePath(m.href) === path && isModuleAllowedBySiteMode(m.id)) || null;
   }
 
   function setHidden(el, hidden) {
@@ -729,7 +729,7 @@
     const profile = await loadProfileData().catch(() => ({ name: "", memberNo: "" }));
     state.profileName = String(profile?.name || "").trim();
     state.profileMemberNo = String(profile?.memberNo || "").trim();
-    state.visibleModules = MODULES.filter((m) => canAccess(m.access, state.roles));
+    state.visibleModules = MODULES.filter((m) => canAccess(m.access, state.roles) && isModuleAllowedBySiteMode(m.id));
 
     const fallback = loadFallback(state.uid);
     let remote = null;
@@ -775,3 +775,11 @@
     applySide();
   });
 })();
+  function siteMode() {
+    return String(window.__APP_SITE_MODE || "").trim().toLowerCase();
+  }
+
+  function isModuleAllowedBySiteMode(moduleId) {
+    if (siteMode() === "fcp" && moduleId === "gewaesserkarte") return false;
+    return true;
+  }

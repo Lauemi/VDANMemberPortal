@@ -1,9 +1,26 @@
 ---
 import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
+
+const isFcp = APP.siteMode === "fcp";
 ---
 
 <Site title={`Impressum • ${APP.name}`} description="Impressum des Vereins der Angler und Naturfreunde Ottenheim 1957 e.V.">
+  {isFcp ? (
+    <section class="card" style="max-width:900px;margin:0 auto;">
+      <div class="card__body">
+        <h1>Impressum</h1>
+        <p class="small">FCP-Modus aktiv.</p>
+        <p>
+          Diese Seite wird für das Fishing-Club-Portal separat gepflegt.
+          Bis zur finalen Veröffentlichung gelten die Angaben im operativen Projektkontext.
+        </p>
+        <p>
+          Kontakt: <a href={`mailto:${APP.supportEmail}`}>{APP.supportEmail}</a>
+        </p>
+      </div>
+    </section>
+  ) : (
   <section class="card" style="max-width:900px;margin:0 auto;">
     <div class="card__body">
       <h1>Impressum</h1>
@@ -54,4 +71,5 @@ import { APP } from "../config/app";
       </p>
     </div>
   </section>
+  )}
 </Site>

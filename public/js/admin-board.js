@@ -1,7 +1,7 @@
 ;(() => {
   const ROLE_MATRIX_STORAGE_KEY = "vdan_role_page_matrix_v1";
   const ROLE_KEYS = ["guest", "member", "manager", "admin", "superadmin"];
-  const PAGE_INDEX = [
+  const PAGE_INDEX_BASE = [
     { route: "/app/", kind: "PORTAL", label: "App Start" },
     { route: "/app/admin-panel/", kind: "PORTAL", label: "Admin Board" },
     { route: "/app/arbeitseinsaetze/", kind: "PORTAL", label: "Arbeitseinsätze" },
@@ -44,6 +44,15 @@
     { route: "/veranstaltungen", kind: "WEB", label: "Veranstaltungen" },
     { route: "/vereinsshop", kind: "WEB", label: "Vereinsshop" },
   ];
+
+  function siteMode() {
+    return String(document.body?.getAttribute("data-site-mode") || window.__APP_SITE_MODE || "").trim().toLowerCase();
+  }
+
+  const PAGE_INDEX = PAGE_INDEX_BASE.filter((page) => {
+    if (siteMode() === "fcp" && page.route === "/app/gewaesserkarte/") return false;
+    return true;
+  });
 
   const state = {
     clubs: [],

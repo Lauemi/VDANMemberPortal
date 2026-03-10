@@ -1,10 +1,15 @@
 ;(() => {
+  function isVdanSiteMode() {
+    return String(window.__APP_SITE_MODE || "").trim().toLowerCase() === "vdan";
+  }
+
   function setMsg(text = "") {
     const el = document.getElementById("authCallbackMsg");
     if (el) el.textContent = text;
   }
 
   function nextTarget(fallback = "/app/") {
+    if (isVdanSiteMode()) return "/app/";
     const q = new URLSearchParams(window.location.search || "");
     const raw = String(q.get("next") || "").trim();
     if (raw.startsWith("/")) return raw;

@@ -1,6 +1,7 @@
 ---
 import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
+const isVdanMode = APP.siteMode === "vdan";
 ---
 
 <Site title={`Mitgliedsausweis • ${APP.name}`} description="Digitaler Mitgliedsausweis" robots="noindex">
@@ -15,7 +16,7 @@ import { APP } from "../../../config/app";
         </div>
       </article>
       <div style="margin-top:10px;">
-        <a class="feed-btn" href="/app/gewaesserkarte/">Gewässerkarte öffnen</a>
+        {isVdanMode && <a class="feed-btn" href="/app/gewaesserkarte/">Gewässerkarte öffnen</a>}
         <a class="feed-btn feed-btn--ghost hidden" data-manager-only hidden href="/app/ausweis/verifizieren/" style="margin-left:8px;">Prüfseite</a>
       </div>
     </div>

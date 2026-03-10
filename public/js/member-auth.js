@@ -4,6 +4,7 @@
   const EXPIRY_SKEW_MS = 30_000;
   const MEMBER_EMAIL_DOMAIN = "members.vdan.local";
   const DEFAULT_MEMBER_HOME = "/app/einstellungen/";
+  const DEFAULT_CORE_HOME = "/app/";
 
   function cfg() {
     const url = String(window.__APP_SUPABASE_URL || "").trim();
@@ -124,6 +125,10 @@
     return window.__APP_AUTH_ALLOW_LEGACY_MEMBER_LOGIN !== false;
   }
 
+  function isVdanSiteMode() {
+    return String(window.__APP_SITE_MODE || "").trim().toLowerCase() === "vdan";
+  }
+
   function pageTarget(defaultTarget = "/") {
     const loginForm = document.getElementById("loginForm");
     const registerForm = document.getElementById("registerForm");
@@ -131,6 +136,13 @@
     const direct = String(loginForm?.dataset?.nextTarget || registerForm?.dataset?.nextTarget || pwForm?.dataset?.nextTarget || "").trim();
     if (direct.startsWith("/")) return direct;
     return defaultTarget;
+  }
+
+  function postAuthTarget(defaultTarget = DEFAULT_CORE_HOME) {
+    const target = pageTarget(defaultTarget);
+    // VDAN surface always enters the same FCP core flow after auth.
+    if (isVdanSiteMode()) return DEFAULT_CORE_HOME;
+    return target;
   }
 
   function readPendingInvite() {
@@ -617,7 +629,7 @@
           const profile = await getOwnProfile();
           if (msg) msg.textContent = "Login ok.";
           document.dispatchEvent(new CustomEvent("vdan:session", { detail: { loggedIn: true } }));
-          const target = pageTarget("/");
+          const target = postAuthTarget(DEFAULT_CORE_HOME);
           if (profile?.must_change_password) {
             window.location.assign(`/app/passwort-aendern/?next=${encodeURIComponent(target)}`);
             return;
@@ -701,7 +713,7 @@
               await claimInviteToken(claimPayload, result.access_token);
               if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Du bist angemeldet.";
               clearPendingInvite();
-              const next = pageTarget("/app/");
+              const next = postAuthTarget(DEFAULT_CORE_HOME);
               window.location.assign(next);
               return;
             }
@@ -728,7 +740,7 @@
               last_name: lastName,
             });
             if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Du bist angemeldet.";
-            window.location.assign(pageTarget(DEFAULT_MEMBER_HOME));
+            window.location.assign(postAuthTarget(DEFAULT_MEMBER_HOME));
             return;
           }
           if (regMsg) regMsg.textContent = "Registrierung gespeichert. Bitte E-Mail bestätigen und danach einloggen.";
@@ -756,7 +768,7 @@
           if (msgEl) msgEl.textContent = "Speichere…";
           await updatePassword(p1);
           if (msgEl) msgEl.textContent = "Passwort aktualisiert.";
-          const target = pageTarget("/");
+          const target = postAuthTarget(DEFAULT_CORE_HOME);
           window.location.assign(target);
         } catch (err) {
           if (msgEl) msgEl.textContent = err?.message || "Passwort konnte nicht geändert werden.";

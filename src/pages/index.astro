@@ -4,22 +4,38 @@ import { APP } from "../config/app";
 import { resolveSiteMode } from "../config/site-mode";
 
 const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
+const isFcpLockdown = String(import.meta.env.PUBLIC_SITE_LOCKDOWN ?? "false").trim().toLowerCase() === "true";
 ---
 
 <Site title={APP.name} description="Neuigkeiten aus dem Verein">
   {isFcp ? (
-    <section class="card" style="max-width:980px;margin:0 auto;">
-      <div class="card__body prose">
-        <h1>Fishing-Club-Portal</h1>
-        <p><strong>FCP-Webseite im Aufbau.</strong></p>
-        <p>
-          Das Portal ist bereits nutzbar. Die öffentlichen FCP-Inhaltsseiten werden schrittweise aufgebaut.
-        </p>
-        <p>
-          Bitte verwende für den Zugang zum Portal den Login.
-        </p>
-      </div>
-    </section>
+    isFcpLockdown ? (
+      <section class="card" style="max-width:780px;margin:0 auto;">
+        <div class="card__body app-portal-guest">
+          <picture class="app-portal-guest__logo" aria-hidden="true">
+            <source srcset="/Branding/New_FCP_GoFishing.svg" type="image/svg+xml" />
+            <img src="/Branding/New_FCP_GoFishing.png" alt="" loading="eager" decoding="async" />
+          </picture>
+          <h1>Hier entsteht etwas Neues.</h1>
+          <p class="app-portal-guest__message">
+            Die Plattform wird aktuell aufgebaut. Bitte später wieder vorbeischauen.
+          </p>
+        </div>
+      </section>
+    ) : (
+      <section class="card" style="max-width:980px;margin:0 auto;">
+        <div class="card__body prose">
+          <h1>Fishing-Club-Portal</h1>
+          <p><strong>FCP-Webseite im Aufbau.</strong></p>
+          <p>
+            Das Portal ist bereits nutzbar. Die öffentlichen FCP-Inhaltsseiten werden schrittweise aufgebaut.
+          </p>
+          <p>
+            Bitte verwende für den Zugang zum Portal den Login.
+          </p>
+        </div>
+      </section>
+    )
   ) : (
   <section class="home-hero-slider" aria-label="Vereinsimpressionen">
     <div class="home-hero-slider__track">

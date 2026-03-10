@@ -1,23 +1,29 @@
 ---
 import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
+import { resolveSiteMode } from "../config/site-mode";
 
 const nextRaw = Astro.url.searchParams.get("next") ?? "/";
 const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/";
 const showDemoHint = Boolean(import.meta.env.DEV);
 const enablePasswordReset = String(import.meta.env.PUBLIC_ENABLE_PASSWORD_RESET || "").toLowerCase() === "true";
+const isFcpMode = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
 ---
 
 <Site title={`Login • ${APP.name}`} description="Login zum Memberbereich." robots="noindex">
   <section class="card" style="max-width:520px;margin:0 auto;">
     <div class="card__body">
       <h1>Login</h1>
-      <p class="small">Login mit E-Mail oder (nur bei Legacy-Accounts) Mitgliedsnummer. Das Passwort Erstpasswort wird vom Vorstand bei Fortschritt der Tests ausgegeben. 
-      </p>
-      <p class="small" style="margin-top:8px;color:var(--danger);font-weight:700;">
-        WICHTIG: Zugangsnamen wie <code>001</code> funktionieren aktuell nicht als Login.
-        Login erfolgt über Auth-E-Mail (oder Legacy-Mitgliedsnummer-Flow, solange vorhanden).
-      </p>
+      {!isFcpMode && (
+        <>
+          <p class="small">Login mit E-Mail oder (nur bei Legacy-Accounts) Mitgliedsnummer. Das Passwort Erstpasswort wird vom Vorstand bei Fortschritt der Tests ausgegeben. 
+          </p>
+          <p class="small" style="margin-top:8px;color:var(--danger);font-weight:700;">
+            WICHTIG: Zugangsnamen wie <code>001</code> funktionieren aktuell nicht als Login.
+            Login erfolgt über Auth-E-Mail (oder Legacy-Mitgliedsnummer-Flow, solange vorhanden).
+          </p>
+        </>
+      )}
 
       <form id="loginForm" data-next-target={nextTarget}>
         <label>
@@ -36,19 +42,23 @@ const enablePasswordReset = String(import.meta.env.PUBLIC_ENABLE_PASSWORD_RESET 
         </div>
       </form>
 
-      <p class="small" style="margin-top:10px;">
-        {enablePasswordReset
-          ? <a href="/passwort-vergessen/">Passwort vergessen?</a>
-          : "Passwort vergessen ist vorbereitet, aber aktuell noch deaktiviert."}
-      </p>
+      {!isFcpMode && (
+        <>
+          <p class="small" style="margin-top:10px;">
+            {enablePasswordReset
+              ? <a href="/passwort-vergessen/">Passwort vergessen?</a>
+              : "Passwort vergessen ist vorbereitet, aber aktuell noch deaktiviert."}
+          </p>
 
-      <p class="small" style="margin-top:8px;">
-        Registrierung:
-        <a href="/registrieren/">Zur Registrierung</a>.
-      </p>
-      <p class="small" style="margin-top:8px;">
-        Du willst dem Verein beitreten? <a href="/mitglied-werden.html/">Mitglied werden</a>.
-      </p>
+          <p class="small" style="margin-top:8px;">
+            Registrierung:
+            <a href="/registrieren/">Zur Registrierung</a>.
+          </p>
+          <p class="small" style="margin-top:8px;">
+            Du willst dem Verein beitreten? <a href="/mitglied-werden.html/">Mitglied werden</a>.
+          </p>
+        </>
+      )}
 
       {showDemoHint && (
         <>

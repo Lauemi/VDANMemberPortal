@@ -175,22 +175,24 @@ const publicMenuLinks = isFcpMode
               {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
             </div>
           )}
-          <div class="nav-actions header-menu">
-            <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
-            {showHeaderAuthCta && <a id="headerAuthCta" class="header-auth-cta" href="/login/" data-ui-session-skip>Sign in</a>}
-            <div class="burger-menu" id="burgerMenu">
-              <button type="button" id="burgerToggle" class="burger-toggle" aria-label="Menü">
-                <span>☰</span>
-              </button>
-              <div id="burgerPopover" class="burger-popover hidden" hidden>
-                {publicMenuLinks.map((link) => (
-                  (link.label === "Nutzungsbedingungen" && !showPortalTermsLink)
-                    ? null
-                    : <a href={link.href}>{link.label}</a>
-                ))}
+          {!isFcpMode && (
+            <div class="nav-actions header-menu">
+              <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
+              {showHeaderAuthCta && <a id="headerAuthCta" class="header-auth-cta" href="/login/" data-ui-session-skip>Sign in</a>}
+              <div class="burger-menu" id="burgerMenu">
+                <button type="button" id="burgerToggle" class="burger-toggle" aria-label="Menü">
+                  <span>☰</span>
+                </button>
+                <div id="burgerPopover" class="burger-popover hidden" hidden>
+                  {publicMenuLinks.map((link) => (
+                    (link.label === "Nutzungsbedingungen" && !showPortalTermsLink)
+                      ? null
+                      : <a href={link.href}>{link.label}</a>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </nav>
       </div>
     </header>
@@ -291,16 +293,18 @@ const publicMenuLinks = isFcpMode
     <footer class="site-footer">
       <div class="container site-footer__inner">
         <p class="small">
-          © VDAN Ottenheim<br />
+          {isFcpMode ? "© Fishing-Club-Portal" : "© VDAN Ottenheim"}<br />
           Plattform: Fishing-Club-Portal - Software von Michael Lauenroth
         </p>
-        <nav class="site-footer__links" aria-label="Rechtliche Links">
-          <a href="/kontakt.html/">Kontakt</a>
-          <a href="/datenschutz.html/">Datenschutz</a>
-          {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
-          <a href="/impressum.html/">Impressum</a>
-          <a href="#" data-open-consent-settings>Datenschutz-Einstellungen</a>
-        </nav>
+        {!isFcpMode && (
+          <nav class="site-footer__links" aria-label="Rechtliche Links">
+            <a href="/kontakt.html/">Kontakt</a>
+            <a href="/datenschutz.html/">Datenschutz</a>
+            {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
+            <a href="/impressum.html/">Impressum</a>
+            <a href="#" data-open-consent-settings>Datenschutz-Einstellungen</a>
+          </nav>
+        )}
       </div>
     </footer>
 

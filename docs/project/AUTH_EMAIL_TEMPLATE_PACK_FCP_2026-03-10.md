@@ -34,7 +34,8 @@ Empfohlener Betreff: `Bitte bestätige deine E-Mail-Adresse`
     </tr>
     <tr>
       <td style="background:#f1f5f9;padding:18px;text-align:center;font-size:12px;color:#666;">
-        Fishing-Club-Portal • VDAN Ottenheim<br>
+        © VDAN Ottenheim<br>
+        Plattform: Fishing-Club-Portal - Software von Michael Lauenroth<br>
         Anbieter: VDAN Ottenheim (siehe Impressum)<br>
         Technischer Portalbetrieb: Michael Lauenroth
       </td>
@@ -70,7 +71,8 @@ Empfohlener Betreff: `Bitte bestätige deine neue E-Mail-Adresse`
     </tr>
     <tr>
       <td style="background:#f1f5f9;padding:18px;text-align:center;font-size:12px;color:#666;">
-        Fishing-Club-Portal • VDAN Ottenheim<br>
+        © VDAN Ottenheim<br>
+        Plattform: Fishing-Club-Portal - Software von Michael Lauenroth<br>
         Anbieter: VDAN Ottenheim (siehe Impressum)<br>
         Technischer Portalbetrieb: Michael Lauenroth
       </td>
@@ -105,7 +107,8 @@ Empfohlener Betreff: `Passwort zurücksetzen`
     </tr>
     <tr>
       <td style="background:#f1f5f9;padding:18px;text-align:center;font-size:12px;color:#666;">
-        Fishing-Club-Portal • VDAN Ottenheim<br>
+        © VDAN Ottenheim<br>
+        Plattform: Fishing-Club-Portal - Software von Michael Lauenroth<br>
         Anbieter: VDAN Ottenheim (siehe Impressum)<br>
         Technischer Portalbetrieb: Michael Lauenroth
       </td>
@@ -140,7 +143,8 @@ Empfohlener Betreff: `Dein Anmelde-Link`
     </tr>
     <tr>
       <td style="background:#f1f5f9;padding:18px;text-align:center;font-size:12px;color:#666;">
-        Fishing-Club-Portal • VDAN Ottenheim<br>
+        © VDAN Ottenheim<br>
+        Plattform: Fishing-Club-Portal - Software von Michael Lauenroth<br>
         Anbieter: VDAN Ottenheim (siehe Impressum)<br>
         Technischer Portalbetrieb: Michael Lauenroth
       </td>

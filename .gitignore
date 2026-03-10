@@ -2,6 +2,10 @@ node_modules/
 dist/
 .astro/
 .env
+.env.local.master
+.env.preview.master
+.env.production.master
 .DS_Store
 docs/supabase/44_set_encryption_key_example.sql
 supabase/.temp/
+.vercel

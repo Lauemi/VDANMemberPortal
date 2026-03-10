@@ -25,6 +25,37 @@
     return !el.hasAttribute("hidden");
   }
 
+  function rememberReturnFocus(dialog) {
+    if (!(dialog instanceof HTMLElement)) return;
+    const active = document.activeElement;
+    if (!(active instanceof HTMLElement)) return;
+    if (dialog.contains(active)) return;
+    dialog.__vdanReturnFocus = active;
+  }
+
+  function moveFocusOutsideDialog(dialog) {
+    if (!(dialog instanceof HTMLElement)) return;
+    const active = document.activeElement;
+    if (!(active instanceof HTMLElement)) return;
+    if (!dialog.contains(active)) return;
+
+    active.blur();
+
+    const remembered = dialog.__vdanReturnFocus;
+    if (remembered instanceof HTMLElement && remembered.isConnected && !remembered.hasAttribute("hidden")) {
+      remembered.focus({ preventScroll: true });
+      return;
+    }
+
+    const fallback = document.querySelector("main, [role='main']") || document.body;
+    if (fallback instanceof HTMLElement) {
+      if (fallback === document.body && !fallback.hasAttribute("tabindex")) {
+        fallback.setAttribute("tabindex", "-1");
+      }
+      fallback.focus({ preventScroll: true });
+    }
+  }
+
   function shouldSkipField(el) {
     if (!el) return true;
     if (el.disabled) return true;
@@ -262,6 +293,7 @@
       if (isNativeDialog(dialog)) {
         dialog.close();
       } else {
+        moveFocusOutsideDialog(dialog);
         dialog.setAttribute("hidden", "");
         dialog.classList.add("hidden");
         dialog.setAttribute("aria-hidden", "true");
@@ -285,6 +317,7 @@
     if (isNativeDialog(dialog)) {
       dialog.close();
     } else {
+      moveFocusOutsideDialog(dialog);
       dialog.setAttribute("hidden", "");
       dialog.classList.add("hidden");
       dialog.setAttribute("aria-hidden", "true");
@@ -322,6 +355,7 @@
       if (!(m.target instanceof HTMLElement)) return;
       if (!m.target.matches(DIALOG_SELECTOR)) return;
       if ((m.attributeName === "open" || m.attributeName === "hidden") && isOpen(m.target)) {
+        rememberReturnFocus(m.target);
         restoreDraftIfPresent(m.target);
       }
     });

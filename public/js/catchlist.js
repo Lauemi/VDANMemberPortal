@@ -1516,8 +1516,37 @@
     return typeof HTMLDialogElement !== "undefined" && el instanceof HTMLDialogElement;
   }
 
+  function rememberReturnFocus(el) {
+    if (!(el instanceof HTMLElement)) return;
+    const active = document.activeElement;
+    if (!(active instanceof HTMLElement)) return;
+    if (el.contains(active)) return;
+    el.__vdanReturnFocus = active;
+  }
+
+  function moveFocusOutsidePanel(el) {
+    if (!(el instanceof HTMLElement)) return;
+    const active = document.activeElement;
+    if (!(active instanceof HTMLElement)) return;
+    if (!el.contains(active)) return;
+
+    active.blur();
+
+    const remembered = el.__vdanReturnFocus;
+    if (remembered instanceof HTMLElement && remembered.isConnected && !remembered.hasAttribute("hidden")) {
+      remembered.focus({ preventScroll: true });
+      return;
+    }
+
+    const fallback = document.getElementById("tripOpenCreate") || document.body;
+    if (fallback instanceof HTMLElement) {
+      fallback.focus({ preventScroll: true });
+    }
+  }
+
   function openDialogOrPanel(el) {
     if (!el) return;
+    rememberReturnFocus(el);
     if (isNativeDialog(el)) {
       if (!el.open) el.showModal();
       return;
@@ -1533,6 +1562,7 @@
       if (el.open) el.close();
       return;
     }
+    moveFocusOutsidePanel(el);
     el.setAttribute("hidden", "");
     el.classList.add("hidden");
     el.setAttribute("aria-hidden", "true");

@@ -88,6 +88,36 @@ async function memberNoTaken(memberNo: string) {
   return Array.isArray(rows) && rows.length > 0;
 }
 
+async function resolvePreferredClubId(userId: string, preferredClubIdRaw: unknown, existingClubIdRaw: unknown) {
+  const existingClubId = txt(existingClubIdRaw);
+  if (existingClubId) return existingClubId;
+
+  const preferredClubId = txt(preferredClubIdRaw);
+  if (preferredClubId) {
+    const preferredRes = await sbServiceFetch(
+      `/rest/v1/user_roles?select=club_id&user_id=eq.${encodeURIComponent(userId)}&club_id=eq.${encodeURIComponent(preferredClubId)}&limit=1`,
+      { method: "GET" },
+    );
+    const preferredRows = await preferredRes.json().catch(() => []);
+    if (Array.isArray(preferredRows) && preferredRows.length) return preferredClubId;
+  }
+
+  const rolesRes = await sbServiceFetch(
+    `/rest/v1/user_roles?select=club_id&user_id=eq.${encodeURIComponent(userId)}&club_id=not.is.null`,
+    { method: "GET" },
+  );
+  const roleRows = await rolesRes.json().catch(() => []);
+  const clubIds = [...new Set(
+    (Array.isArray(roleRows) ? roleRows : [])
+      .map((row) => txt(row?.club_id))
+      .filter(Boolean),
+  )];
+
+  // Deterministic: auto-bind only if there is exactly one unambiguous club.
+  if (clubIds.length === 1) return clubIds[0];
+  return "";
+}
+
 async function pickMemberNo(userId: string, preferredRaw: unknown) {
   const preferred = normalizeMemberNo(preferredRaw);
   if (preferred && !preferred.includes("@") && !(await memberNoTaken(preferred))) {
@@ -122,6 +152,7 @@ Deno.serve(async (req: Request) => {
     const firstName = txt((body as { first_name?: string })?.first_name);
     const lastName = txt((body as { last_name?: string })?.last_name);
     const preferredMemberNo = txt((body as { preferred_member_no?: string })?.preferred_member_no);
+    const preferredClubId = txt((body as { preferred_club_id?: string })?.preferred_club_id);
 
     const userId = txt(actor.id);
     const email = txt((actor as { email?: string })?.email).toLowerCase() || null;
@@ -132,6 +163,7 @@ Deno.serve(async (req: Request) => {
     );
     const profileRows = await profileRes.json().catch(() => []);
     const existing = Array.isArray(profileRows) && profileRows.length ? profileRows[0] : null;
+    const resolvedClubId = await resolvePreferredClubId(userId, preferredClubId, existing?.club_id);
 
     if (!existing?.id) {
       const memberNo = await pickMemberNo(userId, preferredMemberNo);
@@ -147,11 +179,11 @@ Deno.serve(async (req: Request) => {
           first_name: firstName || null,
           last_name: lastName || null,
           member_no: memberNo,
-          club_id: null,
+          club_id: resolvedClubId || null,
         }]),
       });
 
-      return new Response(JSON.stringify({ ok: true, created: true, member_no: memberNo, club_id: null }), {
+      return new Response(JSON.stringify({ ok: true, created: true, member_no: memberNo, club_id: resolvedClubId || null }), {
         status: 200,
         headers: { ...headers, "Content-Type": "application/json" },
       });
@@ -164,6 +196,10 @@ Deno.serve(async (req: Request) => {
 
     if (!txt(existing.member_no)) {
       patch.member_no = await pickMemberNo(userId, preferredMemberNo);
+    }
+
+    if (!txt(existing.club_id) && resolvedClubId) {
+      patch.club_id = resolvedClubId;
     }
 
     if (!txt(existing.display_name)) {
@@ -184,7 +220,7 @@ Deno.serve(async (req: Request) => {
       ok: true,
       created: false,
       member_no: txt((patch.member_no as string) || existing.member_no),
-      club_id: txt(existing.club_id) || null,
+      club_id: txt((patch.club_id as string) || existing.club_id) || null,
     }), {
       status: 200,
       headers: { ...headers, "Content-Type": "application/json" },

@@ -53,6 +53,20 @@ async function isManager(userId: string) {
   return roles.includes("admin") || roles.includes("vorstand");
 }
 
+async function isManagerInClub(userId: string, clubId: string) {
+  const res = await sbServiceFetch(
+    `/rest/v1/user_roles?select=role&user_id=eq.${encodeURIComponent(userId)}&club_id=eq.${encodeURIComponent(clubId)}&role=in.(admin,vorstand)&limit=1`,
+    { method: "GET" }
+  );
+  const rows = await res.json().catch(() => []);
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+function parseClubId(raw: unknown) {
+  const v = String(raw || "").trim();
+  return v || "";
+}
+
 function validTargetUrl(raw: string) {
   const s = String(raw || "").trim();
   if (!s) return "/app/einstellungen/";
@@ -99,21 +113,57 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({})) as {
+      club_id?: string;
       version?: string;
       title?: string;
       message?: string;
       url?: string;
       dry_run?: boolean;
     };
+    const clubId = parseClubId(body?.club_id);
     const version = String(body?.version || "").trim().slice(0, 80);
     const title = String(body?.title || "VDAN APP").trim().slice(0, 80);
     const message = String(body?.message || `Neue Version${version ? ` ${version}` : ""} verfügbar.`).trim().slice(0, 240);
     const url = validTargetUrl(String(body?.url || "/app/einstellungen/"));
     const dryRun = Boolean(body?.dry_run);
     if (!version && !message) throw new Error("version_or_message_required");
+    if (!clubId) throw new Error("club_id_required");
 
+    // If request uses static token, still enforce club-scoped authorization by role table.
+    if (tokenHeader && pushToken && tokenHeader === pushToken) {
+      // token-based trigger is allowed, but club must exist in roles to avoid global blasts.
+      const roleRowsRes = await sbServiceFetch(
+        `/rest/v1/user_roles?select=user_id&club_id=eq.${encodeURIComponent(clubId)}&role=in.(admin,vorstand)&limit=1`,
+        { method: "GET" }
+      );
+      const roleRows = await roleRowsRes.json().catch(() => []);
+      if (!Array.isArray(roleRows) || roleRows.length === 0) {
+        throw new Error("club_without_manager_role");
+      }
+    } else {
+      const user = await getAuthUser(req, supabaseUrl, serviceKey);
+      if (!user?.id || !(await isManager(String(user.id))) || !(await isManagerInClub(String(user.id), clubId))) {
+        return new Response(JSON.stringify({ ok: false, error: "forbidden_club_scope" }), {
+          status: 403,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+    }
+    const roleUsersRes = await sbServiceFetch(
+      `/rest/v1/user_roles?select=user_id&club_id=eq.${encodeURIComponent(clubId)}&role=in.(admin,vorstand,member)`,
+      { method: "GET" }
+    );
+    const roleUsers = await roleUsersRes.json().catch(() => []);
+    const userIds = [...new Set((Array.isArray(roleUsers) ? roleUsers : []).map((r) => String(r?.user_id || "").trim()).filter(Boolean))];
+    if (!userIds.length) {
+      return new Response(JSON.stringify({ ok: true, sent: 0, failed: 0, removed: 0, subscriptions: 0 }), {
+        status: 200,
+        headers: { ...headers, "Content-Type": "application/json" },
+      });
+    }
+    const inList = userIds.join(",");
     const subsRes = await sbServiceFetch(
-      "/rest/v1/push_subscriptions?select=id,endpoint,p256dh,auth,enabled,notify_app_update&enabled=eq.true&notify_app_update=eq.true",
+      `/rest/v1/push_subscriptions?select=id,user_id,endpoint,p256dh,auth,enabled,notify_app_update&enabled=eq.true&notify_app_update=eq.true&user_id=in.(${encodeURIComponent(inList)})`,
       { method: "GET" }
     );
     const subs = await subsRes.json().catch(() => []);

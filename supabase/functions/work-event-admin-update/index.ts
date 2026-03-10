@@ -53,6 +53,27 @@ async function isManager(userId: string) {
   return roles.includes("admin") || roles.includes("vorstand");
 }
 
+async function isManagerInClub(userId: string, clubId: string) {
+  const res = await sbServiceFetch(
+    `/rest/v1/user_roles?select=role&user_id=eq.${encodeURIComponent(userId)}&club_id=eq.${encodeURIComponent(clubId)}&role=in.(admin,vorstand)&limit=1`,
+    { method: "GET" }
+  );
+  const rows = await res.json().catch(() => []);
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+async function loadEventClubId(eventId: string) {
+  const res = await sbServiceFetch(
+    `/rest/v1/work_events?select=club_id&id=eq.${encodeURIComponent(eventId)}&limit=1`,
+    { method: "GET" }
+  );
+  const rows = await res.json().catch(() => []);
+  const row = Array.isArray(rows) && rows.length ? rows[0] : null;
+  const clubId = String(row?.club_id || "").trim();
+  if (!clubId) throw new Error("event_or_club_not_found");
+  return clubId;
+}
+
 Deno.serve(async (req) => {
   const headers = cors(req);
   if (req.method === "OPTIONS") return new Response("ok", { headers });
@@ -91,8 +112,16 @@ Deno.serve(async (req) => {
       });
     }
 
+    const eventClubId = await loadEventClubId(eventId);
+    if (!(await isManagerInClub(String(user.id), eventClubId))) {
+      return new Response(JSON.stringify({ ok: false, error: "forbidden_club_scope" }), {
+        status: 403,
+        headers: { ...headers, "Content-Type": "application/json" },
+      });
+    }
+
     if (body?.action === "delete") {
-      await sbServiceFetch(`/rest/v1/work_events?id=eq.${encodeURIComponent(eventId)}`, {
+      await sbServiceFetch(`/rest/v1/work_events?id=eq.${encodeURIComponent(eventId)}&club_id=eq.${encodeURIComponent(eventClubId)}`, {
         method: "DELETE",
       });
       return new Response(JSON.stringify({ ok: true, deleted: true }), {
@@ -115,7 +144,7 @@ Deno.serve(async (req) => {
         });
       }
       safePatch.updated_by = user.id;
-      await sbServiceFetch(`/rest/v1/work_events?id=eq.${encodeURIComponent(eventId)}`, {
+      await sbServiceFetch(`/rest/v1/work_events?id=eq.${encodeURIComponent(eventId)}&club_id=eq.${encodeURIComponent(eventClubId)}`, {
         method: "PATCH",
         headers: { Prefer: "return=minimal" },
         body: JSON.stringify(safePatch),
@@ -137,4 +166,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-

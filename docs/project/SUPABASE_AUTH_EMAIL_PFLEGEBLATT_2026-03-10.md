@@ -17,14 +17,33 @@ Stand: 2026-03-10
 - Invite user: [05_invite_user.html](/Users/michaellauenroth/Downloads/vdan-app-template/docs/project/auth-email-templates/05_invite_user.html)
 - Reauthentication: [06_reauthentication.html](/Users/michaellauenroth/Downloads/vdan-app-template/docs/project/auth-email-templates/06_reauthentication.html)
 
+## B1) Verfügbare Supabase-Template-Variablen
+- `{{ .ConfirmationURL }}`: Vollständiger Bestätigungs-/Action-Link (Standard für CTA-Button).
+- `{{ .Token }}`: Einmalcode/OTP (nur nutzen, wenn Code-Flow im UI vorgesehen ist).
+- `{{ .TokenHash }}`: Token-Hash (technisch, nicht für Endnutzeranzeige empfohlen).
+- `{{ .SiteURL }}`: Projekt-Site-URL aus Supabase.
+- `{{ .Email }}`: Empfänger-E-Mail (bei Change-Mail: alte E-Mail).
+- `{{ .Data }}`: User-Metadata (nur wenn tatsächlich benötigt und datensparsam).
+- `{{ .RedirectTo }}`: Ziel-Redirect (falls im Flow gesetzt).
+
+## B2) FCP-Nutzungsregel für Variablen
+- Primär in allen produktiven Templates: `{{ .ConfirmationURL }}`
+- Optional für Transparenz:
+  - Change Email: `{{ .Email }}` (+ falls verfügbar `{{ .NewEmail }}`)
+- Nur falls explizit gebraucht:
+  - OTP-Flow: `{{ .Token }}`
+- Nicht im Standard-Usertext anzeigen:
+  - `{{ .TokenHash }}`
+- `{{ .Data }}` nur minimal und ohne sensitive Inhalte verwenden.
+
 ## C) Redirect-URL-Matrix (Supabase URL Configuration)
 
 ### Site URL
-- Production: `https://YOUR-PROD-DOMAIN`
+- Production: `https://www.fishing-club-portal.de`
 
 ### Additional Redirect URLs
-- `https://YOUR-PROD-DOMAIN/auth/callback/`
-- `https://YOUR-PROD-DOMAIN/login/`
+- `https://www.fishing-club-portal.de/auth/callback/`
+- `https://www.fishing-club-portal.de/login/`
 - `http://127.0.0.1:4321/auth/callback/`
 - `http://localhost:4321/auth/callback/`
 - `http://127.0.0.1:4321/login/`

@@ -39,15 +39,20 @@ Stand: 2026-03-10
 ## C) Redirect-URL-Matrix (Supabase URL Configuration)
 
 ### Site URL
-- Production: `https://www.fishing-club-portal.de`
+- Production: `https://www.vdan-ottenheim.com`
 
 ### Additional Redirect URLs
-- `https://www.fishing-club-portal.de/auth/callback/`
-- `https://www.fishing-club-portal.de/login/`
+- `https://www.vdan-ottenheim.com/auth/callback/`
+- `https://www.vdan-ottenheim.com/login/`
 - `http://127.0.0.1:4321/auth/callback/`
 - `http://localhost:4321/auth/callback/`
 - `http://127.0.0.1:4321/login/`
 - `http://localhost:4321/login/`
+
+## C1) Domain-Strategie
+- Live jetzt (VDAN): `https://www.vdan-ottenheim.com`
+- Ziel später (FCP): `https://www.fishing-club-portal.de`
+- Wichtig: In Supabase und in Templates immer dieselbe aktive Live-Domain verwenden.
 
 ## D) Flow-Ziel je Mailtyp (Soll)
 - Confirm sign up: `/auth/callback/?flow=signup&next=/app/`
@@ -73,3 +78,12 @@ Stand: 2026-03-10
 - Abgenommen von:
 - Projekt:
 - Hinweise:
+
+## G) Abarbeitungsreihenfolge (Supabase UI)
+1. `Authentication > Email > Confirm sign up` öffnen.
+2. Subject setzen laut Abschnitt A.
+3. HTML aus passender Datei aus Abschnitt B einfügen.
+4. Speichern.
+5. Testmail senden und in Tabelle E abhaken.
+6. Nächsten Mailtyp in dieser Reihenfolge bearbeiten:
+   `Confirm sign up -> Change email address -> Reset password -> Magic link -> Invite user -> Reauthentication`.

@@ -4,7 +4,7 @@ Stand: 2026-03-10
 ## Global Setup (Supabase Auth > Email)
 - From Name: `Fishing-Club-Portal (VDAN)`
 - Reply-To: `vdan.ottenheim@freenet.de`
-- Brand Logo URL (HTTPS, eigene Domain): `https://www.fishing-club-portal.de/assets/email/logo-fcp.png`
+- Brand Logo URL (HTTPS, eigene Domain): `https://www.vdan-ottenheim.com/assets/email/logo-fcp.png`
 - Anbieterhinweis im Footer: `Anbieter: VDAN Ottenheim (siehe Impressum)`
 
 ## 1) Confirm sign up
@@ -15,7 +15,7 @@ Empfohlener Betreff: `Bitte bestätige deine E-Mail-Adresse`
   <table align="center" width="100%" style="max-width:520px;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.08);">
     <tr>
       <td style="background:#0f172a;padding:24px;text-align:center;">
-        <img src="https://www.fishing-club-portal.de/assets/email/logo-fcp.png" alt="Fishing-Club-Portal" style="height:42px;margin-bottom:8px;">
+        <img src="https://www.vdan-ottenheim.com/assets/email/logo-fcp.png" alt="Fishing-Club-Portal" style="height:42px;margin-bottom:8px;">
         <div style="color:#fff;font-size:18px;font-weight:600;">Fishing-Club-Portal</div>
       </td>
     </tr>
@@ -51,7 +51,7 @@ Empfohlener Betreff: `Bitte bestätige deine neue E-Mail-Adresse`
   <table align="center" width="100%" style="max-width:520px;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.08);">
     <tr>
       <td style="background:#0f172a;padding:24px;text-align:center;">
-        <img src="https://www.fishing-club-portal.de/assets/email/logo-fcp.png" alt="Fishing-Club-Portal" style="height:42px;margin-bottom:8px;">
+        <img src="https://www.vdan-ottenheim.com/assets/email/logo-fcp.png" alt="Fishing-Club-Portal" style="height:42px;margin-bottom:8px;">
         <div style="color:#fff;font-size:18px;font-weight:600;">Fishing-Club-Portal</div>
       </td>
     </tr>
@@ -87,7 +87,7 @@ Empfohlener Betreff: `Passwort zurücksetzen`
   <table align="center" width="100%" style="max-width:520px;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.08);">
     <tr>
       <td style="background:#0f172a;padding:24px;text-align:center;">
-        <img src="https://www.fishing-club-portal.de/assets/email/logo-fcp.png" alt="Fishing-Club-Portal" style="height:42px;margin-bottom:8px;">
+        <img src="https://www.vdan-ottenheim.com/assets/email/logo-fcp.png" alt="Fishing-Club-Portal" style="height:42px;margin-bottom:8px;">
         <div style="color:#fff;font-size:18px;font-weight:600;">Fishing-Club-Portal</div>
       </td>
     </tr>
@@ -122,7 +122,7 @@ Empfohlener Betreff: `Dein Anmelde-Link`
   <table align="center" width="100%" style="max-width:520px;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.08);">
     <tr>
       <td style="background:#0f172a;padding:24px;text-align:center;">
-        <img src="https://www.fishing-club-portal.de/assets/email/logo-fcp.png" alt="Fishing-Club-Portal" style="height:42px;margin-bottom:8px;">
+        <img src="https://www.vdan-ottenheim.com/assets/email/logo-fcp.png" alt="Fishing-Club-Portal" style="height:42px;margin-bottom:8px;">
         <div style="color:#fff;font-size:18px;font-weight:600;">Fishing-Club-Portal</div>
       </td>
     </tr>

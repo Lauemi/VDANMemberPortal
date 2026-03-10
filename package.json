@@ -10,10 +10,12 @@
     "test": "node --test",
     "check:xss-guard": "node scripts/check-xss-guard.mjs",
     "check:studio-contract": "node scripts/check-studio-contract.mjs",
-    "report:role-matrix": "node scripts/generate-role-page-matrix-report.mjs"
+    "report:role-matrix": "node scripts/generate-role-page-matrix-report.mjs",
+    "security:fcp-prelaunch-hash": "node scripts/fcp-prelaunch-hash.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.6.0",
+    "@astrojs/vercel": "^9.0.4",
     "astro": "^5.0.0"
   }
 }

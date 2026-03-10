@@ -1,0 +1,79 @@
+---
+const url = Astro.url;
+const nextRaw = String(url.searchParams.get("next") || "/").trim();
+const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/";
+const hasError = String(url.searchParams.get("error") || "").trim() === "1";
+---
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FCP Zugangsschutz</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #0f172a;
+        color: #f8fafc;
+      }
+      .panel {
+        width: min(92vw, 420px);
+        background: #111827;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 24px;
+      }
+      h1 { margin: 0 0 8px; font-size: 1.2rem; }
+      p { margin: 0 0 16px; color: #cbd5e1; }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #475569;
+        background: #0b1220;
+        color: #f8fafc;
+        margin-bottom: 12px;
+      }
+      button {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 0;
+        background: #2563eb;
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .err {
+        margin-top: 10px;
+        color: #fca5a5;
+        font-size: .9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="panel">
+      <h1>FCP Soft-Access</h1>
+      <p>Geschützter Zugang für den kontrollierten Live-Test.</p>
+      <form method="POST" action="/_fcp-access/verify">
+        <input type="hidden" name="next" value={nextTarget} />
+        <input
+          type="password"
+          name="password"
+          autocomplete="current-password"
+          placeholder="Zugangspasswort"
+          required
+        />
+        <button type="submit">Zugang öffnen</button>
+      </form>
+      {hasError && <div class="err">Passwort ungültig.</div>}
+    </main>
+  </body>
+</html>

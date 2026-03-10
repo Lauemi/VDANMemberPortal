@@ -27,8 +27,16 @@ const isFcpMode = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
 
       <form id="loginForm" data-next-target={nextTarget}>
         <label>
-          <span>Mitgliedsnummer oder E-Mail</span>
-          <input id="loginMemberNo" name="identifier" type="text" inputmode="email" autocomplete="username" placeholder="z. B. m.lauenroth@lauemi.de oder 598" required />
+          <span>{isFcpMode ? "E-Mail" : "Mitgliedsnummer oder E-Mail"}</span>
+          <input
+            id="loginMemberNo"
+            name="identifier"
+            type="text"
+            inputmode="email"
+            autocomplete="username"
+            placeholder="name@beispiel.de"
+            required
+          />
         </label>
         <label>
           <span>Passwort</span>

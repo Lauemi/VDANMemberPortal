@@ -133,20 +133,164 @@ async function ensureProfile(user: Record<string, unknown>, clubId: string, memb
     return;
   }
 
-  const existingClubId = txt(existing.club_id);
-  if (existingClubId && existingClubId !== clubId) {
-    throw new Error("profile_already_bound_other_club");
-  }
-
   await sbServiceFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`, {
     method: "PATCH",
     headers: { Prefer: "return=minimal" },
     body: JSON.stringify({
       display_name: displayName,
-      club_id: clubId,
-      member_no: memberNo || txt(existing.member_no),
+      // Keep existing single-profile fields stable; multi-club membership is represented in role/membership tables.
+      club_id: txt(existing.club_id) || clubId,
+      member_no: txt(existing.member_no) || memberNo,
     }),
   });
+}
+
+async function clubHasMemberDirectory(clubId: string) {
+  const res = await sbServiceFetch(
+    `/rest/v1/club_members?select=member_no&club_id=eq.${encodeURIComponent(clubId)}&limit=1`,
+    { method: "GET" },
+  );
+  const rows = await res.json().catch(() => []);
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+async function memberNoExistsInClub(clubId: string, memberNo: string) {
+  const res = await sbServiceFetch(
+    `/rest/v1/club_members?select=member_no&club_id=eq.${encodeURIComponent(clubId)}&member_no=eq.${encodeURIComponent(memberNo)}&limit=1`,
+    { method: "GET" },
+  );
+  const rows = await res.json().catch(() => []);
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+async function memberNoExistsGlobal(memberNo: string) {
+  const res = await sbServiceFetch(
+    `/rest/v1/club_members?select=member_no&member_no=eq.${encodeURIComponent(memberNo)}&limit=1`,
+    { method: "GET" },
+  );
+  const rows = await res.json().catch(() => []);
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+async function nextClubMemberNo(clubId: string, clubCode: string) {
+  const code = txt(clubCode).toUpperCase() || "CLUB";
+  const prefix = `${code}-`;
+  const res = await sbServiceFetch(
+    `/rest/v1/club_members?select=member_no&club_id=eq.${encodeURIComponent(clubId)}&limit=10000`,
+    { method: "GET" },
+  );
+  const rows = await res.json().catch(() => []);
+
+  let maxNo = 0;
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const current = txt((row as { member_no?: string })?.member_no).toUpperCase();
+    if (!current.startsWith(prefix)) continue;
+    const suffix = current.slice(prefix.length);
+    const n = Number(suffix);
+    if (Number.isFinite(n)) maxNo = Math.max(maxNo, Math.trunc(n));
+  }
+
+  for (let i = maxNo + 1; i <= maxNo + 5000; i += 1) {
+    const candidate = `${prefix}${String(i).padStart(4, "0")}`;
+    const exists = await memberNoExistsGlobal(candidate);
+    if (!exists) return candidate;
+  }
+  throw new Error("member_no_generation_failed");
+}
+
+async function ensureClubMemberRecord(
+  clubId: string,
+  clubCode: string,
+  inputMemberNo: string,
+  firstName: string,
+  lastName: string,
+) {
+  const hasDirectory = await clubHasMemberDirectory(clubId);
+  const desiredInput = txt(inputMemberNo).toUpperCase();
+
+  if (hasDirectory) {
+    if (!desiredInput) throw new Error("member_no_required");
+    const existsInClub = await memberNoExistsInClub(clubId, desiredInput);
+    if (!existsInClub) throw new Error("member_no_not_found_in_club");
+    return desiredInput;
+  }
+
+  // Empty club directory: create first-class member row on invite claim.
+  let assignedMemberNo = desiredInput;
+  if (!assignedMemberNo) {
+    assignedMemberNo = await nextClubMemberNo(clubId, clubCode);
+  } else {
+    const existsGlobal = await memberNoExistsGlobal(assignedMemberNo);
+    if (existsGlobal) {
+      // Existing global member number (usually from another club): auto-provision club-local number.
+      assignedMemberNo = await nextClubMemberNo(clubId, clubCode);
+    }
+  }
+
+  const safeFirst = txt(firstName) || "Vorname";
+  const safeLast = txt(lastName) || "Nachname";
+  const safeCode = txt(clubCode).toUpperCase() || "CLUB";
+
+  await sbServiceFetch("/rest/v1/club_members", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify([{
+      club_id: clubId,
+      club_code: safeCode,
+      member_no: assignedMemberNo,
+      first_name: safeFirst,
+      last_name: safeLast,
+      status: "active",
+      membership_kind: "Mitglied",
+      fishing_card_type: "-",
+      role: "member",
+      wiso_roles: null,
+    }]),
+  });
+
+  return assignedMemberNo;
+}
+
+async function ensureClubMemberIdentity(userId: string, clubId: string, memberNo: string) {
+  const memberNoUp = txt(memberNo).toUpperCase();
+  if (!memberNoUp) throw new Error("member_no_required");
+
+  const byMemberRes = await sbServiceFetch(
+    `/rest/v1/club_member_identities?select=user_id&club_id=eq.${encodeURIComponent(clubId)}&member_no=eq.${encodeURIComponent(memberNoUp)}&limit=1`,
+    { method: "GET" },
+  );
+  const byMemberRows = await byMemberRes.json().catch(() => []);
+  const assignedUserId = txt(Array.isArray(byMemberRows) && byMemberRows.length ? byMemberRows[0]?.user_id : "");
+  if (assignedUserId && assignedUserId !== userId) {
+    throw new Error("member_no_assigned_other_user");
+  }
+
+  const byUserRes = await sbServiceFetch(
+    `/rest/v1/club_member_identities?select=member_no&club_id=eq.${encodeURIComponent(clubId)}&user_id=eq.${encodeURIComponent(userId)}&limit=1`,
+    { method: "GET" },
+  );
+  const byUserRows = await byUserRes.json().catch(() => []);
+  const currentMemberNo = txt(Array.isArray(byUserRows) && byUserRows.length ? byUserRows[0]?.member_no : "").toUpperCase();
+
+  if (!currentMemberNo) {
+    await sbServiceFetch("/rest/v1/club_member_identities", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify([{ club_id: clubId, user_id: userId, member_no: memberNoUp }]),
+    });
+    return;
+  }
+
+  if (currentMemberNo === memberNoUp) return;
+
+  await sbServiceFetch(
+    `/rest/v1/club_member_identities?club_id=eq.${encodeURIComponent(clubId)}&user_id=eq.${encodeURIComponent(userId)}`,
+    {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ member_no: memberNoUp }),
+    },
+  );
 }
 
 async function ensureMemberRole(userId: string, clubId: string) {
@@ -155,12 +299,18 @@ async function ensureMemberRole(userId: string, clubId: string) {
     { method: "GET" },
   );
   const rows = await res.json().catch(() => []);
-  if (Array.isArray(rows) && rows.length) return;
+  if (!(Array.isArray(rows) && rows.length)) {
+    await sbServiceFetch("/rest/v1/user_roles", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify([{ user_id: userId, club_id: clubId, role: "member" }]),
+    });
+  }
 
-  await sbServiceFetch("/rest/v1/user_roles", {
+  await sbServiceFetch("/rest/v1/club_user_roles", {
     method: "POST",
-    headers: { Prefer: "return=minimal" },
-    body: JSON.stringify([{ user_id: userId, club_id: clubId, role: "member" }]),
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify([{ user_id: userId, club_id: clubId, role_key: "member" }]),
   });
 }
 
@@ -184,17 +334,23 @@ Deno.serve(async (req: Request) => {
     const lastName = txt((body as { last_name?: string })?.last_name);
 
     if (!inviteToken) throw new Error("invite_token_required");
-    if (!memberNo) throw new Error("member_no_required");
-
     const loaded = await loadInviteRecord(inviteToken);
     validateInviteRecord(loaded.record);
 
     const userId = txt(actor.id);
     const record = loaded.record!;
+    const assignedMemberNo = await ensureClubMemberRecord(
+      record.club_id,
+      record.club_code,
+      memberNo,
+      firstName,
+      lastName,
+    );
     const usedUsers = Array.isArray(record.used_user_ids) ? record.used_user_ids.map(txt).filter(Boolean) : [];
     const alreadyUsedByActor = usedUsers.includes(userId);
 
-    await ensureProfile(actor, record.club_id, memberNo, firstName, lastName);
+    await ensureClubMemberIdentity(userId, record.club_id, assignedMemberNo);
+    await ensureProfile(actor, record.club_id, assignedMemberNo, firstName, lastName);
     await ensureMemberRole(userId, record.club_id);
 
     if (!alreadyUsedByActor) {
@@ -216,6 +372,7 @@ Deno.serve(async (req: Request) => {
       club_id: record.club_id,
       club_code: record.club_code,
       club_name: record.club_name,
+      member_no: assignedMemberNo,
       role_assigned: "member",
     }), {
       status: 200,

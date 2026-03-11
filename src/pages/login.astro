@@ -16,11 +16,11 @@ const isFcpMode = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
       <h1>Login</h1>
       {!isFcpMode && (
         <>
-          <p class="small">Login mit E-Mail oder (nur bei Legacy-Accounts) Mitgliedsnummer. Das Passwort Erstpasswort wird vom Vorstand bei Fortschritt der Tests ausgegeben. 
-          </p>
+          {/* <p class="small">Login mit E-Mail oder (nur bei Legacy-Accounts) Mitgliedsnummer. Das Passwort Erstpasswort wird vom Vorstand bei Fortschritt der Tests ausgegeben. 
+          </p> */}
           <p class="small" style="margin-top:8px;color:var(--danger);font-weight:700;">
-            WICHTIG: Zugangsnamen wie <code>001</code> funktionieren aktuell nicht als Login.
-            Login erfolgt über Auth-E-Mail (oder Legacy-Mitgliedsnummer-Flow, solange vorhanden).
+            WICHTIG: Zugänge wie Mitgliedsnummer  <code>001</code> + Passwort funktionieren nur noch kurzzeitig. In den kommenden Wochen werden alle Accounts auf die neue Auth-E-Mail umgestellt. Danach erfolgt der Login nur noch über Auth-E-Mail.
+            
           </p>
         </>
       )}

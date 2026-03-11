@@ -198,7 +198,7 @@
     if (!token) throw new Error("login_required_for_invite_claim");
     const inviteToken = String(claimPayload?.invite_token || "").trim();
     const memberNo = String(claimPayload?.member_no || "").trim().toUpperCase();
-    if (!inviteToken || !memberNo) throw new Error("invite_claim_payload_invalid");
+    if (!inviteToken) throw new Error("invite_claim_payload_invalid");
     return callEdgeFunction("club-invite-claim", {
       invite_token: inviteToken,
       member_no: memberNo,
@@ -209,7 +209,7 @@
 
   async function claimPendingInviteIfPresent(accessToken = "") {
     const pending = readPendingInvite();
-    if (!pending?.invite_token || !pending?.member_no) return null;
+    if (!pending?.invite_token) return null;
     const token = String(accessToken || "").trim() || String(loadSession()?.access_token || "").trim();
     if (!token) return null;
     const claimed = await claimInviteToken(pending, token);
@@ -679,18 +679,16 @@
         try {
           const hasInvite = Boolean(inviteToken);
           if (hasInvite) {
-            if (!memberNo) throw new Error("Bitte Mitgliedsnummer eingeben.");
-
             const verify = await verifyInviteToken(inviteToken);
             const inviteMemberNo = extractInviteMemberNo(verify);
             const effectiveMemberNo = inviteMemberNo || memberNo;
-            if (!effectiveMemberNo) throw new Error("Einladung enthält keine gueltige Mitgliedsnummer.");
-            if (inviteMemberNo && inviteMemberNo !== memberNo) throw new Error("Mitgliedsnummer passt nicht zur Einladung.");
+            if (inviteMemberNo && memberNo && inviteMemberNo !== memberNo) throw new Error("Mitgliedsnummer passt nicht zur Einladung.");
 
             const clubCode = String(verify?.club_code || "").trim();
             if (!clubCode) throw new Error("Einladung ohne Vereinsbezug ist ungueltig.");
 
-            const inviteEmail = memberNoToEmail(effectiveMemberNo);
+            const signupMemberNo = effectiveMemberNo || `INV-${String(inviteToken).slice(0, 10).toUpperCase()}`;
+            const inviteEmail = memberNoToEmail(signupMemberNo);
             const claimPayload = {
               invite_token: inviteToken,
               member_no: effectiveMemberNo,

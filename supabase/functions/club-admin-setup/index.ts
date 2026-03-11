@@ -201,6 +201,123 @@ async function insertMissingWaters(clubId: string, waters: string[]) {
   });
 }
 
+async function ensureCoreClubRoles(clubId: string) {
+  const payload = [
+    { club_id: clubId, role_key: "member", label: "Mitglied", is_core: true, is_active: true },
+    { club_id: clubId, role_key: "vorstand", label: "Vorstand", is_core: true, is_active: true },
+    { club_id: clubId, role_key: "admin", label: "Admin", is_core: true, is_active: true },
+  ];
+  await sbServiceFetch("/rest/v1/club_roles?on_conflict=club_id,role_key", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify(payload),
+  });
+}
+
+async function loadActiveUsecases() {
+  const modulesRes = await sbServiceFetch("/rest/v1/module_catalog?select=module_key,is_active", { method: "GET" });
+  const moduleRows = await modulesRes.json().catch(() => []);
+  const activeModules = new Set(
+    (Array.isArray(moduleRows) ? moduleRows : [])
+      .filter((r) => Boolean(r?.is_active))
+      .map((r) => txt(r?.module_key)),
+  );
+
+  const usecasesRes = await sbServiceFetch("/rest/v1/module_usecases?select=module_key,usecase_key,is_active", { method: "GET" });
+  const usecaseRows = await usecasesRes.json().catch(() => []);
+  return (Array.isArray(usecaseRows) ? usecaseRows : [])
+    .filter((r) => Boolean(r?.is_active) && activeModules.has(txt(r?.module_key)))
+    .map((r) => ({ module_key: txt(r?.module_key), usecase_key: txt(r?.usecase_key) }))
+    .filter((r) => r.module_key && r.usecase_key);
+}
+
+async function ensureClubModuleUsecases(clubId: string) {
+  const active = await loadActiveUsecases();
+  if (!active.length) return;
+  const payload = active.map((r) => ({
+    club_id: clubId,
+    module_key: r.module_key,
+    usecase_key: r.usecase_key,
+    is_enabled: true,
+  }));
+  await sbServiceFetch("/rest/v1/club_module_usecases?on_conflict=club_id,module_key,usecase_key", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify(payload),
+  });
+}
+
+async function ensureDefaultUsecaseAcl(clubId: string) {
+  const defaults: Array<{
+    role_key: "member" | "vorstand" | "admin";
+    usecase_key: string;
+    can_view: boolean;
+    can_read: boolean;
+    can_write: boolean;
+    can_update: boolean;
+    can_delete: boolean;
+  }> = [
+    { role_key: "member", usecase_key: "fangliste", can_view: true, can_read: true, can_write: false, can_update: false, can_delete: false },
+    { role_key: "member", usecase_key: "go_fishing", can_view: true, can_read: true, can_write: false, can_update: false, can_delete: false },
+    { role_key: "member", usecase_key: "fangliste_cockpit", can_view: false, can_read: false, can_write: false, can_update: false, can_delete: false },
+    { role_key: "member", usecase_key: "arbeitseinsaetze", can_view: true, can_read: true, can_write: false, can_update: false, can_delete: false },
+    { role_key: "member", usecase_key: "arbeitseinsaetze_cockpit", can_view: false, can_read: false, can_write: false, can_update: false, can_delete: false },
+    { role_key: "member", usecase_key: "feed", can_view: true, can_read: true, can_write: false, can_update: false, can_delete: false },
+    { role_key: "member", usecase_key: "mitglieder", can_view: false, can_read: false, can_write: false, can_update: false, can_delete: false },
+    { role_key: "member", usecase_key: "mitglieder_registry", can_view: false, can_read: false, can_write: false, can_update: false, can_delete: false },
+    { role_key: "member", usecase_key: "dokumente", can_view: false, can_read: false, can_write: false, can_update: false, can_delete: false },
+    { role_key: "member", usecase_key: "sitzungen", can_view: false, can_read: false, can_write: false, can_update: false, can_delete: false },
+    { role_key: "member", usecase_key: "einstellungen", can_view: true, can_read: true, can_write: false, can_update: false, can_delete: false },
+
+    { role_key: "vorstand", usecase_key: "fangliste", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
+    { role_key: "vorstand", usecase_key: "go_fishing", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
+    { role_key: "vorstand", usecase_key: "fangliste_cockpit", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
+    { role_key: "vorstand", usecase_key: "arbeitseinsaetze", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
+    { role_key: "vorstand", usecase_key: "arbeitseinsaetze_cockpit", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
+    { role_key: "vorstand", usecase_key: "feed", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
+    { role_key: "vorstand", usecase_key: "mitglieder", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
+    { role_key: "vorstand", usecase_key: "mitglieder_registry", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
+    { role_key: "vorstand", usecase_key: "dokumente", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
+    { role_key: "vorstand", usecase_key: "sitzungen", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
+    { role_key: "vorstand", usecase_key: "einstellungen", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
+
+    { role_key: "admin", usecase_key: "fangliste", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
+    { role_key: "admin", usecase_key: "go_fishing", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
+    { role_key: "admin", usecase_key: "fangliste_cockpit", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
+    { role_key: "admin", usecase_key: "arbeitseinsaetze", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
+    { role_key: "admin", usecase_key: "arbeitseinsaetze_cockpit", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
+    { role_key: "admin", usecase_key: "feed", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
+    { role_key: "admin", usecase_key: "mitglieder", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
+    { role_key: "admin", usecase_key: "mitglieder_registry", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
+    { role_key: "admin", usecase_key: "dokumente", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
+    { role_key: "admin", usecase_key: "sitzungen", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
+    { role_key: "admin", usecase_key: "einstellungen", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
+  ];
+
+  const active = await loadActiveUsecases();
+  if (!active.length) return;
+  const activeKeys = new Set(active.map((r) => r.usecase_key));
+  const payload = defaults
+    .filter((d) => activeKeys.has(d.usecase_key))
+    .map((d) => ({
+      club_id: clubId,
+      role_key: d.role_key,
+      module_key: d.usecase_key,
+      can_view: d.can_view,
+      can_read: d.can_read,
+      can_write: d.can_write,
+      can_update: d.can_update,
+      can_delete: d.can_delete,
+    }));
+  if (!payload.length) return;
+
+  await sbServiceFetch("/rest/v1/club_role_permissions?on_conflict=club_id,role_key,module_key", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify(payload),
+  });
+}
+
 async function ensureCreatorRoles(userId: string, clubId: string) {
   const existingRes = await sbServiceFetch(
     `/rest/v1/user_roles?select=role&user_id=eq.${encodeURIComponent(userId)}&club_id=eq.${encodeURIComponent(clubId)}`,
@@ -209,7 +326,7 @@ async function ensureCreatorRoles(userId: string, clubId: string) {
   const existingRows = await existingRes.json().catch(() => []);
   const existing = new Set((Array.isArray(existingRows) ? existingRows : []).map((r) => txt(r?.role).toLowerCase()));
 
-  const want = ["admin", "member"];
+  const want = ["admin"];
   const missing = want.filter((role) => !existing.has(role));
   if (!missing.length) return;
 
@@ -218,6 +335,13 @@ async function ensureCreatorRoles(userId: string, clubId: string) {
     method: "POST",
     headers: { Prefer: "return=minimal" },
     body: JSON.stringify(payload),
+  });
+
+  // Keep ACL role mapping in sync for new club setup.
+  await sbServiceFetch("/rest/v1/club_user_roles", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify(missing.map((role) => ({ user_id: userId, club_id: clubId, role_key: role }))),
   });
 }
 
@@ -372,6 +496,9 @@ Deno.serve(async (req: Request) => {
     }
 
     await insertMissingWaters(clubId, waters);
+    await ensureCoreClubRoles(clubId);
+    await ensureClubModuleUsecases(clubId);
+    await ensureDefaultUsecaseAcl(clubId);
 
     if (assignCreatorRoles) {
       await ensureCreatorRoles(String(actor.id), clubId);

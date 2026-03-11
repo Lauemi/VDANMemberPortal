@@ -74,6 +74,7 @@
     profileName: "",
     profileMemberNo: "",
     roles: [],
+    clubMemberships: [],
     visibleModules: [],
     settings: { nav_handedness: "right", portal_favorites: [...DEFAULT_FAVORITES] },
     drawerOpen: false,
@@ -247,6 +248,85 @@
     return Array.isArray(rows) ? rows.map((r) => String(r.role || "").toLowerCase()) : [];
   }
 
+  function uniqStrings(values) {
+    return [...new Set((values || []).map((v) => String(v || "").trim()).filter(Boolean))];
+  }
+
+  function clubCodeByIdMap(rows) {
+    const map = new Map();
+    (Array.isArray(rows) ? rows : []).forEach((row) => {
+      const clubId = String(row?.club_id || "").trim();
+      const clubCode = String(row?.club_code || "").trim();
+      if (!clubId || !clubCode) return;
+      if (!map.has(clubId)) map.set(clubId, clubCode);
+    });
+    return map;
+  }
+
+  async function loadClubMemberships() {
+    const uid = String(state.uid || "").trim();
+    if (!uid) return [];
+
+    let aclRows = [];
+    try {
+      aclRows = await sb(`/rest/v1/club_user_roles?select=club_id,role_key&user_id=eq.${encodeURIComponent(uid)}`, { method: "GET" }, true);
+    } catch {
+      aclRows = [];
+    }
+
+    let rows = [];
+    if (Array.isArray(aclRows) && aclRows.length) {
+      rows = aclRows.map((r) => ({
+        club_id: String(r?.club_id || "").trim(),
+        role: String(r?.role_key || "").trim().toLowerCase(),
+      }));
+    } else {
+      let legacyRows = [];
+      try {
+        legacyRows = await sb(`/rest/v1/user_roles?select=club_id,role&user_id=eq.${encodeURIComponent(uid)}`, { method: "GET" }, true);
+      } catch {
+        legacyRows = [];
+      }
+      rows = (Array.isArray(legacyRows) ? legacyRows : []).map((r) => ({
+        club_id: String(r?.club_id || "").trim(),
+        role: String(r?.role || "").trim().toLowerCase(),
+      }));
+    }
+
+    const clubIds = uniqStrings(rows.map((r) => r.club_id));
+    let codeMap = new Map();
+    if (clubIds.length) {
+      try {
+        const inList = clubIds.join(",");
+        const codeRows = await sb(`/rest/v1/club_members?select=club_id,club_code&club_id=in.(${encodeURIComponent(inList)})`, { method: "GET" }, true);
+        codeMap = clubCodeByIdMap(codeRows);
+      } catch {
+        codeMap = new Map();
+      }
+    }
+
+    const grouped = new Map();
+    rows.forEach((r) => {
+      if (!r.club_id || !r.role) return;
+      if (!grouped.has(r.club_id)) {
+        grouped.set(r.club_id, {
+          club_id: r.club_id,
+          club_code: codeMap.get(r.club_id) || "",
+          roles: new Set(),
+        });
+      }
+      grouped.get(r.club_id).roles.add(r.role);
+    });
+
+    return [...grouped.values()]
+      .map((row) => ({
+        club_id: row.club_id,
+        club_code: row.club_code || "",
+        roles: [...row.roles].sort(),
+      }))
+      .sort((a, b) => String(a.club_code || a.club_id).localeCompare(String(b.club_code || b.club_id), "de"));
+  }
+
   async function loadProfileData() {
     const uid = state.uid;
     if (!uid) return { name: "", memberNo: "" };
@@ -368,7 +448,18 @@
     account.className = "portal-quick-group";
     const accountLabel = state.loggedIn ? accountName() : LABELS.notLoggedIn;
     const memberNo = String(state.profileMemberNo || "").trim();
+    const memberships = Array.isArray(state.clubMemberships) ? state.clubMemberships : [];
     const presence = presenceInfo();
+    const clubsHtml = state.loggedIn && memberships.length
+      ? `
+        <div class="small" style="margin-top:6px;">
+          <strong>Vereine</strong>
+          <ul style="margin:4px 0 0 16px;padding:0;display:grid;gap:2px;">
+            ${memberships.map((m) => `<li>${esc(m.club_code || `Club ${String(m.club_id).slice(0, 8)}`)} <span style="opacity:.8;">(${esc((m.roles || []).join(", "))})</span></li>`).join("")}
+          </ul>
+        </div>
+      `
+      : "";
     account.innerHTML = `
       <h3 class="portal-quick-group__title">Konto</h3>
       <div class="portal-quick-group__list">
@@ -378,6 +469,7 @@
               <p class="portal-quick-row__title">${LABELS.welcome}</p>
               <p class="small portal-quick-account-name">${esc(accountLabel)}</p>
               ${memberNo ? `<p class="small">${LABELS.memberNo}: ${esc(memberNo)}</p>` : ""}
+              ${clubsHtml}
               ${state.loggedIn ? `<p class="small portal-quick-presence"><span class="portal-quick-presence-dot ${presence.className}" aria-hidden="true"></span>${presence.label}</p>` : ""}
               ${state.loggedIn ? `<p class="small portal-quick-legal-row"><a class="portal-quick-legal-link" href="/nutzungsbedingungen.html/">${LABELS.terms}</a><button type="button" class="portal-quick-logout-link" data-action="logout">${LABELS.logout}</button></p>` : ""}
             </div>
@@ -722,6 +814,7 @@
     state.uid = s?.user?.id || null;
     state.profileName = "";
     state.profileMemberNo = "";
+    state.clubMemberships = [];
 
     const toggle = document.getElementById("portalQuickToggle");
     const rail = document.getElementById("portalRail");
@@ -741,6 +834,7 @@
     }
 
     state.roles = await loadRoles().catch(() => []);
+    state.clubMemberships = await loadClubMemberships().catch(() => []);
     const profile = await loadProfileData().catch(() => ({ name: "", memberNo: "" }));
     state.profileName = String(profile?.name || "").trim();
     state.profileMemberNo = String(profile?.memberNo || "").trim();

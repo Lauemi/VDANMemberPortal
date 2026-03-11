@@ -145,12 +145,19 @@ async function resolveClubName(clubId: string, fallbackCode: string) {
 }
 
 async function hasClubManagerRole(userId: string, clubId: string) {
-  const res = await sbServiceFetch(
+  const legacyRes = await sbServiceFetch(
     `/rest/v1/user_roles?select=role&user_id=eq.${encodeURIComponent(userId)}&club_id=eq.${encodeURIComponent(clubId)}&role=in.(admin,vorstand)&limit=1`,
     { method: "GET" },
   );
-  const rows = await res.json().catch(() => []);
-  return Array.isArray(rows) && rows.length > 0;
+  const legacyRows = await legacyRes.json().catch(() => []);
+  if (Array.isArray(legacyRows) && legacyRows.length > 0) return true;
+
+  const aclRes = await sbServiceFetch(
+    `/rest/v1/club_user_roles?select=role_key&user_id=eq.${encodeURIComponent(userId)}&club_id=eq.${encodeURIComponent(clubId)}&role_key=in.(admin,vorstand)&limit=1`,
+    { method: "GET" },
+  );
+  const aclRows = await aclRes.json().catch(() => []);
+  return Array.isArray(aclRows) && aclRows.length > 0;
 }
 
 Deno.serve(async (req: Request) => {
@@ -177,7 +184,7 @@ Deno.serve(async (req: Request) => {
 
     const clubId = await resolveClubId(clubCodeInput, clubIdInput);
     const clubCode = await resolveClubCode(clubId, clubCodeInput);
-    if (!clubCode) throw new Error("club_code_missing");
+    const safeClubCode = clubCode || "CLUB";
 
     const userId = txt(actor.id);
     const allowed = await hasClubManagerRole(userId, clubId);
@@ -194,7 +201,7 @@ Deno.serve(async (req: Request) => {
       version: 1,
       status: "active",
       club_id: clubId,
-      club_code: clubCode,
+      club_code: safeClubCode,
       club_name: clubName,
       created_at: createdAt,
       created_by: userId,
@@ -217,7 +224,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({
         ok: true,
         club_id: clubId,
-        club_code: clubCode,
+        club_code: safeClubCode,
         club_name: clubName,
         invite_token: inviteToken,
         invite_expires_at: inviteExpiresAt,

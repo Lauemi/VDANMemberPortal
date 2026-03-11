@@ -10,6 +10,7 @@
     "test": "node --test",
     "check:xss-guard": "node scripts/check-xss-guard.mjs",
     "check:studio-contract": "node scripts/check-studio-contract.mjs",
+    "check:governance-health": "node scripts/governance-health-gate.mjs",
     "report:role-matrix": "node scripts/generate-role-page-matrix-report.mjs",
     "security:fcp-prelaunch-hash": "node scripts/fcp-prelaunch-hash.mjs"
   },

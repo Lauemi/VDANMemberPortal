@@ -587,15 +587,109 @@
   font-weight: 700;
 }
 
+.admin-kpi .admin-kpi__id {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.gov-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: .78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.gov-status--green {
+  color: #1fc388;
+  border-color: rgba(31, 195, 136, .35);
+  background: rgba(31, 195, 136, .1);
+}
+
+.gov-status--yellow {
+  color: #ffd166;
+  border-color: rgba(255, 209, 102, .35);
+  background: rgba(255, 209, 102, .1);
+}
+
+.gov-status--red {
+  color: #ff6a6a;
+  border-color: rgba(255, 106, 106, .35);
+  background: rgba(255, 106, 106, .1);
+}
+
 .admin-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+.admin-actions--toolbar {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-card-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.admin-card-toolbar__meta {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.admin-card-toolbar__meta p {
+  margin: 0;
 }
 
 .admin-filter-row {
   display: grid;
   grid-template-columns: 1fr 220px;
   gap: 8px;
+}
+
+.registry-invite-grid {
+  grid-template-columns: minmax(240px, 2fr) minmax(160px, 1fr) minmax(140px, 1fr) minmax(140px, 1fr);
+  align-items: end;
+}
+
+.registry-invite-grid > * {
+  min-width: 0;
+}
+
+.registry-invite-grid label {
+  min-width: 0;
+}
+
+.registry-invite-grid input,
+.registry-invite-grid select {
+  width: 100%;
+  min-width: 0;
+}
+
+.registry-invite-grid select {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.registry-invite-grid #clubInviteCreateCode {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.registry-invite-grid .feed-btn {
+  width: 100%;
+  grid-column: 3 / span 2;
 }
 
 @media (max-width: 760px) {
@@ -637,6 +731,22 @@
 
   .admin-filter-row {
     grid-template-columns: 1fr;
+  }
+
+  .registry-invite-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .registry-invite-grid .feed-btn {
+    grid-column: auto;
+  }
+
+  .admin-card-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-actions--toolbar {
+    justify-content: flex-start;
   }
 }
 

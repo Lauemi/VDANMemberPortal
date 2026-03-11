@@ -51,10 +51,10 @@ import { APP } from "../../../config/app";
               <table class="work-part-table" id="adminClubsTopTable">
                 <thead>
                   <tr>
-                    <th>Clubname</th><th>Club-ID</th><th>Mitglieder</th><th>Aktiv</th><th>Letzte Aktivität</th><th>Status</th>
+                    <th>Verein</th><th>Mitglieder (Personen)</th><th>Rollen-Zuordnungen</th><th>Aktiv</th><th>Letzte Aktivität</th><th>Status</th><th>Club-ID</th>
                   </tr>
                 </thead>
-                <tbody><tr><td colspan="6" class="small">Lade Daten...</td></tr></tbody>
+                <tbody><tr><td colspan="7" class="small">Lade Daten...</td></tr></tbody>
               </table>
             </div>
           </article>
@@ -84,10 +84,35 @@ import { APP } from "../../../config/app";
               <table class="work-part-table" id="adminClubsTable">
                 <thead>
                   <tr>
-                    <th>Clubname</th><th>Club-ID</th><th>Erstellt am</th><th>Mitglieder</th><th>Aktiv</th><th>Nie eingeloggt</th><th>Status</th><th>Aktionen</th>
+                    <th>Verein</th><th>Erstellt am</th><th>Mitglieder (Personen)</th><th>Rollen-Zuordnungen</th><th>Aktiv</th><th>Nie eingeloggt</th><th>Status</th><th>Aktionen</th><th>Club-ID</th>
                   </tr>
                 </thead>
-                <tbody><tr><td colspan="8" class="small">Lade Daten...</td></tr></tbody>
+                <tbody><tr><td colspan="9" class="small">Lade Daten...</td></tr></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="admin-card hidden" hidden id="adminClubDetailCard">
+            <div class="admin-card-toolbar">
+              <div class="admin-card-toolbar__meta">
+                <h3 id="adminClubDetailTitle">Club-Detail</h3>
+                <p class="small" id="adminClubDetailMeta">-</p>
+                <p class="small" id="adminClubDetailMsg" aria-live="polite"></p>
+              </div>
+              <div class="admin-actions admin-actions--toolbar">
+                <button type="button" class="feed-btn feed-btn--ghost" id="adminClubDetailSave">Modulzusammensetzung speichern</button>
+                <button type="button" class="feed-btn feed-btn--ghost" id="adminClubDetailReset">Standard für Club laden</button>
+                <button type="button" class="feed-btn feed-btn--ghost" id="adminClubDetailClose">Schließen</button>
+              </div>
+            </div>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminClubModulesTable">
+                <thead>
+                  <tr>
+                    <th>Modul</th><th>Aktiv</th><th>Usecases</th><th>Hinweis</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
               </table>
             </div>
           </article>
@@ -119,10 +144,57 @@ import { APP } from "../../../config/app";
         </section>
 
         <section class="admin-section" data-admin-panel="analytics">
-          <article class="admin-card is-missing">
-            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+          <article class="admin-card">
             <h2>Analytics</h2>
-            <p class="small">Login/Registrierung/Clubbeitritte als Zeitreihen sind als naechster Schritt vorgesehen.</p>
+            <p class="small">Governance-Monitoring aus zentralem Snapshot (Source of Truth fuer Board + Nightly + CI).</p>
+            <div class="admin-kpi-grid">
+              <article class="admin-kpi"><h3>Clubs gruen</h3><p id="kpiGovGreen">-</p></article>
+              <article class="admin-kpi"><h3>Clubs gelb</h3><p id="kpiGovYellow">-</p></article>
+              <article class="admin-kpi"><h3>Clubs rot</h3><p id="kpiGovRed">-</p></article>
+              <article class="admin-kpi"><h3>Issues gesamt</h3><p id="kpiGovIssues">-</p></article>
+              <article class="admin-kpi"><h3>Offene Rules</h3><p id="kpiGovRulesOpen">-</p></article>
+            </div>
+            <p class="small" id="adminGovernanceMsg" aria-live="polite"></p>
+          </article>
+
+          <article class="admin-card">
+            <h3>Governance-Health je Club</h3>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminGovernanceHealthTable">
+                <thead>
+                  <tr>
+                    <th>Verein</th>
+                    <th>Status</th>
+                    <th>Issues</th>
+                    <th>Identity Gaps</th>
+                    <th>Roles ohne Membership</th>
+                    <th>Doppelte Identities</th>
+                    <th>Members ohne Identity-Link</th>
+                    <th>Name/Code fehlt</th>
+                    <th>Club-ID</th>
+                  </tr>
+                </thead>
+                <tbody><tr><td colspan="9" class="small">Lade Daten...</td></tr></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="admin-card">
+            <h3>Governance-Issues (Drilldown)</h3>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminGovernanceIssuesTable">
+                <thead>
+                  <tr>
+                    <th>Rule</th>
+                    <th>Verein</th>
+                    <th>Ref-1</th>
+                    <th>Ref-2</th>
+                    <th>Detail</th>
+                  </tr>
+                </thead>
+                <tbody><tr><td colspan="5" class="small">Lade Daten...</td></tr></tbody>
+              </table>
+            </div>
           </article>
         </section>
 
@@ -181,6 +253,54 @@ import { APP } from "../../../config/app";
                 <thead>
                   <tr>
                     <th>Seite</th><th>Route</th><th>Typ</th><th>Guest</th><th>Member</th><th>Manager</th><th>Admin</th><th>Superadmin</th><th>Aktion</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="admin-card">
+            <h3>Modul-Katalog (Superadmin)</h3>
+            <p class="small">Hier definierst du Modulpakete und welche Usecases jeweils enthalten sind.</p>
+            <p class="small" id="adminModuleCatalogMsg" aria-live="polite"></p>
+            <div class="admin-actions">
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminModuleCatalogSave">Katalog speichern</button>
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminModuleCatalogReset">Katalog reset</button>
+            </div>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminModuleCatalogTable">
+                <thead>
+                  <tr>
+                    <th>Modul-Key</th><th>Label</th><th>Usecases (kommagetrennt)</th><th>Aktiv</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="admin-card">
+            <h3>Standard-Rollenrechte (Superadmin)</h3>
+            <p class="small">Diese Defaults gelten für Vereine und können dort nur innerhalb freigegebener Module feinjustiert werden.</p>
+            <p class="small" id="adminRoleDefaultsMsg" aria-live="polite"></p>
+            <div class="admin-actions">
+              <label class="small" style="display:flex;align-items:center;gap:8px;">
+                Rolle
+                <select id="adminRoleDefaultsRole">
+                  <option value="member">member</option>
+                  <option value="vorstand">vorstand</option>
+                  <option value="admin">admin</option>
+                </select>
+              </label>
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleDefaultsSave">Defaults speichern</button>
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleDefaultsReset">Defaults reset</button>
+            </div>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminRoleDefaultsTable">
+                <thead>
+                  <tr>
+                    <th>Modul</th><th>Usecase</th><th>Anzeigen</th><th>Lesen</th><th>Schreiben</th><th>Bearbeiten</th><th>Löschen</th>
                   </tr>
                 </thead>
                 <tbody></tbody>

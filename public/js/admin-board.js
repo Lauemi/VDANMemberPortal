@@ -1,6 +1,10 @@
 ;(() => {
   const ROLE_MATRIX_STORAGE_KEY = "vdan_role_page_matrix_v1";
   const ROLE_KEYS = ["guest", "member", "manager", "admin", "superadmin"];
+  const MODULE_CATALOG_STORAGE_KEY = "vdan_module_catalog_v1";
+  const MODULE_DEFAULT_RIGHTS_STORAGE_KEY = "vdan_module_default_rights_v1";
+  const CLUB_MODULE_CONFIG_STORAGE_KEY = "vdan_club_module_config_v1";
+  const CORE_ROLES = ["member", "vorstand", "admin"];
   const PAGE_INDEX_BASE = [
     { route: "/app/", kind: "PORTAL", label: "App Start" },
     { route: "/app/admin-panel/", kind: "PORTAL", label: "Admin Board" },
@@ -62,13 +66,299 @@
   const state = {
     clubs: [],
     memberships: [],
+    clubRoleAssignments: [],
     users: [],
+    clubMetrics: [],
     membersFiltered: [],
     loginSignalAvailable: false,
     sources: [],
     diagnostics: [],
+    selectedClubId: "",
+    moduleCatalog: [],
+    moduleDefaultRights: {},
+    clubModuleConfig: {},
+    governanceHealth: [],
+    governanceIssues: [],
   };
   let rolePageMatrix = {};
+
+  function sanitizeKey(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replaceAll("ä", "ae")
+      .replaceAll("ö", "oe")
+      .replaceAll("ü", "ue")
+      .replaceAll("ß", "ss")
+      .replace(/[^a-z0-9 _-]/g, "")
+      .replace(/\s+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "");
+  }
+
+  function rightSet(input = {}) {
+    const v = Boolean(input.view);
+    return {
+      view: v,
+      read: v,
+      write: v ? Boolean(input.write) : false,
+      update: v ? Boolean(input.update) : false,
+      delete: v ? Boolean(input.delete) : false,
+    };
+  }
+
+  function defaultModuleCatalog() {
+    return [
+      { id: "fishing", label: "Fishing", active: true, usecases: ["fangliste", "go_fishing", "fangliste_cockpit"] },
+      { id: "work", label: "Arbeitseinsätze", active: true, usecases: ["arbeitseinsaetze", "arbeitseinsaetze_cockpit"] },
+      { id: "feed", label: "Feed", active: true, usecases: ["feed"] },
+      { id: "members", label: "Mitglieder", active: true, usecases: ["mitglieder", "mitglieder_registry"] },
+      { id: "documents", label: "Dokumente", active: true, usecases: ["dokumente"] },
+      { id: "meetings", label: "Sitzungen", active: true, usecases: ["sitzungen"] },
+      { id: "settings", label: "Einstellungen", active: true, usecases: ["einstellungen"] },
+    ];
+  }
+
+  function normalizeCatalogEntry(raw) {
+    const id = sanitizeKey(raw?.id);
+    if (!id) return null;
+    const label = String(raw?.label || id).trim() || id;
+    const active = raw?.active !== false;
+    const usecasesRaw = Array.isArray(raw?.usecases) ? raw.usecases : [];
+    const usecases = [...new Set(usecasesRaw.map((u) => sanitizeKey(u)).filter(Boolean))];
+    return { id, label, active, usecases };
+  }
+
+  function normalizeModuleCatalog(input) {
+    const base = Array.isArray(input) ? input : defaultModuleCatalog();
+    const out = [];
+    const seen = new Set();
+    base.forEach((entry) => {
+      const n = normalizeCatalogEntry(entry);
+      if (!n || seen.has(n.id)) return;
+      seen.add(n.id);
+      out.push(n);
+    });
+    return out.length ? out : defaultModuleCatalog();
+  }
+
+  function loadModuleCatalog() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(MODULE_CATALOG_STORAGE_KEY) || "null");
+      return normalizeModuleCatalog(raw);
+    } catch {
+      return defaultModuleCatalog();
+    }
+  }
+
+  function saveModuleCatalog(catalog) {
+    try {
+      localStorage.setItem(MODULE_CATALOG_STORAGE_KEY, JSON.stringify(normalizeModuleCatalog(catalog)));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function allUsecasesWithModule(catalog) {
+    const out = [];
+    normalizeModuleCatalog(catalog).forEach((m) => {
+      m.usecases.forEach((u) => out.push({ moduleId: m.id, moduleLabel: m.label, usecaseId: u }));
+    });
+    return out;
+  }
+
+  function defaultRightsForRoleUsecase(role, usecaseId) {
+    const r = String(role || "");
+    const uc = String(usecaseId || "");
+    if (r === "admin") return rightSet({ view: true, write: true, update: true, delete: true });
+    if (r === "vorstand") {
+      if (/cockpit/.test(uc)) return rightSet({ view: true, write: true, update: true, delete: false });
+      if (uc === "mitglieder_registry") return rightSet({ view: true, write: true, update: true, delete: false });
+      return rightSet({ view: true, write: true, update: true, delete: false });
+    }
+    if (r === "member") {
+      if (["fangliste", "go_fishing", "arbeitseinsaetze", "feed", "einstellungen"].includes(uc)) return rightSet({ view: true });
+      return rightSet({ view: false });
+    }
+    return rightSet({ view: false });
+  }
+
+  function defaultModuleRights(catalog) {
+    const out = {};
+    const usecases = allUsecasesWithModule(catalog);
+    CORE_ROLES.forEach((role) => {
+      out[role] = {};
+      usecases.forEach((u) => {
+        out[role][u.usecaseId] = defaultRightsForRoleUsecase(role, u.usecaseId);
+      });
+    });
+    return out;
+  }
+
+  function normalizeModuleRights(input, catalog) {
+    const base = defaultModuleRights(catalog);
+    const out = {};
+    CORE_ROLES.forEach((role) => {
+      out[role] = {};
+      const source = input?.[role] || {};
+      Object.keys(base[role]).forEach((usecaseId) => {
+        out[role][usecaseId] = rightSet(source[usecaseId] || base[role][usecaseId]);
+      });
+    });
+    return out;
+  }
+
+  function loadModuleRights(catalog) {
+    try {
+      const raw = JSON.parse(localStorage.getItem(MODULE_DEFAULT_RIGHTS_STORAGE_KEY) || "{}");
+      return normalizeModuleRights(raw, catalog);
+    } catch {
+      return defaultModuleRights(catalog);
+    }
+  }
+
+  function saveModuleRights(rights, catalog) {
+    try {
+      localStorage.setItem(MODULE_DEFAULT_RIGHTS_STORAGE_KEY, JSON.stringify(normalizeModuleRights(rights, catalog)));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function defaultClubConfigFor(catalog) {
+    const cfg = { modules: {} };
+    normalizeModuleCatalog(catalog).forEach((m) => {
+      cfg.modules[m.id] = {
+        enabled: Boolean(m.active),
+        usecases: Object.fromEntries(m.usecases.map((u) => [u, true])),
+      };
+    });
+    return cfg;
+  }
+
+  function normalizeClubConfig(input, catalog) {
+    const base = defaultClubConfigFor(catalog);
+    const source = input && typeof input === "object" ? input : {};
+    const out = { modules: {} };
+    Object.keys(base.modules).forEach((moduleId) => {
+      const b = base.modules[moduleId];
+      const s = source?.modules?.[moduleId] || {};
+      const usecases = {};
+      Object.keys(b.usecases).forEach((u) => {
+        usecases[u] = Boolean(s?.usecases?.[u] ?? b.usecases[u]);
+      });
+      out.modules[moduleId] = {
+        enabled: Boolean(s.enabled ?? b.enabled),
+        usecases,
+      };
+      if (!out.modules[moduleId].enabled) {
+        Object.keys(out.modules[moduleId].usecases).forEach((u) => { out.modules[moduleId].usecases[u] = false; });
+      }
+    });
+    return out;
+  }
+
+  function loadAllClubConfigs(catalog) {
+    try {
+      const raw = JSON.parse(localStorage.getItem(CLUB_MODULE_CONFIG_STORAGE_KEY) || "{}");
+      const out = {};
+      Object.keys(raw || {}).forEach((clubId) => {
+        out[clubId] = normalizeClubConfig(raw[clubId], catalog);
+      });
+      return out;
+    } catch {
+      return {};
+    }
+  }
+
+  function saveAllClubConfigs(configs, catalog) {
+    try {
+      const payload = {};
+      Object.keys(configs || {}).forEach((clubId) => {
+        payload[clubId] = normalizeClubConfig(configs[clubId], catalog);
+      });
+      localStorage.setItem(CLUB_MODULE_CONFIG_STORAGE_KEY, JSON.stringify(payload));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function buildCatalogFromDb(moduleRows, usecaseRows) {
+    const moduleMap = new Map();
+    (Array.isArray(moduleRows) ? moduleRows : []).forEach((row) => {
+      const id = sanitizeKey(row?.module_key);
+      if (!id) return;
+      moduleMap.set(id, {
+        id,
+        label: String(row?.label || id),
+        active: row?.is_active !== false,
+        sort_order: Number(row?.sort_order || 100),
+        usecases: [],
+      });
+    });
+    (Array.isArray(usecaseRows) ? usecaseRows : []).forEach((row) => {
+      const moduleId = sanitizeKey(row?.module_key);
+      const usecaseId = sanitizeKey(row?.usecase_key);
+      if (!moduleId || !usecaseId) return;
+      if (!moduleMap.has(moduleId)) {
+        moduleMap.set(moduleId, {
+          id: moduleId,
+          label: moduleId,
+          active: true,
+          sort_order: 100,
+          usecases: [],
+        });
+      }
+      if (row?.is_active === false) return;
+      const entry = moduleMap.get(moduleId);
+      if (!entry.usecases.includes(usecaseId)) entry.usecases.push(usecaseId);
+    });
+    return [...moduleMap.values()]
+      .sort((a, b) => (a.sort_order - b.sort_order) || a.id.localeCompare(b.id))
+      .map((row) => ({ id: row.id, label: row.label, active: row.active, usecases: row.usecases }));
+  }
+
+  function buildClubConfigMapFromDb(rows, catalog, clubs) {
+    const out = {};
+    (Array.isArray(clubs) ? clubs : []).forEach((club) => {
+      const clubId = String(club?.id || "");
+      if (!clubId) return;
+      const cfg = defaultClubConfigFor(catalog);
+      Object.keys(cfg.modules).forEach((moduleId) => {
+        cfg.modules[moduleId].enabled = false;
+        Object.keys(cfg.modules[moduleId].usecases).forEach((u) => { cfg.modules[moduleId].usecases[u] = false; });
+      });
+      out[clubId] = cfg;
+    });
+
+    (Array.isArray(rows) ? rows : []).forEach((row) => {
+      const clubId = String(row?.club_id || "");
+      const moduleId = sanitizeKey(row?.module_key);
+      const usecaseId = sanitizeKey(row?.usecase_key);
+      if (!clubId || !moduleId || !usecaseId) return;
+      if (!out[clubId]) out[clubId] = defaultClubConfigFor(catalog);
+      if (!out[clubId]?.modules?.[moduleId]) return;
+      if (!(usecaseId in out[clubId].modules[moduleId].usecases)) return;
+      const enabled = Boolean(row?.is_enabled);
+      out[clubId].modules[moduleId].usecases[usecaseId] = enabled;
+    });
+
+    Object.keys(out).forEach((clubId) => {
+      Object.keys(out[clubId].modules).forEach((moduleId) => {
+        const vals = Object.values(out[clubId].modules[moduleId].usecases || {}).map(Boolean);
+        out[clubId].modules[moduleId].enabled = vals.some(Boolean);
+        if (!out[clubId].modules[moduleId].enabled) {
+          Object.keys(out[clubId].modules[moduleId].usecases).forEach((u) => { out[clubId].modules[moduleId].usecases[u] = false; });
+        }
+      });
+      out[clubId] = normalizeClubConfig(out[clubId], catalog);
+    });
+
+    return out;
+  }
 
   function cfg() {
     const body = document.body;
@@ -222,6 +512,162 @@
     return res.json().catch(() => []);
   }
 
+  async function loadGovernanceFromDb() {
+    let moduleRows = [];
+    let usecaseRows = [];
+    let clubModuleRows = [];
+    let rightsRows = [];
+
+    try {
+      moduleRows = await sb("/rest/v1/module_catalog?select=module_key,label,is_active,sort_order&order=sort_order.asc,module_key.asc", { method: "GET" }, true);
+    } catch (err) {
+      recordDiag("module_catalog", err);
+      moduleRows = [];
+    }
+    try {
+      usecaseRows = await sb("/rest/v1/module_usecases?select=module_key,usecase_key,is_active,sort_order&order=sort_order.asc,usecase_key.asc", { method: "GET" }, true);
+    } catch (err) {
+      recordDiag("module_usecases", err);
+      usecaseRows = [];
+    }
+    if (Array.isArray(moduleRows) && moduleRows.length) {
+      const catalog = buildCatalogFromDb(moduleRows, usecaseRows);
+      if (catalog.length) {
+        state.moduleCatalog = normalizeModuleCatalog(catalog);
+      }
+    }
+    state.moduleDefaultRights = normalizeModuleRights(state.moduleDefaultRights, state.moduleCatalog);
+
+    try {
+      clubModuleRows = await sb("/rest/v1/club_module_usecases?select=club_id,module_key,usecase_key,is_enabled", { method: "GET" }, true);
+    } catch (err) {
+      recordDiag("club_module_usecases", err);
+      clubModuleRows = [];
+    }
+    if (Array.isArray(clubModuleRows) && clubModuleRows.length) {
+      state.clubModuleConfig = buildClubConfigMapFromDb(clubModuleRows, state.moduleCatalog, state.clubs);
+    }
+
+    try {
+      rightsRows = await sb("/rest/v1/club_role_permissions?select=club_id,role_key,module_key,can_view,can_write,can_update,can_delete", { method: "GET" }, true);
+    } catch (err) {
+      recordDiag("club_role_permissions", err);
+      rightsRows = [];
+    }
+    if (Array.isArray(rightsRows) && rightsRows.length) {
+      const usecases = new Set(allUsecasesWithModule(state.moduleCatalog).map((u) => u.usecaseId));
+      const clubsSorted = [...new Set(rightsRows.map((r) => String(r.club_id || "")).filter(Boolean))].sort();
+      const refClubId = clubsSorted[0] || "";
+      if (refClubId) {
+        CORE_ROLES.forEach((role) => {
+          state.moduleDefaultRights[role] = state.moduleDefaultRights[role] || {};
+          rightsRows
+            .filter((r) => String(r.club_id) === refClubId && String(r.role_key) === role && usecases.has(String(r.module_key || "")))
+            .forEach((r) => {
+              state.moduleDefaultRights[role][String(r.module_key)] = rightSet({
+                view: Boolean(r.can_view),
+                write: Boolean(r.can_write),
+                update: Boolean(r.can_update),
+                delete: Boolean(r.can_delete),
+              });
+            });
+        });
+      }
+      state.moduleDefaultRights = normalizeModuleRights(state.moduleDefaultRights, state.moduleCatalog);
+    }
+  }
+
+  async function saveModuleCatalogToDb() {
+    const modulesPayload = state.moduleCatalog.map((m, idx) => ({
+      module_key: m.id,
+      label: m.label,
+      is_active: Boolean(m.active),
+      sort_order: (idx + 1) * 10,
+    }));
+    const usecasesPayload = [];
+    state.moduleCatalog.forEach((m, midx) => {
+      m.usecases.forEach((u, uidx) => {
+        usecasesPayload.push({
+          module_key: m.id,
+          usecase_key: u,
+          label: usecaseLabel(u),
+          is_active: Boolean(m.active),
+          sort_order: ((midx + 1) * 100) + (uidx + 1),
+        });
+      });
+    });
+
+    if (modulesPayload.length) {
+      await sb("/rest/v1/module_catalog?on_conflict=module_key", {
+        method: "POST",
+        headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+        body: JSON.stringify(modulesPayload),
+      }, true);
+    }
+    if (usecasesPayload.length) {
+      await sb("/rest/v1/module_usecases?on_conflict=module_key,usecase_key", {
+        method: "POST",
+        headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+        body: JSON.stringify(usecasesPayload),
+      }, true);
+    }
+  }
+
+  async function saveClubConfigToDb(clubId, config) {
+    const cid = String(clubId || "").trim();
+    if (!cid || !config) return;
+    const rows = [];
+    state.moduleCatalog.forEach((m) => {
+      const moduleCfg = config.modules?.[m.id];
+      const moduleEnabled = Boolean(moduleCfg?.enabled);
+      m.usecases.forEach((u) => {
+        const usecaseEnabled = moduleEnabled && Boolean(moduleCfg?.usecases?.[u]);
+        rows.push({
+          club_id: cid,
+          module_key: m.id,
+          usecase_key: u,
+          is_enabled: usecaseEnabled,
+        });
+      });
+    });
+    if (!rows.length) return;
+    await sb("/rest/v1/club_module_usecases?on_conflict=club_id,module_key,usecase_key", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(rows),
+    }, true);
+  }
+
+  async function saveRoleDefaultsToDb(role) {
+    const roleKey = String(role || "");
+    if (!CORE_ROLES.includes(roleKey)) return;
+    const usecases = allUsecasesWithModule(state.moduleCatalog).map((u) => u.usecaseId);
+    if (!usecases.length) return;
+    const clubIds = [...new Set(state.clubs.map((c) => String(c.id || "")).filter(Boolean))];
+    const rows = [];
+    clubIds.forEach((clubId) => {
+      usecases.forEach((usecase) => {
+        const rights = rightSet(state.moduleDefaultRights?.[roleKey]?.[usecase] || { view: false });
+        rows.push({
+          club_id: clubId,
+          role_key: roleKey,
+          module_key: usecase,
+          can_view: rights.view,
+          can_read: rights.read,
+          can_write: rights.write,
+          can_update: rights.update,
+          can_delete: rights.delete,
+        });
+      });
+    });
+    if (!rows.length) return;
+    await sb("/rest/v1/club_role_permissions?on_conflict=club_id,role_key,module_key", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(rows),
+    }, true);
+  }
+
   function recordDiag(source, err) {
     const status = Number(err?.status || 0) || 0;
     const code = status ? `HTTP ${status}` : "ERR";
@@ -258,6 +704,15 @@
 
   function normalizeClubId(value) {
     return String(value || "").trim();
+  }
+
+  function clubDisplayName(club) {
+    const code = String(club?.code || "").trim();
+    const name = String(club?.name || "").trim();
+    if (code && name && code !== name) return `${code} · ${name}`;
+    if (code) return code;
+    if (name && !/^club\s+[0-9a-f]{6,}$/i.test(name)) return name;
+    return "Unbenannter Verein";
   }
 
   function syntheticClubId(code, name) {
@@ -336,6 +791,14 @@
       roleRows = [];
     }
     if (Array.isArray(roleRows) && roleRows.length) pushSource("user_roles");
+    let aclRoleRows = [];
+    try {
+      aclRoleRows = await sb("/rest/v1/club_user_roles?select=user_id,club_id,role_key,created_at", { method: "GET" }, true);
+    } catch (err) {
+      recordDiag("club_user_roles", err);
+      aclRoleRows = [];
+    }
+    if (Array.isArray(aclRoleRows) && aclRoleRows.length) pushSource("club_user_roles");
 
     const clubMap = new Map();
 
@@ -344,6 +807,7 @@
       const existing = clubMap.get(id) || {};
       clubMap.set(id, {
         id,
+        code: String(existing.code || row?.club_code || ""),
         name: String(existing.name || row?.club_name || row?.club_code || `Club ${id.slice(0, 8)}`),
         status: String(existing.status || "active"),
         created_at: existing.created_at || row?.created_at || null,
@@ -356,6 +820,7 @@
       if (!clubMap.has(clubId)) {
         clubMap.set(clubId, {
           id: clubId,
+          code: "",
           name: `Club ${clubId.slice(0, 8)}`,
           status: "active",
           created_at: null,
@@ -369,6 +834,20 @@
       if (!clubMap.has(clubId)) {
         clubMap.set(clubId, {
           id: clubId,
+          code: "",
+          name: `Club ${clubId.slice(0, 8)}`,
+          status: "active",
+          created_at: row?.created_at || null,
+        });
+      }
+    });
+    (Array.isArray(aclRoleRows) ? aclRoleRows : []).forEach((row) => {
+      const clubId = normalizeClubId(row?.club_id);
+      if (!clubId) return;
+      if (!clubMap.has(clubId)) {
+        clubMap.set(clubId, {
+          id: clubId,
+          code: "",
           name: `Club ${clubId.slice(0, 8)}`,
           status: "active",
           created_at: row?.created_at || null,
@@ -379,6 +858,7 @@
     if (!clubMap.size) {
       clubMap.set("legacy-single-club", {
         id: "legacy-single-club",
+        code: "",
         name: "Standard Club",
         status: "active",
         created_at: null,
@@ -430,11 +910,69 @@
         updated_at: row?.created_at || null,
       });
     });
+    (Array.isArray(aclRoleRows) ? aclRoleRows : []).forEach((row) => {
+      const clubId = normalizeClubId(row?.club_id);
+      const userId = String(row?.user_id || "").trim();
+      if (!clubId || !userId) return;
+      membershipRows.push({
+        user_id: userId,
+        club_id: clubId,
+        status: "active",
+        updated_at: row?.created_at || null,
+      });
+    });
+
+    const roleAssignments = [];
+    (Array.isArray(roleRows) ? roleRows : []).forEach((row) => {
+      const clubId = normalizeClubId(row?.club_id);
+      const userId = String(row?.user_id || "").trim();
+      const role = String(row?.role || "").trim().toLowerCase();
+      if (!clubId || !userId || !role) return;
+      roleAssignments.push({ user_id: userId, club_id: clubId, role_key: role, created_at: row?.created_at || null });
+    });
+    (Array.isArray(aclRoleRows) ? aclRoleRows : []).forEach((row) => {
+      const clubId = normalizeClubId(row?.club_id);
+      const userId = String(row?.user_id || "").trim();
+      const role = String(row?.role_key || "").trim().toLowerCase();
+      if (!clubId || !userId || !role) return;
+      roleAssignments.push({ user_id: userId, club_id: clubId, role_key: role, created_at: row?.created_at || null });
+    });
+    const seenAssignments = new Set();
+    const dedupAssignments = roleAssignments.filter((row) => {
+      const key = `${row.user_id}::${row.club_id}::${row.role_key}`;
+      if (seenAssignments.has(key)) return false;
+      seenAssignments.add(key);
+      return true;
+    });
 
     return {
       clubs: [...clubMap.values()],
       memberships: dedupeMemberships(membershipRows),
+      roleAssignments: dedupAssignments,
     };
+  }
+
+  async function loadClubIdentitiesFromSettings() {
+    const byClubId = new Map();
+    let rows = [];
+    try {
+      rows = await sb("/rest/v1/rpc/get_club_identity_map", { method: "POST", body: "{}" }, true);
+    } catch (err) {
+      recordDiag("rpc.get_club_identity_map", err);
+      rows = [];
+    }
+
+    (Array.isArray(rows) ? rows : []).forEach((row) => {
+      const clubId = String(row?.club_id || "").trim();
+      const code = String(row?.club_code || "").trim().toUpperCase();
+      const name = String(row?.club_name || "").trim();
+      if (!clubId) return;
+      if (!byClubId.has(clubId)) byClubId.set(clubId, {});
+      const entry = byClubId.get(clubId);
+      if (code) entry.code = code;
+      if (name) entry.name = name;
+    });
+    return byClubId;
   }
 
   function switchSection(section) {
@@ -473,12 +1011,155 @@
     }
   }
 
+  function usecaseLabel(id) {
+    return String(id || "").replaceAll("_", " ");
+  }
+
+  function setSmallMsg(id, text = "", isError = false) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.style.color = isError ? "var(--danger)" : "";
+  }
+
+  function renderModuleCatalogEditor() {
+    const body = document.querySelector("#adminModuleCatalogTable tbody");
+    if (!body) return;
+    body.innerHTML = state.moduleCatalog.map((m) => `
+      <tr>
+        <td><input type="text" data-module-catalog-field="id" data-module-id="${esc(m.id)}" value="${esc(m.id)}" /></td>
+        <td><input type="text" data-module-catalog-field="label" data-module-id="${esc(m.id)}" value="${esc(m.label)}" /></td>
+        <td><input type="text" data-module-catalog-field="usecases" data-module-id="${esc(m.id)}" value="${esc(m.usecases.join(", "))}" /></td>
+        <td><input type="checkbox" data-module-catalog-field="active" data-module-id="${esc(m.id)}" ${m.active ? "checked" : ""} /></td>
+      </tr>
+    `).join("");
+  }
+
+  function applyCatalogEditsFromTable() {
+    const body = document.querySelector("#adminModuleCatalogTable tbody");
+    if (!body) return;
+    const next = [];
+    body.querySelectorAll("tr").forEach((tr) => {
+      const id = sanitizeKey(tr.querySelector('[data-module-catalog-field="id"]')?.value || "");
+      if (!id) return;
+      const label = String(tr.querySelector('[data-module-catalog-field="label"]')?.value || "").trim() || id;
+      const usecasesRaw = String(tr.querySelector('[data-module-catalog-field="usecases"]')?.value || "");
+      const usecases = [...new Set(usecasesRaw.split(",").map((v) => sanitizeKey(v)).filter(Boolean))];
+      const active = Boolean(tr.querySelector('[data-module-catalog-field="active"]')?.checked);
+      next.push({ id, label, usecases, active });
+    });
+    state.moduleCatalog = normalizeModuleCatalog(next);
+  }
+
+  function renderRoleDefaultsEditor() {
+    const body = document.querySelector("#adminRoleDefaultsTable tbody");
+    if (!body) return;
+    const roleSel = document.getElementById("adminRoleDefaultsRole");
+    const role = String(roleSel?.value || "member");
+    const rows = allUsecasesWithModule(state.moduleCatalog);
+    body.innerHTML = rows.map((row) => {
+      const rights = rightSet(state.moduleDefaultRights?.[role]?.[row.usecaseId] || { view: false });
+      const viewDis = rights.view ? "" : "disabled";
+      return `
+        <tr>
+          <td>${esc(row.moduleLabel)}</td>
+          <td><code>${esc(row.usecaseId)}</code></td>
+          <td><input type="checkbox" data-default-role="${esc(role)}" data-default-usecase="${esc(row.usecaseId)}" data-default-right="view" ${rights.view ? "checked" : ""} /></td>
+          <td><input type="checkbox" ${rights.read ? "checked" : ""} disabled /></td>
+          <td><input type="checkbox" data-default-role="${esc(role)}" data-default-usecase="${esc(row.usecaseId)}" data-default-right="write" ${rights.write ? "checked" : ""} ${viewDis} /></td>
+          <td><input type="checkbox" data-default-role="${esc(role)}" data-default-usecase="${esc(row.usecaseId)}" data-default-right="update" ${rights.update ? "checked" : ""} ${viewDis} /></td>
+          <td><input type="checkbox" data-default-role="${esc(role)}" data-default-usecase="${esc(row.usecaseId)}" data-default-right="delete" ${rights.delete ? "checked" : ""} ${viewDis} /></td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function updateDefaultRight(role, usecaseId, right, checked) {
+    if (!CORE_ROLES.includes(role)) return;
+    if (!state.moduleDefaultRights[role]) state.moduleDefaultRights[role] = {};
+    const current = rightSet(state.moduleDefaultRights[role][usecaseId] || { view: false });
+    if (right === "view") {
+      current.view = Boolean(checked);
+      current.read = current.view;
+      if (!current.view) {
+        current.write = false;
+        current.update = false;
+        current.delete = false;
+      }
+    } else if (["write", "update", "delete"].includes(right)) {
+      if (!current.view) return;
+      current[right] = Boolean(checked);
+    }
+    state.moduleDefaultRights[role][usecaseId] = rightSet(current);
+    renderRoleDefaultsEditor();
+  }
+
+  function selectedClub() {
+    return state.clubMetrics.find((c) => String(c.id) === String(state.selectedClubId))
+      || state.clubs.find((c) => String(c.id) === String(state.selectedClubId))
+      || null;
+  }
+
+  function ensureClubConfig(clubId) {
+    if (!clubId) return null;
+    if (!state.clubModuleConfig[clubId]) {
+      state.clubModuleConfig[clubId] = defaultClubConfigFor(state.moduleCatalog);
+    }
+    state.clubModuleConfig[clubId] = normalizeClubConfig(state.clubModuleConfig[clubId], state.moduleCatalog);
+    return state.clubModuleConfig[clubId];
+  }
+
+  function renderClubDetail() {
+    const card = document.getElementById("adminClubDetailCard");
+    const title = document.getElementById("adminClubDetailTitle");
+    const meta = document.getElementById("adminClubDetailMeta");
+    const body = document.querySelector("#adminClubModulesTable tbody");
+    const club = selectedClub();
+    if (!card || !title || !meta || !body) return;
+    if (!club) {
+      card.classList.add("hidden");
+      card.setAttribute("hidden", "");
+      return;
+    }
+    card.classList.remove("hidden");
+    card.removeAttribute("hidden");
+    title.textContent = `Club-Detail: ${clubDisplayName(club)}`;
+    meta.textContent = `Club-ID: ${club.id} • Mitglieder (Personen): ${club.members || 0} • Rollen-Zuordnungen: ${club.roleAssignments || 0} • Status: ${club.status || "active"}`;
+    const cfg = ensureClubConfig(club.id);
+    body.innerHTML = state.moduleCatalog.map((m) => {
+      const mc = cfg.modules[m.id] || { enabled: false, usecases: {} };
+      const usecasesHtml = m.usecases.map((u) => {
+        const checked = mc.usecases?.[u] ? "checked" : "";
+        const dis = mc.enabled ? "" : "disabled";
+        return `<label class="small" style="display:inline-flex;align-items:center;gap:6px;margin-right:10px;">
+          <input type="checkbox" data-club-module-usecase="${esc(u)}" data-club-module-id="${esc(m.id)}" ${checked} ${dis} />
+          ${esc(usecaseLabel(u))}
+        </label>`;
+      }).join("");
+      return `
+        <tr>
+          <td>${esc(m.label)}</td>
+          <td><input type="checkbox" data-club-module-enabled="${esc(m.id)}" ${mc.enabled ? "checked" : ""} /></td>
+          <td>${usecasesHtml || "-"}</td>
+          <td class="small"><code>${esc(m.id)}</code></td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function openClubDetail(clubId) {
+    state.selectedClubId = String(clubId || "");
+    renderClubDetail();
+    switchSection("clubs");
+  }
+
   function computeClubMetrics() {
     const byClub = new Map();
     state.clubs.forEach((club) => {
       byClub.set(String(club.id), {
         ...club,
         members: 0,
+        roleAssignments: 0,
         activeMembers: 0,
         neverLoggedIn: 0,
         lastActivity: null,
@@ -496,6 +1177,11 @@
       else club.neverLoggedIn += 1;
       const ts = lastLogin || m.updated_at || null;
       if (ts && (!club.lastActivity || new Date(ts).getTime() > new Date(club.lastActivity).getTime())) club.lastActivity = ts;
+    });
+    state.clubRoleAssignments.forEach((ra) => {
+      const club = byClub.get(String(ra.club_id));
+      if (!club) return;
+      club.roleAssignments += 1;
     });
 
     return [...byClub.values()].sort((a, b) => b.members - a.members);
@@ -549,14 +1235,15 @@
     if (clubsBody) {
       clubsBody.innerHTML = clubsRows.slice(0, 12).map((c) => `
         <tr>
-          <td>${esc(c.name || "-")}</td>
-          <td class="small">${esc(c.id)}</td>
+          <td>${esc(clubDisplayName(c))}</td>
           <td>${c.members}</td>
+          <td>${c.roleAssignments || 0}</td>
           <td>${state.loginSignalAvailable ? c.activeMembers : "n/a"}</td>
           <td>${normalizeDate(c.lastActivity)}</td>
           <td>${esc(c.status || "active")}</td>
+          <td class="small">${esc(c.id)}</td>
         </tr>
-      `).join("") || `<tr><td colspan="6" class="small">Keine Daten.</td></tr>`;
+      `).join("") || `<tr><td colspan="7" class="small">Keine Daten.</td></tr>`;
     }
 
     const usersBody = document.querySelector("#adminUsersTopTable tbody");
@@ -577,20 +1264,21 @@
     const body = document.querySelector("#adminClubsTable tbody");
     if (!body) return;
     body.innerHTML = clubsRows.map((c) => `
-      <tr>
-        <td>${esc(c.name || "-")}</td>
-        <td class="small">${esc(c.id)}</td>
+      <tr data-club-row-id="${esc(c.id)}" style="cursor:pointer;">
+        <td>${esc(clubDisplayName(c))}</td>
         <td>${normalizeDate(c.created_at)}</td>
         <td>${c.members}</td>
+        <td>${c.roleAssignments || 0}</td>
         <td>${state.loginSignalAvailable ? c.activeMembers : "n/a"}</td>
         <td>${state.loginSignalAvailable ? c.neverLoggedIn : "n/a"}</td>
         <td>${esc(c.status || "active")}</td>
         <td>
-          <button type="button" class="feed-btn feed-btn--ghost" disabled>Öffnen</button>
-          <button type="button" class="feed-btn feed-btn--ghost" disabled>Bearbeiten</button>
+          <a class="feed-btn feed-btn--ghost" href="/app/mitgliederverwaltung/?club_id=${encodeURIComponent(String(c.id || ""))}#members">Vereins-Board</a>
+          <button type="button" class="feed-btn feed-btn--ghost" data-open-club-id="${esc(c.id)}">Module</button>
         </td>
+        <td class="small">${esc(c.id)}</td>
       </tr>
-    `).join("") || `<tr><td colspan="8" class="small">Keine Vereine gefunden.</td></tr>`;
+    `).join("") || `<tr><td colspan="9" class="small">Keine Vereine gefunden.</td></tr>`;
   }
 
   function renderMembers(rows) {
@@ -613,6 +1301,91 @@
     `).join("") || `<tr><td colspan="8" class="small">Keine User gefunden.</td></tr>`;
   }
 
+  function governanceStatusClass(status) {
+    const s = String(status || "").toLowerCase();
+    if (s === "red") return "gov-status gov-status--red";
+    if (s === "yellow") return "gov-status gov-status--yellow";
+    return "gov-status gov-status--green";
+  }
+
+  async function loadGovernanceHealth() {
+    let healthRows = [];
+    let issueRows = [];
+    try {
+      healthRows = await sb("/rest/v1/rpc/governance_health_snapshot", { method: "POST", body: "{}" }, true);
+    } catch (err) {
+      recordDiag("rpc.governance_health_snapshot", err);
+      healthRows = [];
+    }
+    try {
+      issueRows = await sb("/rest/v1/rpc/governance_health_issues", { method: "POST", body: JSON.stringify({ p_club_id: null }) }, true);
+    } catch (err) {
+      recordDiag("rpc.governance_health_issues", err);
+      issueRows = [];
+    }
+    state.governanceHealth = Array.isArray(healthRows) ? healthRows : [];
+    state.governanceIssues = Array.isArray(issueRows) ? issueRows : [];
+  }
+
+  function renderGovernanceAnalytics() {
+    const healthRows = Array.isArray(state.governanceHealth) ? state.governanceHealth : [];
+    const issueRows = Array.isArray(state.governanceIssues) ? state.governanceIssues : [];
+
+    const kpiGovGreen = document.getElementById("kpiGovGreen");
+    const kpiGovYellow = document.getElementById("kpiGovYellow");
+    const kpiGovRed = document.getElementById("kpiGovRed");
+    const kpiGovIssues = document.getElementById("kpiGovIssues");
+    const kpiGovRulesOpen = document.getElementById("kpiGovRulesOpen");
+    const govMsg = document.getElementById("adminGovernanceMsg");
+
+    const green = healthRows.filter((r) => String(r?.health_status || "").toLowerCase() === "green").length;
+    const yellow = healthRows.filter((r) => String(r?.health_status || "").toLowerCase() === "yellow").length;
+    const red = healthRows.filter((r) => String(r?.health_status || "").toLowerCase() === "red").length;
+    const totalIssues = healthRows.reduce((sum, row) => sum + Number(row?.total_issues || 0), 0);
+    const openRuleCount = new Set(issueRows.map((r) => String(r?.rule_key || "").trim()).filter(Boolean)).size;
+
+    if (kpiGovGreen) kpiGovGreen.textContent = String(green);
+    if (kpiGovYellow) kpiGovYellow.textContent = String(yellow);
+    if (kpiGovRed) kpiGovRed.textContent = String(red);
+    if (kpiGovIssues) kpiGovIssues.textContent = String(totalIssues);
+    if (kpiGovRulesOpen) kpiGovRulesOpen.textContent = String(openRuleCount);
+    if (govMsg) {
+      govMsg.textContent = healthRows.length
+        ? "Zentrale Audit-Quelle aktiv (Snapshot + Drilldown)."
+        : "Keine Governance-Health-Daten sichtbar (RPC/Permissions prüfen).";
+    }
+
+    const healthBody = document.querySelector("#adminGovernanceHealthTable tbody");
+    if (healthBody) {
+      healthBody.innerHTML = healthRows.map((row) => `
+        <tr>
+          <td>${esc(row?.club_name || row?.club_code || "Unbenannter Verein")}</td>
+          <td><span class="${governanceStatusClass(row?.health_status)}">${esc(row?.health_status || "green")}</span></td>
+          <td>${Number(row?.total_issues || 0)}</td>
+          <td>${Number(row?.identity_gaps || 0)}</td>
+          <td>${Number(row?.roles_without_membership || 0)}</td>
+          <td>${Number(row?.duplicate_identities || 0)}</td>
+          <td>${Number(row?.members_without_identity_link || 0)}</td>
+          <td>${Number(row?.club_name_or_code_missing || 0)}</td>
+          <td class="small">${esc(row?.club_id || "-")}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="9" class="small">Keine Governance-Health-Daten.</td></tr>`;
+    }
+
+    const issueBody = document.querySelector("#adminGovernanceIssuesTable tbody");
+    if (issueBody) {
+      issueBody.innerHTML = issueRows.slice(0, 300).map((row) => `
+        <tr>
+          <td><code>${esc(row?.rule_key || "-")}</code></td>
+          <td>${esc(row?.club_name || row?.club_code || row?.club_id || "-")}</td>
+          <td class="small">${esc(row?.ref_1 || "-")}</td>
+          <td class="small">${esc(row?.ref_2 || "-")}</td>
+          <td>${esc(row?.detail || "-")}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="5" class="small">Keine offenen Governance-Issues.</td></tr>`;
+    }
+  }
+
   function applyMemberFilter() {
     const search = String(document.getElementById("adminMemberSearch")?.value || "").trim().toLowerCase();
     const mode = String(document.getElementById("adminMemberFilter")?.value || "all");
@@ -630,6 +1403,7 @@
 
   async function loadCoreData() {
     state.sources = [];
+    state.clubMetrics = [];
     const profiles = await loadProfiles();
     const authRows = await loadAuthLastSignins();
 
@@ -646,8 +1420,21 @@
     const hasAnyLoginSignal = state.users.some((u) => Boolean(userLastLogin(u)));
     if (!hasAnyLoginSignal) state.loginSignalAvailable = false;
     const fallback = await loadClubsAndMembershipsFallback(state.users);
-    state.clubs = fallback.clubs;
+    const identities = await loadClubIdentitiesFromSettings();
+    state.clubs = (fallback.clubs || []).map((club) => {
+      const patch = identities.get(String(club.id)) || {};
+      const next = {
+        ...club,
+        code: String(patch.code || club.code || "").trim(),
+        name: String(patch.name || club.name || "").trim(),
+      };
+      if (!next.name || /^club\s+[0-9a-f]{6,}$/i.test(next.name)) {
+        next.name = next.code || "Unbenannter Verein";
+      }
+      return next;
+    });
     state.memberships = fallback.memberships;
+    state.clubRoleAssignments = Array.isArray(fallback.roleAssignments) ? fallback.roleAssignments : [];
   }
 
   async function loadRoles(uid) {
@@ -693,7 +1480,13 @@
   async function init() {
     state.diagnostics = [];
     rolePageMatrix = loadRoleMatrix();
+    state.moduleCatalog = loadModuleCatalog();
+    state.moduleDefaultRights = loadModuleRights(state.moduleCatalog);
+    state.clubModuleConfig = loadAllClubConfigs(state.moduleCatalog);
     renderModulesTables();
+    renderModuleCatalogEditor();
+    renderRoleDefaultsEditor();
+    renderClubDetail();
     if (!hasRuntimeConfig()) {
       setMsg("Preflight: Supabase Runtime-Config fehlt oder ist Platzhalter. Admin-Board läuft im Readiness-Modus (kein Live-Connect).", true);
       document.querySelectorAll(".admin-card").forEach((card) => card.classList.add("is-missing"));
@@ -710,6 +1503,146 @@
 
     document.getElementById("adminMemberSearch")?.addEventListener("input", applyMemberFilter);
     document.getElementById("adminMemberFilter")?.addEventListener("change", applyMemberFilter);
+    document.querySelector("#adminClubsTable tbody")?.addEventListener("click", (event) => {
+      const src = event.target;
+      if (!(src instanceof Element)) return;
+      if (src.closest("a,button,input,select,textarea,label")) {
+        const btn = src.closest("[data-open-club-id]");
+        if (!btn) return;
+        openClubDetail(String(btn.getAttribute("data-open-club-id") || ""));
+        return;
+      }
+      const row = src.closest("tr[data-club-row-id]");
+      if (row) {
+        const clubId = String(row.getAttribute("data-club-row-id") || "").trim();
+        if (!clubId) return;
+        window.location.assign(`/app/mitgliederverwaltung/?club_id=${encodeURIComponent(clubId)}#members`);
+        return;
+      }
+      const btn = src.closest("[data-open-club-id]");
+      if (!btn) return;
+      openClubDetail(String(btn.getAttribute("data-open-club-id") || ""));
+    });
+    document.getElementById("adminClubDetailClose")?.addEventListener("click", () => {
+      state.selectedClubId = "";
+      renderClubDetail();
+    });
+    document.getElementById("adminClubDetailSave")?.addEventListener("click", async () => {
+      const club = selectedClub();
+      let dbOk = true;
+      if (club) {
+        try {
+          await saveClubConfigToDb(club.id, ensureClubConfig(club.id));
+        } catch (err) {
+          recordDiag("club_module_usecases(save)", err);
+          dbOk = false;
+        }
+      }
+      const localOk = saveAllClubConfigs(state.clubModuleConfig, state.moduleCatalog);
+      const ok = dbOk && localOk;
+      setSmallMsg("adminClubDetailMsg", ok ? "Modulzusammensetzung gespeichert." : "Speichern nur teilweise erfolgreich (DB/Local prüfen).", !ok);
+    });
+    document.getElementById("adminClubDetailReset")?.addEventListener("click", () => {
+      const club = selectedClub();
+      if (!club) return;
+      state.clubModuleConfig[club.id] = defaultClubConfigFor(state.moduleCatalog);
+      renderClubDetail();
+      setSmallMsg("adminClubDetailMsg", "Standardmodell für diesen Club geladen.");
+    });
+    document.querySelector("#adminClubModulesTable tbody")?.addEventListener("change", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      const club = selectedClub();
+      if (!club) return;
+      const cfg = ensureClubConfig(club.id);
+      const moduleByEnabled = String(target.getAttribute("data-club-module-enabled") || "");
+      if (moduleByEnabled) {
+        if (!cfg.modules[moduleByEnabled]) return;
+        cfg.modules[moduleByEnabled].enabled = Boolean(target.checked);
+        if (!cfg.modules[moduleByEnabled].enabled) {
+          Object.keys(cfg.modules[moduleByEnabled].usecases || {}).forEach((u) => { cfg.modules[moduleByEnabled].usecases[u] = false; });
+        } else {
+          Object.keys(cfg.modules[moduleByEnabled].usecases || {}).forEach((u) => { cfg.modules[moduleByEnabled].usecases[u] = true; });
+        }
+        renderClubDetail();
+        return;
+      }
+      const moduleId = String(target.getAttribute("data-club-module-id") || "");
+      const usecaseId = String(target.getAttribute("data-club-module-usecase") || "");
+      if (!moduleId || !usecaseId) return;
+      if (!cfg.modules[moduleId]) return;
+      if (!cfg.modules[moduleId].enabled) return;
+      cfg.modules[moduleId].usecases[usecaseId] = Boolean(target.checked);
+    });
+
+    document.getElementById("adminModuleCatalogSave")?.addEventListener("click", async () => {
+      applyCatalogEditsFromTable();
+      const ok1 = saveModuleCatalog(state.moduleCatalog);
+      state.moduleDefaultRights = normalizeModuleRights(state.moduleDefaultRights, state.moduleCatalog);
+      const ok2 = saveModuleRights(state.moduleDefaultRights, state.moduleCatalog);
+      Object.keys(state.clubModuleConfig).forEach((clubId) => {
+        state.clubModuleConfig[clubId] = normalizeClubConfig(state.clubModuleConfig[clubId], state.moduleCatalog);
+      });
+      const ok3 = saveAllClubConfigs(state.clubModuleConfig, state.moduleCatalog);
+      let ok4 = true;
+      try {
+        await saveModuleCatalogToDb();
+      } catch (err) {
+        recordDiag("module_catalog/save", err);
+        ok4 = false;
+      }
+      renderModuleCatalogEditor();
+      renderRoleDefaultsEditor();
+      renderClubDetail();
+      setSmallMsg("adminModuleCatalogMsg", ok1 && ok2 && ok3 && ok4 ? "Modul-Katalog gespeichert." : "Konnte Modul-Katalog nicht vollständig speichern.", !(ok1 && ok2 && ok3 && ok4));
+    });
+    document.getElementById("adminModuleCatalogReset")?.addEventListener("click", () => {
+      state.moduleCatalog = defaultModuleCatalog();
+      state.moduleDefaultRights = defaultModuleRights(state.moduleCatalog);
+      Object.keys(state.clubModuleConfig).forEach((clubId) => {
+        state.clubModuleConfig[clubId] = defaultClubConfigFor(state.moduleCatalog);
+      });
+      saveModuleCatalog(state.moduleCatalog);
+      saveModuleRights(state.moduleDefaultRights, state.moduleCatalog);
+      saveAllClubConfigs(state.clubModuleConfig, state.moduleCatalog);
+      renderModuleCatalogEditor();
+      renderRoleDefaultsEditor();
+      renderClubDetail();
+      setSmallMsg("adminModuleCatalogMsg", "Modul-Katalog auf Standard zurückgesetzt.");
+    });
+
+    document.getElementById("adminRoleDefaultsRole")?.addEventListener("change", () => {
+      renderRoleDefaultsEditor();
+      setSmallMsg("adminRoleDefaultsMsg", "");
+    });
+    document.querySelector("#adminRoleDefaultsTable tbody")?.addEventListener("change", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      const role = String(target.getAttribute("data-default-role") || "");
+      const usecase = String(target.getAttribute("data-default-usecase") || "");
+      const right = String(target.getAttribute("data-default-right") || "");
+      if (!role || !usecase || !right) return;
+      updateDefaultRight(role, usecase, right, Boolean(target.checked));
+    });
+    document.getElementById("adminRoleDefaultsSave")?.addEventListener("click", async () => {
+      const role = String(document.getElementById("adminRoleDefaultsRole")?.value || "member");
+      const localOk = saveModuleRights(state.moduleDefaultRights, state.moduleCatalog);
+      let dbOk = true;
+      try {
+        await saveRoleDefaultsToDb(role);
+      } catch (err) {
+        recordDiag("club_role_permissions/save_defaults", err);
+        dbOk = false;
+      }
+      const ok = localOk && dbOk;
+      setSmallMsg("adminRoleDefaultsMsg", ok ? "Standard-Rollenrechte gespeichert." : "Speichern nur teilweise erfolgreich (DB/Local prüfen).", !ok);
+    });
+    document.getElementById("adminRoleDefaultsReset")?.addEventListener("click", () => {
+      state.moduleDefaultRights = defaultModuleRights(state.moduleCatalog);
+      saveModuleRights(state.moduleDefaultRights, state.moduleCatalog);
+      renderRoleDefaultsEditor();
+      setSmallMsg("adminRoleDefaultsMsg", "Standard-Rollenrechte auf App-Default zurückgesetzt.");
+    });
     document.querySelector("#adminModulesTable tbody")?.addEventListener("change", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLInputElement)) return;
@@ -770,15 +1703,22 @@
 
     setMsg("Admin-Board lädt...");
     await loadCoreData();
+    await loadGovernanceFromDb();
+    await loadGovernanceHealth();
+    renderModuleCatalogEditor();
+    renderRoleDefaultsEditor();
     if (state.users.length === 0 && state.clubs.length === 0) {
       const diag = state.diagnostics.length ? ` Diagnose: ${state.diagnostics.slice(0, 4).join(" | ")}` : "";
       setMsg("Keine Datensaetze sichtbar. Wahrscheinlich fehlen Select-Policies (RLS) oder Profile/Club-Daten fuer diesen User." + diag, true);
     }
     const clubRows = computeClubMetrics();
+    state.clubMetrics = clubRows;
     const userRows = computeUserMetrics();
     state.membersFiltered = userRows;
     renderDashboard(clubRows, userRows);
     renderClubs(clubRows);
+    renderGovernanceAnalytics();
+    renderClubDetail();
     applyMemberFilter();
 
     if (!state.loginSignalAvailable) {

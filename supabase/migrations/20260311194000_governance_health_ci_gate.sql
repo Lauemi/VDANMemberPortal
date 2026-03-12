@@ -170,3 +170,4 @@ grant execute on function public.governance_health_ci_gate(boolean) to service_r
 grant execute on function public.governance_health_ci_gate(boolean) to postgres;
 
 commit;
+

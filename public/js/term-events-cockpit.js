@@ -5,6 +5,7 @@
   let isManager = false;
   let listenersBound = false;
   let initInProgress = false;
+  let profileLabelById = new Map();
 
   function cfg() {
     return {
@@ -94,20 +95,43 @@
     return Array.isArray(rows) ? rows.map((r) => String(r.role || "").toLowerCase()) : [];
   }
 
+  async function loadProfileLabels(ids = []) {
+    const unique = [...new Set((Array.isArray(ids) ? ids : []).map((id) => String(id || "").trim()).filter(Boolean))];
+    if (!unique.length) return new Map();
+    const inList = unique.map((id) => `"${id}"`).join(",");
+    const rows = await sb(`/rest/v1/profiles?select=id,display_name,email,member_no&id=in.(${inList})`, { method: "GET" }, true);
+    return new Map((Array.isArray(rows) ? rows : []).map((row) => [
+      String(row.id || "").trim(),
+      String(row.display_name || row.member_no || row.email || row.id || "").trim(),
+    ]));
+  }
+
+  function creatorLabel(row) {
+    const id = String(row?.created_by || "").trim();
+    return profileLabelById.get(id) || (id ? "Mitglied" : "-");
+  }
+
   async function listEvents() {
     const rows = await sbGetCached(
       "events",
-      "/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,created_at&order=starts_at.desc",
+      "/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,created_at,is_youth,created_by&order=starts_at.desc",
       true,
       []
     );
-    return Array.isArray(rows) ? rows : [];
+    const list = Array.isArray(rows) ? rows : [];
+    profileLabelById = await loadProfileLabels(list.map((row) => row?.created_by)).catch(() => new Map());
+    return list;
   }
 
   async function createEvent(payload) {
     try {
       return await sb("/rest/v1/rpc/term_event_create", { method: "POST", body: JSON.stringify(payload) }, true);
     } catch (err) {
+      if (Object.prototype.hasOwnProperty.call(payload || {}, "p_is_youth")) {
+        const fallback = { ...payload };
+        delete fallback.p_is_youth;
+        return sb("/rest/v1/rpc/term_event_create", { method: "POST", body: JSON.stringify(fallback) }, true);
+      }
       if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
         await queueAction("create_event", payload);
         return { queued: true };
@@ -172,7 +196,7 @@
     await window.VDAN_OFFLINE_SYNC.flush(OFFLINE_NS, async (op) => {
       const p = op?.payload || {};
       if (op?.type === "create_event") {
-        await sb("/rest/v1/rpc/term_event_create", { method: "POST", body: JSON.stringify(p) }, true);
+        await createEvent(p);
         return;
       }
       if (op?.type === "publish_event") {
@@ -200,7 +224,8 @@
       <div class="card__body" data-studio-component-id="term-cockpit-event-body-${rowSuffix}" data-studio-component-type="section" data-studio-slot="main">
         <h3>${escapeHtml(row.title)}</h3>
         <p class="small">${escapeHtml(fmt(row.starts_at))} - ${escapeHtml(fmt(row.ends_at))}</p>
-        <p class="small">${escapeHtml(row.location || "Ort offen")} | Status: ${escapeHtml(statusLabel(row.status))}</p>
+        <p class="small">${escapeHtml(row.location || "Ort offen")} | Status: ${escapeHtml(statusLabel(row.status))}${row.is_youth ? " | Jugend" : ""}</p>
+        <p class="small">Erstellt von: ${escapeHtml(creatorLabel(row))}</p>
         ${row.description ? `<p class="small">${escapeHtml(row.description)}</p>` : ""}
         <div class="work-actions" data-studio-component-id="term-cockpit-event-actions-${rowSuffix}" data-studio-component-type="section" data-studio-slot="main">
           <button class="feed-btn" type="button" data-publish="${row.id}" data-studio-component-id="term-cockpit-publish-btn-${rowSuffix}" data-studio-component-type="button" data-studio-slot="main" data-component-name="Veröffentlichen" ${row.status === "draft" ? "" : "disabled"}>Veröffentlichen</button>
@@ -215,6 +240,7 @@
             <label><span>Ort</span><input type="text" maxlength="180" value="${escapeHtml(row.location || "")}" data-edit-location="${row.id}" /></label>
             <label><span>Start</span><input type="datetime-local" value="${escapeHtml(toLocalInput(row.starts_at))}" data-edit-start="${row.id}" /></label>
             <label><span>Ende</span><input type="datetime-local" value="${escapeHtml(toLocalInput(row.ends_at))}" data-edit-end="${row.id}" /></label>
+            <label style="grid-column:1/-1;display:flex;gap:8px;align-items:center;"><input type="checkbox" ${row.is_youth ? "checked" : ""} data-edit-is-youth="${row.id}" /><span>Jugend-Termin</span></label>
             <label style="grid-column:1/-1"><span>Beschreibung</span><textarea rows="2" data-edit-description="${row.id}">${escapeHtml(row.description || "")}</textarea></label>
           </div>
           <div style="margin-top:8px;"><button class="feed-btn" type="button" data-save-edit="${row.id}" data-studio-component-id="term-cockpit-save-edit-btn-${rowSuffix}" data-studio-component-type="button" data-studio-slot="main" data-component-name="Änderungen speichern">Änderungen speichern</button></div>
@@ -256,6 +282,15 @@
 
   function openDialog() {
     document.getElementById("termCreateForm")?.reset();
+    const youth = document.getElementById("termIsYouth");
+    const youthBtn = document.getElementById("termIsYouthToggle");
+    if (youth) youth.value = "0";
+    if (youthBtn) {
+      youthBtn.style.background = "";
+      youthBtn.style.borderColor = "";
+      youthBtn.style.color = "";
+      youthBtn.setAttribute("aria-pressed", "false");
+    }
     if (!createDialog?.open) createDialog.showModal();
   }
 
@@ -287,6 +322,7 @@
         location: String(document.querySelector(`[data-edit-location="${saveEditId}"]`)?.value || "").trim() || null,
         starts_at: toIso(String(document.querySelector(`[data-edit-start="${saveEditId}"]`)?.value || "").trim()),
         ends_at: toIso(String(document.querySelector(`[data-edit-end="${saveEditId}"]`)?.value || "").trim()),
+        is_youth: Boolean(document.querySelector(`[data-edit-is-youth="${saveEditId}"]`)?.checked),
         description: String(document.querySelector(`[data-edit-description="${saveEditId}"]`)?.value || "").trim() || null,
       };
       if (!payload.title || !payload.starts_at || !payload.ends_at) {
@@ -348,6 +384,18 @@
       document.getElementById("termCreateOpenTop")?.addEventListener("click", openDialog);
       document.getElementById("termCreateOpenFab")?.addEventListener("click", openDialog);
       document.getElementById("termCreateClose")?.addEventListener("click", closeDialog);
+      document.getElementById("termIsYouthToggle")?.addEventListener("click", () => {
+        const youth = document.getElementById("termIsYouth");
+        const btn = document.getElementById("termIsYouthToggle");
+        if (!youth || !btn) return;
+        const next = String(youth.value) === "1" ? "0" : "1";
+        youth.value = next;
+        const active = next === "1";
+        btn.style.background = active ? "#1f7a3b" : "";
+        btn.style.borderColor = active ? "#1f7a3b" : "";
+        btn.style.color = active ? "#fff" : "";
+        btn.setAttribute("aria-pressed", active ? "true" : "false");
+      });
 
       document.getElementById("termCreateForm")?.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -359,6 +407,7 @@
             p_location: String(document.getElementById("termLocation")?.value || "").trim() || null,
             p_starts_at: toIso(String(document.getElementById("termStartsAt")?.value || "")),
             p_ends_at: toIso(String(document.getElementById("termEndsAt")?.value || "")),
+            p_is_youth: String(document.getElementById("termIsYouth")?.value || "0") === "1",
           });
           closeDialog();
           setMsg(out?.queued ? "Offline gespeichert. Termin wird bei Empfang übertragen." : "Termin erstellt.");

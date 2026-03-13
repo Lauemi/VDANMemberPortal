@@ -1,0 +1,947 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site
+  title={`Kontrollboard • ${APP.name}`}
+  description="Interner Arbeitsraum fuer Masken-Audits, offene Punkte und Smoke-Tests."
+  robots="noindex"
+  containerClass="container container--admin-wide"
+>
+  <section class="card" data-studio-component-id="control-board-shell" data-studio-component-type="section" data-studio-slot="main">
+    <div class="card__body" data-studio-component-id="control-board-header" data-studio-component-type="section" data-studio-slot="main">
+      <h1>Kontrollboard</h1>
+      <p class="small">
+        Lokales Arbeitsboard fuer Workflow-Audit, Komponenten-Audit, Smoke-Tests und Fehleruebergabe.
+        Keine Datenbank noetig, alles bleibt lokal im Browser.
+      </p>
+      <div class="admin-actions admin-actions--toolbar">
+        <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardCopyOverview">Gesamtueberblick kopieren</button>
+        <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardResetState">Lokalen Stand zuruecksetzen</button>
+      </div>
+      <p id="controlBoardMsg" class="small" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__body admin-board control-board">
+      <aside class="admin-board__nav control-board__nav" aria-label="Kontrollboard Navigation">
+        <label class="control-board__search">
+          <span class="small">Maske oder Bereich</span>
+          <input id="controlBoardSearch" type="search" placeholder="z. B. Fangliste oder Token" />
+        </label>
+        <div class="control-board__filters" aria-label="Arbeitsfilter">
+          <button type="button" class="control-board__btn control-board__btn--ghost control-board__btn--small" id="controlBoardFilterOpen">Nur offen</button>
+          <button type="button" class="control-board__btn control-board__btn--ghost control-board__btn--small" id="controlBoardFilterIssues">Nur Issues</button>
+          <button type="button" class="control-board__btn control-board__btn--ghost control-board__btn--small" id="controlBoardFilterSmoke">Smoke offen</button>
+        </div>
+        <div id="controlBoardNavGroups" class="control-board__nav-groups"></div>
+      </aside>
+
+      <div class="admin-board__content control-board__content">
+        <section class="admin-section is-active" data-control-panel="overview">
+          <article class="admin-card">
+            <div class="admin-card-toolbar">
+              <div class="admin-card-toolbar__meta">
+                <h2>Gesamtueberblick</h2>
+                <p class="small">Alle Masken, Querschnittsthemen und ihr aktueller Abarbeitungsstand.</p>
+              </div>
+            </div>
+            <div class="admin-kpi-grid control-board__kpis">
+              <article class="admin-kpi"><h3>Eintraege</h3><p id="cbOverviewItems">-</p></article>
+              <article class="admin-kpi"><h3>Offen</h3><p id="cbOverviewOpen">-</p></article>
+              <article class="admin-kpi"><h3>Erledigt</h3><p id="cbOverviewDone">-</p></article>
+              <article class="admin-kpi"><h3>Smoke OK</h3><p id="cbOverviewSmoke">-</p></article>
+              <article class="admin-kpi"><h3>Offene Issues</h3><p id="cbOverviewIssues">-</p></article>
+            </div>
+          </article>
+
+          <article class="admin-card">
+            <div class="admin-card-toolbar">
+              <div class="admin-card-toolbar__meta">
+                <h3>Fortschritt</h3>
+                <p class="small">Was ist erledigt, was kommt als Naechstes und wie weit ist jede Welle.</p>
+              </div>
+            </div>
+            <div id="controlBoardWaveProgress" class="control-board__wave-grid"></div>
+            <div class="control-board__history-grid">
+              <section class="control-board__history-panel">
+                <h4>Hinter dir</h4>
+                <div id="controlBoardRecentDone" class="control-board__history-list"></div>
+              </section>
+              <section class="control-board__history-panel">
+                <h4>Vor dir</h4>
+                <div id="controlBoardUpcomingOpen" class="control-board__history-list"></div>
+              </section>
+            </div>
+          </article>
+
+          <article class="admin-card">
+            <div class="admin-card-toolbar">
+              <div class="admin-card-toolbar__meta">
+                <h3>Uebersichtstabelle</h3>
+                <p class="small">Mit einem Klick kannst du jeden Bereich direkt oeffnen.</p>
+              </div>
+              <div class="admin-actions admin-actions--toolbar">
+                <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardCopyCompact">Kompakt-Report kopieren</button>
+              </div>
+            </div>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="controlBoardOverviewTable">
+                <thead>
+                  <tr>
+                    <th>Bereich</th>
+                    <th>Route / Scope</th>
+                    <th>Status</th>
+                    <th>Offen</th>
+                    <th>Erledigt</th>
+                    <th>Smoke</th>
+                    <th>Issues</th>
+                    <th>Aktion</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="admin-card">
+            <div class="admin-card-toolbar">
+              <div class="admin-card-toolbar__meta">
+                <h3>Report-Vorschau</h3>
+                <p class="small">Copy- und Druckansicht fuer den aktuellen Gesamtstand.</p>
+              </div>
+            </div>
+            <pre id="controlBoardOverviewReport" class="control-board__report-preview"></pre>
+          </article>
+        </section>
+
+        <section class="admin-section" data-control-panel="detail">
+          <article class="admin-card">
+            <div class="admin-card-toolbar">
+              <div class="admin-card-toolbar__meta">
+                <h2 id="controlBoardDetailTitle">Bereich</h2>
+                <p class="small" id="controlBoardDetailMeta">-</p>
+              </div>
+              <div class="admin-actions admin-actions--toolbar">
+                <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardCopyItem">Bereich kopieren</button>
+              </div>
+            </div>
+
+            <div class="control-board__form-grid">
+              <label>
+                <span>Status</span>
+                <select id="controlBoardStatus">
+                  <option value="todo">todo</option>
+                  <option value="ready">ready</option>
+                  <option value="doing">doing</option>
+                  <option value="blocked">blocked</option>
+                  <option value="review">review</option>
+                  <option value="done">done</option>
+                </select>
+              </label>
+              <label>
+                <span>Fokus / Owner</span>
+                <input id="controlBoardOwner" type="text" placeholder="z. B. user, codex, user+codex" />
+              </label>
+            </div>
+
+            <div class="admin-kpi-grid control-board__kpis">
+              <article class="admin-kpi"><h3>Offene Punkte</h3><p id="cbDetailOpen">-</p></article>
+              <article class="admin-kpi"><h3>Erledigt</h3><p id="cbDetailDone">-</p></article>
+              <article class="admin-kpi"><h3>Smoke</h3><p id="cbDetailSmoke">-</p></article>
+              <article class="admin-kpi"><h3>Offene Issues</h3><p id="cbDetailIssues">-</p></article>
+              <article class="admin-kpi"><h3>Zuletzt aktualisiert</h3><p id="cbDetailUpdated">-</p></article>
+            </div>
+            <div class="control-board__detail-progress">
+              <div class="control-board__progress-head">
+                <strong>Fortschritt dieser Maske</strong>
+                <span id="cbDetailProgressText">-</span>
+              </div>
+              <div class="control-board__progress-bar" aria-hidden="true">
+                <span id="cbDetailProgressBar"></span>
+              </div>
+            </div>
+          </article>
+
+          <article class="admin-card">
+            <div class="admin-card-toolbar">
+              <div class="admin-card-toolbar__meta">
+                <h3>Offen / Erledigt</h3>
+                <p class="small">Punkte koennen per Checkbox zwischen offen und erledigt verschoben werden.</p>
+              </div>
+            </div>
+            <div class="control-board__split">
+              <div class="control-board__panel">
+                <h4>Offen</h4>
+                <div id="controlBoardOpenTasks" class="control-board__task-list"></div>
+                <div class="control-board__composer">
+                  <label>
+                    <span>Neuer offener Punkt</span>
+                    <input id="controlBoardNewOpenTask" type="text" placeholder="z. B. Komponenten-Audit abschliessen" />
+                  </label>
+                  <button type="button" class="control-board__btn control-board__btn--primary" id="controlBoardAddOpenTask">Hinzufuegen</button>
+                </div>
+              </div>
+
+              <div class="control-board__panel">
+                <h4>Erledigt</h4>
+                <div id="controlBoardDoneTasks" class="control-board__task-list"></div>
+                <div class="control-board__composer">
+                  <label>
+                    <span>Erledigten Punkt nachtragen</span>
+                    <input id="controlBoardNewDoneTask" type="text" placeholder="z. B. Token-Mapping ueberprueft" />
+                  </label>
+                  <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardAddDoneTask">Nachtragen</button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="admin-card">
+            <div class="admin-card-toolbar">
+              <div class="admin-card-toolbar__meta">
+                <h3>Smoke-Tests</h3>
+                <p class="small">Durchfuehrung einfach per Checkbox bestaetigen. Offene Checks bleiben sichtbar.</p>
+              </div>
+            </div>
+            <div id="controlBoardSmokeTests" class="control-board__task-list"></div>
+            <div class="control-board__composer">
+              <label>
+                <span>Zusatz-Smoke-Test</span>
+                <input id="controlBoardNewSmoke" type="text" placeholder="z. B. Mobile Layout auf iPhone 13" />
+              </label>
+              <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardAddSmoke">Hinzufuegen</button>
+            </div>
+          </article>
+
+          <article class="admin-card">
+            <div class="admin-card-toolbar">
+              <div class="admin-card-toolbar__meta">
+                <h3>Issue / Fehler eintragen</h3>
+                <p class="small">Mit Komponentenbezug, damit ich den Fehler direkt technisch zuordnen kann.</p>
+              </div>
+            </div>
+            <div class="control-board__form-grid control-board__form-grid--issues">
+              <label>
+                <span>Komponente</span>
+                <input id="controlBoardIssueComponent" type="text" placeholder="z. B. Mitglieder Tabelle" />
+              </label>
+              <label>
+                <span>Standard-ID</span>
+                <input id="controlBoardIssueStandardId" type="text" placeholder="z. B. STD-TABLE-01" />
+              </label>
+              <label>
+                <span>Komponenten-Ref</span>
+                <input id="controlBoardIssueRef" type="text" placeholder="z. B. members-main-table" />
+              </label>
+              <label>
+                <span>Severity</span>
+                <select id="controlBoardIssueSeverity">
+                  <option value="low">low</option>
+                  <option value="medium" selected>medium</option>
+                  <option value="high">high</option>
+                  <option value="critical">critical</option>
+                </select>
+              </label>
+              <label class="resp-full">
+                <span>Titel</span>
+                <input id="controlBoardIssueTitle" type="text" placeholder="z. B. Filterzustand geht beim Reload verloren" />
+              </label>
+              <label class="resp-full">
+                <span>Beschreibung / Beobachtung</span>
+                <textarea id="controlBoardIssueDetail" rows="5" placeholder="Was passiert, was erwartet war, wie reproduzierbar?"></textarea>
+              </label>
+            </div>
+            <div class="admin-actions admin-actions--toolbar">
+              <button type="button" class="control-board__btn control-board__btn--primary" id="controlBoardAddIssue">Issue speichern</button>
+            </div>
+            <div id="controlBoardIssues" class="control-board__issue-list"></div>
+          </article>
+
+          <article class="admin-card">
+            <div class="admin-card-toolbar">
+              <div class="admin-card-toolbar__meta">
+                <h3>Notizen / Kontext</h3>
+                <p class="small">Kurze Hinweise, Entscheidungen oder Blocker ohne Issue-Charakter.</p>
+              </div>
+            </div>
+            <label>
+              <span>Neue Notiz</span>
+              <textarea id="controlBoardNewNote" rows="4" placeholder="z. B. CTO: Standard erweitern statt Spezialkomponente"></textarea>
+            </label>
+            <div class="admin-actions admin-actions--toolbar">
+              <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardAddNote">Notiz speichern</button>
+            </div>
+            <div id="controlBoardNotes" class="control-board__note-list"></div>
+          </article>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/control-board.js" defer></script>
+
+  <style>
+    .control-board {
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .control-board .admin-actions--toolbar {
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .control-board__btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(124, 156, 255, 0.2);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      font: inherit;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      transition: border-color .16s ease, background .16s ease, transform .16s ease;
+    }
+
+    .control-board__btn:hover,
+    .control-board__btn:focus-visible {
+      border-color: rgba(124, 156, 255, 0.38);
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .control-board__btn--primary {
+      background: linear-gradient(180deg, rgba(68, 108, 188, 0.9), rgba(35, 60, 113, 0.95));
+      border-color: rgba(124, 156, 255, 0.42);
+    }
+
+    .control-board__btn--ghost {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .control-board__btn--small {
+      min-height: 32px;
+      padding: 0 10px;
+      border-radius: 10px;
+      font-size: .86rem;
+    }
+
+    .control-board .admin-card {
+      border-color: rgba(124, 156, 255, 0.22);
+      background:
+        linear-gradient(180deg, rgba(18, 28, 46, 0.92), rgba(10, 18, 34, 0.94)),
+        radial-gradient(circle at top right, rgba(89, 138, 255, 0.14), transparent 40%);
+      box-shadow: 0 18px 40px rgba(3, 8, 18, 0.24);
+    }
+
+    .control-board .admin-card-toolbar {
+      gap: 12px;
+      align-items: start;
+    }
+
+    .control-board .admin-card-toolbar__meta {
+      display: grid;
+      gap: 4px;
+    }
+
+    .control-board .admin-card-toolbar__meta p,
+    .control-board .admin-card-toolbar__meta h2,
+    .control-board .admin-card-toolbar__meta h3 {
+      margin: 0;
+    }
+
+    .control-board__nav {
+      gap: 14px;
+      position: sticky;
+      top: 84px;
+      align-self: start;
+      max-height: calc(100vh - 108px);
+      overflow: auto;
+    }
+
+    .control-board__nav-groups {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .control-board__nav-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .control-board__nav-group-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .control-board__nav-group-title {
+      margin: 0;
+      color: rgba(211, 223, 255, 0.74);
+      font-size: .76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .control-board__search {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid rgba(124, 156, 255, 0.2);
+      border-radius: 14px;
+      background: rgba(10, 18, 33, 0.72);
+    }
+
+    .control-board__search input {
+      width: 100%;
+    }
+
+    .control-board__filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 12px;
+      border: 1px solid rgba(124, 156, 255, 0.2);
+      border-radius: 14px;
+      background: rgba(10, 18, 33, 0.72);
+    }
+
+    .control-board__filters .control-board__btn {
+      flex: 1 1 100%;
+      justify-content: flex-start;
+    }
+
+    .control-board__filters .control-board__btn.is-active {
+      border-color: rgba(106, 159, 255, 0.58);
+      background: linear-gradient(180deg, rgba(34, 57, 96, 0.92), rgba(18, 31, 57, 0.94));
+      color: #fff;
+    }
+
+    .control-board__nav .admin-nav-btn {
+      display: grid;
+      gap: 8px;
+      padding: 12px 14px;
+      text-align: left;
+      border-radius: 14px;
+      border: 1px solid rgba(124, 156, 255, 0.16);
+      background: rgba(16, 25, 41, 0.74);
+      color: var(--text);
+      transition: border-color .16s ease, background .16s ease, transform .16s ease;
+    }
+
+    .control-board__nav .admin-nav-btn:hover,
+    .control-board__nav .admin-nav-btn:focus-visible {
+      border-color: rgba(124, 156, 255, 0.34);
+      background: rgba(20, 31, 52, 0.9);
+      transform: translateY(-1px);
+    }
+
+    .control-board__nav .admin-nav-btn.is-active {
+      border-color: rgba(106, 159, 255, 0.58);
+      background: linear-gradient(180deg, rgba(34, 57, 96, 0.92), rgba(18, 31, 57, 0.94));
+      box-shadow: inset 0 0 0 1px rgba(166, 198, 255, 0.12);
+    }
+
+    .control-board__nav-main,
+    .control-board__nav-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .control-board__nav-main {
+      justify-content: space-between;
+    }
+
+    .control-board__nav-route {
+      font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: .8rem;
+      color: rgba(211, 223, 255, 0.72);
+      overflow-wrap: anywhere;
+    }
+
+    .control-board__nav-count {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(124, 156, 255, 0.16);
+      background: rgba(255, 255, 255, 0.04);
+      font-size: .74rem;
+      color: rgba(226, 234, 255, 0.84);
+    }
+
+    .control-board__nav-progress {
+      display: grid;
+      gap: 5px;
+    }
+
+    .control-board__nav-progress-label {
+      font-size: .78rem;
+      color: rgba(216, 225, 245, 0.76);
+    }
+
+    .control-board__nav-group-items {
+      display: grid;
+      gap: 8px;
+    }
+
+    .control-board__nav-group.is-collapsed .control-board__nav-group-items {
+      display: none;
+    }
+
+    .control-board__group-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(124, 156, 255, 0.16);
+      background: rgba(255, 255, 255, 0.04);
+      font-size: .74rem;
+      color: rgba(226, 234, 255, 0.76);
+    }
+
+    .control-board__content {
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .control-board__content .admin-section {
+      gap: 16px;
+    }
+
+    .control-board__kpis {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .control-board__wave-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .control-board__wave-card,
+    .control-board__history-panel,
+    .control-board__detail-progress {
+      border: 1px solid rgba(124, 156, 255, 0.16);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 14px;
+    }
+
+    .control-board__wave-card {
+      display: grid;
+      gap: 10px;
+    }
+
+    .control-board__wave-head,
+    .control-board__progress-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+
+    .control-board__wave-head h4,
+    .control-board__history-panel h4 {
+      margin: 0;
+    }
+
+    .control-board__wave-meta,
+    .control-board__history-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: .82rem;
+      color: rgba(216, 225, 245, 0.82);
+    }
+
+    .control-board__history-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .control-board__history-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .control-board__history-item {
+      display: grid;
+      gap: 4px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(124, 156, 255, 0.12);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .control-board__history-item strong,
+    .control-board__history-item p {
+      margin: 0;
+    }
+
+    .control-board__split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .control-board__panel {
+      border: 1px solid rgba(124, 156, 255, 0.16);
+      border-radius: 14px;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      background: rgba(255, 255, 255, .03);
+      min-width: 0;
+    }
+
+    .control-board__panel h4 {
+      margin: 0;
+    }
+
+    .control-board__task-list,
+    .control-board__issue-list,
+    .control-board__note-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .control-board__form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .control-board__form-grid label,
+    .control-board__composer label {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+      min-width: 0;
+    }
+
+    .control-board__form-grid input,
+    .control-board__form-grid select,
+    .control-board__form-grid textarea,
+    .control-board__composer input {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .control-board__composer {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .control-board__composer .control-board__btn {
+      min-width: 128px;
+    }
+
+    .control-board__list-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 14px;
+      border: 1px solid rgba(124, 156, 255, 0.14);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+    }
+
+    .control-board__list-row.is-done {
+      background: rgba(112, 212, 161, 0.08);
+      border-color: rgba(112, 212, 161, 0.2);
+    }
+
+    .control-board__check {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: #84b1ff;
+      cursor: pointer;
+    }
+
+    .control-board__row-body {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .control-board__row-title {
+      font-weight: 700;
+      line-height: 1.35;
+      margin: 0;
+    }
+
+    .control-board__row-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: .82rem;
+      color: rgba(216, 225, 245, 0.76);
+    }
+
+    .control-board__row-state {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(124, 156, 255, 0.16);
+      background: rgba(255, 255, 255, 0.04);
+      font-weight: 700;
+      text-transform: lowercase;
+    }
+
+    .control-board__row-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .control-board__issue,
+    .control-board__note {
+      border: 1px solid rgba(124, 156, 255, 0.16);
+      border-radius: 14px;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      background: rgba(255, 255, 255, .03);
+    }
+
+    .control-board__issue.is-resolved {
+      opacity: .7;
+    }
+
+    .control-board__issue-head,
+    .control-board__note-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: start;
+      flex-wrap: wrap;
+    }
+
+    .control-board__chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .control-board__chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(124, 156, 255, 0.18);
+      background: rgba(255, 255, 255, 0.04);
+      font-size: .78rem;
+      font-weight: 700;
+    }
+
+    .control-board__chip.is-low { color: #9cc8ff; }
+    .control-board__chip.is-medium { color: #ffd166; }
+    .control-board__chip.is-high { color: #ff9f43; }
+    .control-board__chip.is-critical { color: #ff6a6a; }
+
+    .control-board__issue-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: .82rem;
+      color: rgba(216, 225, 245, 0.82);
+    }
+
+    .control-board__issue-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(124, 156, 255, 0.14);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .control-board__issue-body,
+    .control-board__note-body {
+      white-space: pre-wrap;
+      line-height: 1.55;
+      color: rgba(232, 238, 252, 0.92);
+    }
+
+    .control-board__actions {
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .control-board__detail-progress {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .control-board__empty {
+      border: 1px dashed rgba(124, 156, 255, 0.22);
+      border-radius: 14px;
+      padding: 12px;
+      color: rgba(211, 223, 255, 0.7);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .control-board__status-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(124, 156, 255, 0.18);
+      background: rgba(255, 255, 255, 0.05);
+      font-size: .76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .control-board__status-chip--done { color: #7fe0a8; }
+    .control-board__status-chip--blocked { color: #ff8c8c; }
+    .control-board__status-chip--review { color: #ffd479; }
+    .control-board__status-chip--active { color: #b9cdfd; }
+
+    .control-board__progress-bar {
+      overflow: hidden;
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(124, 156, 255, 0.12);
+    }
+
+    .control-board__progress-bar > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, rgba(123, 182, 255, 0.92), rgba(104, 222, 170, 0.92));
+      width: 0%;
+    }
+
+    .control-board .work-part-table td,
+    .control-board .work-part-table th {
+      vertical-align: middle;
+    }
+
+    .control-board__report-preview {
+      margin: 0;
+      padding: 16px;
+      border: 1px solid rgba(124, 156, 255, 0.16);
+      border-radius: 14px;
+      background: rgba(7, 13, 25, 0.82);
+      color: rgba(232, 238, 252, 0.94);
+      font: 0.86rem/1.55 "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      max-height: 420px;
+      overflow: auto;
+    }
+
+    @media (max-width: 1200px) {
+      .control-board {
+        grid-template-columns: 280px minmax(0, 1fr);
+      }
+
+      .control-board__kpis {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 900px) {
+      .control-board {
+        grid-template-columns: 1fr;
+      }
+
+      .control-board__nav {
+        position: static;
+        max-height: none;
+      }
+
+      .control-board__form-grid,
+      .control-board__wave-grid,
+      .control-board__history-grid,
+      .control-board__split,
+      .control-board__kpis {
+        grid-template-columns: 1fr;
+      }
+
+      .control-board__composer {
+        grid-template-columns: 1fr;
+      }
+
+      .control-board__list-row {
+        grid-template-columns: auto 1fr;
+      }
+
+      .control-board__row-actions {
+        grid-column: 2;
+        justify-content: flex-start;
+      }
+    }
+
+    @media print {
+      .control-board__nav,
+      .admin-actions,
+      .control-board__filters,
+      #controlBoardMsg {
+        display: none !important;
+      }
+
+      .control-board {
+        display: block;
+      }
+
+      .control-board .admin-card {
+        box-shadow: none;
+        background: #fff;
+        color: #111;
+        border-color: #ccc;
+        break-inside: avoid;
+      }
+
+      .control-board__report-preview {
+        max-height: none;
+        overflow: visible;
+        background: #fff;
+        color: #111;
+      }
+    }
+  </style>
+</Site>

@@ -142,14 +142,17 @@
   background: rgba(255, 255, 255, .03);
 }
 
-.fangliste-table {
-  width: 100%;
+.catch-table--fangliste {
   min-width: 760px;
-  border-collapse: collapse;
   color: var(--text);
 }
 
-.fangliste-table thead th {
+.catch-table--fangliste .catch-table__head,
+.catch-table--fangliste .catch-table__row {
+  grid-template-columns: minmax(148px, 1fr) minmax(170px, 1.15fr) minmax(240px, 1.5fr) 120px 100px;
+}
+
+.catch-table__head--fangliste {
   position: sticky;
   top: 0;
   z-index: 2;
@@ -163,7 +166,15 @@
   padding: 12px 16px;
   text-align: left;
   white-space: nowrap;
-  position: sticky;
+}
+
+.fangliste-table-headcell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
 }
 
 .fangliste-th-label {
@@ -258,44 +269,32 @@
   margin-top: 4px;
 }
 
-.fangliste-table tbody tr {
+.catch-table__row--fangliste {
   cursor: pointer;
+  padding: 13px 16px;
+  min-height: 50px;
 }
 
-.fangliste-table tbody tr:nth-child(odd) {
+.catch-table__row--fangliste:nth-of-type(odd) {
   background: color-mix(in srgb, var(--surface, #f3efe5) 92%, #fff);
 }
 
-.fangliste-table tbody tr:nth-child(even) {
+.catch-table__row--fangliste:nth-of-type(even) {
   background: color-mix(in srgb, var(--surface, #f3efe5) 84%, var(--surface-2, #ddd4c2));
 }
 
-.fangliste-table tbody tr:hover td {
+.catch-table__row--fangliste:hover,
+.catch-table__row--fangliste:focus-visible {
   background: color-mix(in srgb, var(--surface, #f3efe5) 70%, var(--surface-2, #ddd4c2));
-}
-
-.fangliste-table td {
-  border-bottom: 1px solid var(--line);
-  padding: 13px 16px;
-  min-height: 46px;
-  vertical-align: middle;
-  font-size: .92rem;
-}
-
-.fangliste-table tbody tr:last-child td {
-  border-bottom: none;
 }
 
 .fangliste-table__cell {
   min-width: 0;
+  font-size: .92rem;
 }
 
 .fangliste-table__cell--trip_date {
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
-}
-
-.fangliste-table tbody td:first-child {
   font-weight: 700;
 }
 
@@ -713,6 +712,39 @@
 
   .trip-filter-meta {
     order: -1;
+  }
+
+  .fangliste-table-wrap {
+    overflow: auto;
+    overflow-y: visible;
+    max-height: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .catch-table--fangliste {
+    min-width: 620px;
+  }
+
+  .catch-table--fangliste .catch-table__head,
+  .catch-table--fangliste .catch-table__row {
+    grid-template-columns: 110px minmax(130px, 1.05fr) minmax(180px, 1.3fr) 90px 76px;
+  }
+
+  .catch-table__head--fangliste {
+    padding: 10px 12px;
+    font-size: .72rem;
+  }
+
+  .catch-table__row--fangliste {
+    padding: 11px 12px;
+    min-height: 46px;
+  }
+
+  .fangliste-table__cell {
+    font-size: .88rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .admin-board {

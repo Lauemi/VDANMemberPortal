@@ -900,7 +900,7 @@
           <details data-members-list ${membersOpen ? "open" : ""}>
             <summary style="cursor:pointer;font-weight:600;">Mitgliederliste aufklappen (${presentCount}/${(Array.isArray(members) ? members : []).length} aktiv)</summary>
             <div class="work-part-table-wrap" style="margin-top:8px;">
-              <table class="work-part-table work-member-table">
+              <table class="work-part-table work-member-table" data-studio-component-type="table" data-studio-library-id="lists--standard-tabelle" data-table-id="work-cockpit-members">
                 <thead>
                   <tr>
                     <th class="work-member-col work-member-col--name">Name</th>
@@ -923,7 +923,7 @@
           <button class="feed-btn" type="button" data-bulk-approve="${eventId}">Mehrfach freigeben</button>
           <button class="feed-btn feed-btn--ghost" type="button" data-bulk-reject="${eventId}">Mehrfach ablehnen</button>
         </div>
-        <table class="work-part-table work-part-table--admin">
+        <table class="work-part-table work-part-table--admin" data-studio-component-type="table" data-studio-library-id="lists--standard-tabelle" data-table-id="work-cockpit-participants">
           <thead>
             <tr>
               <th class="work-part-col work-part-col--select">✓</th>

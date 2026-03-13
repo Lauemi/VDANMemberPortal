@@ -29,12 +29,13 @@ import { APP } from "../config/app";
         </label>
       </div>
       <p id="termineMsg" class="small" aria-live="polite"></p>
-      <div id="termineTableWrap" class="catch-table">
-        <div class="catch-table__head" style="grid-template-columns:1.2fr 1.6fr 1fr 1fr">
+      <div id="termineTableWrap" class="catch-table" data-studio-component-type="table" data-studio-library-id="lists--standard-tabelle" data-table-id="termine-merged" data-row-click="dialog">
+        <div class="catch-table__head" style="grid-template-columns:1.15fr 1.4fr 1fr 1fr 1fr">
           <span>Start</span>
           <span>Titel</span>
           <span>Art</span>
           <span>Ort</span>
+          <span>Erstellt von</span>
         </div>
         <div id="termineTableBody"></div>
       </div>

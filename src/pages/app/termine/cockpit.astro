@@ -29,6 +29,14 @@ import { APP } from "../../../config/app";
     <form id="termCreateForm" class="catch-dialog__form" method="dialog">
       <h3>Termin erstellen</h3>
       <div class="grid cols2">
+        <label style="grid-column:1/-1">
+          <span>Jugend-Termin</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="termIsYouth" type="hidden" value="0" />
+            <button type="button" id="termIsYouthToggle" class="feed-btn feed-btn--ghost">Jugend</button>
+            <span class="small">Aktiv = nur Jugend-Kontext</span>
+          </div>
+        </label>
         <label>
           <span>Titel</span>
           <input id="termTitle" type="text" required />

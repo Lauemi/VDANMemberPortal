@@ -6,13 +6,31 @@ import { APP } from "../../../config/app";
 <Site title={`Fangliste • ${APP.name}`} description="Digitale Fangliste" robots="noindex">
   <section class="card" data-studio-component-id="fangliste-header-card" data-studio-component-type="card" data-studio-slot="main">
     <div class="card__body" data-studio-component-id="fangliste-header-content" data-studio-component-type="section" data-studio-slot="main">
-      <h1>Fangliste / Angeltage</h1>
-      <p class="small">Klicke auf eine Zeile für Details. Bilder können im Dialog hinterlegt werden.</p>
-
-      <div class="fangliste-actions" data-studio-component-id="fangliste-actions" data-studio-component-type="section" data-studio-slot="main">
-        <button type="button" id="tripOpenCreate" class="feed-btn feed-btn--ghost" data-studio-component-id="fangliste-open-create-btn" data-studio-component-type="button" data-studio-slot="main">Eintrag erfassen</button>
-        <button type="button" id="tripQuickNoCatch" class="feed-btn" data-studio-component-id="fangliste-no-catch-btn" data-studio-component-type="button" data-studio-slot="main">Kein Fang</button>
+      <div class="catch-table-toolbar">
+        <h1>Fangliste / Angeltage</h1>
+        <div class="fangliste-add-anchor">
+          <button
+            type="button"
+            id="tripCreateOpenTop"
+            class="catch-add-btn catch-add-btn--top"
+            aria-label="Fang hinzufügen"
+            aria-expanded="false"
+            aria-controls="tripTopMenu"
+            data-studio-component-id="fangliste-open-create-top-btn"
+            data-studio-component-type="button"
+            data-studio-slot="main"
+          >+</button>
+          <div id="tripTopMenu" class="fangliste-action-menu fangliste-action-menu--top hidden" hidden>
+            <button type="button" id="tripTopCatch" class="fangliste-fab-action">
+              <span class="fangliste-fab-action__label">Fang erfassen</span>
+            </button>
+            <button type="button" id="tripTopNoCatch" class="fangliste-fab-action fangliste-fab-action--ghost">
+              <span class="fangliste-fab-action__label">Kein Fang</span>
+            </button>
+          </div>
+        </div>
       </div>
+      <p class="small">Klicke auf eine Zeile für Details. Bilder können im Dialog hinterlegt werden.</p>
 
       <p id="tripMsg" class="small" aria-live="polite"></p>
     </div>
@@ -25,7 +43,7 @@ import { APP } from "../../../config/app";
       <div class="trip-table-toolbar" role="region" aria-label="Tabellensteuerung" data-studio-component-id="fangliste-table-toolbar" data-studio-component-type="section" data-studio-slot="main">
         <label class="trip-table-search">
           <span class="visually-hidden">Suche in der Fangliste</span>
-          <input id="tripSearch" type="search" placeholder="Suche Tag, Gewässer, Fang, Status..." data-studio-component-id="fangliste-search-input" data-studio-component-type="input" data-studio-slot="main" />
+          <input id="tripSearch" type="search" placeholder="Suche Tag, Gewässer, Fang, Gewicht, Anzahl..." data-studio-component-id="fangliste-search-input" data-studio-component-type="input" data-studio-slot="main" />
         </label>
         <div class="trip-table-toolbar__actions">
           <span id="tripActiveFilterCount" class="trip-filter-meta hidden" aria-live="polite">0 Filter aktiv</span>
@@ -137,5 +155,98 @@ import { APP } from "../../../config/app";
     </form>
   </section>
 
+  <div class="catch-fab-stack fangliste-fab-stack">
+    <div id="tripFabMenu" class="fangliste-action-menu fangliste-action-menu--fab hidden" hidden>
+      <button type="button" id="tripFabCatch" class="fangliste-fab-action">
+        <span class="fangliste-fab-action__label">Fang erfassen</span>
+      </button>
+      <button type="button" id="tripFabNoCatch" class="fangliste-fab-action fangliste-fab-action--ghost">
+        <span class="fangliste-fab-action__label">Kein Fang</span>
+      </button>
+    </div>
+    <button
+      type="button"
+      id="tripCreateFab"
+      class="catch-add-btn catch-add-btn--fab"
+      aria-label="Fang hinzufügen"
+      aria-expanded="false"
+      aria-controls="tripFabMenu"
+      data-studio-component-id="fangliste-open-create-fab"
+      data-studio-component-type="button"
+      data-studio-slot="main"
+    >+</button>
+  </div>
+
   <script src="/js/catchlist.js" defer></script>
+
+  <style>
+    .fangliste-add-anchor {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .fangliste-fab-stack {
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .fangliste-action-menu {
+      display: grid;
+      gap: 8px;
+      justify-items: stretch;
+    }
+
+    .fangliste-action-menu--top {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      min-width: 220px;
+      z-index: 4;
+    }
+
+    .fangliste-action-menu--fab {
+      justify-items: end;
+    }
+
+    .fangliste-fab-action {
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(78, 161, 255, .44);
+      background: linear-gradient(180deg, rgba(64, 103, 182, .92), rgba(31, 57, 109, .96));
+      color: var(--text);
+      font: inherit;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, .26);
+    }
+
+    .fangliste-fab-action--ghost {
+      background: rgba(17, 27, 45, .96);
+    }
+
+    .fangliste-fab-action__label {
+      white-space: nowrap;
+    }
+
+    #tripCreateFab[aria-expanded="true"],
+    #tripCreateOpenTop[aria-expanded="true"] {
+      background: rgba(78, 161, 255, .36);
+      border-color: rgba(120, 184, 255, .7);
+    }
+
+    @media (min-width: 900px) {
+      .fangliste-fab-stack {
+        display: none;
+      }
+    }
+
+    @media (max-width: 899px) {
+      .fangliste-add-anchor {
+        display: none;
+      }
+    }
+  </style>
 </Site>

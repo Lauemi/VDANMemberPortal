@@ -27,12 +27,25 @@
   const isYouthFeed = forcedCategory === "jugend";
   const YOUTH_TERM = "jugend";
 
-  function titleHasYouthTerm(title) {
-    return String(title || "").toLowerCase().includes(YOUTH_TERM);
+  function rowHasYouthTerm(row) {
+    const haystack = [
+      row?.title,
+      row?.description,
+      row?.location,
+    ]
+      .map((value) => String(value || "").toLowerCase())
+      .join(" ");
+    return haystack.includes(YOUTH_TERM);
+  }
+
+  function isTruthyYouthFlag(value) {
+    if (value === true || value === 1) return true;
+    const normalized = String(value ?? "").trim().toLowerCase();
+    return normalized === "true" || normalized === "1" || normalized === "t" || normalized === "yes" || normalized === "ja";
   }
 
   function isYouthItem(row) {
-    return Boolean(row?.is_youth) || titleHasYouthTerm(row?.title);
+    return isTruthyYouthFlag(row?.is_youth) || rowHasYouthTerm(row);
   }
 
   function filterByFeedCategory(rows) {
@@ -1048,82 +1061,80 @@
     list.innerHTML = "";
 
     try {
-      if (!isForcedCategory) {
-        const [terms, works] = await Promise.all([
-          listUpcomingTerms().catch(() => []),
-          listUpcomingWorkEvents().catch(() => []),
-        ]);
-        const merged = [
-          ...(Array.isArray(terms) ? terms : []).map((row) => ({ ...row, sourceLabel: isYouthItem(row) ? "Termin Jugend" : "Termin" })),
-          ...(Array.isArray(works) ? works : []).map((row) => ({ ...row, sourceLabel: isYouthItem(row) ? "Arbeitseinsatz Jugend" : "Arbeitseinsatz" })),
-        ].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+      const [terms, works] = await Promise.all([
+        listUpcomingTerms().catch(() => []),
+        listUpcomingWorkEvents().catch(() => []),
+      ]);
+      const merged = [
+        ...(Array.isArray(terms) ? terms : []).map((row) => ({ ...row, sourceLabel: isYouthItem(row) ? "Termin Jugend" : "Termin" })),
+        ...(Array.isArray(works) ? works : []).map((row) => ({ ...row, sourceLabel: isYouthItem(row) ? "Arbeitseinsatz Jugend" : "Arbeitseinsatz" })),
+      ].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
 
-        if (merged.length) {
-          const section = document.createElement("article");
-          section.className = "feed-post";
-          section.innerHTML = `
-            <header class="feed-post__head">
-              <h3>Nächste Termine & Arbeitseinsätze</h3>
-              <div class="feed-post__meta">
-                <a class="feed-btn feed-btn--ghost" href="/termine.html/">Alle Termine</a>
-              </div>
-            </header>
-            <div class="feed-upcoming-slider" data-up-slider-wrap>
-              <button type="button" class="feed-upcoming-nav feed-upcoming-nav--prev" data-up-prev aria-label="Vorheriger Eintrag">&#x2039;</button>
-              <div class="feed-upcoming-stage" data-up-slider></div>
-              <button type="button" class="feed-upcoming-nav feed-upcoming-nav--next" data-up-next aria-label="Nächster Eintrag">&#x203A;</button>
+      if (merged.length) {
+        const section = document.createElement("article");
+        section.className = "feed-post";
+        section.innerHTML = `
+          <header class="feed-post__head">
+            <h3>${isYouthFeed ? "Nächste Jugend-Termine & Jugend-Arbeitseinsätze" : "Nächste Termine & Arbeitseinsätze"}</h3>
+            <div class="feed-post__meta">
+              <a class="feed-btn feed-btn--ghost" href="/termine.html/">Alle Termine</a>
+            </div>
+          </header>
+          <div class="feed-upcoming-slider" data-up-slider-wrap>
+            <button type="button" class="feed-upcoming-nav feed-upcoming-nav--prev" data-up-prev aria-label="Vorheriger Eintrag">&#x2039;</button>
+            <div class="feed-upcoming-stage" data-up-slider></div>
+            <button type="button" class="feed-upcoming-nav feed-upcoming-nav--next" data-up-next aria-label="Nächster Eintrag">&#x203A;</button>
+          </div>
+        `;
+
+        const slider = section.querySelector("[data-up-slider]");
+        const prevBtn = section.querySelector("[data-up-prev]");
+        const nextBtn = section.querySelector("[data-up-next]");
+        let idx = 0;
+        let touchStartX = null;
+
+        const renderUpcoming = () => {
+          const row = merged[idx];
+          slider.innerHTML = `
+            <div class="feed-calendar-item feed-calendar-item--upcoming" style="touch-action:pan-y; user-select:none;">
+              <span class="feed-chip">${escapeHtml(row.sourceLabel)} ${idx + 1}/${merged.length}</span>
+              <strong>${escapeHtml(row.title)}</strong>
+              <span class="small">${escapeHtml(formatDate(row.starts_at))} - ${escapeHtml(formatDate(row.ends_at))}</span>
+              <span class="small">${escapeHtml(row.location || "Ort offen")}</span>
+              ${row.description ? `<p class="small">${escapeHtml(row.description)}</p>` : ""}
             </div>
           `;
+        };
 
-          const slider = section.querySelector("[data-up-slider]");
-          const prevBtn = section.querySelector("[data-up-prev]");
-          const nextBtn = section.querySelector("[data-up-next]");
-          let idx = 0;
-          let touchStartX = null;
-
-          const renderUpcoming = () => {
-            const row = merged[idx];
-            slider.innerHTML = `
-              <div class="feed-calendar-item feed-calendar-item--upcoming" style="touch-action:pan-y; user-select:none;">
-                <span class="feed-chip">${escapeHtml(row.sourceLabel)} ${idx + 1}/${merged.length}</span>
-                <strong>${escapeHtml(row.title)}</strong>
-                <span class="small">${escapeHtml(formatDate(row.starts_at))} - ${escapeHtml(formatDate(row.ends_at))}</span>
-                <span class="small">${escapeHtml(row.location || "Ort offen")}</span>
-                ${row.description ? `<p class="small">${escapeHtml(row.description)}</p>` : ""}
-              </div>
-            `;
-          };
-
-          const move = (dir) => {
-            idx = (idx + dir + merged.length) % merged.length;
-            renderUpcoming();
-          };
-
-          prevBtn?.addEventListener("click", () => move(-1));
-          nextBtn?.addEventListener("click", () => move(1));
-          slider?.addEventListener("touchstart", (e) => {
-            touchStartX = e.touches?.[0]?.clientX ?? null;
-          }, { passive: true });
-          slider?.addEventListener("touchend", (e) => {
-            if (touchStartX == null) return;
-            const endX = e.changedTouches?.[0]?.clientX ?? touchStartX;
-            const dx = endX - touchStartX;
-            if (Math.abs(dx) >= 30) move(dx < 0 ? 1 : -1);
-            touchStartX = null;
-          }, { passive: true });
-
+        const move = (dir) => {
+          idx = (idx + dir + merged.length) % merged.length;
           renderUpcoming();
-          list.appendChild(section);
-        }
+        };
+
+        prevBtn?.addEventListener("click", () => move(-1));
+        nextBtn?.addEventListener("click", () => move(1));
+        slider?.addEventListener("touchstart", (e) => {
+          touchStartX = e.touches?.[0]?.clientX ?? null;
+        }, { passive: true });
+        slider?.addEventListener("touchend", (e) => {
+          if (touchStartX == null) return;
+          const endX = e.changedTouches?.[0]?.clientX ?? touchStartX;
+          const dx = endX - touchStartX;
+          if (Math.abs(dx) >= 30) move(dx < 0 ? 1 : -1);
+          touchStartX = null;
+        }, { passive: true });
+
+        renderUpcoming();
+        list.appendChild(section);
       }
 
-      const weekItems = isForcedCategory ? [] : await listWeekCalendarItems().catch(() => []);
+      const weekItems = await listWeekCalendarItems().catch(() => []);
       if (weekItems.length) {
         const section = document.createElement("article");
         section.className = "feed-post";
         section.innerHTML = `
           <header class="feed-post__head">
-            <h3>Diese Woche: Termine & Arbeitseinsätze</h3>
+            <h3>${isYouthFeed ? "Diese Woche: Jugend-Termine & Jugend-Arbeitseinsätze" : "Diese Woche: Termine & Arbeitseinsätze"}</h3>
             <div class="feed-post__meta">
               <a class="feed-btn feed-btn--ghost" href="/termine.html/">Alle Termine</a>
             </div>

@@ -6,6 +6,7 @@
     rows: [],
     ansicht: "zeile",
   };
+  let profileLabelById = new Map();
 
   function cfg() {
     return {
@@ -41,6 +42,22 @@
     if (el) el.textContent = text;
   }
 
+  async function loadProfileLabels(ids = []) {
+    const unique = [...new Set((Array.isArray(ids) ? ids : []).map((id) => String(id || "").trim()).filter(Boolean))];
+    if (!unique.length) return new Map();
+    const inList = unique.map((id) => `"${id}"`).join(",");
+    const rows = await sb(`/rest/v1/profiles?select=id,display_name,email,member_no&id=in.(${inList})`);
+    return new Map((Array.isArray(rows) ? rows : []).map((row) => [
+      String(row.id || "").trim(),
+      String(row.display_name || row.member_no || row.email || row.id || "").trim(),
+    ]));
+  }
+
+  function creatorLabel(row) {
+    const id = String(row?.created_by || "").trim();
+    return profileLabelById.get(id) || (id ? "Mitglied" : "-");
+  }
+
   function loadView() {
     try {
       return String(localStorage.getItem(VIEW_KEY) || "zeile") === "karte" ? "karte" : "zeile";
@@ -68,9 +85,14 @@
   async function listCombinedUpcoming() {
     const nowIso = new Date().toISOString();
     const [terms, works] = await Promise.all([
-      sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`),
-      sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`),
+      sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,created_by&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`),
+      sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status,created_by&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`),
     ]);
+
+    profileLabelById = await loadProfileLabels([
+      ...(Array.isArray(terms) ? terms : []).map((row) => row?.created_by),
+      ...(Array.isArray(works) ? works : []).map((row) => row?.created_by),
+    ]).catch(() => new Map());
 
     const t = (Array.isArray(terms) ? terms : []).map((x) => ({ ...x, kind: "termin", badge: "Termin", row_id: `termin:${x.id}` }));
     const w = (Array.isArray(works) ? works : []).map((x) => ({ ...x, kind: "arbeitseinsatz", badge: "Arbeitseinsatz", row_id: `arbeit:${x.id}` }));
@@ -97,6 +119,7 @@
     box.innerHTML = `
       <p><strong>Titel:</strong> ${esc(row.title || "-")}</p>
       <p><strong>Art:</strong> ${esc(row.badge)}</p>
+      <p><strong>Erstellt von:</strong> ${esc(creatorLabel(row))}</p>
       <p><strong>Start:</strong> ${esc(fmt(row.starts_at))}</p>
       <p><strong>Ende:</strong> ${esc(fmt(row.ends_at))}</p>
       <p><strong>Ort:</strong> ${esc(row.location || "-")}</p>
@@ -113,11 +136,12 @@
       return;
     }
     body.innerHTML = rows.map((row) => `
-      <button type="button" class="catch-table__row" data-open-row="${esc(row.row_id)}" style="grid-template-columns:1.2fr 1.6fr 1fr 1fr;">
+      <button type="button" class="catch-table__row" data-open-row="${esc(row.row_id)}" style="grid-template-columns:1.15fr 1.4fr 1fr 1fr 1fr;">
         <span>${esc(fmt(row.starts_at))}</span>
         <span>${esc(row.title || "-")}</span>
         <span>${esc(row.badge)}</span>
         <span>${esc(row.location || "-")}</span>
+        <span>${esc(creatorLabel(row))}</span>
       </button>
     `).join("");
   }
@@ -136,6 +160,7 @@
           <p class="small"><span class="feed-chip">${esc(row.badge)}</span></p>
           <p class="small">${esc(fmt(row.starts_at))} - ${esc(fmt(row.ends_at))}</p>
           <p class="small">${esc(row.location || "Ort offen")}</p>
+          <p class="small">Erstellt von: ${esc(creatorLabel(row))}</p>
           ${row.description ? `<p class="small">${esc(row.description)}</p>` : ""}
         </div>
       </button>

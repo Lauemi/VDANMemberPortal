@@ -1,5 +1,5 @@
 -- 108 Auth signup guard audit
--- Date: 2026-03-20
+-- Date: 2026-03-20 
 -- Run AFTER:
 --   supabase/migrations/20260320140500_auth_signup_guard_invite_or_internal_club_create.sql
 

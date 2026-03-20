@@ -10,9 +10,11 @@ import vercel from "@astrojs/vercel";
 const isVercelRuntime = process.env.VERCEL === "1" || process.env.VERCEL === "true";
 const forceServerOutput = process.env.FORCE_SERVER_OUTPUT === "1" || process.env.FORCE_SERVER_OUTPUT === "true";
 const useServerOutput = isVercelRuntime || forceServerOutput;
+const normalizedSiteMode = String(process.env.PUBLIC_SITE_MODE || "").trim().toLowerCase();
+const isFcpSiteMode = normalizedSiteMode === "fcp" || normalizedSiteMode === "fcp_brand";
 const publicSiteUrl = process.env.PUBLIC_SITE_URL?.trim()
   || process.env.FCP_PLATFORM_URL?.trim()
-  || "https://www.fishing-club-portal.de";
+  || (isFcpSiteMode ? "https://www.fishing-club-portal.de" : "https://www.vdan-ottenheim.com");
 
 export default defineConfig({
   site: publicSiteUrl,

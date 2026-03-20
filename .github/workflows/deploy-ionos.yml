@@ -37,6 +37,7 @@ jobs:
           # VDAN deploy path is intentionally hard-pinned to VDAN surface defaults.
           # FCP branding/theme is handled in the separate Vercel deployment path.
           PUBLIC_SITE_MODE: vdan
+          PUBLIC_SITE_URL: https://www.vdan-ottenheim.com
           PUBLIC_APP_NAME: VDAN Ottenheim
           PUBLIC_APP_BRAND: VDAN
           PUBLIC_APP_THEME: vdan_default

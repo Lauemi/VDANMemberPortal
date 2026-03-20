@@ -6,7 +6,7 @@ function normalizeHost(hostname: string): string {
 
 function normalizeFallbackMode(fallback: unknown): SiteMode {
   const mode = String(fallback || "").trim().toLowerCase();
-  return mode === "fcp" ? "fcp" : "vdan";
+  return mode === "fcp" || mode === "fcp_brand" ? "fcp" : "vdan";
 }
 
 export function resolveSiteMode(hostname: string, fallback: unknown): SiteMode {

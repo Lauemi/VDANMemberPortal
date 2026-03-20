@@ -10,7 +10,7 @@ const toSlug = (value) =>
 
 const statusClass = (status) => {
   if (status === "Standard") return "is-standard";
-  if (status === "In Pruefung") return "is-review";
+  if (status === "In Prüfung") return "is-review";
   return "is-legacy";
 };
 
@@ -30,7 +30,7 @@ const splitCsv = (value) =>
 const functionsForItem = (item) => {
   if (item.features) return splitCsv(item.features);
   if (item.variant === "table") return ["Rows scanbar", "Header sortierbar", "Filterbar anbindbar"];
-  if (item.variant === "row") return ["Row klickbar", "Dialog oeffnet bei Row-Klick"];
+  if (item.variant === "row") return ["Row klickbar", "Dialog öffnet bei Row-Klick"];
   if (item.variant === "view-toggle") return ["Umschalten Tabelle/Karte", "Aktiver Zustand sichtbar"];
   return [];
 };
@@ -89,7 +89,7 @@ const categories = [
         name: "Ghost Button",
         type: "Action",
         status: "Standard",
-        description: "Niedrigere visuelle Prioritat in dichten Toolbars.",
+        description: "Niedrigere visuelle Priorität in dichten Toolbars.",
         height: "48px",
         width: "Auto",
         padding: "0 16px",
@@ -106,7 +106,7 @@ const categories = [
       {
         name: "Icon Button",
         type: "Action",
-        status: "In Pruefung",
+        status: "In Prüfung",
         description: "Kompakte Aktion mit klarer Icon-Semantik und ARIA-Label.",
         height: "48px",
         width: "48px",
@@ -124,7 +124,7 @@ const categories = [
       {
         name: "Danger Button",
         type: "Action",
-        status: "In Pruefung",
+        status: "In Prüfung",
         description: "Destruktive Aktion, nur mit klarer Kontextwarnung einsetzen.",
         height: "48px",
         width: "Auto",
@@ -203,7 +203,7 @@ const categories = [
       {
         name: "Textarea",
         type: "Form",
-        status: "In Pruefung",
+        status: "In Prüfung",
         description: "Mehrzeilige Eingabe, vertikal skalierbar bei Bedarf.",
         height: "Mind. 96px",
         width: "100%",
@@ -221,7 +221,7 @@ const categories = [
       {
         name: "Checkbox / Switch / Radio",
         type: "Form",
-        status: "In Pruefung",
+        status: "In Prüfung",
         description: "Boolean- und Einzelwahl-Controls, klar gruppiert mit Label.",
         height: "18-24px control, 48px row touch",
         width: "Auto",
@@ -282,7 +282,7 @@ const categories = [
       {
         name: "Info Tag",
         type: "Indicator",
-        status: "In Pruefung",
+        status: "In Prüfung",
         description: "Kurzlabel fur Meta-Info ohne Aktion.",
         height: "24px",
         width: "Auto",
@@ -361,7 +361,7 @@ const categories = [
       {
         name: "Info Card",
         type: "Surface",
-        status: "In Pruefung",
+        status: "In Prüfung",
         description: "Kompakte Karte fur KPIs, Hinweise oder schmale Meta-Infos.",
         height: "Auto",
         width: "minmax(220px, 1fr)",
@@ -379,7 +379,7 @@ const categories = [
       {
         name: "Action Card",
         type: "Surface",
-        status: "In Pruefung",
+        status: "In Prüfung",
         description: "Klickbare Karte als alternative Listenansicht.",
         height: "Auto",
         width: "100%",
@@ -432,7 +432,7 @@ const categories = [
         icon: "24px",
         touch: "48x48 fix",
         states: "default, hover, focus-visible, active",
-        usage: "Menu oeffnen/schliessen",
+        usage: "Menu öffnen/schließen",
         patterns: ".burger-toggle, .burger-popover",
         preview: "nav",
         variant: "burger",
@@ -440,7 +440,7 @@ const categories = [
       {
         name: "Tab Bar",
         type: "Navigation",
-        status: "In Pruefung",
+        status: "In Prüfung",
         description: "Horizontale Bereichsumschaltung in Cockpits.",
         height: "48px controls",
         width: "Auto-wrap",
@@ -458,7 +458,7 @@ const categories = [
       {
         name: "Bottom Actions",
         type: "Navigation",
-        status: "In Pruefung",
+        status: "In Prüfung",
         description: "Daumennahe Aktionen am unteren Rand, mobil priorisiert.",
         height: "56-64px",
         width: "Auto",
@@ -501,7 +501,7 @@ const categories = [
       {
         name: "Confirm Dialog",
         type: "Overlay",
-        status: "In Pruefung",
+        status: "In Prüfung",
         description: "Kurze Entscheidung mit 1-2 klaren Aktionen.",
         height: "Auto",
         width: "min(460px, 100%)",
@@ -519,7 +519,7 @@ const categories = [
       {
         name: "Info Dialog",
         type: "Overlay",
-        status: "In Pruefung",
+        status: "In Prüfung",
         description: "Informiert ohne komplexe Eingaben.",
         height: "Auto",
         width: "min(560px, 92vw)",
@@ -555,7 +555,7 @@ const categories = [
       {
         name: "Bottom Sheet / Action Sheet",
         type: "Overlay",
-        status: "In Pruefung",
+        status: "In Prüfung",
         description: "Daumennahe Kurzentscheidung auf Mobilgeraten.",
         height: "Auto",
         width: "100%",
@@ -591,10 +591,10 @@ const categories = [
         touch: ">=44px je Zeile",
         states: "default, hover row, selected row, sorted",
         colors: "text:#E8EAF0, bg:#0F1728, border:#2A3550",
-        usage: "Listen mit vielen Datensaetzen und schneller Vergleichbarkeit",
+        usage: "Listen mit vielen Datensätzen und schneller Vergleichbarkeit",
         patterns: ".catch-table, .work-part-table, .fangliste-table",
-        features: "Row-Klick oeffnet Detaildialog, Sortierung per Header, Zeilen filtern ueber Filterbar, Umschalter zu Kartenansicht, Zustand je Row (aktiv/pruefen/gesperrt)",
-        checks: "Zeilenoptik muss 1:1 zum Table-Row-Component passen, Hover und Selected muessen konsistent sein, Datumsspalte darf auf Mobile nicht umbrechen",
+        features: "Row-Klick öffnet Detaildialog, Sortierung per Header, Zeilen filtern über Filterbar, Umschalter zu Kartenansicht, Zustand je Row (aktiv/prüfen/gesperrt)",
+        checks: "Zeilenoptik muss 1:1 zum Table-Row-Component passen, Hover und Selected müssen konsistent sein, Datumsspalte darf auf Mobile nicht umbrechen",
         preview: "list",
         variant: "table",
       },
@@ -614,8 +614,8 @@ const categories = [
         colors: "text:#E8EAF0, bg:#0F1728, border:#2A3550",
         usage: "Mitglieder, Termine, Cockpitdaten",
         patterns: ".work-part-table, .fangliste-table, .catch-row",
-        features: "Row-Klick oeffnet Detaildialog, Header-Sortierung, Zeilenfiltern ueber Filterbar, Keyboard-Navigation Zeile fuer Zeile, Checkbox-Multiselect optional",
-        checks: "Rows muessen denselben Radius und dieselbe Zellstruktur wie in der echten Tabelle haben, Row-Klick darf keinen Inline-Button blockieren, Dialog muss den geklickten Datensatz eindeutig uebernehmen",
+        features: "Row-Klick öffnet Detaildialog, Header-Sortierung, Zeilenfiltern über Filterbar, Keyboard-Navigation Zeile für Zeile, Checkbox-Multiselect optional",
+        checks: "Rows müssen denselben Radius und dieselbe Zellstruktur wie in der echten Tabelle haben, Row-Klick darf keinen Inline-Button blockieren, Dialog muss den geklickten Datensatz eindeutig übernehmen",
         preview: "list",
         variant: "row",
       },
@@ -636,7 +636,7 @@ const categories = [
         usage: "Mobilansicht fur Datensatze",
         patterns: ".ui-karte, .term-card, .demo-data-card",
         features: "Kartenansicht statt Tabellenzeile, Primaraktion je Karte, Optional Swipe-Aktionen",
-        checks: "Datenfelder muessen der Tabellenansicht entsprechen, keine Information darf nur in einer Ansicht existieren",
+        checks: "Datenfelder müssen der Tabellenansicht entsprechen, keine Information darf nur in einer Ansicht existieren",
         preview: "list",
         variant: "card-item",
       },
@@ -656,7 +656,7 @@ const categories = [
         colors: "text:#E8EAF0, bg:#111A2C, border:#2A3550",
         usage: "Tabellensteuerung und datennahe Aktionen",
         patterns: ".trip-table-toolbar, .feed-toolbar, .ui-container-toolbar",
-        features: "Suchen in Rows, Filter aktivieren/zuruecksetzen, Export/Batch-Aktionen",
+        features: "Suchen in Rows, Filter aktivieren/zurücksetzen, Export/Batch-Aktionen",
         checks: "Filterstatus muss sichtbar bleiben, Reset muss alle Filter inkl. Suchfeld entfernen",
         preview: "list",
         variant: "toolbar",
@@ -685,7 +685,7 @@ const categories = [
       {
         name: "Filter Bar",
         type: "Data Controls",
-        status: "In Pruefung",
+        status: "In Prüfung",
         description: "Schnellfilter fur mehrspaltige Datensichten.",
         height: "Auto",
         width: "100%",
@@ -699,7 +699,7 @@ const categories = [
         usage: "Column filter, status toggles, quick refine",
         patterns: ".members-filter-panel, .fangliste-col-filter",
         features: "Rows nach Status filtern, Mehrfachfilter kombinieren, Clear-Filter in einem Klick",
-        checks: "Filter darf keine Rows permanent verstecken, aktivierte Filter muessen als Chip sichtbar sein",
+        checks: "Filter darf keine Rows permanent verstecken, aktivierte Filter müssen als Chip sichtbar sein",
         preview: "list",
         variant: "filterbar",
       },
@@ -856,7 +856,7 @@ const categories = [
                         {item.variant === "status" && (
                           <div class="lib-chip-set">
                             <span class="chip chip-success">Aktiv</span>
-                            <span class="chip chip-warning">Pruefen</span>
+                            <span class="chip chip-warning">Prüfen</span>
                             <span class="chip chip-danger">Kritisch</span>
                           </div>
                         )}
@@ -896,7 +896,7 @@ const categories = [
                         {item.variant === "tab" && (
                           <div class="ui-view-toggle" role="group" aria-label="Tab Preview">
                             <button type="button" class="feed-btn">Aktiv</button>
-                            <button type="button" class="feed-btn feed-btn--ghost">Sekundaer</button>
+                            <button type="button" class="feed-btn feed-btn--ghost">Sekundär</button>
                           </div>
                         )}
                         {item.variant === "bottom" && (
@@ -946,7 +946,7 @@ const categories = [
                             </div>
                             <div class="catch-table__row">
                               <span>Anna Beispiel</span>
-                              <span class="chip chip-warning">Pruefen</span>
+                              <span class="chip chip-warning">Prüfen</span>
                               <span>05.03.2026</span>
                             </div>
                           </div>
@@ -1044,14 +1044,14 @@ const categories = [
                       <p class="small">{item.description}</p>
                       <dl class="lib-specs">
                         <dt>Typ</dt><dd><input class="lib-edit-input" data-field="type" data-default={item.type} value={item.type} /></dd>
-                        <dt>Hoehe</dt><dd><input class="lib-edit-input" data-field="height" data-default={item.height} value={item.height} /></dd>
+                        <dt>Höhe</dt><dd><input class="lib-edit-input" data-field="height" data-default={item.height} value={item.height} /></dd>
                         <dt>Breite / Verhalten</dt><dd><input class="lib-edit-input" data-field="width" data-default={item.width} value={item.width} /></dd>
                         <dt>Padding</dt><dd><input class="lib-edit-input" data-field="padding" data-default={item.padding} value={item.padding} /></dd>
                         <dt>Border-Radius</dt><dd><input class="lib-edit-input" data-field="radius" data-default={item.radius} value={item.radius} /></dd>
                         <dt>Font-Size</dt><dd><input class="lib-edit-input" data-field="font" data-default={item.font} value={item.font} /></dd>
-                        <dt>Icon-Groesse</dt><dd><input class="lib-edit-input" data-field="icon" data-default={item.icon} value={item.icon} /></dd>
+                        <dt>Icon-Größe</dt><dd><input class="lib-edit-input" data-field="icon" data-default={item.icon} value={item.icon} /></dd>
                         <dt>Touch-Target</dt><dd><input class="lib-edit-input" data-field="touch" data-default={item.touch} value={item.touch} /></dd>
-                        <dt>Zustaende</dt><dd><input class="lib-edit-input" data-field="states" data-default={item.states} value={item.states} /></dd>
+                        <dt>Zustände</dt><dd><input class="lib-edit-input" data-field="states" data-default={item.states} value={item.states} /></dd>
                         <dt>Farben</dt><dd><input class="lib-edit-input" data-field="colors" data-default={item.colors || ""} value={item.colors || ""} placeholder="text:#E8EAF0, bg:#0B1220, border:#2A3550" /></dd>
                         <dt>Verwendungszweck</dt><dd><input class="lib-edit-input" data-field="usage" data-default={item.usage} value={item.usage} /></dd>
                         <dt>Funktionen</dt><dd><input class="lib-edit-input" data-field="features" data-default={item.features || ""} value={item.features || ""} /></dd>

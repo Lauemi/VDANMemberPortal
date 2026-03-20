@@ -1,6 +1,6 @@
 # Marketing-Paket Gesamt (VDAN / Fishing-Club-Portal)
 
-Stand: 2026-03-09
+Stand: 2026-03-18
 Inhalt: Produkt-Onepager + Security/DSGVO-Kurzblatt + Demo-Skript in einem Dokument
 
 ---
@@ -8,7 +8,7 @@ Inhalt: Produkt-Onepager + Security/DSGVO-Kurzblatt + Demo-Skript in einem Dokum
 ## Teil 1: Produkt-Onepager
 
 ### Kurzbeschreibung
-VDAN/FCP ist eine digitale Vereinsplattform, die oeffentliche Website und geschuetztes Mitgliederportal in einem System verbindet. Ziel ist ein durchgaengiger, sicherer und mobil nutzbarer Vereinsbetrieb.
+VDAN/FCP ist eine digitale Vereinsplattform, die oeffentliche Website, geschuetztes Mitgliederportal und gefuehrtes Vereins-Onboarding in einem System verbindet. Ziel ist ein durchgaengiger, sicherer und mobil nutzbarer Vereinsbetrieb.
 
 ### Fuer wen
 - Angelvereine und vergleichbare Mitgliedsorganisationen
@@ -21,12 +21,15 @@ VDAN/FCP ist eine digitale Vereinsplattform, die oeffentliche Website und geschu
 - zentrale Daten statt verteilter Inselloesungen
 - rollen- und mandantenbasierter Zugriff
 - bessere Verbindlichkeit bei Terminen und Einsaetzen
+- kontrollierter Vereinsstart und sauberer Einfuehrungsweg
 
 ### Abgedeckte Kernprozesse
 - Website und oeffentliche Vereinskommunikation
-- Login/Portalzugang
+- Login, Invite und registrierter Portalzugang
+- gefuehrtes Vereins-Onboarding
 - Mitgliederverwaltung und Stammdatenpflege
 - Termine/Sitzungen und Arbeitseinsaetze
+- Eventplaner fuer Helferplanung und Freigaben
 - Fangliste
 - Dokumente
 - Ausweis/Verifikation
@@ -35,14 +38,16 @@ VDAN/FCP ist eine digitale Vereinsplattform, die oeffentliche Website und geschu
 1. Integrierte Plattform statt Tool-Mix
 2. Security-/DSGVO-orientierte Architektur
 3. Rollen-/Tenant-Scoping und RLS als technisches Fundament
-4. Kontrolliertes Onboarding (Invite/QR)
+4. Kontrolliertes Onboarding mit Invite-, Registrierungs- und Setup-Flow
 5. Praxisorientierte Module fuer den Vereinsalltag
+6. Governance- und Modulrechte bis auf Clubebene steuerbar
 
 ### Ergebnis fuer den Verein
 - strukturierter digitaler Betrieb
 - klarere Verantwortlichkeiten
 - bessere Datenqualitaet
 - geringere Reibung zwischen Vorstand, Verwaltung und Mitgliedern
+- besser planbare Einfuehrung neuer Vereine und Nutzer
 
 ### Next Step fuer Interessenten
 - 30-Minuten-Vorstandsdemo
@@ -57,8 +62,9 @@ VDAN/FCP ist eine digitale Vereinsplattform, die oeffentliche Website und geschu
 - Rollen- und mandantenbasierte Zugriffslogik
 - Row Level Security (RLS) auf relevanten Tabellen
 - Security-Hardening und Release-Gates dokumentiert
-- kontrollierte Auth- und Onboarding-Flows (inkl. Invite/QR)
+- kontrollierte Auth- und Onboarding-Flows inkl. Invite, Registrierung und Vereinssetup
 - Security-Audit und Follow-up-Fixes im Projektprozess verankert
+- Governance- und ACL-Modell fuer Modulrechte vorhanden
 
 ### DSGVO-Basis (technisch-organisatorisch)
 - Datenverarbeitung entlang definierter Vereinszwecke
@@ -66,16 +72,18 @@ VDAN/FCP ist eine digitale Vereinsplattform, die oeffentliche Website und geschu
 - Trennung von Plattform- und Vereinskontext
 - technische Nachvollziehbarkeit durch Audit-/Dokupfade
 - Datenschutzseiten und technische Datenschutzdokumente vorhanden
+- Invite-/Registrierungsweg und Vereinssetup sind kontrolliert modelliert
 
 ### Was wir aktiv sagen koennen
 - "Die Plattform ist Security- und DSGVO-orientiert konzipiert und umgesetzt."
 - "Zugriffe werden rollen- und mandantenbasiert kontrolliert."
 - "Es existieren dokumentierte Sicherheits- und Datenschutz-Checks."
+- "Onboarding, Freischaltung und Modulzugriffe sind kontrolliert und nachvollziehbar angelegt."
 
 ### Was wir nicht versprechen
-- keine absoluten Sicherheitszusagen (z. B. "100% sicher")
+- keine absoluten Sicherheitszusagen
 - keine Rechtsberatung
-- keine pauschalen Aussagen ohne juristische Endfreigabe der finalen Rechtstexte
+- keine pauschalen Aussagen ohne juristische Endfreigabe
 
 ### Typische Einwaende
 Einwand: "Datenschutz ist bei Vereinssoftware kritisch."
@@ -88,6 +96,7 @@ Antwort: "Die Plattform ist rollenbasiert aufgebaut, und Datenzugriffe sind je M
 1. Aktuellen Security-Status aus den Projektdokumenten gegenpruefen.
 2. Keine nicht-freigegebenen Roadmap-Features kommunizieren.
 3. Rechts-/Datenschutzhinweis im Angebot/Deckblatt fuehren.
+4. Zwischen aktuellem Produktstand und geplanter Rollout-Stufe klar trennen.
 
 ---
 
@@ -111,13 +120,13 @@ Antwort: "Die Plattform ist rollenbasiert aufgebaut, und Datenzugriffe sind je M
 
 #### Drei Kern-Use-Cases
 1. Termin- und Einsatzorganisation
-- Termin anlegen, Status sehen, Beteiligung nachvollziehen
+- Termin anlegen, Helferbedarf sehen, Beteiligung nachvollziehen
 
 2. Mitglieder- und Kontothematik
-- Rollen-/Portalzugang, Account-/Stammdatenbezug, klare Verantwortung
+- Rollen-/Portalzugang, Invite-/Registrierungsweg, Account-/Stammdatenbezug
 
 3. Operative Vereinsarbeit
-- Fangliste, Dokumente, Ausweis/Verifikation als zusammenhaengender Ablauf
+- Vereinssetup, Eventplaner, Fangliste, Dokumente und Ausweis/Verifikation als zusammenhaengender Ablauf
 
 ### Variante B: 45 Minuten (Admin/Verwaltung)
 #### Agenda
@@ -130,7 +139,9 @@ Antwort: "Die Plattform ist rollenbasiert aufgebaut, und Datenzugriffe sind je M
 #### Deep-Dive Punkte
 - Portalnavigation und Modul-Logik
 - Mitgliederverwaltung vs. Rollenverwaltung
-- kontrolliertes Onboarding (Invite/QR)
+- kontrolliertes Onboarding (Invite/QR/Registrierung)
+- Vereinssetup mit gefuehrtem Ablauf
+- Eventplaner mit Mitglieder- und Freigabepfad
 - Dokumentation/Auditfaehigkeit
 
 ### Demo-Regeln
@@ -138,7 +149,7 @@ Antwort: "Die Plattform ist rollenbasiert aufgebaut, und Datenzugriffe sind je M
 - keine absoluten Sicherheitsversprechen
 - bei Rechtsfragen auf juristische Endfreigabe verweisen
 
-### Discovery-Fragen (vor/waehrend der Demo)
+### Discovery-Fragen
 1. Welche 3 Prozesse kosten aktuell am meisten Zeit?
 2. Wo treten Medienbrueche auf?
 3. Wer braucht welche Zugriffe im Verein?
@@ -149,6 +160,7 @@ Antwort: "Die Plattform ist rollenbasiert aufgebaut, und Datenzugriffe sind je M
 - Anzahl digital abgewickelter Kernprozesse
 - Zeitersparnis in Verwaltung/Vorstand
 - Reduktion von Rueckfragen/Abstimmungschaos
+- Zeit bis zum produktiven Vereinsstart
 
 ### Abschlussformel
 "Wenn wir in 60 Tagen Ihre drei wichtigsten Verwaltungsprozesse messbar vereinfachen, ist der Pilot erfolgreich."
@@ -157,6 +169,7 @@ Antwort: "Die Plattform ist rollenbasiert aufgebaut, und Datenzugriffe sind je M
 1. Zusammenfassung mit identifizierten Pain Points
 2. Vorschlag Pilotumfang (Scope + Zeitplan)
 3. Verantwortlichkeiten und naechster Termin
+4. Falls passend: Onboarding- und Einfuehrungsfahrplan mitsenden
 
 ---
 
@@ -166,3 +179,5 @@ Antwort: "Die Plattform ist rollenbasiert aufgebaut, und Datenzugriffe sind je M
 - docs/project/PROJECT_BRIEF_PACKAGE_VDAN_2026-02-26.md
 - docs/security-audit-2026-03-07.md
 - docs/security-dsgvo-checklist.md
+- docs/project/FCP_Onboarding_Bundle_FINAL/00_README.md
+- docs/project/EVENTPLANER_MARKETING_TECHNIK_2026-03-15.md

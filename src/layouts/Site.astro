@@ -32,13 +32,32 @@ const openSelfRegistrationEnabled = String(import.meta.env.PUBLIC_OPEN_SELF_REGI
 const authAllowLegacyMemberLogin = String(import.meta.env.PUBLIC_AUTH_ALLOW_LEGACY_MEMBER_LOGIN ?? "true").trim().toLowerCase() === "true";
 const appVersionEnv = String(import.meta.env.PUBLIC_APP_VERSION ?? "").trim();
 const pkgVersion = String(pkg?.version || "0.1.0").trim();
-const appVersion = appVersionEnv && appVersionEnv !== "dev-local" ? appVersionEnv : `v${pkgVersion}-beta.dev`;
+const deploySha = envText(
+  import.meta.env.PUBLIC_DEPLOY_SHA,
+  envText(import.meta.env.VERCEL_GIT_COMMIT_SHA, envText(import.meta.env.GITHUB_SHA, "")),
+);
+const deployRef = envText(
+  import.meta.env.PUBLIC_DEPLOY_REF,
+  envText(import.meta.env.VERCEL_GIT_COMMIT_REF, envText(import.meta.env.GITHUB_REF_NAME, "")),
+);
+const buildStamp = envText(import.meta.env.PUBLIC_BUILD_STAMP, "");
+const autoAppVersion = [
+  `v${pkgVersion}`,
+  deployRef ? deployRef.replace(/[^a-zA-Z0-9._-]+/g, "-") : "",
+  deploySha ? deploySha.slice(0, 7) : buildStamp || "dev-local",
+].filter(Boolean).join("+");
+const appVersion = appVersionEnv && appVersionEnv !== "dev-local" ? appVersionEnv : autoAppVersion;
 const appChannel = String(import.meta.env.PUBLIC_APP_CHANNEL ?? "beta").trim().toLowerCase();
 const isBetaChannel = appChannel === "beta";
+const assetVersion = encodeURIComponent(appVersion);
 const resolvedSiteMode = resolveSiteMode(Astro.url.hostname, APP.siteMode);
 const isFcpMode = resolvedSiteMode === "fcp";
+const path = Astro.url.pathname.toLowerCase();
+const isAppPath = path.startsWith("/app/");
 const runtimeSiteName = isFcpMode ? "Fishing-Club-Portal" : "VDAN Ottenheim";
-const effectiveAppTheme = isFcpMode ? "fcp_tactical" : "vdan_default";
+const effectiveAppTheme = isFcpMode
+  ? (APP.theme === "fcp_brand" && isAppPath ? "fcp_tactical" : (APP.theme || "fcp_tactical"))
+  : "vdan_default";
 const themeColor = isFcpMode ? "#2f352a" : "#0b1220";
 const normalizedTitle = String(title || runtimeSiteName).replace(APP.name, runtimeSiteName);
 const displayTitle = isBetaChannel && !String(title).toLowerCase().includes("beta")
@@ -88,14 +107,16 @@ const schemaGraphJson = JSON.stringify({
   "@graph": [schemaOrganization, schemaWebsite, schemaWebPage],
 });
 const manifestPath = isFcpMode ? "/manifest-fcp.webmanifest" : "/manifest-vdan.webmanifest";
-const favicon192 = isFcpMode ? "/Branding/NewLogoCamouFCP.png" : "/Bilder/logo300x300.png";
-const favicon512 = isFcpMode ? "/Branding/NewLogoCamouFCP.png" : "/Bilder/logo300x300.png";
-const appleTouch = isFcpMode ? "/Branding/NewLogoCamouFCP.png" : "/Bilder/logo300x300.png";
+const favicon16 = isFcpMode ? "/Branding/FCPIcons/favicon-16.png" : "/favicon.ico";
+const favicon32 = isFcpMode ? "/Branding/FCPIcons/favicon-32.png" : "/favicon.ico";
+const favicon192 = isFcpMode ? "/Branding/FCPIcons/icon-192.png" : "/Bilder/logo192x192.png";
+const favicon512 = isFcpMode ? "/Branding/FCPIcons/icon-512.png" : "/Bilder/logo512x512.png";
+const appleTouch = isFcpMode ? "/Branding/FCPIcons/apple-touch-icon.png" : "/Bilder/logo180x180.png";
+const fcpHeaderLogoSvg = `/Branding/NewLogoCamouFCP.svg?v=${assetVersion}`;
+const fcpHeaderLogoPng = `/Branding/NewLogoCamouFCP.png?v=${assetVersion}`;
 
 // Guard member area paths:
-const path = Astro.url.pathname.toLowerCase();
 const isScannerPath = path.startsWith("/app/ausweis/verifizieren/");
-const isAppPath = path.startsWith("/app/");
 const isTermsPath = path === "/nutzungsbedingungen.html/" || path === "/nutzungsbedingungen.html";
 const showPortalTermsLink = isAppPath || isTermsPath;
 const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
@@ -139,9 +160,11 @@ const publicMenuLinks = isFcpMode
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content={runtimeSiteName} />
     <script type="application/ld+json" set:html={schemaGraphJson}></script>
+    <link rel="icon" type="image/png" sizes="16x16" href={favicon16} />
+    <link rel="icon" type="image/png" sizes="32x32" href={favicon32} />
     <link rel="icon" type="image/png" sizes="192x192" href={favicon192} />
     <link rel="icon" type="image/png" sizes="512x512" href={favicon512} />
-    <link rel="shortcut icon" type="image/png" href={favicon192} />
+    <link rel="shortcut icon" type="image/png" href={favicon32} />
     <link rel="apple-touch-icon" sizes="180x180" href={appleTouch} />
     <link rel="stylesheet" href="/css/ui-standards.css" />
     <link rel="stylesheet" href="/css/main.css" />
@@ -168,8 +191,8 @@ const publicMenuLinks = isFcpMode
             <div class="header-brand-fcp" aria-label="FCP Marke">
               <a class="logo" href="/" aria-label={APP.name}>
                 <picture class="header-brand-fcp__logo" aria-hidden="true">
-                  <source srcset="/Branding/NewLogoCamouFCP.svg" type="image/svg+xml" />
-                  <img src="/Branding/NewLogoCamouFCP.png" alt="" loading="eager" decoding="async" />
+                  <source srcset={fcpHeaderLogoSvg} type="image/svg+xml" />
+                  <img src={fcpHeaderLogoPng} alt="" loading="eager" decoding="async" />
                 </picture>
               </a>
               {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
@@ -182,7 +205,72 @@ const publicMenuLinks = isFcpMode
               {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
             </div>
           )}
-          {!isFcpMode && (
+          <div class="header-utility">
+            <div id="headerLoginEntryWrap" class="header-login-entry" data-ui-session-skip>
+              <button
+                type="button"
+                id="headerLoginEntryToggle"
+                class="header-login-toggle"
+                aria-label="Login öffnen"
+                aria-expanded="false"
+                data-ui-session-skip
+              >
+                Login
+              </button>
+              <div id="headerLoginEntryPopover" class="header-login-popover hidden" hidden data-ui-session-skip>
+                <div class="header-login-popover__section">
+                  <h3>Anmelden</h3>
+                  <form id="headerQuickLoginForm" class="header-login-form">
+                    <label>
+                      <span>Mitgliedsnummer oder E-Mail</span>
+                      <input id="headerQuickLoginIdentifier" type="text" autocomplete="username" placeholder="name@beispiel.de" />
+                    </label>
+                    <label>
+                      <span>Passwort</span>
+                      <input id="headerQuickLoginPassword" type="password" autocomplete="current-password" placeholder="Passwort" />
+                    </label>
+                    <div class="header-login-form__actions">
+                      <button type="submit" class="feed-btn">Login</button>
+                      <a class="feed-btn feed-btn--ghost" href="/login/">Zur Login-Seite</a>
+                    </div>
+                    <p id="headerQuickLoginMsg" class="small" aria-live="polite"></p>
+                  </form>
+                </div>
+
+                <div class="header-login-popover__section">
+                  <h3>Invite-Link</h3>
+                  <label class="header-login-field">
+                    <span>Invite-Link oder Token einfügen</span>
+                    <input id="headerInviteEntryInput" type="text" autocomplete="off" placeholder="https://... oder Token" />
+                  </label>
+                  <div class="header-login-form__actions">
+                    <button type="button" id="headerInviteEntryBtn" class="feed-btn feed-btn--ghost">Invite öffnen</button>
+                  </div>
+                  <p class="small">Der Link führt direkt in die Vereins-Registrierung mit vorausgefülltem Invite.</p>
+                </div>
+
+                <div class="header-login-popover__section">
+                  <h3>Verein registrieren</h3>
+                  <p class="small">Kein Invite zur Hand? Dann direkt in die Registrierungsstrecke wechseln.</p>
+                  <div class="header-login-form__actions">
+                    <a id="headerRegisterClubBtn" class="feed-btn" href="/registrieren/">Verein registrieren</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="headerNotificationWrap" class="header-notification-wrap hidden" hidden data-ui-session-skip>
+              <button
+                type="button"
+                id="headerNotificationToggle"
+                class="header-notification-toggle"
+                aria-label="Benachrichtigungen öffnen"
+                aria-expanded="false"
+                data-ui-session-skip
+              >
+                <span aria-hidden="true">🔔</span>
+                <span id="headerNotificationBadge" class="header-notification-badge hidden" hidden aria-hidden="true"></span>
+              </button>
+            </div>
             <div class="nav-actions header-menu">
               <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
               {showHeaderAuthCta && <a id="headerAuthCta" class="header-auth-cta" href="/login/" data-ui-session-skip>Sign in</a>}
@@ -199,10 +287,23 @@ const publicMenuLinks = isFcpMode
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </nav>
       </div>
     </header>
+    <div id="memberNotificationsDrawer" class="member-notifications-drawer hidden" hidden data-ui-session-skip>
+      <section id="memberNotificationsPanel" class="member-notifications-panel" aria-label="Benachrichtigungen">
+        <div class="member-notifications-panel__head">
+          <h2>Benachrichtigungen</h2>
+          <div class="member-notifications-panel__actions">
+            <button type="button" id="memberNotificationsMarkAll" class="member-notifications-mark-all">Alle gelesen</button>
+            <button type="button" id="memberNotificationsClose" class="member-notifications-close" aria-label="Benachrichtigungen schließen">✕</button>
+          </div>
+        </div>
+        <p class="small">Relevante Hinweise zu deinen Einsätzen und Freigaben.</p>
+        <div id="memberNotificationsList" class="member-notifications-list"></div>
+      </section>
+    </div>
     <button
       type="button"
       id="portalQuickToggle"
@@ -325,6 +426,33 @@ const publicMenuLinks = isFcpMode
     {needsMemberGuard && <script src="/js/member-guard.js" defer></script>}
     <script src="/js/ui-session.js" defer></script>
     <script src="/js/header-auth-cta.js" defer></script>
+    <script src="/js/header-login-entry.js" defer></script>
+    <script is:inline>
+      (() => {
+        const brand = document.querySelector(".header-brand-fcp");
+        if (!brand) return;
+
+        let rafId = 0;
+        const maxScroll = 180;
+        const maxLogoProgress = 0.561;
+
+        const applyLogoProgress = () => {
+          rafId = 0;
+          const progress = Math.max(0, Math.min(window.scrollY / maxScroll, maxLogoProgress));
+          brand.style.setProperty("--header-logo-progress", progress.toFixed(3));
+        };
+
+        const requestUpdate = () => {
+          if (rafId) return;
+          rafId = window.requestAnimationFrame(applyLogoProgress);
+        };
+
+        applyLogoProgress();
+        window.addEventListener("scroll", requestUpdate, { passive: true });
+        window.addEventListener("resize", requestUpdate, { passive: true });
+      })();
+    </script>
+    <script src="/js/notifications-center.js" defer></script>
     <script src="/js/nav-burger.js" defer></script>
     <script src="/js/portal-quick.js" defer></script>
     <script src="/js/studio-inspector-bridge.js" defer></script>

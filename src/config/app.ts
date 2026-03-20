@@ -9,11 +9,14 @@ const appName = envText(metaEnv.PUBLIC_APP_NAME, "Fishing-Club-Portal");
 const appBrand = envText(metaEnv.PUBLIC_APP_BRAND, "FCP");
 const appThemeRaw = envText(metaEnv.PUBLIC_APP_THEME, "");
 const siteModeRaw = envText(metaEnv.PUBLIC_SITE_MODE, "");
-const siteMode = siteModeRaw.toLowerCase() === "fcp"
+const normalizedSiteModeRaw = siteModeRaw.toLowerCase();
+const isFcpTheme = appThemeRaw === "fcp_tactical" || appThemeRaw === "fcp_brand";
+const isFcpSiteMode = normalizedSiteModeRaw === "fcp" || normalizedSiteModeRaw === "fcp_brand";
+const siteMode = isFcpSiteMode
   ? "fcp"
-  : siteModeRaw.toLowerCase() === "vdan"
+  : normalizedSiteModeRaw === "vdan"
     ? "vdan"
-    : appThemeRaw === "fcp_tactical"
+    : isFcpTheme
       ? "fcp"
       : appBrand.toLowerCase().includes("fcp")
         ? "fcp"

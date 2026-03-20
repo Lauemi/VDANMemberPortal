@@ -1,5 +1,6 @@
 ;(() => {
   const SESSION_KEY = "vdan_member_session_v1";
+  const SESSION_META_KEY = "vdan_member_session_meta_v1";
   const INVITE_PENDING_KEY = "vdan_invite_claim_pending_v1";
   const EXPIRY_SKEW_MS = 30_000;
   const MEMBER_EMAIL_DOMAIN = "members.vdan.local";
@@ -28,11 +29,66 @@
     return (expiresAt - EXPIRY_SKEW_MS) > nowMs() && Boolean(session.access_token);
   }
 
+  function sessionStorageAvailable() {
+    try {
+      return typeof sessionStorage !== "undefined";
+    } catch {
+      return false;
+    }
+  }
+
+  function safeParse(raw) {
+    try {
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function sessionMetaFrom(payload) {
+    return {
+      user: payload?.user
+        ? {
+            id: String(payload.user.id || "").trim() || null,
+            email: String(payload.user.email || "").trim() || null,
+          }
+        : null,
+      expiresAt: Number(payload?.expiresAt || 0) || null,
+      updated_at: new Date().toISOString(),
+    };
+  }
+
+  function readLegacyLocalSession() {
+    try {
+      return safeParse(localStorage.getItem(SESSION_KEY));
+    } catch {
+      return null;
+    }
+  }
+
+  function readSessionMeta() {
+    try {
+      return safeParse(localStorage.getItem(SESSION_META_KEY));
+    } catch {
+      return null;
+    }
+  }
+
   function loadStoredSession() {
     try {
-      const raw = localStorage.getItem(SESSION_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw);
+      if (sessionStorageAvailable()) {
+        const raw = sessionStorage.getItem(SESSION_KEY);
+        const parsed = safeParse(raw);
+        if (parsed) return parsed;
+      }
+
+      const legacy = readLegacyLocalSession();
+      if (legacy && sessionStorageAvailable()) {
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(legacy));
+        localStorage.setItem(SESSION_META_KEY, JSON.stringify(sessionMetaFrom(legacy)));
+        localStorage.removeItem(SESSION_KEY);
+      }
+      return legacy;
     } catch {
       return null;
     }
@@ -44,11 +100,18 @@
   }
 
   function saveSession(payload) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
+    const serialized = JSON.stringify(payload);
+    if (sessionStorageAvailable()) {
+      sessionStorage.setItem(SESSION_KEY, serialized);
+    }
+    localStorage.setItem(SESSION_META_KEY, JSON.stringify(sessionMetaFrom(payload)));
+    localStorage.removeItem(SESSION_KEY);
   }
 
   function clearSession() {
+    if (sessionStorageAvailable()) sessionStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_META_KEY);
   }
 
   function parseUrlAuthPayload() {
@@ -127,6 +190,70 @@
 
   function isVdanSiteMode() {
     return String(window.__APP_SITE_MODE || "").trim().toLowerCase() === "vdan";
+  }
+
+  function configuredSuperadmins() {
+    return String(document.body?.getAttribute("data-superadmin-user-ids") || "")
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
+  }
+
+  function isCurrentSuperadmin() {
+    const uid = String(loadSession()?.user?.id || "").trim();
+    if (!uid) return false;
+    return configuredSuperadmins().includes(uid);
+  }
+
+  function readRegisterMode() {
+    const checked = document.querySelector('input[name="registration_mode"]:checked');
+    return String(checked?.value || "join_club").trim();
+  }
+
+  function syncRegisterModeUi() {
+    const createAllowed = isCurrentSuperadmin();
+    const mode = readRegisterMode();
+    const joinSection = document.getElementById("registerJoinSection");
+    const createSection = document.getElementById("registerCreateSection");
+    const createCard = document.getElementById("registerModeCreateCard");
+    const createInput = document.getElementById("registerModeCreate");
+    const createLockedNote = document.getElementById("registerCreateLockedNote");
+    const createFieldset = document.getElementById("registerCreateFieldset");
+    const hint = document.getElementById("registerModeHint");
+    const submitBtn = document.getElementById("registerSubmitBtn");
+
+    if (joinSection) {
+      const isJoin = mode === "join_club";
+      joinSection.hidden = !isJoin;
+      joinSection.classList.toggle("hidden", !isJoin);
+    }
+    if (createSection) {
+      const isCreate = mode === "create_club";
+      createSection.hidden = !isCreate;
+      createSection.classList.toggle("hidden", !isCreate);
+    }
+    if (createCard) {
+      createCard.classList.toggle("is-locked", !createAllowed);
+      createCard.setAttribute("aria-disabled", String(!createAllowed));
+    }
+    if (createLockedNote) {
+      createLockedNote.hidden = createAllowed || mode !== "create_club";
+      createLockedNote.classList.toggle("hidden", createAllowed || mode !== "create_club");
+    }
+    if (createFieldset) {
+      createFieldset.disabled = !createAllowed;
+      createFieldset.classList.toggle("is-locked", !createAllowed);
+    }
+    if (hint) {
+      hint.textContent = !createAllowed
+        ? "Der Vereinsanlage-Flow ist als Vorschau sichtbar. Die öffentliche Registrierung neuer Vereine ist noch nicht freigeschaltet, der Vereinsbeitritt per Invite ist aber nutzbar."
+        : mode === "create_club"
+        ? "Der Vereinsanlage-Flow ist als vorbereitete Mehrphasenstrecke aufgebaut. Billing und Verantwortlichenprozess werden bereits mitgedacht."
+        : "Der Vereinsbeitritt läuft aktuell über Invite-Token und Mitgliedsnummer. Nach der Mailbestätigung folgt die Datenbestätigung im Vereinskontext.";
+    }
+    if (submitBtn) {
+      submitBtn.textContent = mode === "create_club" && createAllowed ? "Verein vorbereiten" : "Konto anlegen";
+    }
   }
 
   function pageTarget(defaultTarget = "/") {
@@ -491,7 +618,7 @@
     if (!force) return false;
 
     const next = encodeURIComponent(String(redirectTarget || (path + window.location.search) || "/app/"));
-    window.location.replace(`/app/zugang-pruefen/?next=${next}`);
+    window.location.replace(`/app/zugang-prüfen/?next=${next}`);
     return true;
   }
 
@@ -587,6 +714,7 @@
     claimPendingInviteIfPresent,
     logout,
     SESSION_KEY,
+    SESSION_META_KEY,
   };
 
   // Login page wiring (if present)
@@ -645,28 +773,33 @@
 
     if (registerForm) {
       const regMsg = document.getElementById("registerMsg");
-      const regModeHint = document.getElementById("registerModeHint");
       const prefilledInviteToken = String(document.getElementById("registerInviteToken")?.value || "").trim();
-      if (regModeHint) {
-        if (prefilledInviteToken) {
-          regModeHint.textContent = "Einladung erkannt: Registrierung wird direkt mit dem Verein verknüpft.";
-        } else if (isOpenSelfRegistrationEnabled()) {
-          regModeHint.textContent = "Offene Registrierung ist aktiv. Ein Verein kann später per Invite-Link hinzugefügt werden.";
-        } else {
-          regModeHint.textContent = "Aktuell nur Registrierung mit Einladungs-Token möglich.";
-        }
+      const modeInputs = Array.from(document.querySelectorAll('input[name="registration_mode"]'));
+      if (prefilledInviteToken) {
+        const join = document.getElementById("registerModeJoin");
+        if (join) join.checked = true;
       }
+      modeInputs.forEach((input) => input.addEventListener("change", syncRegisterModeUi));
+      syncRegisterModeUi();
       registerForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         if (regMsg) regMsg.textContent = "…";
+        const mode = readRegisterMode();
+        const createAllowed = isCurrentSuperadmin();
         const memberNo = normalizeMemberNo(document.getElementById("registerMemberNo")?.value || "");
         const emailRaw = String(document.getElementById("registerEmail")?.value || "").trim().toLowerCase();
         const inviteToken = String(document.getElementById("registerInviteToken")?.value || "").trim();
         const pass = String(document.getElementById("registerPass")?.value || "");
         const pass2 = String(document.getElementById("registerPass2")?.value || "");
-        const firstName = String(document.getElementById("registerFirstName")?.value || "").trim();
-        const lastName = String(document.getElementById("registerLastName")?.value || "").trim();
         const accepted = Boolean(document.getElementById("registerAccept")?.checked);
+        const clubName = String(document.getElementById("registerClubName")?.value || "").trim();
+        const clubAddress = String(document.getElementById("registerClubAddress")?.value || "").trim();
+        const responsibleName = String(document.getElementById("registerResponsibleName")?.value || "").trim();
+        const responsibleEmail = String(document.getElementById("registerResponsibleEmail")?.value || "").trim().toLowerCase();
+        const clubSize = String(document.getElementById("registerClubSize")?.value || "").trim();
+        const clubMailConfirm = Boolean(document.getElementById("registerClubMailConfirm")?.checked);
+        const firstName = "";
+        const lastName = "";
 
         if (!accepted) {
           if (regMsg) regMsg.textContent = "Bitte Nutzungsbedingungen und Datenschutzerklärung bestätigen.";
@@ -676,13 +809,19 @@
           if (regMsg) regMsg.textContent = "Passwörter stimmen nicht überein.";
           return;
         }
+        if (mode === "create_club" && !createAllowed) {
+          if (regMsg) regMsg.textContent = "Die öffentliche Registrierung neuer Vereine ist aktuell noch nicht freigeschaltet.";
+          syncRegisterModeUi();
+          return;
+        }
         try {
-          const hasInvite = Boolean(inviteToken);
-          if (hasInvite) {
+          if (mode === "join_club") {
+            if (!inviteToken) throw new Error("Für den Vereinsbeitritt ist aktuell ein Invite-Token erforderlich.");
             const verify = await verifyInviteToken(inviteToken);
             const inviteMemberNo = extractInviteMemberNo(verify);
             const effectiveMemberNo = inviteMemberNo || memberNo;
             if (inviteMemberNo && memberNo && inviteMemberNo !== memberNo) throw new Error("Mitgliedsnummer passt nicht zur Einladung.");
+            if (!effectiveMemberNo) throw new Error("Bitte die Vereins-Mitgliedsnummer angeben.");
 
             const clubCode = String(verify?.club_code || "").trim();
             if (!clubCode) throw new Error("Einladung ohne Vereinsbezug ist ungueltig.");
@@ -696,6 +835,7 @@
               last_name: lastName,
             };
           const result = await signUpWithPassword(inviteEmail, pass, {
+              registration_mode: "join_club",
               ...claimPayload,
               club_code: clubCode,
               club_name: String(verify?.club_name || "").trim(),
@@ -709,39 +849,59 @@
                 last_name: lastName,
               });
               await claimInviteToken(claimPayload, result.access_token);
-              if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Du bist angemeldet.";
+              if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Du bist angemeldet und wirst in den Vereinsprozess weitergeleitet.";
               clearPendingInvite();
               const next = postAuthTarget(DEFAULT_CORE_HOME);
               window.location.assign(next);
               return;
             }
-            if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Bitte E-Mail bestätigen und danach einloggen. Die Vereinszuordnung erfolgt automatisch beim ersten Login.";
+            if (regMsg) regMsg.textContent = "Registrierung gespeichert. Bitte E-Mail bestätigen. Danach wird dein Vereinsbeitritt weitergeführt.";
             return;
           }
 
-          if (!isOpenSelfRegistrationEnabled()) {
-            throw new Error("Offene Registrierung ist aktuell deaktiviert. Bitte Invite-Link verwenden.");
-          }
           if (!emailRaw || !isLikelyEmail(emailRaw)) {
-            throw new Error("Bitte eine gueltige E-Mail eingeben.");
+            throw new Error("Bitte eine gültige E-Mail eingeben.");
+          }
+          if (!clubName) {
+            throw new Error("Bitte den Vereinsnamen angeben.");
+          }
+          if (!clubAddress) {
+            throw new Error("Bitte die Vereinsanschrift angeben.");
+          }
+          if (!responsibleName) {
+            throw new Error("Bitte die verantwortliche Person angeben.");
+          }
+          if (!responsibleEmail || !isLikelyEmail(responsibleEmail)) {
+            throw new Error("Bitte eine gültige E-Mail-Adresse der verantwortlichen Person angeben.");
+          }
+          if (!clubSize) {
+            throw new Error("Bitte die Vereinsgröße auswählen.");
+          }
+          if (!clubMailConfirm) {
+            throw new Error("Bitte den Hinweis zur Vereinsadministrator-E-Mail bestätigen.");
           }
           const result = await signUpWithPassword(emailRaw, pass, {
-            first_name: firstName,
-            last_name: lastName,
-            registration_mode: "self",
+            registration_mode: "create_club_pending",
+            onboarding_path: "create_club",
+            club_name: clubName,
+            club_address: clubAddress,
+            responsible_name: responsibleName,
+            responsible_email: responsibleEmail,
+            club_size: clubSize,
+            club_mail_confirmed: clubMailConfirm,
+            billing_status: "billing_pending",
           });
           if (result?.access_token) {
             await acceptCurrentLegal(result.access_token);
             await ensureProfileBootstrap(result.access_token, {
-              preferred_member_no: memberNo,
               first_name: firstName,
               last_name: lastName,
             });
-            if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Du bist angemeldet.";
-            window.location.assign(postAuthTarget(DEFAULT_MEMBER_HOME));
+            if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Der Vereinsanlage-Flow ist vorbereitet und wird jetzt weitergeführt.";
+            window.location.assign("/app/vereine/?onboarding=1");
             return;
           }
-          if (regMsg) regMsg.textContent = "Registrierung gespeichert. Bitte E-Mail bestätigen und danach einloggen.";
+          if (regMsg) regMsg.textContent = "Registrierung gespeichert. Bitte E-Mail bestätigen. Danach wirst du in das Vereinssetup weitergeführt.";
         } catch (err) {
           if (regMsg) regMsg.textContent = err?.message || "Registrierung fehlgeschlagen.";
         }

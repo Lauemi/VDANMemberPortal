@@ -1,47 +1,47 @@
 ;(() => {
   const STORAGE_KEY = "vdan_control_board_state_v1";
   const DEFAULT_SMOKE = [
-    "Maske laedt ohne JS-/Renderfehler",
+    "Maske lädt ohne JS-/Renderfehler",
     "Rollen-/Zugriffsverhalten passt",
     "Hauptaktion / Happy Path funktioniert",
-    "Leere und Fehler-States geprueft",
-    "Mobile Layout geprueft",
+    "Leere und Fehler-States geprüft",
+    "Mobile Layout geprüft",
   ];
 
   const WAVE_ORDER = ["W1", "W2", "W3", "W4"];
   const WAVE_LABELS = {
     W1: "Welle 1 - Referenzmasken",
     W2: "Welle 2 - Ausbau / Kernverwaltung",
-    W3: "Welle 3 - Ergaenzende Fachmasken",
+    W3: "Welle 3 - Ergänzende Fachmasken",
     W4: "Welle 4 - Interne Tools / Querschnitt",
   };
 
   const ITEMS = [
-    { id: "fangliste", label: "Fangliste", route: "/app/fangliste/", group: "Kernmodule", wave: "W1", type: "mask", owner: "user+codex", open: ["Workflow-Audit: Zweck, Rollen und Hauptstates dokumentieren", "Workflow-Audit: Datenquellen, RPCs und Offline-Pfade erfassen", "Komponenten-Audit: Liste, Filter, Dialoge und Aktionen gegen Standards mappen", "Komponenten-Audit: Abweichungen und Spezialkomponenten bewerten", "Smoke: Happy Path fuer Eintrag erfassen und Kein-Fang pruefen"] },
-    { id: "arbeitseinsaetze", label: "Arbeitseinsaetze", route: "/app/arbeitseinsaetze/", group: "Kernmodule", wave: "W1", type: "mask", owner: "user+codex", open: ["Workflow-Audit: Anmeldung, Check-in und Check-out als Ablauf dokumentieren", "Workflow-Audit: Rollen, Event-Status und Offline-Queue festhalten", "Komponenten-Audit: Listen, Check-in-Aktionen und Statusbausteine klassifizieren", "Komponenten-Audit: Mobile und QR-bezogene Sonderfaelle markieren", "Smoke: Anmeldung und Check-in-Flow manuell bestaetigen"] },
+    { id: "fangliste", label: "Fangliste", route: "/app/fangliste/", group: "Kernmodule", wave: "W1", type: "mask", owner: "user+codex", open: ["Workflow-Audit: Zweck, Rollen und Hauptzustände dokumentieren", "Workflow-Audit: Datenquellen, RPCs und Offline-Pfade erfassen", "Komponenten-Audit: Liste, Filter, Dialoge und Aktionen gegen Standards mappen", "Komponenten-Audit: Abweichungen und Spezialkomponenten bewerten", "Smoke: Happy Path für Eintrag erfassen und Kein-Fang prüfen"] },
+    { id: "arbeitseinsaetze", label: "Arbeitseinsätze", route: "/app/arbeitseinsaetze/", group: "Kernmodule", wave: "W1", type: "mask", owner: "user+codex", open: ["Workflow-Audit: Anmeldung, Check-in und Check-out als Ablauf dokumentieren", "Workflow-Audit: Rollen, Event-Status und Offline-Queue festhalten", "Komponenten-Audit: Listen, Check-in-Aktionen und Statusbausteine klassifizieren", "Komponenten-Audit: Mobile und QR-bezogene Sonderfälle markieren", "Smoke: Anmeldung und Check-in-Flow manuell bestätigen"] },
     { id: "ausweis", label: "Mitgliedsausweis", route: "/app/ausweis/", group: "Kernmodule", wave: "W3", type: "mask", owner: "user+codex", open: ["Ausweis-Lifecycle gegen Registry abstimmen", "Komponenten-Audit erstellen"] },
-    { id: "gewaesserkarte", label: "Gewaesserkarte", route: "/app/gewaesserkarte/", group: "Kernmodule", wave: "W3", type: "mask", open: ["VDAN-only Verhalten pruefen", "Komponenten-Audit erstellen"] },
-    { id: "zustaendigkeiten", label: "Zustaendigkeiten", route: "/app/zustaendigkeiten/", group: "Kernmodule", wave: "W3", type: "mask", open: ["Workflow-Audit erstellen", "Offline-Verhalten pruefen"] },
-    { id: "einstellungen", label: "Einstellungen", route: "/app/einstellungen/", group: "Kernmodule", wave: "W1", type: "mask", open: ["Workflow-Audit: Account, Notifications und Portal-Praeferenzen aufteilen", "Workflow-Audit: RPC-Fallbacks und Preview-Gates explizit markieren", "Komponenten-Audit: Formularbausteine, Info-States und Aktionsleisten mappen", "Komponenten-Audit: Standardabweichungen fuer Settings-Formulare festhalten", "Smoke: Account-Ansicht, Edit-Flow und Notification-Abschnitt pruefen"] },
-    { id: "zugang_pruefen", label: "Zugang pruefen", route: "/app/zugang-pruefen/", group: "Kernmodule", wave: "W3", type: "mask", open: ["Gate-Finalisierung klaeren", "Komponenten-Audit erstellen"] },
-    { id: "mitglieder", label: "Mitglieder", route: "/app/mitglieder/", group: "Admin / Betrieb", wave: "W1", type: "mask", open: ["Workflow-Audit: Listenansicht, Detailansicht und Admin-Aktionen dokumentieren", "Workflow-Audit: Rollen, Datenquellen und Policy-Annahmen pruefen", "Komponenten-Audit: Tabellen-/Kartenwechsel, Filter und Detaildialog klassifizieren", "Komponenten-Audit: Tabellenstandard gegen reale Umsetzung abgleichen", "Smoke: Listenwechsel, Detailoeffnung und Schliessen bestaetigen"] },
+    { id: "gewaesserkarte", label: "Gewässerkarte", route: "/app/gewaesserkarte/", group: "Kernmodule", wave: "W3", type: "mask", open: ["VDAN-only Verhalten prüfen", "Komponenten-Audit erstellen"] },
+    { id: "zustaendigkeiten", label: "Zuständigkeiten", route: "/app/zustaendigkeiten/", group: "Kernmodule", wave: "W3", type: "mask", open: ["Workflow-Audit erstellen", "Offline-Verhalten prüfen"] },
+    { id: "einstellungen", label: "Einstellungen", route: "/app/einstellungen/", group: "Kernmodule", wave: "W1", type: "mask", open: ["Workflow-Audit: Account, Notifications und Portal-Präferenzen aufteilen", "Workflow-Audit: RPC-Fallbacks und Preview-Gates explizit markieren", "Komponenten-Audit: Formularbausteine, Info-States und Aktionsleisten mappen", "Komponenten-Audit: Standardabweichungen für Settings-Formulare festhalten", "Smoke: Account-Ansicht, Edit-Flow und Notification-Abschnitt prüfen"] },
+    { id: "zugang_pruefen", label: "Zugang prüfen", route: "/app/zugang-pruefen/", group: "Kernmodule", wave: "W3", type: "mask", open: ["Gate-Finalisierung klären", "Komponenten-Audit erstellen"] },
+    { id: "mitglieder", label: "Mitglieder", route: "/app/mitglieder/", group: "Admin / Betrieb", wave: "W1", type: "mask", open: ["Workflow-Audit: Listenansicht, Detailansicht und Admin-Aktionen dokumentieren", "Workflow-Audit: Rollen, Datenquellen und Policy-Annahmen prüfen", "Komponenten-Audit: Tabellen-/Kartenwechsel, Filter und Detaildialog klassifizieren", "Komponenten-Audit: Tabellenstandard gegen reale Umsetzung abgleichen", "Smoke: Listenwechsel, Detailöffnung und Schließen bestätigen"] },
     { id: "mitgliederverwaltung", label: "Mitglieder-Registry", route: "/app/mitgliederverwaltung/", group: "Admin / Betrieb", wave: "W2", type: "mask", open: ["Fehlende Teilbereiche priorisieren", "ACL-Pilot-Stub durch echte Backend-Logik ersetzen", "Komponenten-Audit erstellen"] },
     { id: "bewerbungen", label: "Bewerbungen", route: "/app/bewerbungen/", group: "Admin / Betrieb", wave: "W2", type: "mask", open: ["Workflow-Audit erstellen", "Komponenten-Audit erstellen"] },
-    { id: "dokumente", label: "Dokumente", route: "/app/dokumente/", group: "Admin / Betrieb", wave: "W2", type: "mask", open: ["Betriebsreife pruefen", "Komponenten-Audit erstellen"] },
+    { id: "dokumente", label: "Dokumente", route: "/app/dokumente/", group: "Admin / Betrieb", wave: "W2", type: "mask", open: ["Betriebsreife prüfen", "Komponenten-Audit erstellen"] },
     { id: "sitzungen", label: "Sitzungen", route: "/app/sitzungen/", group: "Admin / Betrieb", wave: "W2", type: "mask", open: ["Workflow-Audit erstellen", "Komponenten-Audit erstellen"] },
     { id: "arbeitseinsaetze_cockpit", label: "Arbeitseinsatz Cockpit", route: "/app/arbeitseinsaetze/cockpit/", group: "Admin / Betrieb", wave: "W2", type: "mask", open: ["Workflow-Audit erstellen", "Komponenten-Audit erstellen"] },
     { id: "termine_cockpit", label: "Termine Cockpit", route: "/app/termine/cockpit/", group: "Admin / Betrieb", wave: "W2", type: "mask", open: ["Workflow-Audit erstellen", "Komponenten-Audit erstellen"] },
-    { id: "fangliste_cockpit", label: "Fangliste Cockpit", route: "/app/fangliste/cockpit/", group: "Admin / Betrieb", wave: "W2", type: "mask", open: ["Reporting-Pruefung dokumentieren", "Komponenten-Audit erstellen"] },
+    { id: "fangliste_cockpit", label: "Fangliste Cockpit", route: "/app/fangliste/cockpit/", group: "Admin / Betrieb", wave: "W2", type: "mask", open: ["Reporting-Prüfung dokumentieren", "Komponenten-Audit erstellen"] },
     { id: "admin_panel", label: "Admin Board", route: "/app/admin-panel/", group: "Admin / Betrieb", wave: "W2", type: "mask", open: ["Platzhalterbereiche entscheiden", "Komponenten-Audit erstellen"] },
     { id: "vereine", label: "Vereins-Setup", route: "/app/vereine/", group: "Admin / Betrieb", wave: "W2", type: "mask", open: ["Setup-Flow dokumentieren", "Komponenten-Audit erstellen"] },
-    { id: "component_library", label: "Component Library", route: "/app/component-library/", group: "Interne Tools", wave: "W4", type: "mask", open: ["Standardbibliothek mit realen IDs schaerfen", "Studio-Contract vervollstaendigen"] },
-    { id: "template_studio", label: "Template Studio", route: "/app/template-studio/", group: "Interne Tools", wave: "W4", type: "mask", open: ["Studio-Contract vervollstaendigen", "Sidebar-/Slot-Strategie klaeren"] },
-    { id: "ui_demo", label: "UI Neumorph Demo", route: "/app/ui-neumorph-demo/", group: "Interne Tools", wave: "W4", type: "mask", open: ["Referenzcharakter dokumentieren", "Standard-Match pruefen"] },
+    { id: "component_library", label: "Component Library", route: "/app/component-library/", group: "Interne Tools", wave: "W4", type: "mask", open: ["Standardbibliothek mit realen IDs schärfen", "Studio-Contract vervollständigen"] },
+    { id: "template_studio", label: "Template Studio", route: "/app/template-studio/", group: "Interne Tools", wave: "W4", type: "mask", open: ["Studio-Contract vervollständigen", "Sidebar-/Slot-Strategie klären"] },
+    { id: "ui_demo", label: "UI Neumorph Demo", route: "/app/ui-neumorph-demo/", group: "Interne Tools", wave: "W4", type: "mask", open: ["Referenzcharakter dokumentieren", "Standard-Match prüfen"] },
     { id: "notes", label: "Notes", route: "/app/notes/", group: "Interne Tools", wave: "W4", type: "mask", open: ["Nur Demo oder echtes Werkzeug entscheiden", "Komponenten-Audit erstellen"] },
-    { id: "token_alignment", label: "Token Angleich", route: "Querschnitt", group: "Querschnitt", wave: "W4", type: "track", open: ["token_map.md mit realen Komponenten abgleichen", "Hardcoded-Farben und Sonderwerte identifizieren", "Rueckbauplan fuer Token-Abweichungen erstellen"] },
-    { id: "studio_contract", label: "Studio Contract", route: "Querschnitt", group: "Querschnitt", wave: "W4", type: "track", open: ["Nicht compliant Masken auf data-studio-* bringen", "Contract-Report auf gruen ziehen"] },
-    { id: "component_audit", label: "Komponenten-Audit Standard", route: "Querschnitt", group: "Querschnitt", wave: "W4", type: "track", open: ["COMPONENT_STANDARDS.md weiter schaerfen", "Pilot-Audits fuer Kernmasken durchziehen"] },
-    { id: "release_ops", label: "Release / Ops", route: "Querschnitt", group: "Querschnitt", wave: "W4", type: "track", open: ["Runtime-Sanity-Tests protokollieren", "Mail-Template-/Domain-Cutover abschliessen", "Secret-Rotation dokumentieren"] },
+    { id: "token_alignment", label: "Token Angleich", route: "Querschnitt", group: "Querschnitt", wave: "W4", type: "track", open: ["token_map.md mit realen Komponenten abgleichen", "Hardcoded-Farben und Sonderwerte identifizieren", "Rückbauplan für Token-Abweichungen erstellen"] },
+    { id: "studio_contract", label: "Studio Contract", route: "Querschnitt", group: "Querschnitt", wave: "W4", type: "track", open: ["Nicht compliant Masken auf data-studio-* bringen", "Contract-Report auf grün ziehen"] },
+    { id: "component_audit", label: "Komponenten-Audit Standard", route: "Querschnitt", group: "Querschnitt", wave: "W4", type: "track", open: ["COMPONENT_STANDARDS.md weiter schärfen", "Pilot-Audits für Kernmasken durchziehen"] },
+    { id: "release_ops", label: "Release / Ops", route: "Querschnitt", group: "Querschnitt", wave: "W4", type: "track", open: ["Runtime-Sanity-Tests protokollieren", "Mail-Template-/Domain-Cutover abschließen", "Secret-Rotation dokumentieren"] },
   ];
 
   const ITEM_MAP = new Map(ITEMS.map((item) => [item.id, item]));
@@ -320,8 +320,8 @@
     setFilterState("controlBoardFilterSmoke", state.filters.smokeOpenOnly);
     root.innerHTML = `
       <div class="control-board__nav-group">
-        <p class="control-board__nav-group-title">Uebersicht</p>
-        <button type="button" class="admin-nav-btn ${state.selectedId === "overview" ? "is-active" : ""}" data-cb-nav="overview">Gesamtueberblick</button>
+        <p class="control-board__nav-group-title">Übersicht</p>
+        <button type="button" class="admin-nav-btn ${state.selectedId === "overview" ? "is-active" : ""}" data-cb-nav="overview">Gesamtüberblick</button>
       </div>
       ${GROUPS.map((group) => {
         const items = filtered.filter((item) => item.group === group);
@@ -475,7 +475,7 @@
           <td>${task.done}</td>
           <td>${smoke.done}/${smoke.total}</td>
           <td>${issues}</td>
-          <td><button type="button" class="control-board__btn control-board__btn--ghost control-board__btn--small" data-cb-open="${item.id}">Oeffnen</button></td>
+          <td><button type="button" class="control-board__btn control-board__btn--ghost control-board__btn--small" data-cb-open="${item.id}">Öffnen</button></td>
         </tr>
       `;
     }).join("");
@@ -562,7 +562,7 @@
             <div class="control-board__row-body">
               <p class="control-board__row-title">${esc(test.label)}</p>
               <div class="control-board__row-meta">
-                <span>${test.checked_at ? `bestaetigt ${fmtDate(test.checked_at)}` : "noch offen"}</span>
+                <span>${test.checked_at ? `bestätigt ${fmtDate(test.checked_at)}` : "noch offen"}</span>
                 <span class="control-board__row-state">${test.checked ? "ok" : "offen"}</span>
               </div>
             </div>
@@ -598,9 +598,9 @@
             </div>
             <div class="control-board__issue-body">${esc(issue.detail || "-")}</div>
             <div class="admin-actions admin-actions--toolbar control-board__actions">
-              <button type="button" class="control-board__btn control-board__btn--ghost control-board__btn--small" data-cb-issue-toggle="${esc(issue.id)}">${issue.resolved ? "Wieder oeffnen" : "Als geloest markieren"}</button>
+              <button type="button" class="control-board__btn control-board__btn--ghost control-board__btn--small" data-cb-issue-toggle="${esc(issue.id)}">${issue.resolved ? "Wieder öffnen" : "Als geloest markieren"}</button>
               <button type="button" class="control-board__btn control-board__btn--ghost control-board__btn--small" data-cb-issue-copy="${esc(issue.id)}">Copy</button>
-              <button type="button" class="control-board__btn control-board__btn--ghost control-board__btn--small" data-cb-issue-delete="${esc(issue.id)}">Loeschen</button>
+              <button type="button" class="control-board__btn control-board__btn--ghost control-board__btn--small" data-cb-issue-delete="${esc(issue.id)}">Löschen</button>
             </div>
           </div>
         `).join("")
@@ -621,7 +621,7 @@
             <div class="control-board__note-body">${esc(note.text)}</div>
             <div class="admin-actions admin-actions--toolbar control-board__actions">
               <button type="button" class="control-board__btn control-board__btn--ghost control-board__btn--small" data-cb-note-copy="${esc(note.id)}">Copy</button>
-              <button type="button" class="control-board__btn control-board__btn--ghost control-board__btn--small" data-cb-note-delete="${esc(note.id)}">Loeschen</button>
+              <button type="button" class="control-board__btn control-board__btn--ghost control-board__btn--small" data-cb-note-delete="${esc(note.id)}">Löschen</button>
             </div>
           </div>
         `).join("")
@@ -646,7 +646,7 @@
       `- Bereich: ${item.label}`,
       `- Route/Scope: ${item.route}`,
       `- Test: ${test.label}`,
-      `- Bestaetigt: ${test.checked ? "ja" : "nein"}`,
+      `- Bestätigt: ${test.checked ? "ja" : "nein"}`,
       `- Timestamp: ${test.checked_at || "-"}`,
     ].join("\n");
   }
@@ -803,7 +803,7 @@
     const title = String(document.getElementById("controlBoardIssueTitle")?.value || "").trim();
     const detail = String(document.getElementById("controlBoardIssueDetail")?.value || "").trim();
     if (!title && !detail) {
-      setMsg("Bitte mindestens Titel oder Beschreibung fuer das Issue eintragen.", true);
+      setMsg("Bitte mindestens Titel oder Beschreibung für das Issue eintragen.", true);
       return;
     }
     itemState.issues.unshift({
@@ -894,16 +894,16 @@
       const item = selectedItem();
       const itemState = selectedItemState();
       if (!item || !itemState) return;
-      copyText(formatItemExport(item, itemState), `Bereichsreport fuer ${item.label} kopiert.`);
+      copyText(formatItemExport(item, itemState), `Bereichsreport für ${item.label} kopiert.`);
     });
     document.getElementById("controlBoardCopyOverview")?.addEventListener("click", () => {
-      copyText(formatOverviewExport(false), "Gesamtueberblick kopiert.");
+      copyText(formatOverviewExport(false), "Gesamtüberblick kopiert.");
     });
     document.getElementById("controlBoardCopyCompact")?.addEventListener("click", () => {
       copyText(formatOverviewExport(true), "Kompakt-Report kopiert.");
     });
     document.getElementById("controlBoardResetState")?.addEventListener("click", () => {
-      const ok = window.confirm("Lokalen Kontrollboard-Stand wirklich zuruecksetzen?");
+      const ok = window.confirm("Lokalen Kontrollboard-Stand wirklich zurücksetzen?");
       if (!ok) return;
       localStorage.removeItem(STORAGE_KEY);
       loadState();

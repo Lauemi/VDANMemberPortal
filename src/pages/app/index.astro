@@ -1,6 +1,29 @@
 ---
 import Site from "../../layouts/Site.astro";
 import { APP } from "../../config/app";
+import pkg from "../../../package.json";
+
+function envText(value: unknown, fallback: string) {
+  const text = String(value ?? "").trim();
+  return text || fallback;
+}
+
+const appVersionEnv = String(import.meta.env.PUBLIC_APP_VERSION ?? "").trim();
+const deploySha = envText(
+  import.meta.env.PUBLIC_DEPLOY_SHA,
+  envText(import.meta.env.VERCEL_GIT_COMMIT_SHA, envText(import.meta.env.GITHUB_SHA, "")),
+);
+const deployRef = envText(
+  import.meta.env.PUBLIC_DEPLOY_REF,
+  envText(import.meta.env.VERCEL_GIT_COMMIT_REF, envText(import.meta.env.GITHUB_REF_NAME, "")),
+);
+const buildStamp = envText(import.meta.env.PUBLIC_BUILD_STAMP, "");
+const autoAppVersion = [
+  `v${String(pkg?.version || "0.1.0").trim()}`,
+  deployRef ? deployRef.replace(/[^a-zA-Z0-9._-]+/g, "-") : "",
+  deploySha ? deploySha.slice(0, 7) : buildStamp || "dev-local",
+].filter(Boolean).join("+");
+const assetVersion = encodeURIComponent(appVersionEnv && appVersionEnv !== "dev-local" ? appVersionEnv : autoAppVersion);
 ---
 
 <Site title={`Fishing-Club-Portal • ${APP.name}`} description="Memberbereich." robots="noindex">
@@ -8,8 +31,8 @@ import { APP } from "../../config/app";
     <div class="card__body app-portal" data-studio-component-id="app-home-content" data-studio-component-type="section" data-studio-slot="main">
       <div class="app-portal-guest hidden" data-guest-only hidden data-studio-component-id="app-home-guest-hero" data-studio-component-type="card" data-studio-slot="main">
         <picture class="app-portal-guest__logo" aria-hidden="true">
-          <source srcset="/Branding/New_FCP_GoFishing.svg" type="image/svg+xml" />
-          <img src="/Branding/New_FCP_GoFishing.svg" alt="" loading="eager" decoding="async" />
+          <source srcset={`/Branding/New_FCP_GoFishing.svg?v=${assetVersion}`} type="image/svg+xml" />
+          <img src={`/Branding/New_FCP_GoFishing.svg?v=${assetVersion}`} alt="" loading="eager" decoding="async" />
         </picture>
         <p class="app-portal-guest__message">{APP.guestLoginMessage}</p>
         <a class="feed-btn" href="/login/?next=%2Fapp%2F">{APP.guestLoginCtaLabel}</a>
@@ -23,8 +46,8 @@ import { APP } from "../../config/app";
 
       <div class="app-portal-guest app-portal-guest--member" data-member-only hidden data-studio-component-id="app-home-app-grid" data-studio-component-type="card" data-studio-slot="main">
         <picture class="app-portal-guest__logo" aria-hidden="true">
-          <source srcset="/Branding/New_FCP_GoFishing.svg" type="image/svg+xml" />
-          <img src="/Branding/New_FCP_GoFishing.png" alt="" loading="eager" decoding="async" />
+          <source srcset={`/Branding/New_FCP_GoFishing.svg?v=${assetVersion}`} type="image/svg+xml" />
+          <img src={`/Branding/New_FCP_GoFishing.png?v=${assetVersion}`} alt="" loading="eager" decoding="async" />
         </picture>
         <p class="app-portal-guest__message">Bitte logge dich ein.</p>
         <a class="feed-btn" href="/login/?next=%2Fapp%2F">Zum Login</a>

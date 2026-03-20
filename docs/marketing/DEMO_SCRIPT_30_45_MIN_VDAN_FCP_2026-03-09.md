@@ -1,6 +1,6 @@
 # Demo-Skript (30/45 Minuten): VDAN / Fishing-Club-Portal
 
-Stand: 2026-03-09
+Stand: 2026-03-18
 
 ## Ziel der Demo
 - Nutzen im Vereinsalltag sichtbar machen
@@ -13,20 +13,20 @@ Stand: 2026-03-09
 2. Plattformueberblick Website + Portal (5 Min)
 3. Drei Kern-Use-Cases (15 Min)
 4. Security/DSGVO-Kurzblick (4 Min)
-5. Nächste Schritte/Pilot (3 Min)
+5. Naechste Schritte/Pilot (3 Min)
 
 ### Fokusbotschaft
 "Weniger Verwaltungsaufwand, klare Prozesse, ein System fuer den gesamten Vereinsbetrieb."
 
 ### Drei Kern-Use-Cases
 1. Termin- und Einsatzorganisation
-- Termin anlegen, Status sehen, Beteiligung nachvollziehen
+- Termin anlegen, Helferbedarf sehen, Beteiligung nachvollziehen
 
 2. Mitglieder- und Kontothematik
-- Rollen-/Portalzugang, Account-/Stammdatenbezug, klare Verantwortung
+- Rollen-/Portalzugang, Invite-/Registrierungsweg, Account-/Stammdatenbezug
 
 3. Operative Vereinsarbeit
-- Fangliste, Dokumente, Ausweis/Verifikation als zusammenhaengender Ablauf
+- Vereinssetup, Eventplaner, Fangliste, Dokumente und Ausweis/Verifikation als zusammenhaengender Ablauf
 
 ## Variante B: 45 Minuten (Admin/Verwaltung)
 ### Agenda
@@ -39,7 +39,9 @@ Stand: 2026-03-09
 ### Deep-Dive Punkte
 - Portalnavigation und Modul-Logik
 - Mitgliederverwaltung vs. Rollenverwaltung
-- kontrolliertes Onboarding (Invite/QR)
+- kontrolliertes Onboarding (Invite/QR/Registrierung)
+- Vereinssetup mit gefuehrtem Ablauf
+- Eventplaner mit Mitglieder- und Freigabepfad
 - Dokumentation/Auditfaehigkeit
 
 ## Demo-Regeln
@@ -58,6 +60,7 @@ Stand: 2026-03-09
 - Anzahl digital abgewickelter Kernprozesse
 - Zeitersparnis in Verwaltung/Vorstand
 - Reduktion von Rueckfragen/Abstimmungschaos
+- Zeit bis zum produktiven Vereinsstart
 
 ## Abschlussformel
 "Wenn wir in 60 Tagen Ihre drei wichtigsten Verwaltungsprozesse messbar vereinfachen, ist der Pilot erfolgreich."
@@ -66,3 +69,4 @@ Stand: 2026-03-09
 1. Zusammenfassung mit identifizierten Pain Points
 2. Vorschlag Pilotumfang (Scope + Zeitplan)
 3. Verantwortlichkeiten und naechster Termin
+4. Falls passend: Onboarding- und Einfuehrungsfahrplan mitsenden

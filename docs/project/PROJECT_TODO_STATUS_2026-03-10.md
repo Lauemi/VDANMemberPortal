@@ -26,6 +26,10 @@ Stand: 2026-03-10
 - Domain-/Redirect-Switch vorbereiten (VDAN -> `www.fishing-club-portal.de`).
 - Secret-/Key-Rotation mit reproduzierbarem VSCode-Flow umsetzen.
 - MVP-Entscheidungen für Multi-Club-Betrieb (z. B. MFA-Status, Umschaltlogik, Support-Prozess).
+- Eventplaner als Vorstands-Modul ausbauen:
+  - UI jetzt als Aggregationsschicht ueber `club_events` + `work_events`.
+  - Keine neue Kern-Eventtabelle anlegen.
+  - Slot-/Schichtlogik spaeter nur als kleine Erweiterungsschicht mit Referenz auf Basisobjekt (`base_kind`, `base_id`).
 
 ## 3) Entscheidungen, die ich noch von dir brauche
 - `MFA`:
@@ -65,3 +69,45 @@ Stand: 2026-03-10
 1. Supabase Dashboard: alle 13 Mail-Templates einpflegen und Testmails auslösen.
 2. Runtime-Sanity-Tests einmal sauber durchführen und Ergebnis kurz protokollieren (`pass/fail` je Test).
 3. Domain-/Mail-Cutover-Entscheidung treffen (stufenweise vs. Stichtag), danach Redirect-Matrix fixieren.
+
+## 6) Eventplaner-Architektur
+- `club_events` bleibt Source of Truth fuer Termine.
+- `work_events` bleibt Source of Truth fuer Arbeitseinsaetze.
+- `work_participations` bleibt die bestehende Basis fuer Helferanmeldungen und Freigaben.
+- Der neue `Eventplaner` liest diese Tabellen zusammen und schafft eine Vorstands-Sicht, ohne Stammdaten zu duplizieren.
+- Falls strukturierte Planung mit Slots gebraucht wird, dann nur als Zusatzmodell wie `event_planner_configs`, `event_planner_slots`, `event_planner_registrations` mit Referenz auf das Basisobjekt.
+
+## 7) Eventplaner Phase 2
+- Migration angelegt: `supabase/migrations/20260314101000_event_planner_phase2_extension.sql`
+- Zusatzhaertung angelegt: `supabase/migrations/20260314113000_event_planner_phase2_hardening.sql`
+- Phase 2b.1 Notifications angelegt: `supabase/migrations/20260314123000_member_notifications_phase2b1.sql`
+- Neue/erweiterte UI-Dateien:
+  - `src/pages/app/eventplaner/index.astro`
+  - `src/pages/app/eventplaner/mitmachen.astro`
+  - `public/js/event-planner-board.js`
+  - `public/js/event-planner-member.js`
+  - `public/js/notifications-center.js`
+  - `src/layouts/Site.astro`
+- Technische Leitplanke gegen DB-Dschungel:
+  - `event_planner_configs` referenziert immer genau ein Basisobjekt (`base_club_event_id` oder `base_work_event_id`)
+  - beide Basis-Referenzen sind per Constraint/FK abgesichert
+  - `event_planner_slots` haengen zwingend an `event_planner_configs`
+  - Trigger validieren, dass Slots zeitlich innerhalb des Basisobjekts liegen
+  - Zeitfenster-Aenderungen an `club_events` / `work_events` werden blockiert, falls bestehende Slots danach ausserhalb des Basisfensters laegen
+  - `event_planner_registrations` haengen zwingend an Config und optional an genau einem Slot
+  - strukturierte Registrierungen ohne Slot und Slots ohne Basisobjekt sind technisch verboten
+  - Registrations-Freigabe/Ablehnung soll nur noch ueber die vorgesehenen RPCs laufen, nicht mehr ueber offene Tabellen-Schreibpfade fuer Manager
+- Phase 2b.1 Produkt-Schnitt:
+  - generische Tabelle `member_notifications` als Nutzer-Inbox
+  - Glocke + Badge im Header als sichtbarer Einstieg
+  - Eventplaner ist erster Producer fuer relevante Hinweise
+  - initiale Notification-Faelle:
+    - Event-Zeit geaendert
+    - Slot-Zeit geaendert
+    - Slot geloescht
+    - Event abgesagt
+    - Anmeldung bestaetigt
+    - Anmeldung abgelehnt
+- Phase 2b.2 bleibt getrennt:
+  - administrative Teilnahme-Korrektur mit Auditspur
+  - bewusst nicht in denselben ersten Notification-Wurf gezogen

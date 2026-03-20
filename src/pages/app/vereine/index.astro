@@ -3,105 +3,910 @@ import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
 ---
 
-<Site title={`Vereins-Setup • ${APP.name}`} description="Admin: Neuen Verein anlegen" robots="noindex">
+<Site
+  title={`Vereins-Setup • ${APP.name}`}
+  description="Interne Verwaltungsmaske für Club-Anlage, Setup-Status, Invite und Billing-Vorbereitung"
+  robots="noindex"
+  containerClass="container container--admin-wide"
+>
   <section class="card">
-    <div class="card__body">
-      <h1>Vereins-Setup</h1>
-      <p class="small">Nur für Admin. Erstellt einen neuen Vereinskontext mit Metadaten, Angelkarte und initialen Gewässern.</p>
-      <p id="clubSetupMsg" class="small" aria-live="polite"></p>
-
-      <form id="clubSetupForm" class="resp-form-grid">
-        <label>
-          <span>Vereinsname</span>
-          <input id="clubSetupName" type="text" placeholder="z. B. FCP Ottenheim" required />
-        </label>
-        <label>
-          <span>Club-Code (AA00)</span>
-          <input id="clubSetupCode" type="text" placeholder="wird automatisch erzeugt" readonly />
-        </label>
-
-        <label class="resp-full">
-          <span>Standard-Angelkarte</span>
-          <input id="clubSetupCardDefault" type="text" placeholder="z. B. FCP Standard" required />
-        </label>
-
-        <label class="resp-full">
-          <span>Weitere Angelkarten (optional, eine pro Zeile)</span>
-          <textarea id="clubSetupCards" rows="4" placeholder="FCP Jugend\nFCP Gastkarte"></textarea>
-        </label>
-
-        <label class="resp-full">
-          <span>Initiale Gewässer (eine pro Zeile)</span>
-          <textarea id="clubSetupWaters" rows="5" placeholder="FCP Gewässer 1\nFCP Gewässer 2"></textarea>
-        </label>
-
-        <label class="resp-full">
-          <span><input id="clubSetupSetPublic" type="checkbox" /> Als `public_active_club_id` setzen</span>
-        </label>
-
-        <label class="resp-full">
-          <span><input id="clubSetupAssignCreator" type="checkbox" checked /> Mich im neuen Verein als `admin` zuordnen (kein automatisches Mitglied)</span>
-        </label>
-
-        <div class="resp-full" style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;">
-          <button id="clubSetupSubmit" type="button" class="feed-btn">Verein anlegen</button>
+    <div class="card__body club-admin-shell">
+      <aside class="club-admin-nav" aria-label="Vereinssetup Navigation">
+        <div class="club-admin-nav__intro">
+          <h1>Vereinssetup</h1>
+          <p class="small">
+            Interne Verwaltungsmaske für Club-Anlage, Onboarding-Fortschritt, Blocking und Invite-Verwaltung.
+          </p>
         </div>
-      </form>
 
-      <hr style="margin:16px 0;" />
-
-      <h2>Invite-Link für bestehenden Verein</h2>
-      <p class="small">Erstellt einen neuen Registrierungslink für einen bereits bestehenden Verein (ohne Neuanlage).</p>
-      <form id="clubInviteCreateForm" class="resp-form-grid">
-        <label>
-          <span>Club-Code (AA00)</span>
-          <input id="clubInviteCreateCode" type="text" placeholder="z. B. FC01" required />
-        </label>
-        <label>
-          <span>Max. Nutzungen</span>
-          <input id="clubInviteCreateMaxUses" type="number" min="1" max="500" value="25" />
-        </label>
-        <label>
-          <span>Gültigkeit (Tage)</span>
-          <input id="clubInviteCreateDays" type="number" min="1" max="90" value="14" />
-        </label>
-        <div class="resp-full" style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;">
-          <button id="clubInviteCreateBtn" type="button" class="feed-btn feed-btn--ghost">Invite-Link erzeugen</button>
+        <div class="club-admin-context">
+          <label class="club-admin-field">
+            <span class="small">Aktiver Verein</span>
+            <select id="clubOnboardingClubSelect">
+              <option value="">Lade Vereine...</option>
+            </select>
+          </label>
+          <button id="clubOnboardingRefresh" type="button" class="feed-btn feed-btn--ghost">Status neu laden</button>
+          <p id="clubOnboardingMsg" class="small" aria-live="polite"></p>
         </div>
-      </form>
 
-      <details style="margin-top:12px;">
-        <summary>Antwortdetails</summary>
-        <pre id="clubSetupResult" class="small" style="white-space:pre-wrap;"></pre>
-      </details>
+        <nav class="club-admin-nav__links">
+          <button type="button" class="club-admin-nav__btn is-active" data-club-admin-section="overview">Übersicht</button>
+          <button type="button" class="club-admin-nav__btn" data-club-admin-section="club-data">Vereinsdaten</button>
+          <button type="button" class="club-admin-nav__btn" data-club-admin-section="billing">Billing</button>
+          <button type="button" class="club-admin-nav__btn" data-club-admin-section="waters">Gewässer</button>
+          <button type="button" class="club-admin-nav__btn" data-club-admin-section="cards">Angelkarten</button>
+          <button type="button" class="club-admin-nav__btn" data-club-admin-section="members">Mitglieder</button>
+          <button type="button" class="club-admin-nav__btn" data-club-admin-section="create">Verein anlegen</button>
+          <button type="button" class="club-admin-nav__btn" data-club-admin-section="invite">Invite-Link</button>
+        </nav>
+      </aside>
 
-      <section id="clubInvitePanel" class="card hidden" hidden style="margin-top:12px;">
-        <div class="card__body">
-          <h2>Registrierungs-QR</h2>
-          <p class="small">Nur Personen mit diesem Token können sich registrieren.</p>
-          <div style="display:grid;gap:10px;grid-template-columns:220px minmax(0,1fr);align-items:start;">
-            <img id="clubInviteQr" alt="Registrierungs-QR" width="220" height="220" loading="lazy" />
-            <div style="display:grid;gap:8px;">
-              <label>
-                <span class="small">Invite-Token</span>
-                <input id="clubInviteToken" type="text" readonly />
-              </label>
-              <label>
-                <span class="small">Registrierungs-Link</span>
-                <input id="clubInviteUrl" type="text" readonly />
-              </label>
-              <p id="clubInviteExpires" class="small"></p>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button id="clubInviteCopyToken" type="button" class="feed-btn feed-btn--ghost">Token kopieren</button>
-                <button id="clubInviteCopyUrl" type="button" class="feed-btn feed-btn--ghost">Link kopieren</button>
-                <a id="clubInviteOpenUrl" class="feed-btn" href="#" target="_blank" rel="noopener noreferrer">Link öffnen</a>
+      <div class="club-admin-content">
+        <section class="club-admin-panel is-active" data-club-admin-panel="overview">
+          <article class="club-admin-card">
+            <div class="club-admin-card__head">
+              <div>
+                <h2>Operative Übersicht</h2>
+                <p class="small">
+                  Zustände, nächster Schritt und harte Guards aus der serverseitigen Onboarding-Logik.
+                </p>
+              </div>
+              <div class="club-admin-actions">
+                <button id="clubOnboardingSave" type="button" class="feed-btn">Setup-Fortschritt speichern</button>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
+
+            <div class="club-admin-kpi-grid">
+              <article class="club-admin-kpi">
+                <span class="small">Club</span>
+                <strong id="clubOverviewClubLabel">-</strong>
+                <small id="clubOverviewClubMeta">Kein Verein gewählt.</small>
+              </article>
+              <article class="club-admin-kpi">
+                <span class="small">Setup-State</span>
+                <strong id="clubOnboardingSetupState">-</strong>
+                <small id="clubOverviewSetupMeta">Serverstatus wird geladen.</small>
+              </article>
+              <article class="club-admin-kpi">
+                <span class="small">Billing-State</span>
+                <strong id="clubOnboardingBillingState">-</strong>
+                <small id="clubOverviewBillingMeta">Billing-Metadaten werden geladen.</small>
+              </article>
+              <article class="club-admin-kpi">
+                <span class="small">Portal-State</span>
+                <strong id="clubOnboardingPortalState">-</strong>
+                <small id="clubOverviewPortalMeta">Aktivierung folgt erst nach Billing.</small>
+              </article>
+              <article class="club-admin-kpi">
+                <span class="small">Freigabe Restbereiche</span>
+                <strong id="clubOnboardingReadyState">-</strong>
+                <small id="clubOverviewReadyMeta">Gewässer, Karten und Mitglieder folgen nach Billing oder Superadmin-Bypass.</small>
+              </article>
+              <article class="club-admin-kpi">
+                <span class="small">Nächster Schritt</span>
+                <strong id="clubOverviewNextStep">-</strong>
+                <small id="clubOverviewNextStepMeta">Wird aus Snapshot und Billing abgeleitet.</small>
+              </article>
+            </div>
+          </article>
+
+          <article class="club-admin-card">
+            <div class="club-admin-card__head">
+              <div>
+                <h3>Blocking und Freigaben</h3>
+                <p class="small">
+                  Hier ist sichtbar, warum ein Club noch in `pending_setup` bleibt oder bereits in `pending_payment` steht.
+                </p>
+              </div>
+            </div>
+
+            <div class="club-admin-columns">
+              <div class="club-admin-block">
+                <h4>Offene Guards</h4>
+                <ul id="clubOnboardingBlockers" class="club-admin-list small">
+                  <li>Status wird geladen...</li>
+                </ul>
+              </div>
+              <div class="club-admin-block">
+                <h4>Erfüllte Guards</h4>
+                <ul id="clubOnboardingSatisfied" class="club-admin-list small">
+                  <li>Status wird geladen...</li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <article class="club-admin-card">
+            <div class="club-admin-card__head">
+              <div>
+                <h3>Snapshot-Detail</h3>
+                <p class="small">
+                  Verdichtete Sicht auf Setup, Billing und Bestandsableitung. Diese Tabelle soll den Zustand lesbar machen, nicht verstecken.
+                </p>
+              </div>
+            </div>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table">
+                <thead>
+                  <tr>
+                    <th>Bereich</th>
+                    <th>Status</th>
+                    <th>Hinweis</th>
+                  </tr>
+                </thead>
+                <tbody id="clubOnboardingSnapshotTable">
+                  <tr><td colspan="3" class="small">Status wird geladen...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="club-admin-panel" data-club-admin-panel="club-data">
+          <article class="club-admin-card">
+            <div class="club-admin-card__head">
+              <div>
+                <h2>Vereinsdaten</h2>
+                <p class="small">
+                  Erster geführter Schritt. Hier werden Stammdaten, Rollenbasis und Module fachlich freigegeben.
+                </p>
+              </div>
+              <div class="club-admin-actions">
+                <button type="button" class="feed-btn" id="clubDataSaveBtn">Vereinsdaten speichern</button>
+              </div>
+            </div>
+
+            <div class="club-admin-stage-note" id="clubDataStageNote">
+              Billing wird freigegeben, sobald die Vereinsdaten fachlich komplett sind.
+            </div>
+
+            <div class="club-admin-module-grid club-admin-module-grid--single">
+              <article class="club-admin-module-card">
+                <div class="club-admin-module-card__head">
+                  <div>
+                    <h3>Stammdaten und Setup-Basis</h3>
+                    <p class="small">Name, Code, Rollen, Module und Club-Kontext bilden den Billing-Einstieg.</p>
+                  </div>
+                  <div id="clubModuleStateClubData">-</div>
+                </div>
+                <div class="club-admin-module-card__body">
+                  <label class="club-admin-toggle">
+                    <input id="clubOnboardingClubData" type="checkbox" />
+                    <span>Vereinsdaten fachlich abgeschlossen markieren</span>
+                  </label>
+                  <div id="clubModuleHintClubData" class="small">Guard wird geladen...</div>
+                </div>
+              </article>
+            </div>
+
+            <div class="club-admin-form-grid">
+              <label class="club-admin-field">
+                <span class="small">Vereinsname</span>
+                <input id="clubDataName" type="text" placeholder="z. B. FCP Ottenheim" />
+              </label>
+              <label class="club-admin-field">
+                <span class="small">Club-Code</span>
+                <input id="clubDataCode" type="text" readonly />
+              </label>
+              <label class="club-admin-field">
+                <span class="small">Straße / Hausnummer</span>
+                <input id="clubDataStreet" type="text" placeholder="Musterstraße 12" />
+              </label>
+              <label class="club-admin-field">
+                <span class="small">PLZ</span>
+                <input id="clubDataZip" type="text" placeholder="77700" />
+              </label>
+              <label class="club-admin-field">
+                <span class="small">Ort</span>
+                <input id="clubDataCity" type="text" placeholder="Musterstadt" />
+              </label>
+              <label class="club-admin-field">
+                <span class="small">Ansprechpartner</span>
+                <input id="clubDataContactName" type="text" placeholder="Vorname Nachname" />
+              </label>
+              <label class="club-admin-field">
+                <span class="small">E-Mail</span>
+                <input id="clubDataContactEmail" type="email" placeholder="verein@example.org" />
+              </label>
+              <label class="club-admin-field">
+                <span class="small">Telefon</span>
+                <input id="clubDataContactPhone" type="text" placeholder="+49 ..." />
+              </label>
+            </div>
+
+            <div class="club-admin-card__subgrid">
+              <label class="club-admin-field">
+                <span class="small">Audit-Notiz</span>
+                <textarea id="clubOnboardingNote" rows="4" placeholder="z. B. Altbestand verifiziert, Gewässerliste geprüft, Mitgliederbasis bewusst leer bestätigt"></textarea>
+              </label>
+            </div>
+          </article>
+        </section>
+
+        <section class="club-admin-panel" data-club-admin-panel="billing">
+          <article class="club-admin-card">
+            <div class="club-admin-card__head">
+              <div>
+                <h2>Billing</h2>
+                <p class="small">
+                  Zweiter geführter Schritt. Für normale Vereins-Admins schaltet Billing die restlichen Verwaltungsbereiche frei.
+                </p>
+              </div>
+            </div>
+
+            <div class="club-admin-stage-note" id="clubBillingStageNote">
+              Billing-Metadaten werden geladen.
+            </div>
+
+            <div class="club-admin-columns">
+              <div class="club-admin-block">
+                <h3>Serverstatus</h3>
+                <p class="small" id="clubBillingSummary">
+                  Billing-Metadaten werden geladen.
+                </p>
+                <ul id="clubBillingFacts" class="club-admin-list small">
+                  <li>Keine Daten geladen.</li>
+                </ul>
+              </div>
+              <div class="club-admin-block">
+                <h3>Freigabelogik</h3>
+                <ul class="club-admin-list small">
+                  <li>Normale Vereins-Admins kommen erst nach freigegebenen Vereinsdaten in diesen Schritt.</li>
+                  <li>Gewässer, Angelkarten und Mitglieder bleiben bis zu aktivem Billing gesperrt.</li>
+                  <li>Im Superadmin-Kontext bleibt der Ablauf sichtbar gleich, Billing blockiert aber nicht.</li>
+                </ul>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="club-admin-panel" data-club-admin-panel="waters">
+          <article class="club-admin-card">
+            <div class="club-admin-card__head">
+              <div>
+                <h2>Gewässer</h2>
+                <p class="small">
+                  Erst nach Billing oder im Superadmin-Bypass operativ freigeschaltet.
+                </p>
+              </div>
+              <div class="club-admin-actions">
+                <button type="button" class="feed-btn" id="clubWatersSaveBtn">Gewässer-Fortschritt speichern</button>
+              </div>
+            </div>
+
+            <div class="club-admin-stage-note" id="clubWatersStageNote">
+              Bereich wird geladen.
+            </div>
+
+            <div class="club-admin-module-grid club-admin-module-grid--single">
+              <article class="club-admin-module-card" id="clubWatersCard">
+                <div class="club-admin-module-card__head">
+                  <div>
+                    <h3>Gewässer-Basis</h3>
+                    <p class="small">Hier kommt die operative Tabelle mit Inline-Anlage hin. Bis dahin bleibt die Freigabe sauber geführt.</p>
+                  </div>
+                  <div id="clubModuleStateWaters">-</div>
+                </div>
+                <div class="club-admin-module-card__body">
+                  <label class="club-admin-toggle">
+                    <input id="clubOnboardingWaters" type="checkbox" />
+                    <span>Gewässer-Basis fachlich abgeschlossen markieren</span>
+                  </label>
+                  <div id="clubModuleHintWaters" class="small">Guard wird geladen...</div>
+                </div>
+              </article>
+            </div>
+
+            <div class="club-admin-inline-create">
+              <label class="club-admin-field">
+                <span class="small">Neues Gewässer</span>
+                <input id="clubWaterCreateName" type="text" placeholder="z. B. Altrhein Süd" />
+              </label>
+              <button type="button" class="feed-btn feed-btn--ghost" id="clubWaterCreateBtn">Gewässer anlegen</button>
+            </div>
+
+            <div class="work-part-table-wrap">
+              <table class="work-part-table">
+                <thead>
+                  <tr>
+                    <th>Gewässer</th>
+                    <th>Typ</th>
+                    <th>Status</th>
+                    <th>Aktion</th>
+                  </tr>
+                </thead>
+                <tbody id="clubWatersTable">
+                  <tr><td colspan="4" class="small">Gewässer werden geladen...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="club-admin-panel" data-club-admin-panel="cards">
+          <article class="club-admin-card">
+            <div class="club-admin-card__head">
+              <div>
+                <h2>Angelkarten</h2>
+                <p class="small">
+                  Wird nach Billing freigeschaltet oder im Superadmin-Kontext direkt testbar gemacht.
+                </p>
+              </div>
+              <div class="club-admin-actions">
+                <button type="button" class="feed-btn" id="clubCardsSaveBtn">Karten-Fortschritt speichern</button>
+              </div>
+            </div>
+
+            <div class="club-admin-stage-note" id="clubCardsStageNote">
+              Bereich wird geladen.
+            </div>
+
+            <div class="club-admin-module-grid club-admin-module-grid--single">
+              <article class="club-admin-module-card" id="clubCardsCard">
+                <div class="club-admin-module-card__head">
+                  <div>
+                    <h3>Karten-Basis</h3>
+                    <p class="small">Default-Karte und weitere Karten werden hier als eigener Arbeitsbereich geführt.</p>
+                  </div>
+                  <div id="clubModuleStateCards">-</div>
+                </div>
+                <div class="club-admin-module-card__body">
+                  <label class="club-admin-toggle">
+                    <input id="clubOnboardingCards" type="checkbox" />
+                    <span>Karten-Basis fachlich abgeschlossen markieren</span>
+                  </label>
+                  <div id="clubModuleHintCards" class="small">Guard wird geladen...</div>
+                </div>
+              </article>
+            </div>
+
+            <div class="club-admin-inline-create">
+              <label class="club-admin-field">
+                <span class="small">Neue Angelkarte</span>
+                <input id="clubCardCreateName" type="text" placeholder="z. B. Tageskarte" />
+              </label>
+              <button type="button" class="feed-btn feed-btn--ghost" id="clubCardCreateBtn">Karte ergänzen</button>
+            </div>
+
+            <div class="work-part-table-wrap">
+              <table class="work-part-table">
+                <thead>
+                  <tr>
+                    <th>Karte</th>
+                    <th>Default</th>
+                    <th>Hinweis</th>
+                  </tr>
+                </thead>
+                <tbody id="clubCardsTable">
+                  <tr><td colspan="3" class="small">Karten werden geladen...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="club-admin-panel" data-club-admin-panel="members">
+          <article class="club-admin-card">
+            <div class="club-admin-card__head">
+              <div>
+                <h2>Mitglieder</h2>
+                <p class="small">
+                  Nach Billing wird die Mitgliedergrundlage aktiv bearbeitbar. Superadmin kann den Ablauf vorab vollständig testen.
+                </p>
+              </div>
+              <div class="club-admin-actions">
+                <button type="button" class="feed-btn" id="clubMembersSaveBtn">Mitglieder-Fortschritt speichern</button>
+              </div>
+            </div>
+
+            <div class="club-admin-stage-note" id="clubMembersStageNote">
+              Bereich wird geladen.
+            </div>
+
+            <div class="club-admin-module-grid club-admin-module-grid--single">
+              <article class="club-admin-module-card" id="clubMembersCard">
+                <div class="club-admin-module-card__head">
+                  <div>
+                    <h3>Mitgliedergrundlage</h3>
+                    <p class="small">Importiert oder bewusst leer bestätigt. Kein stilles Durchwinken.</p>
+                  </div>
+                  <div id="clubModuleStateMembers">-</div>
+                </div>
+                <div class="club-admin-module-card__body">
+                  <label class="club-admin-field">
+                    <span class="small">Status</span>
+                    <select id="clubOnboardingMembersMode">
+                      <option value="pending">offen</option>
+                      <option value="imported">importiert</option>
+                      <option value="confirmed_empty">bewusst leer</option>
+                    </select>
+                  </label>
+                  <div id="clubModuleHintMembers" class="small">Guard wird geladen...</div>
+                </div>
+              </article>
+            </div>
+
+            <div class="club-admin-form-grid">
+              <label class="club-admin-field">
+                <span class="small">Vorname</span>
+                <input id="clubMemberFirstName" type="text" placeholder="Max" />
+              </label>
+              <label class="club-admin-field">
+                <span class="small">Nachname</span>
+                <input id="clubMemberLastName" type="text" placeholder="Mustermann" />
+              </label>
+              <label class="club-admin-field">
+                <span class="small">Status</span>
+                <select id="clubMemberStatus">
+                  <option value="active">aktiv</option>
+                  <option value="inactive">inaktiv</option>
+                </select>
+              </label>
+              <label class="club-admin-field">
+                <span class="small">Kartentyp</span>
+                <input id="clubMemberCardType" type="text" placeholder="z. B. Jahreskarte" />
+              </label>
+              <label class="club-admin-field">
+                <span class="small">Ort</span>
+                <input id="clubMemberCity" type="text" placeholder="Ort" />
+              </label>
+              <label class="club-admin-field">
+                <span class="small">Telefon</span>
+                <input id="clubMemberPhone" type="text" placeholder="+49 ..." />
+              </label>
+            </div>
+
+            <div class="club-admin-actions">
+              <button type="button" class="feed-btn feed-btn--ghost" id="clubMemberCreateBtn">Mitglied anlegen</button>
+            </div>
+
+            <div class="work-part-table-wrap">
+              <table class="work-part-table">
+                <thead>
+                  <tr>
+                    <th>Nr.</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Karte</th>
+                    <th>Ort</th>
+                  </tr>
+                </thead>
+                <tbody id="clubMembersTable">
+                  <tr><td colspan="5" class="small">Mitglieder werden geladen...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="club-admin-panel" data-club-admin-panel="create">
+          <article class="club-admin-card">
+            <div class="club-admin-card__head">
+              <div>
+                <h2>Verein anlegen</h2>
+                <p class="small">
+                  Minimalanlage eines neuen Club-Kontexts. Danach wird derselbe Verein in dieser Maske weitergeführt.
+                </p>
+              </div>
+            </div>
+
+            <p id="clubSetupMsg" class="small" aria-live="polite"></p>
+
+            <form id="clubSetupForm" class="resp-form-grid">
+              <label>
+                <span>Vereinsname</span>
+                <input id="clubSetupName" type="text" placeholder="z. B. FCP Ottenheim" required />
+              </label>
+              <label>
+                <span>Club-Code (AA00)</span>
+                <input id="clubSetupCode" type="text" placeholder="wird automatisch erzeugt" readonly />
+              </label>
+
+              <label class="resp-full">
+                <span>Standard-Angelkarte</span>
+                <input id="clubSetupCardDefault" type="text" placeholder="z. B. FCP Standard" required />
+              </label>
+
+              <label class="resp-full">
+                <span>Weitere Angelkarten (optional, eine pro Zeile)</span>
+                <textarea id="clubSetupCards" rows="4" placeholder="FCP Jugend&#10;FCP Gastkarte"></textarea>
+              </label>
+
+              <label class="resp-full">
+                <span>Initiale Gewässer (eine pro Zeile)</span>
+                <textarea id="clubSetupWaters" rows="5" placeholder="FCP Gewässer 1&#10;FCP Gewässer 2"></textarea>
+              </label>
+
+              <label class="resp-full">
+                <span><input id="clubSetupSetPublic" type="checkbox" /> Als `public_active_club_id` setzen</span>
+              </label>
+
+              <label class="resp-full">
+                <span><input id="clubSetupAssignCreator" type="checkbox" checked /> Mich im neuen Verein als `admin` zuordnen (kein automatisches Mitglied)</span>
+              </label>
+
+              <div class="resp-full club-admin-actions">
+                <button id="clubSetupSubmit" type="button" class="feed-btn">Verein anlegen</button>
+              </div>
+            </form>
+
+            <details style="margin-top:12px;">
+              <summary>Antwortdetails</summary>
+              <pre id="clubSetupResult" class="small" style="white-space:pre-wrap;"></pre>
+            </details>
+          </article>
+        </section>
+
+        <section class="club-admin-panel" data-club-admin-panel="invite">
+          <article class="club-admin-card">
+            <div class="club-admin-card__head">
+              <div>
+                <h2>Invite-Link für bestehenden Verein</h2>
+                <p class="small">
+                  Readable Management statt Blindflug: Club-Code, Token, Ablauf und QR an einer Stelle.
+                </p>
+              </div>
+            </div>
+
+            <form id="clubInviteCreateForm" class="resp-form-grid">
+              <label>
+                <span>Club-Code (AA00)</span>
+                <input id="clubInviteCreateCode" type="text" placeholder="z. B. FC01" required />
+              </label>
+              <label>
+                <span>Max. Nutzungen</span>
+                <input id="clubInviteCreateMaxUses" type="number" min="1" max="500" value="25" />
+              </label>
+              <label>
+                <span>Gültigkeit (Tage)</span>
+                <input id="clubInviteCreateDays" type="number" min="1" max="90" value="14" />
+              </label>
+              <div class="resp-full club-admin-actions">
+                <button id="clubInviteCreateBtn" type="button" class="feed-btn feed-btn--ghost">Invite-Link erzeugen</button>
+              </div>
+            </form>
+
+            <section id="clubInvitePanel" class="card hidden" hidden style="margin-top:12px;">
+              <div class="card__body">
+                <h3>Registrierungs-QR</h3>
+                <p class="small">Nur Personen mit diesem Token können sich registrieren.</p>
+                <div style="display:grid;gap:10px;grid-template-columns:220px minmax(0,1fr);align-items:start;">
+                  <img id="clubInviteQr" alt="Registrierungs-QR" width="220" height="220" loading="lazy" />
+                  <div style="display:grid;gap:8px;">
+                    <label>
+                      <span class="small">Invite-Token</span>
+                      <input id="clubInviteToken" type="text" readonly />
+                    </label>
+                    <label>
+                      <span class="small">Registrierungs-Link</span>
+                      <input id="clubInviteUrl" type="text" readonly />
+                    </label>
+                    <p id="clubInviteExpires" class="small"></p>
+                    <div class="club-admin-actions">
+                      <button id="clubInviteCopyToken" type="button" class="feed-btn feed-btn--ghost">Token kopieren</button>
+                      <button id="clubInviteCopyUrl" type="button" class="feed-btn feed-btn--ghost">Link kopieren</button>
+                      <a id="clubInviteOpenUrl" class="feed-btn" href="#" target="_blank" rel="noopener noreferrer">Link öffnen</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </article>
+        </section>
+      </div>
     </div>
   </section>
 
   <script src="/js/club-admin-setup.js" defer></script>
 </Site>
+
+<style>
+  .club-admin-shell {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+    min-width: 0;
+  }
+
+  .club-admin-nav {
+    position: sticky;
+    top: 92px;
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+    width: 100%;
+    align-self: start;
+  }
+
+  .club-admin-nav__intro,
+  .club-admin-context,
+  .club-admin-card,
+  .club-admin-module-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .club-admin-nav__intro,
+  .club-admin-context {
+    padding: 14px;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .club-admin-nav__links {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .club-admin-nav__btn {
+    text-align: left;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text);
+    padding: 12px 14px;
+    cursor: pointer;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .club-admin-nav__btn.is-active {
+    border-color: rgba(126, 194, 255, 0.45);
+    background: rgba(78, 161, 255, 0.16);
+  }
+
+  .club-admin-nav__btn.is-disabled {
+    opacity: 0.56;
+    cursor: not-allowed;
+  }
+
+  .club-admin-field {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .club-admin-content {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .club-admin-panel {
+    display: none;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .club-admin-panel.is-active {
+    display: grid;
+  }
+
+  .club-admin-card {
+    padding: 16px;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .club-admin-card__head,
+  .club-admin-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    min-width: 0;
+  }
+
+  .club-admin-card__head > div,
+  .club-admin-actions > div {
+    min-width: 0;
+  }
+
+  .club-admin-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+    min-width: 0;
+  }
+
+  .club-admin-kpi {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.02);
+    padding: 12px;
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .club-admin-kpi strong {
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+  }
+
+  .club-admin-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 14px;
+    min-width: 0;
+  }
+
+  .club-admin-block {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.02);
+    padding: 14px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .club-admin-list {
+    margin: 10px 0 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 8px;
+  }
+
+  .club-admin-module-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 14px;
+    min-width: 0;
+  }
+
+  .club-admin-module-grid--single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .club-admin-module-card {
+    padding: 14px;
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .club-admin-module-card__head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: start;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .club-admin-toggle {
+    display: flex;
+    gap: 10px;
+    align-items: start;
+    min-width: 0;
+  }
+
+  .club-admin-context select,
+  .club-admin-field select,
+  .club-admin-field input,
+  .club-admin-field textarea {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .club-admin-context .feed-btn,
+  .club-admin-card .feed-btn,
+  .club-admin-card a.feed-btn {
+    max-width: 100%;
+  }
+
+  .club-admin-card__subgrid {
+    display: grid;
+    gap: 12px;
+    margin-top: 14px;
+    min-width: 0;
+  }
+
+  .club-admin-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+    min-width: 0;
+  }
+
+  .club-admin-inline-create {
+    display: flex;
+    gap: 12px;
+    align-items: end;
+    margin-top: 14px;
+    min-width: 0;
+  }
+
+  .club-admin-inline-create > * {
+    min-width: 0;
+  }
+
+  .club-admin-stage-note {
+    margin-top: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .club-admin-stage-note[data-tone="warn"] {
+    border-color: rgba(230, 191, 93, 0.42);
+    background: rgba(230, 191, 93, 0.12);
+  }
+
+  .club-admin-stage-note[data-tone="good"] {
+    border-color: rgba(106, 201, 142, 0.45);
+    background: rgba(106, 201, 142, 0.12);
+  }
+
+  .club-admin-stage-note[data-tone="info"] {
+    border-color: rgba(126, 194, 255, 0.45);
+    background: rgba(78, 161, 255, 0.12);
+  }
+
+  .club-admin-card.is-locked,
+  .club-admin-module-card.is-locked {
+    opacity: 0.7;
+  }
+
+  .onboarding-state-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 118px;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .onboarding-state-pill[data-tone="good"] {
+    border-color: rgba(106, 201, 142, 0.45);
+    background: rgba(106, 201, 142, 0.16);
+  }
+
+  .onboarding-state-pill[data-tone="warn"] {
+    border-color: rgba(230, 191, 93, 0.42);
+    background: rgba(230, 191, 93, 0.15);
+  }
+
+  .onboarding-state-pill[data-tone="bad"] {
+    border-color: rgba(228, 110, 110, 0.48);
+    background: rgba(228, 110, 110, 0.16);
+  }
+
+  @media (max-width: 980px) {
+    .club-admin-shell {
+      grid-template-columns: 1fr;
+    }
+
+    .club-admin-nav {
+      position: static;
+    }
+
+    .club-admin-kpi-grid,
+    .club-admin-columns,
+    .club-admin-module-grid,
+    .club-admin-form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .club-admin-inline-create {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+</style>

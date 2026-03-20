@@ -8,19 +8,50 @@ import { APP } from "../../../config/app";
     <div class="card__body">
       <h1>Rechtliches bestätigen</h1>
       <p class="small">
-        Bevor du das Portal weiter nutzt, bestätige bitte die aktuellen Nutzungsbedingungen und die Datenschutzerklärung.
+        Bevor du das Portal weiter nutzt, bestätige bitte die aktuellen Nutzungsbedingungen und die Datenschutzerklärung. Wenn du für deinen
+        Verein vertretungsberechtigt bist, wird dir zusätzlich die aktuelle AVV zur Annahme angezeigt.
       </p>
       <p class="small" id="legalVersionInfo">Lade aktuelle Versionen …</p>
 
       <label class="small" style="display:flex;gap:8px;align-items:flex-start;margin-top:12px;">
         <input id="legalAcceptCheck" type="checkbox" />
         <span>
-          Ich akzeptiere die
+          Ich habe die
           <a href="/nutzungsbedingungen.html/" target="_blank" rel="noopener noreferrer">Nutzungsbedingungen</a>
           und die
           <a href="/datenschutz.html/" target="_blank" rel="noopener noreferrer">Datenschutzerklärung</a>.
+          gelesen und akzeptiere sie.
         </span>
       </label>
+
+      <div id="legalAvvSection" style="display:none;margin-top:16px;padding:14px;border:1px solid rgba(75,76,51,.18);border-radius:18px;background:rgba(255,255,255,.35);">
+        <p class="small" style="margin:0 0 10px 0;">
+          Für deine Rolle ist zusätzlich die
+          <a href="/avv.html/" target="_blank" rel="noopener noreferrer">Auftragsverarbeitungsvereinbarung (AVV)</a>
+          für den Verein zu bestätigen.
+        </p>
+
+        <label class="small" style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;">
+          <input id="legalAcceptAvvCheck" type="checkbox" />
+          <span>Ich habe den AVV gelesen und akzeptiere ihn im Namen des Vereins.</span>
+        </label>
+
+        <label class="small" style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;">
+          <input id="legalAcceptAuthorityCheck" type="checkbox" />
+          <span>Ich bestätige, dass ich für den Verein vertretungsberechtigt oder ausdrücklich zur Annahme des AVV bevollmächtigt bin.</span>
+        </label>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px;">
+          <label class="small" style="display:grid;gap:6px;">
+            <span>Vor- und Nachname</span>
+            <input id="legalSignerName" type="text" autocomplete="name" />
+          </label>
+          <label class="small" style="display:grid;gap:6px;">
+            <span>Funktion im Verein</span>
+            <input id="legalSignerFunction" type="text" autocomplete="organization-title" placeholder="z. B. Vorstand oder Admin" />
+          </label>
+        </div>
+      </div>
 
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;">
         <button id="legalAcceptBtn" type="button" class="feed-btn">Bestätigen und fortfahren</button>

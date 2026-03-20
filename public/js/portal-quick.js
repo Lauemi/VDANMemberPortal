@@ -40,7 +40,7 @@
 
   const MODULES = [
     { id: "fangliste", href: "/app/fangliste/", label: "Fangliste", short: "FL", access: "member", group: "member" },
-    { id: "arbeitseinsaetze", href: "/app/arbeitseinsaetze/", label: "Arbeitseinsätze", short: "AS", access: "member", group: "member" },
+    { id: "arbeitseinsaetze", href: "/app/arbeitseinsaetze/", label: "Termine / Events", short: "TE", access: "member", group: "member" },
     { id: "ausweis", href: "/app/ausweis/", label: "Mitgliedsausweis", short: "ID", access: "member", group: "member" },
     { id: "gewaesserkarte", href: "/app/gewaesserkarte/", label: "Gewässerkarte", short: "GK", access: "member", group: "member" },
     { id: "zustaendigkeiten", href: "/app/zustaendigkeiten/", label: "Zuständigkeiten", short: "ZU", access: "member", group: "member" },
@@ -49,6 +49,7 @@
     { id: "scanner", href: "/app/ausweis/verifizieren/", label: "Scanner", short: "SC", access: "manager", group: "manager" },
     { id: "as_cockpit", href: "/app/arbeitseinsaetze/cockpit/", label: "Arbeitseinsatz Cockpit", short: "AC", access: "manager", group: "manager" },
     { id: "termine_cockpit", href: "/app/termine/cockpit/", label: "Termine Cockpit", short: "TC", access: "manager", group: "manager" },
+    { id: "eventplaner", href: "/app/eventplaner/", label: "Eventplaner", short: "EP", access: "manager", group: "manager" },
     { id: "feedback", href: "/app/feedback/", label: "Feedback", short: "FB", access: "member", group: "manager" },
     { id: "sitzungen", href: "/app/sitzungen/", label: "Sitzungen", short: "SI", access: "manager", group: "manager" },
     { id: "bewerbungen", href: "/app/bewerbungen/", label: "Bewerbungen", short: "BW", access: "manager", group: "manager" },
@@ -508,7 +509,10 @@
 
       const section = document.createElement("section");
       section.className = "portal-quick-group";
-      section.innerHTML = `<h3 class="portal-quick-group__title">${groupLabel(group)}</h3>`;
+      const heading = document.createElement("h3");
+      heading.className = "portal-quick-group__title";
+      heading.textContent = groupLabel(group);
+      section.appendChild(heading);
 
       const list = document.createElement("div");
       list.className = "portal-quick-group__list";
@@ -520,12 +524,24 @@
         row.setAttribute("data-open-url", mod.href);
         row.setAttribute("role", "link");
         row.setAttribute("tabindex", "0");
-        row.innerHTML = `
-          <div class="portal-quick-row__line">
-            <p class="portal-quick-row__title">${mod.label}</p>
-            <button type="button" class="portal-quick-star ${fav ? "is-active" : ""}" data-action="toggle" data-module-id="${mod.id}" aria-label="${fav ? LABELS.unpin : LABELS.pin}" title="${fav ? LABELS.unpin : LABELS.pin}">${fav ? "★" : "☆"}</button>
-          </div>
-        `;
+        const line = document.createElement("div");
+        line.className = "portal-quick-row__line";
+
+        const title = document.createElement("p");
+        title.className = "portal-quick-row__title";
+        title.textContent = mod.label;
+
+        const star = document.createElement("button");
+        star.type = "button";
+        star.className = `portal-quick-star${fav ? " is-active" : ""}`;
+        star.setAttribute("data-action", "toggle");
+        star.setAttribute("data-module-id", mod.id);
+        star.setAttribute("aria-label", fav ? LABELS.unpin : LABELS.pin);
+        star.setAttribute("title", fav ? LABELS.unpin : LABELS.pin);
+        star.textContent = fav ? "★" : "☆";
+
+        line.append(title, star);
+        row.appendChild(line);
         list.appendChild(row);
       });
 

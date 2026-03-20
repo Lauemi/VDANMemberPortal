@@ -88,30 +88,54 @@ async function memberNoTaken(memberNo: string) {
   return Array.isArray(rows) && rows.length > 0;
 }
 
-async function resolvePreferredClubId(userId: string, preferredClubIdRaw: unknown, existingClubIdRaw: unknown) {
-  const existingClubId = txt(existingClubIdRaw);
-  if (existingClubId) return existingClubId;
+async function hasPreferredClubAccess(userId: string, preferredClubId: string) {
+  if (!preferredClubId) return false;
 
-  const preferredClubId = txt(preferredClubIdRaw);
-  if (preferredClubId) {
-    const preferredRes = await sbServiceFetch(
-      `/rest/v1/user_roles?select=club_id&user_id=eq.${encodeURIComponent(userId)}&club_id=eq.${encodeURIComponent(preferredClubId)}&limit=1`,
-      { method: "GET" },
-    );
-    const preferredRows = await preferredRes.json().catch(() => []);
-    if (Array.isArray(preferredRows) && preferredRows.length) return preferredClubId;
-  }
+  const legacyRes = await sbServiceFetch(
+    `/rest/v1/user_roles?select=club_id&user_id=eq.${encodeURIComponent(userId)}&club_id=eq.${encodeURIComponent(preferredClubId)}&limit=1`,
+    { method: "GET" },
+  );
+  const legacyRows = await legacyRes.json().catch(() => []);
+  if (Array.isArray(legacyRows) && legacyRows.length) return true;
 
-  const rolesRes = await sbServiceFetch(
+  const aclRes = await sbServiceFetch(
+    `/rest/v1/club_user_roles?select=club_id&user_id=eq.${encodeURIComponent(userId)}&club_id=eq.${encodeURIComponent(preferredClubId)}&limit=1`,
+    { method: "GET" },
+  );
+  const aclRows = await aclRes.json().catch(() => []);
+  return Array.isArray(aclRows) && aclRows.length > 0;
+}
+
+async function loadUserClubIds(userId: string) {
+  const legacyRes = await sbServiceFetch(
     `/rest/v1/user_roles?select=club_id&user_id=eq.${encodeURIComponent(userId)}&club_id=not.is.null`,
     { method: "GET" },
   );
-  const roleRows = await rolesRes.json().catch(() => []);
-  const clubIds = [...new Set(
-    (Array.isArray(roleRows) ? roleRows : [])
+  const legacyRows = await legacyRes.json().catch(() => []);
+
+  const aclRes = await sbServiceFetch(
+    `/rest/v1/club_user_roles?select=club_id&user_id=eq.${encodeURIComponent(userId)}&club_id=not.is.null`,
+    { method: "GET" },
+  );
+  const aclRows = await aclRes.json().catch(() => []);
+
+  return [...new Set(
+    [...(Array.isArray(legacyRows) ? legacyRows : []), ...(Array.isArray(aclRows) ? aclRows : [])]
       .map((row) => txt(row?.club_id))
       .filter(Boolean),
   )];
+}
+
+async function resolvePreferredClubId(userId: string, preferredClubIdRaw: unknown, existingClubIdRaw: unknown) {
+  const preferredClubId = txt(preferredClubIdRaw);
+  if (preferredClubId && await hasPreferredClubAccess(userId, preferredClubId)) {
+    return preferredClubId;
+  }
+
+  const existingClubId = txt(existingClubIdRaw);
+  if (existingClubId) return existingClubId;
+
+  const clubIds = await loadUserClubIds(userId);
 
   // Deterministic: auto-bind only if there is exactly one unambiguous club.
   if (clubIds.length === 1) return clubIds[0];

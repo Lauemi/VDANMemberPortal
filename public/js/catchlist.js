@@ -59,7 +59,7 @@
     const live = session()?.user?.id;
     if (live) return live;
     try {
-      const raw = localStorage.getItem("vdan_member_session_v1");
+      const raw = localStorage.getItem("vdan_member_session_meta_v1");
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       const fallback = String(parsed?.user?.id || "").trim();

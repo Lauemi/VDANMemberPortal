@@ -6,71 +6,123 @@ import { resolveSiteMode } from "../config/site-mode";
 const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
 ---
 
-<Site title={`Impressum • ${APP.name}`} description="Impressum des Vereins der Angler und Naturfreunde Ottenheim 1957 e.V.">
+<Site
+  title={`Impressum • ${APP.name}`}
+  description={isFcp ? "Impressum des Fishing-Club-Portals." : "Impressum des Vereins der Angler und Naturfreunde Ottenheim 1957 e.V."}
+>
   {isFcp ? (
-    <section class="card" style="max-width:900px;margin:0 auto;">
-      <div class="card__body">
+    <section class="card" style="max-width:960px;margin:0 auto;">
+      <div class="card__body prose">
         <h1>Impressum</h1>
-        <p class="small">FCP-Modus aktiv.</p>
+        <p><strong>Angaben gemäß § 5 DDG</strong></p>
+
         <p>
-          Diese Seite wird für das Fishing-Club-Portal separat gepflegt.
-          Bis zur finalen Veröffentlichung gelten die Angaben im operativen Projektkontext.
+          Michael Lauenroth<br />
+          Gartenstraße 21<br />
+          77963 Schwanau<br />
+          Deutschland
+        </p>
+
+        <p>
+          E-Mail: <a href={`mailto:${APP.supportEmail}`}>{APP.supportEmail}</a>
+        </p>
+
+        <h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
+        <p>
+          Michael Lauenroth<br />
+          Gartenstraße 21<br />
+          77963 Schwanau<br />
+          Deutschland
+        </p>
+
+        <h2>Plattformhinweis</h2>
+        <p>
+          Das Fishing-Club-Portal ist eine vereinsunabhängige Softwareplattform zur digitalen Verwaltung von Vereinsprozessen.
         </p>
         <p>
-          Kontakt: <a href={`mailto:${APP.supportEmail}`}>{APP.supportEmail}</a>
+          Der Plattformbetreiber stellt die technische Infrastruktur bereit. Angeschlossene Vereine nutzen die Plattform als eigenständige
+          Mandanten.
+        </p>
+
+        <h2>Verantwortlichkeit für vereinsbezogene Inhalte</h2>
+        <p>
+          Für vereinsbezogene Inhalte, Ansprechpartner, Vereinsdaten, vereinsinterne Dokumente und vereinsbezogene Rechtstexte ist
+          grundsätzlich der jeweilige Verein verantwortlich, soweit diese Inhalte vom Verein selbst bereitgestellt, gepflegt oder veranlasst
+          werden.
+        </p>
+
+        <h2>Haftung für Inhalte</h2>
+        <p>
+          Als Diensteanbieter bin ich für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Für fremde Inhalte,
+          die von angebundenen Vereinen oder Nutzern innerhalb der Plattform eingestellt werden, besteht eine Verantwortlichkeit erst ab
+          Kenntnis einer konkreten Rechtsverletzung. Bei Bekanntwerden entsprechender Rechtsverletzungen werden solche Inhalte geprüft und
+          gegebenenfalls entfernt oder gesperrt.
+        </p>
+
+        <h2>Haftung für Links</h2>
+        <p>
+          Diese Plattform kann Links zu externen Websites Dritter enthalten. Auf deren Inhalte besteht kein Einfluss. Für diese fremden
+          Inhalte wird daher keine Gewähr übernommen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber
+          verantwortlich.
+        </p>
+
+        <h2>Urheberrecht</h2>
+        <p>
+          Die durch den Plattformbetreiber erstellten Inhalte, Strukturen, Designs, Texte, Bilder, Softwarebestandteile und sonstigen Werke
+          auf dieser Plattform unterliegen dem deutschen Urheberrecht, soweit nicht Rechte Dritter oder der jeweiligen Vereine entgegenstehen.
+          Jede Verwertung außerhalb der Grenzen des Urheberrechts bedarf der vorherigen Zustimmung des jeweiligen Rechteinhabers.
         </p>
       </div>
     </section>
   ) : (
-  <section class="card" style="max-width:900px;margin:0 auto;">
-    <div class="card__body">
-      <h1>Impressum</h1>
+    <section class="card" style="max-width:900px;margin:0 auto;">
+      <div class="card__body">
+        <h1>Impressum</h1>
 
-      <h2>Angaben gemäß § 5 TMG</h2>
-      <p>
-        Verein der Angler und Naturfreunde Ottenheim 1957 e.V.<br />
-        Georgenstr. 33<br />
-        77963 Schwanau
-      </p>
+        <h2>Angaben gemäß § 5 TMG</h2>
+        <p>
+          Verein der Angler und Naturfreunde Ottenheim 1957 e.V.<br />
+          Georgenstr. 33<br />
+          77963 Schwanau
+        </p>
 
-      <h2>Vertreten durch den Vorstand</h2>
-      <p>
-        1. Vorstand: Rolf Bühler<br />
-        2. Vorstand: Markus Mild
-      </p>
+        <h2>Vertreten durch den Vorstand</h2>
+        <p>
+          1. Vorstand: Rolf Bühler<br />
+          2. Vorstand: Markus Mild
+        </p>
 
-      <h2>Kontakt</h2>
-      <p>
-        E-Mail: <a href="mailto:vdan.ottenheim@freenet.de">vdan.ottenheim@freenet.de</a>
-      </p>
+        <h2>Kontakt</h2>
+        <p>
+          E-Mail: <a href="mailto:vdan.ottenheim@freenet.de">vdan.ottenheim@freenet.de</a>
+        </p>
 
-      <h2>Vereinsregister</h2>
-      <p>
-        Registergericht: Amtsgericht Freiburg im Breisgau<br />
-        Registernummer: VR 390454
-      </p>
+        <h2>Vereinsregister</h2>
+        <p>
+          Registergericht: Amtsgericht Freiburg im Breisgau<br />
+          Registernummer: VR 390454
+        </p>
 
-      <h2>Webseiten-Administration</h2>
-      <p>
-        Michael Lauenroth<br />
-        Gartenstraße 21<br />
-        77963 Schwanau<br />
-        E-Mail: <a href="mailto:m.lauenroth@lauemi.de">m.lauenroth@lauemi.de</a>
-      </p>
+        <h2>Webseiten-Administration</h2>
+        <p>
+          Michael Lauenroth<br />
+          Gartenstraße 21<br />
+          77963 Schwanau<br />
+          E-Mail: <a href="mailto:m.lauenroth@lauemi.de">m.lauenroth@lauemi.de</a>
+        </p>
 
-      <h2>Haftung für Inhalte</h2>
-      <p>
-        Die Inhalte dieser Website wurden mit größtmöglicher Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und
-        Aktualität der Inhalte kann jedoch keine Gewähr übernommen werden.
-      </p>
+        <h2>Haftung für Inhalte</h2>
+        <p>
+          Die Inhalte dieser Website wurden mit größtmöglicher Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der
+          Inhalte kann jedoch keine Gewähr übernommen werden.
+        </p>
 
-      <h2>Haftung für Links</h2>
-      <p>
-        Diese Website enthält Links zu externen Websites Dritter, auf deren Inhalte kein Einfluss besteht. Für diese
-        fremden Inhalte wird daher keine Gewähr übernommen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige
-        Anbieter oder Betreiber verantwortlich.
-      </p>
-    </div>
-  </section>
+        <h2>Haftung für Links</h2>
+        <p>
+          Diese Website enthält Links zu externen Websites Dritter, auf deren Inhalte kein Einfluss besteht. Für diese fremden Inhalte wird
+          daher keine Gewähr übernommen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber verantwortlich.
+        </p>
+      </div>
+    </section>
   )}
 </Site>

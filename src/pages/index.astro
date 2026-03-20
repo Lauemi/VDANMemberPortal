@@ -2,19 +2,41 @@
 import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
 import { resolveSiteMode } from "../config/site-mode";
+import pkg from "../../package.json";
+
+function envText(value: unknown, fallback: string) {
+  const text = String(value ?? "").trim();
+  return text || fallback;
+}
 
 const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
 const isFcpLockdown = String(import.meta.env.PUBLIC_SITE_LOCKDOWN ?? "false").trim().toLowerCase() === "true";
+const appVersionEnv = String(import.meta.env.PUBLIC_APP_VERSION ?? "").trim();
+const deploySha = envText(
+  import.meta.env.PUBLIC_DEPLOY_SHA,
+  envText(import.meta.env.VERCEL_GIT_COMMIT_SHA, envText(import.meta.env.GITHUB_SHA, "")),
+);
+const deployRef = envText(
+  import.meta.env.PUBLIC_DEPLOY_REF,
+  envText(import.meta.env.VERCEL_GIT_COMMIT_REF, envText(import.meta.env.GITHUB_REF_NAME, "")),
+);
+const buildStamp = envText(import.meta.env.PUBLIC_BUILD_STAMP, "");
+const autoAppVersion = [
+  `v${String(pkg?.version || "0.1.0").trim()}`,
+  deployRef ? deployRef.replace(/[^a-zA-Z0-9._-]+/g, "-") : "",
+  deploySha ? deploySha.slice(0, 7) : buildStamp || "dev-local",
+].filter(Boolean).join("+");
+const assetVersion = encodeURIComponent(appVersionEnv && appVersionEnv !== "dev-local" ? appVersionEnv : autoAppVersion);
 ---
 
-<Site title={APP.name} description="Neuigkeiten aus dem Verein">
+<Site title={APP.name} description="Neuigkeiten aus dem Verein" containerClass={isFcp ? "container--fcp-brand" : "container"}>
   {isFcp ? (
     isFcpLockdown ? (
       <section class="card" style="max-width:780px;margin:0 auto;">
         <div class="card__body app-portal-guest">
           <picture class="app-portal-guest__logo" aria-hidden="true">
-            <source srcset="/Branding/New_FCP_GoFishing.svg" type="image/svg+xml" />
-            <img src="/Branding/New_FCP_GoFishing.png" alt="" loading="eager" decoding="async" />
+            <source srcset={`/Branding/New_FCP_GoFishing.svg?v=${assetVersion}`} type="image/svg+xml" />
+            <img src={`/Branding/New_FCP_GoFishing.png?v=${assetVersion}`} alt="" loading="eager" decoding="async" />
           </picture>
           <h1>Hier entsteht etwas Neues.</h1>
           <p class="app-portal-guest__message">
@@ -23,18 +45,180 @@ const isFcpLockdown = String(import.meta.env.PUBLIC_SITE_LOCKDOWN ?? "false").tr
         </div>
       </section>
     ) : (
-      <section class="card" style="max-width:980px;margin:0 auto;">
-        <div class="card__body prose">
-          <h1>Fishing-Club-Portal</h1>
-          <p><strong>FCP-Webseite im Aufbau.</strong></p>
-          <p>
-            Das Portal ist bereits nutzbar. Die öffentlichen FCP-Inhaltsseiten werden schrittweise aufgebaut.
-          </p>
-          <p>
-            Bitte verwende für den Zugang zum Portal den Login.
-          </p>
-        </div>
-      </section>
+      <div class="fcp-brand-home">
+        <section class="fcp-brand-hero">
+          <div class="fcp-brand-hero__media">
+            <img src="/Bilder/Hero1.jpg" alt="Angelruten am See bei intensivem Sonnenaufgang" loading="eager" decoding="async" />
+          </div>
+          <div class="fcp-brand-hero__overlay"></div>
+          <div class="container fcp-brand-hero__content">
+            <h1>Vereinsbetrieb digital organisieren. Ohne Chat-Chaos, Excel-Wildwuchs und Tool-Brüche.</h1>
+            <p>
+              Fishing-Club-Portal ist die zentrale Plattform für Angelvereine, die Mitglieder, Termine,
+              Arbeitseinsätze, Dokumente und Zugänge an einem Ort organisieren wollen, klar, nachvollziehbar
+              und direkt im Alltag nutzbar.
+            </p>
+            <div class="fcp-brand-hero__actions">
+              <a class="feed-btn fcp-brand-btn--primary" href="/registrieren/">Jetzt Loslegen</a>
+              <span class="fcp-brand-soon-note">COMING SOON</span>
+            </div>
+            <div class="fcp-brand-hero__metrics">
+              <div class="fcp-brand-metric">
+                <strong>1</strong>
+                <span>Ein System statt vieler Einzellösungen</span>
+              </div>
+              <div class="fcp-brand-metric">
+                <strong>3</strong>
+                <span>Setup, Mitglieder und Planung in einem Ablauf</span>
+              </div>
+              <div class="fcp-brand-metric">
+                <strong>Praxisnah</strong>
+                <span>Entwickelt für echte Vereinsarbeit, nicht für Demos</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="fcp-brand-band">
+          <div class="container">
+            <div class="fcp-brand-card-grid">
+              <article class="fcp-brand-card">
+                <span class="fcp-brand-card__eyebrow">Vereinsstart</span>
+                <h2>Sauber starten statt später aufräumen</h2>
+                <p>Neue Vereine, Mitglieder, Gewässer, Karten und Grunddaten folgen einem geführten Einstieg. So entsteht von Anfang an Struktur statt späterem Datenchaos.</p>
+              </article>
+              <article class="fcp-brand-card">
+                <span class="fcp-brand-card__eyebrow">Eventplanung</span>
+                <h2>Planung statt Nachrichten-Pingpong</h2>
+                <p>Termine, Arbeitseinsätze, Helferbedarf und Freigaben liegen an einem Ort, nicht verteilt über WhatsApp, Listen und Zurufe.</p>
+              </article>
+              <article class="fcp-brand-card">
+                <span class="fcp-brand-card__eyebrow">Zugriffe &amp; Rollen</span>
+                <h2>Jeder sieht, was zu seiner Rolle gehört</h2>
+                <p>Vorstand, Verwaltung und Mitglieder arbeiten im selben System, aber mit klar geregelten Zuständigkeiten und Zugriffswegen.</p>
+              </article>
+              <article class="fcp-brand-card fcp-brand-card--accent">
+                <span class="fcp-brand-card__eyebrow">Im Alltag nutzbar</span>
+                <h2>Nicht für die Theorie gebaut</h2>
+                <p>FCP ist für echte Vereinsarbeit gedacht: mobil erreichbar, direkt verständlich und so aufgebaut, dass Prozesse im Alltag funktionieren und nicht nur in der Demo.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="fcp-brand-showcase">
+          <div class="container fcp-brand-showcase__grid">
+            <div class="fcp-brand-showcase__copy">
+              <div class="fcp-brand-kicker">Produktfokus</div>
+              <h2>Die wichtigsten Vereinsprozesse. In einem klaren System.</h2>
+              <p>
+                FCP verbindet öffentliche Vereinsdarstellung und geschütztes Portal zu einer gemeinsamen Arbeitsstruktur.
+                Mitgliederzugang, Eventplanung, Dokumente, Vereinssetup und Vereinsabläufe greifen ineinander,
+                statt in getrennten Tools auseinanderzufallen.
+              </p>
+              <ul class="fcp-brand-list">
+                <li>Geführter Vereinsstart mit kontrollierter Freischaltung</li>
+                <li>Eventplaner für Termine, Helfer, Einsätze und Freigaben</li>
+                <li>Mitgliederzugang über Einladung, Login und geregelte Rollen</li>
+                <li>Dokumente, Ausweise und weitere Kernmodule in derselben Plattform</li>
+                <li>Saubere Vereinskontexte statt verstreuter Einzellogik</li>
+              </ul>
+            </div>
+            <div class="fcp-brand-showcase__visual">
+              <div class="fcp-brand-panel">
+                <div class="fcp-brand-panel__top">
+                  <span class="fcp-brand-dot"></span>
+                  <span class="fcp-brand-dot"></span>
+                  <span class="fcp-brand-dot"></span>
+                </div>
+                <div class="fcp-brand-panel__body">
+                  <div class="fcp-brand-panel__hero">
+                    <div>
+                      <span class="fcp-brand-kicker">Systemüberblick</span>
+                      <h3>Setup. Mitglieder. Planung. Betrieb.</h3>
+                    </div>
+                    <span class="fcp-brand-chip">fcp_beta</span>
+                  </div>
+                  <div class="fcp-brand-panel__stats">
+                    <div><strong>Setup</strong><span>Vereinsdaten, Gewässer, Karten, Mitglieder</span></div>
+                    <div><strong>Betrieb</strong><span>Termine, Einsätze, Eventpfade und Zusammenarbeit</span></div>
+                    <div><strong>Governance</strong><span>Rollen, Module, Rechte und nachvollziehbare Zuständigkeiten</span></div>
+                  </div>
+                  <div class="fcp-brand-panel__tiles">
+                    <div class="fcp-brand-tile"><span>VS</span><strong>Vereinssetup</strong></div>
+                    <div class="fcp-brand-tile"><span>EP</span><strong>Eventplaner</strong></div>
+                    <div class="fcp-brand-tile"><span>MG</span><strong>Mitglieder</strong></div>
+                    <div class="fcp-brand-tile"><span>DK</span><strong>Dokumente</strong></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="fcp-brand-story">
+          <div class="container fcp-brand-story__grid">
+            <div class="fcp-brand-story__media">
+              <img src="/Bilder/20201026_165446.jpg" alt="Wald und Wasser im Abendlicht" loading="lazy" />
+            </div>
+            <div class="fcp-brand-story__copy">
+              <div class="fcp-brand-kicker">Warum FCP</div>
+              <h2>Weniger Reibung. Mehr Klarheit im Vereinsalltag.</h2>
+              <p>
+                Viele Vereine arbeiten digital noch zwischen Chatgruppen, Einzeldateien, Papierlisten und isolierten
+                Tools. FCP wurde entwickelt, um genau diese Reibung zu reduzieren und Vereinsorganisation klarer,
+                nachvollziehbarer und alltagstauglicher zu machen.
+              </p>
+              <div class="fcp-brand-bullets">
+                <div><strong>Klare Zuständigkeiten</strong><span>Vorstand, Admins und Mitglieder arbeiten auf derselben Grundstruktur.</span></div>
+                <div><strong>Weniger Tool-Brüche</strong><span>Wichtige Prozesse liegen nicht mehr verteilt, sondern gebündelt an einem Ort.</span></div>
+                <div><strong>Einführung mit System</strong><span>Onboarding und Freischaltung sind Teil des Produkts und nicht nur ein Projekt nebenbei.</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="fcp-brand-about">
+          <div class="container fcp-brand-about__grid">
+            <div class="fcp-brand-about__copy">
+              <div class="fcp-brand-kicker">Über das Projekt</div>
+              <h2>Entstanden nicht aus Theorie, sondern aus echter Praxis.</h2>
+              <p>
+                Fishing-Club-Portal ist aus der Beobachtung entstanden, dass Vereinsarbeit digital an denselben
+                Punkten scheitert: zu viele Nebenwege, zu wenig klare Zuständigkeiten, verstreute Informationen und
+                Prozesse, die am Ende doch wieder über Chat, Papier oder Tabellen laufen.
+              </p>
+              <p>
+                Die Idee war deshalb nie eine weitere Vereinssoftware, sondern eine zusammenhängende Struktur, in der
+                Einstieg, Mitgliederbetrieb, Eventplanung, Dokumente und Verwaltung wirklich ineinandergreifen.
+              </p>
+              <p>
+                FCP entsteht nicht am Reißbrett, sondern aus echter Nutzung, echten Anforderungen und echtem
+                Vereinsalltag, Schritt für Schritt, mit dem Ziel, Vereinsbetrieb digital einfacher, klarer und
+                belastbarer zu machen.
+              </p>
+            </div>
+            <div class="fcp-brand-about__founder">
+              <div class="fcp-brand-kicker">Über den Gründer</div>
+              <h2>Ich entwickle FCP nicht für eine Zielgruppe auf dem Papier, sondern für reale Abläufe.</h2>
+              <p>
+                Ich komme selbst aus der Praxis und sehe jeden Tag, wo Vereinsorganisation digital nicht funktioniert:
+                Informationen sind verteilt, Zuständigkeiten unklar und Prozesse hängen an einzelnen Personen statt
+                an einer Struktur.
+              </p>
+              <p>
+                Als Entwickler ist mein Anspruch nicht, möglichst viele Features zu bauen, sondern ein System, das
+                im Alltag wirklich hilft. Ein System, das nachvollziehbar ist, Prozesse zusammenführt und Vereine
+                dabei unterstützt, sauber und effizient zu arbeiten.
+              </p>
+              <p>
+                FCP ist deshalb kein fertiges Produkt von der Stange, sondern ein System, das mit echter Nutzung
+                wächst, nah an den Vereinen, nah an den Anforderungen und ohne Umwege über theoretische Lösungen.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
     )
   ) : (
   <section class="home-hero-slider" aria-label="Vereinsimpressionen">

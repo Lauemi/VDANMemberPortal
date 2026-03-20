@@ -2,8 +2,23 @@
   const DB_NAME = "vdan_offline_v1";
   const DB_VERSION = 1;
   const STORE = "kv";
+  const LOCAL_FALLBACK_MAX_BYTES = 48 * 1024;
+  const LOCAL_FALLBACK_DENY_PREFIXES = [
+    "vdan_trip_cache_v1:",
+    "vdan_trip_images_v1:",
+  ];
 
   let dbPromise = null;
+
+  function isDeniedLocalFallbackKey(key) {
+    const text = String(key || "").trim();
+    return LOCAL_FALLBACK_DENY_PREFIXES.some((prefix) => text.startsWith(prefix));
+  }
+
+  function canUseLocalFallback(key, raw = "") {
+    if (isDeniedLocalFallbackKey(key)) return false;
+    return String(raw || "").length <= LOCAL_FALLBACK_MAX_BYTES;
+  }
 
   function hasIndexedDb() {
     return typeof indexedDB !== "undefined";
@@ -47,8 +62,14 @@
     if (res && typeof res === "object" && Object.prototype.hasOwnProperty.call(res, "value")) {
       return res.value;
     }
+    if (isDeniedLocalFallbackKey(key)) return null;
     try {
       const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      if (!canUseLocalFallback(key, raw)) {
+        localStorage.removeItem(key);
+        return null;
+      }
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
@@ -60,7 +81,12 @@
     const ok = await withStore("readwrite", (store) => store.put({ key, value, updated_at: new Date().toISOString() }));
     if (ok == null) {
       try {
-        localStorage.setItem(key, JSON.stringify(value));
+        const raw = JSON.stringify(value);
+        if (!canUseLocalFallback(key, raw)) {
+          localStorage.removeItem(key);
+          return;
+        }
+        localStorage.setItem(key, raw);
       } catch {
         // ignore
       }

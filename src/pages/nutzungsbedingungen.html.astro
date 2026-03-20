@@ -6,173 +6,185 @@ import { resolveSiteMode } from "../config/site-mode";
 const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
 ---
 
-<Site title={`Nutzungsbedingungen • ${APP.name}`} description="Nutzungsbedingungen für das VDAN Fishing-Club-Portal.">
+<Site
+  title={`Nutzungsbedingungen • ${APP.name}`}
+  description={isFcp ? "Nutzungsbedingungen für das Fishing-Club-Portal." : "Nutzungsbedingungen für das VDAN Fishing-Club-Portal."}
+>
   {isFcp ? (
     <section class="card">
       <div class="card__body prose">
-        <h1>Nutzungsbedingungen</h1>
-        <p class="small">FCP-Modus aktiv.</p>
+        <h1>Nutzungsbedingungen – Fishing-Club-Portal</h1>
+        <p><strong>Stand:</strong> 19.03.2026</p>
+
+        <h2>1. Geltungsbereich</h2>
         <p>
-          Diese Nutzungsbedingungen werden für das Fishing-Club-Portal separat geführt.
-          Bis zur finalen Veröffentlichung gilt der aktuelle Projekt- und Pilotbetrieb.
+          Diese Nutzungsbedingungen regeln die Nutzung der Plattform "Fishing-Club-Portal" einschließlich der öffentlichen Website, des
+          geschützten Mitgliederportals und der bereitgestellten Plattformfunktionen.
+        </p>
+
+        <h2>2. Plattformanbieter</h2>
+        <p>
+          Michael Lauenroth<br />
+          Gartenstraße 21<br />
+          77963 Schwanau<br />
+          Deutschland<br />
+          E-Mail: <a href={`mailto:${APP.supportEmail}`}>{APP.supportEmail}</a>
+        </p>
+
+        <h2>3. Plattformcharakter</h2>
+        <p>
+          Das Fishing-Club-Portal ist eine vereinsunabhängige Softwareplattform. Angeschlossene Vereine nutzen die Plattform als eigenständige
+          Mandanten.
+        </p>
+
+        <h2>4. Rolle der Vereine</h2>
+        <p>Vereine sind insbesondere verantwortlich für:</p>
+        <ul>
+          <li>Mitgliederdaten und vereinsbezogene Inhalte</li>
+          <li>interne Dokumente und Vereinsinformationen</li>
+          <li>vereinsbezogene Termine, Planungen und organisatorische Inhalte</li>
+          <li>Rechtmäßigkeit der eingestellten oder gepflegten Inhalte</li>
+        </ul>
+
+        <h2>5. Datenschutzrollen</h2>
+        <p>
+          Soweit Vereine über Zwecke und Mittel der Verarbeitung ihrer Vereins- und Mitgliederdaten entscheiden, sind sie datenschutzrechtlich
+          Verantwortliche.
         </p>
         <p>
-          Technischer Portalbetrieb: Michael Lauenroth<br />
-          Kontakt: <a href={`mailto:${APP.supportEmail}`}>{APP.supportEmail}</a>
+          Soweit der Plattformbetreiber diese Daten ausschließlich zur technischen Bereitstellung und Verarbeitung im Auftrag des Vereins
+          verarbeitet, erfolgt dies als Auftragsverarbeitung. Hierfür ist eine gesonderte Auftragsverarbeitungsvereinbarung vorzusehen.
+        </p>
+
+        <h2>6. Registrierung und Zugang</h2>
+        <p>
+          Die Nutzung geschützter Bereiche setzt ein berechtigtes Nutzerkonto voraus. Zugangsdaten sind vertraulich zu behandeln und vor dem
+          Zugriff Dritter zu schützen.
+        </p>
+
+        <h2>7. Zulässige Nutzung</h2>
+        <p>Unzulässig sind insbesondere:</p>
+        <ul>
+          <li>unbefugte Zugriffsversuche</li>
+          <li>Umgehung von Rollen- oder Rechtebeschränkungen</li>
+          <li>Manipulation der Plattform oder ihrer Datenstrukturen</li>
+          <li>Einstellung rechtswidriger, irreführender, beleidigender oder schädlicher Inhalte</li>
+          <li>automatisierte Angriffe, Überlastung oder missbräuchliche Nutzung</li>
+        </ul>
+
+        <h2>8. Rollen, Rechte und Sichtbarkeiten</h2>
+        <p>
+          Die Plattform arbeitet mit rollen- und mandantenbasierten Zugriffen. Nutzer dürfen nur auf Inhalte und Funktionen zugreifen, die
+          ihrem Rollen- und Vereinskontext zugeordnet sind.
+        </p>
+
+        <h2>9. Leistungen und Weiterentwicklung</h2>
+        <p>
+          Die Plattform kann technisch, funktional, organisatorisch oder sicherheitsbezogen weiterentwickelt, eingeschränkt oder erweitert
+          werden, soweit dies für Betrieb, Sicherheit, Wartung, Produktpflege oder Weiterentwicklung erforderlich ist.
+        </p>
+
+        <h2>10. Externe Dienste und Inhalte</h2>
+        <p>
+          Einzelne Funktionen können externe Inhalte oder externe technische Ressourcen einbinden, etwa Karten-, Shop- oder CDN-Dienste. Für
+          diese Inhalte können zusätzlich die Bedingungen und Datenschutzinformationen der jeweiligen Drittanbieter gelten.
+        </p>
+
+        <h2>11. Verfügbarkeit</h2>
+        <p>
+          Der Plattformbetreiber bemüht sich um einen möglichst störungsarmen Betrieb. Eine jederzeitige unterbrechungsfreie Verfügbarkeit wird
+          jedoch nicht geschuldet.
+        </p>
+
+        <h2>12. Inhalte der Nutzer und Vereine</h2>
+        <p>
+          Nutzer und Vereine sind dafür verantwortlich, dass eingestellte, gepflegte oder übermittelte Inhalte rechtmäßig sind und keine
+          Rechte Dritter verletzen.
+        </p>
+
+        <h2>13. Sperrung von Zugängen</h2>
+        <p>
+          Zugänge können vorübergehend oder dauerhaft gesperrt werden, wenn Anhaltspunkte für missbräuchliche Nutzung, Sicherheitsverstöße,
+          erhebliche Pflichtverletzungen oder sonstige Risiken für Plattform, Verein oder andere Nutzer vorliegen.
+        </p>
+
+        <h2>14. Haftung</h2>
+        <p>
+          Der Plattformbetreiber haftet unbeschränkt bei Vorsatz und grober Fahrlässigkeit sowie bei Schäden aus der Verletzung von Leben,
+          Körper oder Gesundheit.
+        </p>
+        <p>
+          Bei leicht fahrlässiger Verletzung wesentlicher Vertragspflichten ist die Haftung auf den vertragstypischen, vorhersehbaren Schaden
+          beschränkt. Im Übrigen ist die Haftung bei leichter Fahrlässigkeit ausgeschlossen, soweit gesetzlich zulässig.
+        </p>
+
+        <h2>15. Rechte an der Plattform</h2>
+        <p>
+          Die Plattform, ihre Softwarebestandteile, Strukturen, Texte, Grafiken, Layouts, Logos und sonstigen Inhalte des Plattformbetreibers
+          sind urheber-, marken- oder kennzeichenrechtlich geschützt, soweit nicht Rechte Dritter entgegenstehen.
+        </p>
+
+        <h2>16. Datenschutz</h2>
+        <p>
+          Die Verarbeitung personenbezogener Daten richtet sich nach der Datenschutzerklärung in ihrer jeweils aktuellen Fassung sowie, soweit
+          einschlägig, nach der zwischen Verein und Plattformbetreiber abgeschlossenen Auftragsverarbeitungsvereinbarung.
+        </p>
+
+        <h2>17. Beendigung und Exit</h2>
+        <p>
+          Im Fall der Beendigung der Nutzung werden vereinsbezogene Daten gemäß den vertraglichen und datenschutzrechtlichen Vorgaben gelöscht,
+          gesperrt oder exportiert.
+        </p>
+
+        <h2>18. Änderungen dieser Nutzungsbedingungen</h2>
+        <p>
+          Diese Nutzungsbedingungen können aus sachlichem Grund angepasst werden, etwa bei Rechtsänderungen, technischen Änderungen,
+          Sicherheitsanforderungen oder Weiterentwicklungen der Plattform.
+        </p>
+
+        <h2>19. Schlussbestimmungen</h2>
+        <p>
+          Es gilt deutsches Recht. Sollten einzelne Bestimmungen unwirksam sein oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen
+          unberührt.
         </p>
       </div>
     </section>
   ) : (
-  <section class="card">
-    <div class="card__body prose">
-      <h1>Nutzungsbedingungen</h1>
-      <p><strong>Stand:</strong> 09.03.2026</p>
+    <section class="card">
+      <div class="card__body prose">
+        <h1>Nutzungsbedingungen</h1>
+        <p><strong>Stand:</strong> 16.03.2026</p>
 
-      <h2>1. Geltungsbereich</h2>
-      <p>
-        Diese Nutzungsbedingungen gelten für die Nutzung der öffentlichen Website sowie des geschützten
-         Fishing-Club-Portals (Mitgliederbereich). Nachfolgend wird der Verein als "VDAN" bezeichnet.
-      </p>
+        <h2>1. Geltungsbereich</h2>
+        <p>
+          Diese Nutzungsbedingungen gelten für die Nutzung der öffentlichen Website sowie des geschützten Fishing-Club-Portals
+          (Mitgliederbereich). Nachfolgend wird der Verein als "VDAN" bezeichnet.
+        </p>
 
-      <h2>2. Anbieter / Verantwortliche Stelle</h2>
-      <p>
-        VDAN (Verein der Angler und Naturfreunde Ottenheim 1957 e.V.)
-      </p>
-      <p>
-        Operativer technischer Portalbetrieb: Michael Lauenroth
-      </p>
-      <p>
-        Kontakt für technische Portalfragen: <a href="mailto:m.lauenroth@lauemi.de">m.lauenroth@lauemi.de</a>
-      </p>
-      <p>
-        Rechtsverbindliche Anbieterangaben ergeben sich aus dem jeweils aktuellen Impressum.
-      </p>
+        <h2>2. Anbieter / Verantwortliche Stelle</h2>
+        <p>VDAN (Verein der Angler und Naturfreunde Ottenheim 1957 e.V.)</p>
+        <p>Operativer technischer Portalbetrieb: Michael Lauenroth</p>
+        <p>Kontakt für technische Portalfragen: <a href="mailto:m.lauenroth@lauemi.de">m.lauenroth@lauemi.de</a></p>
 
-      <h2>3. Eigentum, Rechte und Nutzungsumfang</h2>
-      <ol>
-        <li>Das Fishing-Club-Portal ist ein eigenständiges Produkt von Michael Lauenroth.</li>
-        <li>Eigentums-, Urheber- und Verwertungsrechte verbleiben vollständig beim Entwickler.</li>
-        <li>Der Verein erhält ein einfaches, nicht übertragbares Nutzungsrecht für den internen Vereinsbetrieb.</li>
-        <li>Eine Weitergabe, Kopie oder Nutzung des Systems durch Dritte ist ohne Zustimmung des Rechteinhabers nicht zulässig.</li>
-        <li>Es besteht kein Anspruch auf Quellcode, Miturheberrechte oder Verwertungsbeteiligung.</li>
-      </ol>
+        <h2>3. Eigentum, Rechte und Nutzungsumfang</h2>
+        <ol>
+          <li>Das Fishing-Club-Portal ist ein eigenständiges Produkt von Michael Lauenroth.</li>
+          <li>Eigentums-, Urheber- und Verwertungsrechte verbleiben vollständig beim Entwickler.</li>
+          <li>Der Verein erhält ein einfaches, nicht übertragbares Nutzungsrecht für den internen Vereinsbetrieb.</li>
+        </ol>
 
-      <h2>4. Pilot- und Übergangsstatus</h2>
-      <ol>
-        <li>Die aktuelle Nutzung erfolgt als Pilot- und Testbetrieb und derzeit freiwillig unentgeltlich.</li>
-        <li>Die aktuelle Kostenübernahme für Provider/Hosting durch Michael Lauenroth erfolgt freiwillig und begründet keinen Anspruch auf dauerhafte Kostenfreiheit.</li>
-        <li>Mit offizieller Markteinführung werden formelle Nutzungs- und Auftragsverarbeitungsvereinbarungen ergänzt.</li>
-      </ol>
+        <h2>4. Pilot- und Übergangsstatus</h2>
+        <ol>
+          <li>Die aktuelle Nutzung erfolgt als Pilot- und Testbetrieb und derzeit freiwillig unentgeltlich.</li>
+          <li>Mit offizieller Markteinführung werden formelle Nutzungs- und Auftragsverarbeitungsvereinbarungen ergänzt.</li>
+        </ol>
 
-      <h2>5. Leistungen des Portals</h2>
-      <ol>
-        <li>Öffentlich: Informationsseiten, Termine, Downloads, Kontakt.</li>
-        <li>Mitgliederportal: rollenbasierte Funktionen (z. B. Fangliste, Arbeitseinsätze, Ausweis, Gewässerkarte, interne Verwaltung).</li>
-        <li>VDAN kann Funktionen aus technischen, organisatorischen oder rechtlichen Gründen ändern, einschränken oder einstellen.</li>
-      </ol>
-
-      <h2>5a. Verantwortung für Vereinsinhalte</h2>
-      <ol>
-        <li>Für inhaltliche Vereinsdaten (z. B. Beiträge, Termine, Vereinsinformationen, Dokumentinhalte) ist der Verein als Verantwortlicher zuständig.</li>
-        <li>Technische Plattformleistungen (Hosting, Betrieb, Sicherheitsmechanismen, Zugriffssteuerung) erfolgen getrennt als IT-/Portalbetrieb.</li>
-        <li>Soweit Inhalte durch Vereinsorgane oder beauftragte Vereinsnutzer eingestellt werden, verbleibt die inhaltliche Verantwortung beim Verein.</li>
-      </ol>
-
-      <h2>5b. Datenschutzrollen (Controller/Processor)</h2>
-      <ol>
-        <li>VDAN ist Verantwortlicher im Sinne der DSGVO für die durch Vereinsorgane oder Mitglieder im Portal verarbeiteten personenbezogenen Daten.</li>
-        <li>Das Fishing-Club-Portal stellt die technische Plattform für Speicherung, Verarbeitung und Zugriff bereit und handelt insoweit als technischer Plattformbetreiber.</li>
-        <li>Die Verarbeitung erfolgt ausschließlich zur Bereitstellung und zum Betrieb der Plattformfunktionen.</li>
-        <li>Mit offizieller Markteinführung oder Nutzung durch weitere Vereine werden entsprechende Auftragsverarbeitungsvereinbarungen (Art. 28 DSGVO) geschlossen.</li>
-        <li>Die Plattform ist so konzipiert, dass Daten verschiedener Vereine technisch voneinander getrennt verarbeitet werden.</li>
-      </ol>
-
-      <h2>6. Registrierung und Zugang</h2>
-      <ol>
-        <li>Geschützte Bereiche dürfen nur von berechtigten Nutzern verwendet werden.</li>
-        <li>Der technische Login-Identifier ist die im Auth-System geführte E-Mail-Adresse.</li>
-        <li>Mitgliedsnummern und Kürzel dienen ausschließlich der vereinsinternen Zuordnung und Anzeige und sind nicht zwingend direkter Login-Name.</li>
-        <li>In Übergangsphasen kann eine Anmeldung technisch auch über Mitgliedskennungen erfolgen, die intern auf Auth-E-Mail-Identitäten abgebildet werden.</li>
-        <li>Zugangsdaten sind geheim zu halten und vor dem Zugriff Dritter zu schützen.</li>
-        <li>Bei Verdacht auf Missbrauch sind Zugangsdaten unverzüglich zu ändern und der Verein zu informieren.</li>
-      </ol>
-
-      <h2>7. Pflichten der Nutzer</h2>
-      <ol>
-        <li>Angaben müssen wahrheitsgemäß und aktuell sein.</li>
-        <li>Missbräuchliche Nutzung ist untersagt (insb. unbefugte Zugriffe, Manipulation, automatisierte Angriffe, Umgehung von Berechtigungen).</li>
-        <li>Übermittelte Inhalte dürfen keine Rechte Dritter verletzen und keine rechtswidrigen Inhalte enthalten.</li>
-      </ol>
-
-      <h2>8. Verfügbarkeit</h2>
-      <ol>
-        <li>VDAN bemüht sich um einen störungsarmen Betrieb.</li>
-        <li>Eine durchgehende Verfügbarkeit wird nicht geschuldet.</li>
-        <li>Wartung, Sicherheitsupdates, Ausfälle von Drittanbietern, höhere Gewalt oder Netzstörungen können zu Unterbrechungen führen.</li>
-      </ol>
-
-      <h2>9. Sicherheitserklärung</h2>
-      <ol>
-        <li>VDAN setzt angemessene technische und organisatorische Maßnahmen zum Schutz von Daten und Systemen ein.</li>
-        <li>Dazu gehören insbesondere rollenbasierte Zugriffssteuerung, Authentifizierungsmechanismen und Protokollierung sicherheitsrelevanter Ereignisse.</li>
-        <li>Ein vollständig risikofreier Betrieb kann technisch nicht garantiert werden.</li>
-      </ol>
-
-      <h2>10. Externe Dienste und Inhalte</h2>
-      <ol>
-        <li>Bei Nutzung externer Dienste (z. B. Karten- oder CDN-Dienste) gelten ergänzend deren Bedingungen und Datenschutzhinweise.</li>
-        <li>Externe Inhalte können einwilligungsabhängig geladen werden.</li>
-      </ol>
-
-      <h2>11. Haftung</h2>
-      <ol>
-        <li>VDAN haftet unbeschränkt bei Vorsatz und grober Fahrlässigkeit sowie bei Schäden aus Verletzung von Leben, Körper oder Gesundheit.</li>
-        <li>Bei leicht fahrlässiger Verletzung wesentlicher Vertragspflichten haftet VDAN nur auf den vertragstypischen, vorhersehbaren Schaden.</li>
-        <li>Im Übrigen ist die Haftung bei leichter Fahrlässigkeit ausgeschlossen.</li>
-        <li>Zwingende gesetzliche Haftungsvorschriften bleiben unberührt.</li>
-      </ol>
-
-      <h2>12. Rechte an Inhalten</h2>
-      <ol>
-        <li>Inhalte der Plattform (Texte, Layout, Grafiken, Logos, Datenstrukturen) sind urheber- und/oder kennzeichenrechtlich geschützt.</li>
-        <li>Jede Nutzung außerhalb gesetzlicher Schranken bedarf der vorherigen Zustimmung des Rechteinhabers.</li>
-      </ol>
-
-      <h2>13. Datenschutz</h2>
-      <p>
-        Die Verarbeitung personenbezogener Daten richtet sich nach der Datenschutzerklärung in der jeweils aktuellen Fassung:
-        <a href="/datenschutz.html/">/datenschutz.html/</a>.
-      </p>
-
-      <h2>14. Änderungen dieser Nutzungsbedingungen</h2>
-      <ol>
-        <li>VDAN kann diese Nutzungsbedingungen aus sachlichem Grund anpassen (z. B. Rechtsänderungen, Sicherheitsanforderungen, Funktionsänderungen).</li>
-        <li>Die jeweils aktuelle Fassung wird auf der Website veröffentlicht.</li>
-      </ol>
-
-      <h2>15. Verbraucherstreitbeilegung</h2>
-      <p>
-        Der Verein ist nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
-      </p>
-
-      <h2>16. Beendigung der Nutzung (Exit-Regelung)</h2>
-      <ol>
-        <li>Die Nutzung kann durch Vorstandsbeschluss beendet werden.</li>
-        <li>Im Beendigungsfall erfolgen die Einstellung des Portalbetriebs, die datenschutzkonforme Löschung vereinsbezogener Daten, ein optionaler Export vereinsrelevanter Daten zur Übergabe an den Verein und die Dokumentation der Löschung.</li>
-      </ol>
-
-      <h2>17. Schlussbestimmungen</h2>
-      <ol>
-        <li>Es gilt deutsches Recht.</li>
-        <li>Zwingende Verbraucherschutzvorschriften bleiben unberührt.</li>
-        <li>Sollten einzelne Bestimmungen unwirksam sein oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.</li>
-      </ol>
-
-      <p class="small">
-        © VDAN Ottenheim<br />
-        Plattform: Fishing-Club-Portal - Software von Michael Lauenroth
-      </p>
-    </div>
-  </section>
+        <h2>5. Datenschutz</h2>
+        <p>
+          Die Verarbeitung personenbezogener Daten richtet sich nach der Datenschutzerklärung in der jeweils aktuellen Fassung:
+          <a href="/datenschutz.html/">/datenschutz.html/</a>.
+        </p>
+      </div>
+    </section>
   )}
 </Site>

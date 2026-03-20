@@ -1,0 +1,124 @@
+<mxfile host="65bd71144e">
+    <diagram id="eventplaner-mask-dom" name="Eventplaner DOM">
+        <mxGraphModel dx="2668" dy="1768" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1400" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="MASKE: /app/eventplaner/" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2f352a;fontColor=#ffffff;strokeColor=#2f352a;fontStyle=1;fontSize=18;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="20" width="320" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="main.container--admin-wide" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f7f3ea;strokeColor=#6c705b;strokeWidth=2;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="90" width="2040" height="1180" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="section.card&#xa;Hero / Kopfbereich" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#efe8d9;strokeColor=#6c705b;strokeWidth=2;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="130" width="1960" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" value="div.event-planner-hero" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffaf0;strokeColor=#6c705b;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="160" width="1900" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" value="div.event-planner-hero__copy&#xa;h1 Eventplaner&#xa;p#eventPlannerMsg (nur bei Meldung sichtbar)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;" parent="1" vertex="1">
+                    <mxGeometry x="130" y="175" width="980" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" value="div.event-planner-club-switch&#xa;- Aktiver Verein&#xa;- #eventPlannerActiveClubLabel&#xa;- #eventPlannerClubSwitchList&#xa;  - button.event-planner-club-chip*" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f4e8;strokeColor=#6c705b;" parent="1" vertex="1">
+                    <mxGeometry x="1490" y="170" width="490" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" value="section.card&#xa;Board / Arbeitsbereich" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#efe8d9;strokeColor=#6c705b;strokeWidth=2;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="280" width="1960" height="980" as="geometry"/>
+                </mxCell>
+                <mxCell id="31" value="div.admin-board.event-planner-board" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffaf0;strokeColor=#6c705b;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="310" width="1900" height="920" as="geometry"/>
+                </mxCell>
+                <mxCell id="40" value="aside.admin-board__nav&#xa;Navigation&#xa;- Kalender&#xa;- Events verwalten&#xa;- Helferanmeldungen / Freigaben&#xa;- DB-Architektur" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f6f0e2;strokeColor=#6c705b;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="130" y="340" width="300" height="860" as="geometry"/>
+                </mxCell>
+                <mxCell id="50" value="div.admin-board__content" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffdf8;strokeColor=#6c705b;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="460" y="340" width="1530" height="860" as="geometry"/>
+                </mxCell>
+                <mxCell id="60" value="section.admin-section.is-active[data-eventplanner-panel=&#39;kalender&#39;]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f5eb;strokeColor=#c8bea7;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="380" width="690" height="780" as="geometry"/>
+                </mxCell>
+                <mxCell id="61" value="article.admin-card&#xa;Kalender Toolbar&#xa;- Monat Label&#xa;- Vorheriger Monat&#xa;- Nächster Monat" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;" parent="1" vertex="1">
+                    <mxGeometry x="520" y="400" width="660" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="62" value="div.event-planner-kpis&#xa;5 KPI-Karten" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;" parent="1" vertex="1">
+                    <mxGeometry x="520" y="500" width="660" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="63" value="div.event-planner-calendar&#xa;- Head: Mo Di Mi Do Fr Sa So&#xa;- Grid: #eventPlannerCalendarGrid&#xa;- Zellen: button.event-planner-calendar__cell*" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;" parent="1" vertex="1">
+                    <mxGeometry x="520" y="580" width="660" height="330" as="geometry"/>
+                </mxCell>
+                <mxCell id="64" value="article.admin-card&#xa;Ausgewählter Tag&#xa;- #eventPlannerSelectedDateLabel&#xa;- #eventPlannerSelectedDayList" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;" parent="1" vertex="1">
+                    <mxGeometry x="520" y="925" width="660" height="170" as="geometry"/>
+                </mxCell>
+                <mxCell id="65" value="dialog#eventPlannerDayDialog&#xa;catch-dialog&#xa;- Tagesdetails im Dialog" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf1ff;strokeColor=#5f99dc;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="540" y="1105" width="620" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="70" value="section.admin-section[data-eventplanner-panel=&#39;events&#39;]&#xa;enthaelt div.event-planner-workspace" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f5eb;strokeColor=#c8bea7;" parent="1" vertex="1">
+                    <mxGeometry x="1230" y="370" width="730" height="880" as="geometry"/>
+                </mxCell>
+                <mxCell id="71" value="article.admin-card&#xa;Event-Workspace Toolbar&#xa;- Mitgliederansicht öffnen&#xa;- Planungsquelle öffnen" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;" parent="1" vertex="1">
+                    <mxGeometry x="1260" y="400" width="670" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="72" value="article.admin-card&#xa;Aktive Planevents" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1260" y="495" width="670" height="370" as="geometry"/>
+                </mxCell>
+                <mxCell id="73" value="div.event-planner-quick-create&#xa;table.event-planner-create-table&#xa;thead: Datum | Zeit | Titel | Bedarf | Angemeldet | Aktionen&#xa;tbody:&#xa;- Toggle Row: + Neues Event&#xa;- Create Row mit Inline-Feldern&#xa;  Datum | Start/Ende | Titel | Basis | Label | Bedarf | Check/Reset" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fdfbf6;strokeColor=#6c705b;" parent="1" vertex="1">
+                    <mxGeometry x="1290" y="525" width="610" height="145" as="geometry"/>
+                </mxCell>
+                <mxCell id="74" value="div.work-part-table-wrap&#xa;table#eventPlannerManagedTable&#xa;thead: Datum | Zeit | Titel | Bedarf | Angemeldet | Aktion&#xa;tbody: Event-Zeilen, per JS mit aufklappbarer Detail-Zeile" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fdfbf6;strokeColor=#6c705b;" parent="1" vertex="1">
+                    <mxGeometry x="1290" y="685" width="610" height="150" as="geometry"/>
+                </mxCell>
+                <mxCell id="80" value="Detail-Zeile eines Planevents" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef5ff;strokeColor=#5f99dc;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1260" y="880" width="670" height="220" as="geometry"/>
+                </mxCell>
+                <mxCell id="81" value="Schichten / Tätigkeiten&#xa;table#eventPlannerSlotsTable&#xa;Spalten: Aufgabe | Datum | Von | Bis | Helfer | Mitglieder | Aktion&#xa;- vorhandene Slot-Zeilen&#xa;- Inline-Eingabezeile" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#5f99dc;" parent="1" vertex="1">
+                    <mxGeometry x="1285" y="910" width="400" height="175" as="geometry"/>
+                </mxCell>
+                <mxCell id="82" value="Event-Details&#xa;Detailbereich / Konfigurationsformular (per JS)&#xa;- Freigabeart&#xa;- Helfer gesamt&#xa;- Wiederholung Pills&#xa;- Speichern" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#5f99dc;" parent="1" vertex="1">
+                    <mxGeometry x="1700" y="910" width="205" height="175" as="geometry"/>
+                </mxCell>
+                <mxCell id="90" value="article#eventPlannerSourceCard&#xa;Termin / Arbeitseinsatz als Event planen" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1260" y="1115" width="670" height="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="91" value="div.work-part-table-wrap&#xa;table#eventPlannerSourceTable&#xa;Spalten: Datum | Titel | Typ | Status | Ort | Aktion&#xa;- Row-Klick / Aktion öffnet Source-Dialog&#xa;- Button: Als Event planen" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fdfbf6;strokeColor=#6c705b;" parent="1" vertex="1">
+                    <mxGeometry x="1285" y="1150" width="620" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="100" value="dialog#eventPlannerSourceDialog&#xa;catch-dialog&#xa;Bearbeitung Basisobjekt vor Planung" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf1ff;strokeColor=#5f99dc;strokeWidth=2;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1540" y="90" width="500" height="540" as="geometry"/>
+                </mxCell>
+                <mxCell id="101" value="Felder in .event-planner-form-grid-2&#xa;- Titel&#xa;- Ort&#xa;- Start (datetime-local)&#xa;- Ende (datetime-local)&#xa;- optional: Max. Helfer&#xa;- optional: Jugend-Termin Checkbox&#xa;- Beschreibung (volle Breite)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#5f99dc;" parent="1" vertex="1">
+                    <mxGeometry x="1570" y="140" width="440" height="360" as="geometry"/>
+                </mxCell>
+                <mxCell id="102" value="catch-dialog__actions&#xa;- Speichern&#xa;- Als Event planen&#xa;- Schließen via Dialog-Button" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#5f99dc;" parent="1" vertex="1">
+                    <mxGeometry x="1570" y="515" width="440" height="85" as="geometry"/>
+                </mxCell>
+                <mxCell id="130" value="section.admin-section[data-eventplanner-panel=&#39;freigaben&#39;]&#xa;article.admin-card" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f5eb;strokeColor=#c8bea7;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="1175" width="690" height="155" as="geometry"/>
+                </mxCell>
+                <mxCell id="131" value="table#eventPlannerApprovalsTable&#xa;Spalten: Event | Slot | Mitglied | Zeitraum | Status | Freigabe | Aktion" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;" parent="1" vertex="1">
+                    <mxGeometry x="530" y="1210" width="630" height="85" as="geometry"/>
+                </mxCell>
+                <mxCell id="140" value="section.admin-section[data-eventplanner-panel=&#39;architektur&#39;]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f5eb;strokeColor=#c8bea7;" parent="1" vertex="1">
+                    <mxGeometry x="1230" y="1265" width="730" height="220" as="geometry"/>
+                </mxCell>
+                <mxCell id="141" value="article.admin-card admin-card--compact&#xa;DB-Architekturleitplanke&#xa;- Heute&#xa;- Regel&#xa;- Naechster sauberer Ausbau" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;" parent="1" vertex="1">
+                    <mxGeometry x="1260" y="1295" width="670" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="142" value="article.admin-card&#xa;Empfohlene spaetere Erweiterung&#xa;pre.event-planner-pre&#xa;- event_planner_configs&#xa;- event_planner_slots&#xa;- event_planner_registrations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;" parent="1" vertex="1">
+                    <mxGeometry x="1260" y="1385" width="670" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="110" value="DOM-/Flow-Hinweise" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2f352a;fontColor=#ffffff;strokeColor=#2f352a;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="1360" width="220" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="111" value="1. Die Navigation schaltet vier Panels: kalender, events, freigaben, architektur.&#xa;2. Nur kalender ist initial mit .is-active markiert.&#xa;3. Das events-Panel enthaelt Toolbar, Planevents, Source-Tabelle und Source-Dialog.&#xa;4. Die Planevent-Detailzeile wird dynamisch per JS in #eventPlannerManagedTable gerendert.&#xa;5. Quick-Create ist inline in der Tabelle und nicht als separates Formular." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffaf0;strokeColor=#6c705b;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="1350" width="1060" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="120" value="" style="endArrow=block;html=1;rounded=0;strokeColor=#5f99dc;strokeWidth=2;" parent="1" source="91" target="100" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="121" value="" style="endArrow=block;html=1;rounded=0;strokeColor=#5f99dc;strokeWidth=2;" parent="1" source="74" target="80" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

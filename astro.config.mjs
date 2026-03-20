@@ -10,9 +10,12 @@ import vercel from "@astrojs/vercel";
 const isVercelRuntime = process.env.VERCEL === "1" || process.env.VERCEL === "true";
 const forceServerOutput = process.env.FORCE_SERVER_OUTPUT === "1" || process.env.FORCE_SERVER_OUTPUT === "true";
 const useServerOutput = isVercelRuntime || forceServerOutput;
+const publicSiteUrl = process.env.PUBLIC_SITE_URL?.trim()
+  || process.env.FCP_PLATFORM_URL?.trim()
+  || "https://www.fishing-club-portal.de";
 
 export default defineConfig({
-  site: "https://www.vdan-ottenheim.com", // TODO: set your domain
+  site: publicSiteUrl,
   trailingSlash: "always",
   output: useServerOutput ? "server" : "static",
   adapter: useServerOutput ? vercel() : undefined,

@@ -1,0 +1,23 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site
+  title={`Mitmachen • ${APP.name}`}
+  description="Einfache Mitgliederansicht für planbare Events und Slots"
+  robots="noindex"
+>
+  <section class="card">
+    <div class="card__body">
+      <h1>Mitmachen</h1>
+      <p class="small">
+        Übersicht für Mitglieder: anstehende planbare Events, freie Plätze und direkte Anmeldung zu Event oder Slot.
+      </p>
+      <p id="eventPlannerMemberMsg" class="small" aria-live="polite"></p>
+      <div id="eventPlannerMemberList" class="grid"></div>
+    </div>
+  </section>
+
+  <script src="/js/event-planner-member.js" defer></script>
+</Site>

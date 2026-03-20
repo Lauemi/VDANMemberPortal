@@ -2,8 +2,12 @@
   let reloadingForSw = false;
   const UPDATE_NOTIFY_KEY = "vdan_notify_app_update_v1";
   const isFcp = String(document.body?.dataset?.siteMode || "").trim().toLowerCase() === "fcp";
+  const isLocalDev = ["localhost", "127.0.0.1"].includes(String(window.location.hostname || "").trim().toLowerCase());
   const notifyTitle = isFcp ? "Fishing-Club-Portal" : "VDAN APP";
-  const notifyIcon = isFcp ? "/Branding/NewLogoCamouFCP.png" : "/Bilder/logo300x300.png";
+  const assetVersion = encodeURIComponent(String(document.body?.dataset?.appVersion || "dev").trim());
+  const notifyIcon = isFcp
+    ? `/Branding/NewLogoCamouFCP.png?v=${assetVersion}`
+    : `/Bilder/logo300x300.png?v=${assetVersion}`;
 
   function updateNotifyEnabled() {
     try {
@@ -48,8 +52,17 @@
 
   async function registerSw() {
     if (!("serviceWorker" in navigator)) return;
+    if (isLocalDev) {
+      try {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((reg) => reg.unregister().catch(() => {})));
+      } catch {
+        // ignore cleanup issues in local dev
+      }
+      return;
+    }
     try {
-      const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      const reg = await navigator.serviceWorker.register(`/sw.js?v=${assetVersion}`, { scope: "/" });
       reg.update().catch(() => {});
       if (reg.waiting) {
         notifyUpdateAvailable(reg).catch(() => {});

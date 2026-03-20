@@ -270,19 +270,30 @@
   }
 
   async function listUpcomingTerms() {
-    const nowIso = new Date().toISOString();
-    const rows = await sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc&limit=40`, { method: "GET" });
+    const { dayStartIso } = todayRangeIso();
+    const rows = await sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&starts_at=gte.${encodeURIComponent(dayStartIso)}&order=starts_at.asc&limit=40`, { method: "GET" });
     return filterByFeedCategory(rows);
   }
 
   async function listUpcomingWorkEvents() {
-    const nowIso = new Date().toISOString();
-    const rows = await sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc&limit=40`, { method: "GET" });
+    const { dayStartIso } = todayRangeIso();
+    const rows = await sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&starts_at=gte.${encodeURIComponent(dayStartIso)}&order=starts_at.asc&limit=40`, { method: "GET" });
     return filterByFeedCategory(rows);
+  }
+
+  function todayRangeIso() {
+    const now = new Date();
+    const dayStart = new Date(now);
+    dayStart.setHours(0, 0, 0, 0);
+    return {
+      nowIso: now.toISOString(),
+      dayStartIso: dayStart.toISOString(),
+    };
   }
 
   function weekRangeIso() {
     const now = new Date();
+    const { dayStartIso } = todayRangeIso();
     const day = (now.getDay() + 6) % 7;
     const weekStart = new Date(now);
     weekStart.setDate(now.getDate() - day);
@@ -292,14 +303,19 @@
     weekEnd.setDate(weekStart.getDate() + 6);
     weekEnd.setHours(23, 59, 59, 999);
 
-    return { nowIso: now.toISOString(), weekStartIso: weekStart.toISOString(), weekEndIso: weekEnd.toISOString() };
+    return {
+      nowIso: now.toISOString(),
+      dayStartIso,
+      weekStartIso: weekStart.toISOString(),
+      weekEndIso: weekEnd.toISOString(),
+    };
   }
 
   async function listWeekCalendarItems() {
-    const { nowIso, weekEndIso } = weekRangeIso();
+    const { dayStartIso, weekEndIso } = weekRangeIso();
     const [termsRaw, worksRaw] = await Promise.all([
-      sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`, { method: "GET" }),
-      sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&starts_at=lte.${encodeURIComponent(weekEndIso)}&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`, { method: "GET" }),
+      sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&starts_at=gte.${encodeURIComponent(dayStartIso)}&starts_at=lte.${encodeURIComponent(weekEndIso)}&order=starts_at.asc`, { method: "GET" }),
+      sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status,is_youth&status=eq.published&starts_at=gte.${encodeURIComponent(dayStartIso)}&starts_at=lte.${encodeURIComponent(weekEndIso)}&order=starts_at.asc`, { method: "GET" }),
     ]);
 
     const terms = filterByFeedCategory(termsRaw);

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://www.fishing-club-portal.de/sitemap-index.xml

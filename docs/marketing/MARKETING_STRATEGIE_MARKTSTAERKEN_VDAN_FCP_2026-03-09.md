@@ -1,6 +1,6 @@
 # Marketingstrategie und Marktstaerken (VDAN / Fishing-Club-Portal)
 
-Stand: 2026-03-09
+Stand: 2026-03-18
 Produkt: VDAN App Template (Website + Mitgliederportal)
 Status: Arbeitsgrundlage fuer Marketing, Kommunikation, Vertrieb und Partneransprache
 
@@ -12,7 +12,7 @@ Dieses Dokument soll sicherstellen, dass Marketing ohne technische Rueckfragen p
 - konkrete Go-to-Market- und Content-Planung fuer die naechsten 90 Tage
 
 ## 2. Produkt in einem Satz
-Eine digitale Vereinsplattform, die oeffentliche Website und geschuetztes Mitgliederportal in einem System verbindet und zentrale Vereinsprozesse (Mitglieder, Termine, Einsaetze, Fangliste, Dokumente, Ausweis/Verifikation) sicher und mobil nutzbar abbildet.
+Eine digitale Vereinsplattform, die oeffentliche Website, geschuetztes Mitgliederportal und gefuehrtes Vereins-Onboarding in einem System verbindet und zentrale Vereinsprozesse sicher und mobil nutzbar abbildet.
 
 ## 3. Marktproblem (aus Sicht des Kunden)
 Typische Vereine arbeiten mit verteilten Einzeltools, was zu Reibung fuehrt:
@@ -21,6 +21,7 @@ Typische Vereine arbeiten mit verteilten Einzeltools, was zu Reibung fuehrt:
 - unklare Verantwortlichkeiten und geringe Nachvollziehbarkeit
 - hoher manueller Aufwand bei Vorstand/Verwaltung
 - Sicherheits-/DSGVO-Risiko durch unsaubere Zugriffslogik
+- unstrukturierte Einfuehrung neuer Vereine und Nutzer
 
 ## 4. Zielgruppen und Kaufmotive
 ### 4.1 Primaere Zielgruppe
@@ -32,6 +33,7 @@ Kaufmotive:
 - klare Prozesse fuer Mitglieder und Funktionstraeger
 - bessere Verbindlichkeit bei Terminen/Einsaetzen
 - rechtlich/organisatorisch sauberere Datenhaltung
+- kontrollierter, nachvollziehbarer Vereinsstart
 
 ### 4.2 Sekundaere Zielgruppe
 - Vereinsverbuende oder Dachorganisationen, die einen uebertragbaren Standard suchen
@@ -52,13 +54,16 @@ Nicht "nur Vereinswebsite" und nicht "nur Mitgliederverwaltung", sondern eine in
 - Security-Baseline, Audit-Checks, nachweisbare Hardening-Schritte
 
 4. Operativ nutzbar statt nur Demo-UI
-- konkrete Module fuer taegliche Aufgaben (Fangliste, Arbeitseinsaetze, Termine, Dokumente, Ausweis)
+- konkrete Module fuer taegliche Aufgaben wie Eventplaner, Fangliste, Arbeitseinsaetze, Dokumente und Ausweis
 
 5. Kontrollierte Onboarding-Mechanik
-- Invite-/QR-gestuetzte Registrierung fuer autorisierte Zugangssteuerung
+- Invite-/Registrierungs- und Setup-Flow fuer autorisierte und geordnete Einfuehrung
 
 6. Mobile/PWA-Orientierung
 - praxistaugliche Nutzung im Vereinsbetrieb, auch unterwegs
+
+7. Governance- und Rechteklarheit
+- Modulfreigaben, Rollenrechte und Club-Kontexte sind technisch nachvollziehbar modelliert
 
 ## 6. Evidenz / Proof Points fuer Marketing
 Diese Punkte sind fuer Marketing verwertbar, weil sie projektseitig bereits verankert sind:
@@ -66,8 +71,10 @@ Diese Punkte sind fuer Marketing verwertbar, weil sie projektseitig bereits vera
 - Multi-Tenant-/Club-Scope im Sicherheits- und Datenzugriffsmodell dokumentiert
 - RLS/Policy-Konzept mit Security- und DSGVO-Baseline vorhanden
 - dokumentierte Security-Audits und Hardening-Schritte
-- kontrollierter Invite-/QR-Onboarding-Flow implementiert
-- Mitgliedsregister-P0 mit fachlicher Pflegeausrichtung in Umsetzung
+- kontrollierter Invite-/Registrierungs- und Onboarding-Flow umgesetzt
+- gefuehrtes Vereinssetup fuer neue Clubs angelegt
+- Eventplaner als operative Planungsoberflaeche vorhanden
+- Governance-Health- und ACL-Struktur technisch angebunden
 
 Hinweis fuer Kommunikation:
 - Keine absoluten Sicherheitsversprechen ("100% sicher").
@@ -78,9 +85,10 @@ Hinweis fuer Kommunikation:
 1. Integriertes Produkt (Website + Portal)
 2. Klarer Nutzen im Vereinsalltag (Zeitgewinn, Transparenz, Verbindlichkeit)
 3. Rollen-/Mandantensicherheit als professionelles Fundament
+4. Kontrollierter Einfuehrungsweg fuer neue Vereine
 
 ### B-Staerken (mit belastbarer Story ausbauen)
-1. Controlled Onboarding (Invite/QR)
+1. Controlled Onboarding
 2. Prozessstandardisierung fuer Vorstand/Verwaltung
 3. Modulbreite fuer operative Vereinsarbeit
 
@@ -99,8 +107,9 @@ Hinweis fuer Kommunikation:
 - Mitglieder: "Einfacher Zugang zu allem, was den Verein betrifft."
 
 ## 8.3 Funktionsbotschaften
-- Termine/Einsaetze: "Verbindliche Planung statt Chat-Chaos"
+- Termine/Einsaetze/Eventplaner: "Verbindliche Planung statt Chat-Chaos"
 - Mitgliederdaten: "Fachlich pflegbar und rollenbasiert abgesichert"
+- Onboarding: "Gefuehrter Start statt unsauberer Einfuehrung"
 - Ausweis/Verifikation: "Nachweisprozesse digital und nachvollziehbar"
 - Dokumente: "Zentral statt verstreut"
 
@@ -120,13 +129,15 @@ Antwort: "Gerade deshalb: rollen-/mandantenbasierter Zugriff, RLS-Konzept und do
 - Website-Landingpage fuer Portalnutzen scharfstellen
 - 3 Kern-Use-Cases als kurze Storys aufbereiten
 - FAQ zu Sicherheit/DSGVO/Einfuehrung erstellen
+- Onboarding-Story fuer neue Vereine konkret texten
 
 ### Phase 2 (Tag 31-60): Nachfrage erzeugen
 - 2 Demo-Formate (Live-Demo + kompakte Vorstandsdemo)
 - 3 Content-Pieces:
   - "Vom Tool-Mix zur Vereinsplattform"
   - "Sichere Rollen statt offene Datenlisten"
-  - "Onboarding mit Invite/QR"
+  - "Onboarding mit Invite und gefuehrtem Setup"
+- Eventplaner als Praxis-Use-Case in Demo und Content fest verankern
 - Outreach an Pilotvereine
 
 ### Phase 3 (Tag 61-90): Conversion und Referenzen
@@ -139,14 +150,15 @@ Antwort: "Gerade deshalb: rollen-/mandantenbasierter Zugriff, RLS-Konzept und do
 - Demo-zu-Pilot-Quote
 - Pilot-zu-Rollout-Quote
 - Time-to-First-Value (erste produktive Nutzung)
-- Aktivitaetskennzahlen je Modul (z. B. Termine/Einsaetze/Fangliste)
+- Aktivitaetskennzahlen je Modul
+- Zeit bis zum produktiven Vereinsstart
 
 ## 12. Benoetigte Unterlagen fuer sofortigen Einsatz
-1. Produkt-Onepager (Nutzen + Module + Zielgruppe)
-2. Sicherheits-/DSGVO-Kurzblatt (nicht-juristisch)
-3. Demo-Leitfaden (30 Min Vorstand, 45 Min Admin)
-4. Einfuehrungsfahrplan (Kickoff -> Pilot -> Betrieb)
-5. Einwandbehandlung (FAQ-Vertrieb)
+1. Produkt-Onepager
+2. Sicherheits-/DSGVO-Kurzblatt
+3. Demo-Leitfaden
+4. Einfuehrungsfahrplan
+5. Einwandbehandlung
 
 ## 13. Red Lines fuer externe Kommunikation
 - Keine Rechtsberatung suggerieren
@@ -155,7 +167,7 @@ Antwort: "Gerade deshalb: rollen-/mandantenbasierter Zugriff, RLS-Konzept und do
 - Klare Trennung zwischen aktuellem Stand und geplanter Roadmap
 
 ## 14. Sofort umsetzbare naechste Aufgaben (Marketing-Team)
-1. Claim + Kernbotschaft final texten (1 Seite)
+1. Claim + Kernbotschaft final texten
 2. 3 Persona-spezifische Landing-Abschnitte erstellen
 3. Demo-Script mit 3 Use-Cases finalisieren
 4. Pilotvereins-Ansprache als E-Mail-Sequenz vorbereiten
@@ -169,5 +181,5 @@ Antwort: "Gerade deshalb: rollen-/mandantenbasierter Zugriff, RLS-Konzept und do
 - docs/security-dsgvo-checklist.md
 - docs/project/PROJECT_BRIEF_PACKAGE_VDAN_2026-02-26.md
 - docs/project/projektstatus_gesamt_onepager_2026-03-04.md
-- docs/project/UMSETZUNGSBERICHT_MEMBER_REGISTRY_AUTH_P0_2026-03-09.md
-
+- docs/project/FCP_Onboarding_Bundle_FINAL/00_README.md
+- docs/project/EVENTPLANER_MARKETING_TECHNIK_2026-03-15.md

@@ -1,0 +1,339 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site
+  title={`Eventplaner • ${APP.name}`}
+  description="Planungsboard für Vorstand und Admin zur Event- und Helferkoordination"
+  robots="noindex"
+  containerClass="container container--admin-wide"
+>
+  <section class="card">
+    <div class="card__body">
+      <div class="event-planner-hero">
+        <div class="event-planner-hero__copy">
+          <h1>Eventplaner</h1>
+          <p id="eventPlannerMsg" class="small hidden" aria-live="polite" hidden></p>
+        </div>
+        <div class="event-planner-club-switch" aria-label="Aktiver Verein">
+          <div class="event-planner-club-switch__head">
+            <span>Aktiver Verein</span>
+            <strong id="eventPlannerActiveClubLabel">-</strong>
+          </div>
+          <div id="eventPlannerClubSwitchList" class="event-planner-club-switch__list">
+            <span class="small">Lade Vereine...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__body admin-board event-planner-board">
+      <aside class="admin-board__nav event-planner-board__nav" aria-label="Eventplaner Navigation">
+        <button type="button" class="admin-nav-btn is-active" data-eventplanner-section="kalender">Kalender</button>
+        <button type="button" class="admin-nav-btn" data-eventplanner-section="events">Events verwalten</button>
+        <button type="button" class="admin-nav-btn" data-eventplanner-section="freigaben">Helferanmeldungen / Freigaben</button>
+        <button type="button" class="admin-nav-btn" data-eventplanner-section="architektur">DB-Architektur</button>
+      </aside>
+
+      <div class="admin-board__content">
+        <section class="admin-section is-active" data-eventplanner-panel="kalender">
+          <article class="admin-card admin-card--compact">
+            <div class="admin-card-toolbar">
+              <div class="admin-card-toolbar__meta">
+                <h2>Kalender</h2>
+                <p class="small">Gemeinsame Sicht auf Termine und Arbeitseinsätze. Klick auf einen Tag zeigt alle Einträge und den Helferstand.</p>
+              </div>
+              <div class="admin-actions admin-actions--toolbar event-planner-month-toolbar">
+                <button type="button" class="feed-btn feed-btn--ghost event-planner-month-nav" id="eventPlannerPrevMonth" aria-label="Vorheriger Monat" title="Vorheriger Monat">&#8249;</button>
+                <strong id="eventPlannerMonthLabel" class="event-planner-month-label">-</strong>
+                <button type="button" class="feed-btn feed-btn--ghost event-planner-month-nav" id="eventPlannerNextMonth" aria-label="Nächster Monat" title="Nächster Monat">&#8250;</button>
+              </div>
+            </div>
+            <div class="event-planner-kpis admin-kpi-grid">
+              <article class="admin-kpi"><h3>Events gesamt</h3><p id="eventPlannerKpiTotal">-</p></article>
+              <article class="admin-kpi"><h3>Termine</h3><p id="eventPlannerKpiTerms">-</p></article>
+              <article class="admin-kpi"><h3>Arbeitseinsätze</h3><p id="eventPlannerKpiWork">-</p></article>
+              <article class="admin-kpi"><h3>Offene Freigaben</h3><p id="eventPlannerKpiPending">-</p></article>
+              <article class="admin-kpi"><h3>Belegte Helfer</h3><p id="eventPlannerKpiHelpers">-</p></article>
+            </div>
+            <div class="event-planner-calendar">
+              <div class="event-planner-calendar__head">
+                <span class="event-planner-calendar__week-label">KW</span>
+                <span>Mo</span>
+                <span>Di</span>
+                <span>Mi</span>
+                <span>Do</span>
+                <span>Fr</span>
+                <span class="event-planner-calendar__head-weekend">Sa</span>
+                <span class="event-planner-calendar__head-weekend">So</span>
+              </div>
+              <div id="eventPlannerCalendarGrid" class="event-planner-calendar__grid"></div>
+            </div>
+          </article>
+
+          <article class="admin-card admin-card--compact">
+            <div class="admin-card-toolbar">
+              <div class="admin-card-toolbar__meta">
+                <h3 id="eventPlannerSelectedDateLabel">Ausgewählter Tag</h3>
+                <p class="small">Direktlinks führen in die bestehenden Cockpits, damit keine doppelte Pflege entsteht.</p>
+              </div>
+              <div class="admin-actions admin-actions--toolbar">
+                <a href="/app/termine/cockpit/" class="feed-btn feed-btn--ghost">Termin-Cockpit</a>
+                <a href="/app/arbeitseinsaetze/cockpit/" class="feed-btn feed-btn--ghost">Arbeitseinsatz-Cockpit</a>
+              </div>
+            </div>
+            <div id="eventPlannerSelectedDayList" class="event-planner-day-list"></div>
+          </article>
+
+          <dialog id="eventPlannerDayDialog" class="catch-dialog">
+            <form method="dialog" class="catch-dialog__form">
+              <div class="catch-dialog__head">
+                <div>
+                  <h3 id="eventPlannerDayDialogTitle">Tagesdetails</h3>
+                  <p class="small">Kalenderklick öffnet die Einträge dieses Tages direkt im Dialog.</p>
+                </div>
+                <button type="submit" class="feed-btn feed-btn--ghost">Schließen</button>
+              </div>
+              <div id="eventPlannerDayDialogList" class="event-planner-day-list"></div>
+            </form>
+          </dialog>
+        </section>
+
+        <section class="admin-section" data-eventplanner-panel="events">
+          <article class="admin-card admin-card--compact">
+            <div class="admin-card-toolbar">
+              <div class="admin-card-toolbar__meta">
+                <h2>Planungstabelle</h2>
+              </div>
+            </div>
+
+            <div class="work-part-table-wrap event-planner-table-shell">
+              <table class="work-part-table event-planner-master-table" id="eventPlannerManagedTable">
+                <thead>
+                  <tr>
+                    <th>Datum</th>
+                    <th>Zeit</th>
+                    <th>Titel</th>
+                    <th>Bedarf</th>
+                    <th>Angemeldet</th>
+                    <th>Helfer</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="event-planner-create-toggle-row">
+                    <td colspan="6">
+                      <div class="event-planner-create-launch">
+                        <button type="button" class="feed-btn feed-btn--ghost event-planner-create-toggle-btn" data-create-kind="club_event">+ Neuer Termin</button>
+                        <button type="button" class="feed-btn feed-btn--ghost event-planner-create-toggle-btn" data-create-kind="work_event">+ Neuer Arbeitseinsatz</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="event-planner-create-row is-disabled hidden" hidden>
+                    <td><input id="eventPlannerCreateDate" type="date" disabled /></td>
+                    <td>
+                      <div class="event-planner-time-inline">
+                        <input id="eventPlannerCreateStartTime" type="time" step="900" aria-label="Startzeit" disabled />
+                        <span>–</span>
+                        <input id="eventPlannerCreateEndTime" type="time" step="900" aria-label="Endzeit" disabled />
+                      </div>
+                    </td>
+                    <td>
+                      <input id="eventPlannerCreateTitle" type="text" maxlength="120" placeholder="Titel eingeben..." disabled />
+                      <label class="event-planner-create-youth" id="eventPlannerCreateYouthWrap">
+                        <input id="eventPlannerCreateYouth" type="checkbox" disabled />
+                        <span>Jugend</span>
+                      </label>
+                    </td>
+                    <td>
+                      <input id="eventPlannerCreateRequiredPeople" type="number" min="0" step="1" value="0" disabled />
+                      <label class="event-planner-inline-check">
+                        <span class="event-planner-inline-check__divider" aria-hidden="true"></span>
+                        <span class="event-planner-inline-check__control">
+                          <input id="eventPlannerCreateMaxParticipantsEnabled" type="checkbox" disabled />
+                          <span>Max Teilnehmer</span>
+                        </span>
+                      </label>
+                    </td>
+                    <td class="event-planner-create-row__meta">0 / 0</td>
+                    <td>
+                      <div class="event-planner-inline-actions event-planner-inline-actions--tight">
+                        <button type="button" class="feed-btn event-planner-symbol-btn" id="eventPlannerCreateSubmit" disabled aria-label="Speichern" title="Speichern">&#10003;</button>
+                        <button type="button" class="feed-btn feed-btn--ghost event-planner-symbol-btn" id="eventPlannerCreateReset" disabled aria-label="Abbrechen" title="Abbrechen">&#10005;</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr><td colspan="6" class="small">Lade Daten...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <dialog id="eventPlannerSourceDialog" class="catch-dialog">
+              <form method="dialog" class="catch-dialog__form event-planner-source-dialog">
+                <div class="catch-dialog__head">
+                  <div>
+                    <h3 id="eventPlannerSourceDialogTitle">Basisobjekt bearbeiten</h3>
+                    <p id="eventPlannerSourceDialogMeta" class="small">Termin oder Arbeitseinsatz im gewohnten Dialog bearbeiten.</p>
+                  </div>
+                  <button type="submit" class="feed-btn feed-btn--ghost">Schließen</button>
+                </div>
+
+                <div class="event-planner-form-grid-2">
+                  <label>
+                    <span>Titel</span>
+                    <input id="eventPlannerSourceEditTitle" type="text" maxlength="120" />
+                  </label>
+                  <label>
+                    <span>Ort</span>
+                    <input id="eventPlannerSourceEditLocation" type="text" maxlength="120" />
+                  </label>
+                  <label>
+                    <span>Start</span>
+                    <input id="eventPlannerSourceEditStart" type="datetime-local" />
+                  </label>
+                  <label>
+                    <span>Ende</span>
+                    <input id="eventPlannerSourceEditEnd" type="datetime-local" />
+                  </label>
+                  <label class="event-planner-source-dialog__work-field hidden" id="eventPlannerSourceEditMaxWrap">
+                    <span>Max. Helfer</span>
+                    <input id="eventPlannerSourceEditMaxParticipants" type="number" min="0" step="1" />
+                  </label>
+                  <label class="event-planner-source-dialog__club-field hidden" id="eventPlannerSourceEditYouthWrap">
+                    <span>Label</span>
+                    <label class="event-planner-check-pill event-planner-check-pill--inline">
+                      <input id="eventPlannerSourceEditYouth" type="checkbox" />
+                      <span>Jugend-Termin</span>
+                    </label>
+                  </label>
+                  <label class="event-planner-form-grid-2__full">
+                    <span>Beschreibung</span>
+                    <textarea id="eventPlannerSourceEditDescription" rows="4" placeholder="Optionaler Hinweis zum Basisobjekt"></textarea>
+                  </label>
+                </div>
+
+                <div class="catch-dialog__actions">
+                  <button type="button" class="feed-btn" id="eventPlannerSourceSave">Speichern</button>
+                  <button type="button" class="feed-btn feed-btn--ghost" id="eventPlannerSourcePlan">Als Planungsbasis speichern</button>
+                </div>
+              </form>
+            </dialog>
+          </article>
+        </section>
+
+        <section class="admin-section" data-eventplanner-panel="freigaben">
+          <article class="admin-card admin-card--compact">
+            <div class="admin-card-toolbar">
+              <div class="admin-card-toolbar__meta">
+                <h2>Freigabecenter</h2>
+                <p class="small">Oben stehen offene Freigaben für Events und Arbeitseinsätze. Darunter gibt es dieselbe Tabelle für bereits freigegebene Einträge, standardmäßig eingeklappt.</p>
+              </div>
+            </div>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="eventPlannerOpenApprovalsTable">
+                <thead>
+                  <tr>
+                    <th>Eintrag</th>
+                    <th>Zeitraum</th>
+                    <th>Offen</th>
+                    <th>Aktiv</th>
+                    <th>Gegangen</th>
+                    <th>Freigabe</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="6" class="small">Lade Daten...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <details class="event-planner-approvals-archive">
+              <summary>Freigegebene</summary>
+              <div class="work-part-table-wrap">
+                <table class="work-part-table" id="eventPlannerApprovedApprovalsTable">
+                  <thead>
+                    <tr>
+                      <th>Eintrag</th>
+                      <th>Zeitraum</th>
+                      <th>Offen</th>
+                      <th>Aktiv</th>
+                      <th>Gegangen</th>
+                      <th>Freigabe</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td colspan="6" class="small">Lade Daten...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          </article>
+        </section>
+
+        <section class="admin-section" data-eventplanner-panel="architektur">
+          <article class="admin-card admin-card--compact">
+            <h2>DB-Architekturleitplanke</h2>
+            <div class="event-planner-arch-grid">
+              <div class="event-planner-arch-item">
+                <h3>Heute</h3>
+                <p class="small"><strong>Termine</strong> bleiben in <code>public.club_events</code>.</p>
+                <p class="small"><strong>Arbeitseinsätze</strong> bleiben in <code>public.work_events</code>.</p>
+                <p class="small"><strong>Anmeldungen und Freigaben</strong> bleiben in <code>public.work_participations</code>.</p>
+              </div>
+              <div class="event-planner-arch-item">
+                <h3>Regel</h3>
+                <p class="small">
+                  Der Eventplaner ist eine <strong>Erweiterungsschicht</strong> über vorhandene Module. Er liest und strukturiert bestehende Daten,
+                  statt neue Stammdaten doppelt anzulegen.
+                </p>
+              </div>
+              <div class="event-planner-arch-item">
+                <h3>Nächster sauberer Ausbau</h3>
+                <p class="small">
+                  Wenn strukturierte Event-Slots wirklich gebaut werden, dann als kleine Zusatzschicht mit Referenz auf das Basisobjekt
+                  (<code>base_kind</code> + <code>base_id</code>) und nicht als konkurrierendes Eventsystem.
+                </p>
+              </div>
+            </div>
+          </article>
+
+          <article class="admin-card">
+            <h3>Empfohlene spätere Erweiterung</h3>
+            <pre class="event-planner-pre">event_planner_configs
+- id
+- base_kind        -- club_event | work_event
+- base_id
+- approval_mode    -- auto | manual
+- event_mode       -- simple | structured
+- repeat_rule
+- created_at
+
+event_planner_slots
+- id
+- planner_id
+- title
+- description
+- starts_at
+- ends_at
+- required_people
+- created_at
+
+event_planner_registrations
+- id
+- planner_id
+- slot_id
+- user_id
+- status           -- pending | approved | rejected
+- created_at</pre>
+            <p class="small">
+              Vorteil: vorhandene Termine und Arbeitseinsätze bleiben Source of Truth. Der Eventplaner dockt nur Zusatzlogik an und verhindert DB-Dschungel.
+            </p>
+          </article>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/event-planner-board.js" defer></script>
+</Site>

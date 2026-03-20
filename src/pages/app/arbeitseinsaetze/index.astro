@@ -3,72 +3,44 @@ import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
 ---
 
-<Site title={`Arbeitseinsaetze • ${APP.name}`} description="Arbeitseinsaetze im Memberbereich" robots="noindex">
-  <section class="card" data-studio-component-id="work-member-shell" data-studio-component-type="section" data-studio-slot="main">
-    <div class="card__body" data-studio-component-id="work-member-content" data-studio-component-type="section" data-studio-slot="main">
-      <h1>Arbeitseinsätze</h1>
-      <p class="small">Veröffentlichte Einsätze, Anmeldung und Check-in.</p>
-
-      <div id="workCheckinBlock" class="work-checkin-inline" data-studio-component-id="work-checkin-block" data-studio-component-type="section" data-studio-slot="main">
-        <label>
-          <span>Check-in Token (vom QR)</span>
-          <input id="workCheckinToken" type="text" placeholder="Token eingeben oder aus QR übernehmen" data-studio-component-id="work-checkin-token-input" data-studio-component-type="input" data-studio-slot="main" />
-        </label>
-        <button type="button" id="workCheckinBtn" class="feed-btn" data-studio-component-id="work-checkin-btn" data-studio-component-type="button" data-studio-slot="main">Check-in</button>
+<Site title={`Termine / Events • ${APP.name}`} description="Gemeinsame Tabellenansicht für Termine und Arbeitseinsätze" robots="noindex">
+  <section class="card" data-studio-component-id="events-overview-shell" data-studio-component-type="section" data-studio-slot="main">
+    <div class="card__body" data-studio-component-id="events-overview-content" data-studio-component-type="section" data-studio-slot="main">
+      <div class="catch-table-toolbar">
+        <h1>Termine / Events</h1>
       </div>
+      <p class="small">Gemeinsame Standardtabelle für Termine und Arbeitseinsätze. Fokus auf Suche, Filter und schnelle Übersicht.</p>
 
-      <p id="workMemberMsg" class="small" aria-live="polite"></p>
       <div class="ui-filter-row">
         <label>
           <span>Suche</span>
-          <input id="workMemberSearch" type="search" placeholder="Titel oder Ort durchsuchen" data-studio-component-id="work-search-input" data-studio-component-type="input" data-studio-slot="main" />
+          <input id="eventsOverviewSearch" type="search" placeholder="Titel oder Ort durchsuchen" data-studio-component-id="events-overview-search" data-studio-component-type="input" data-studio-slot="main" />
         </label>
         <label>
-          <span>Ansicht</span>
-          <div class="ui-view-toggle" role="group" aria-label="Ansicht">
-            <button type="button" class="feed-btn" id="workMemberViewZeileBtn" data-ansicht="zeile">Ansicht Zeile</button>
-            <button type="button" class="feed-btn feed-btn--ghost" id="workMemberViewKarteBtn" data-ansicht="karte">Ansicht Karte</button>
-          </div>
+          <span>Art</span>
+          <select id="eventsOverviewTypeFilter" data-studio-component-id="events-overview-type-filter" data-studio-component-type="input" data-studio-slot="main">
+            <option value="alle">Alle</option>
+            <option value="termin">Termin</option>
+            <option value="arbeitseinsatz">Arbeitseinsatz</option>
+          </select>
         </label>
       </div>
-      <hr />
 
-      <h2>Kommende Einsätze</h2>
-      <div id="workMemberUpcomingTableWrap" class="catch-table" data-studio-component-id="work-upcoming-table" data-studio-component-type="table" data-studio-slot="main" data-studio-library-id="lists--standard-tabelle" data-table-id="work-upcoming" data-row-click="dialog">
-        <div class="catch-table__head" style="grid-template-columns:1.5fr 1fr 1fr 1fr">
+      <p id="eventsOverviewMsg" class="small" aria-live="polite"></p>
+
+      <div id="eventsOverviewTableWrap" class="catch-table" data-studio-component-id="events-overview-table" data-studio-component-type="table" data-studio-slot="main" data-studio-library-id="lists--standard-tabelle" data-table-id="events-overview">
+        <div class="catch-table__head" style="grid-template-columns:1fr .9fr 1.6fr 1fr 1fr .8fr">
+          <span>Datum</span>
+          <span>Zeit</span>
           <span>Titel</span>
-          <span>Start</span>
+          <span>Art</span>
           <span>Ort</span>
           <span>Status</span>
         </div>
-        <div id="workMemberUpcomingTableBody"></div>
+        <div id="eventsOverviewTableBody"></div>
       </div>
-      <div id="workMemberUpcomingCards" class="grid hidden" hidden></div>
-
-      <hr />
-      <h2>Meine Einsätze</h2>
-      <div id="workMemberMineTableWrap" class="catch-table" data-studio-component-id="work-mine-table" data-studio-component-type="table" data-studio-slot="main" data-studio-library-id="lists--standard-tabelle" data-table-id="work-mine" data-row-click="dialog">
-        <div class="catch-table__head" style="grid-template-columns:1.5fr 1fr 1fr 1fr">
-          <span>Titel</span>
-          <span>Von</span>
-          <span>Bis</span>
-          <span>Status</span>
-        </div>
-        <div id="workMemberMineTableBody"></div>
-      </div>
-      <div id="workMemberMineCards" class="grid hidden" hidden></div>
     </div>
   </section>
 
-  <dialog id="workMemberDetailDialog" class="catch-dialog" data-studio-component-id="work-member-detail-dialog" data-studio-component-type="dialog" data-studio-slot="main">
-    <form method="dialog" class="catch-dialog__form">
-      <h3>Details</h3>
-      <div id="workMemberDetailBody" class="catch-dialog__body"></div>
-      <div class="catch-dialog__actions">
-        <button type="submit" class="feed-btn">Schließen</button>
-      </div>
-    </form>
-  </dialog>
-
-  <script src="/js/work-events-member.js" defer></script>
+  <script src="/js/events-overview.js" defer></script>
 </Site>

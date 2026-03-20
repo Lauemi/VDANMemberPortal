@@ -67,7 +67,7 @@
       });
     }
     const fn = await jsQrLoader;
-    if (typeof fn !== "function") throw new Error("jsQR nicht verfuegbar.");
+    if (typeof fn !== "function") throw new Error("jsQR nicht verfügbar.");
     return fn;
   }
 
@@ -430,7 +430,7 @@
       return;
     }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setMsg("Browser unterstuetzt keine Kamera-API (getUserMedia).");
+      setMsg("Browser unterstützt keine Kamera-API (getUserMedia).");
       setInlineStatus("Kamera-API fehlt", "invalid");
       return;
     }
@@ -497,7 +497,7 @@
     } catch (err) {
       const reason = String(err?.message || "");
       if (reason.toLowerCase().includes("permission") || reason.toLowerCase().includes("notallowed")) {
-        setMsg("Kein Kamerazugriff. Browser-Berechtigung fuer Kamera erlauben.");
+        setMsg("Kein Kamerazugriff. Browser-Berechtigung für Kamera erlauben.");
       } else if (reason.toLowerCase().includes("notfound")) {
         setMsg("Keine Kamera gefunden.");
       } else {

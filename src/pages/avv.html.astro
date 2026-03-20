@@ -1,0 +1,122 @@
+---
+import Site from "../layouts/Site.astro";
+import { APP } from "../config/app";
+import { resolveSiteMode } from "../config/site-mode";
+
+const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
+---
+
+<Site
+  title={`AVV • ${APP.name}`}
+  description="Auftragsverarbeitungsvereinbarung für das Fishing-Club-Portal."
+  robots="noindex"
+>
+  {isFcp ? (
+    <section class="card" style="max-width:980px;margin:0 auto;">
+      <div class="card__body prose">
+        <h1>Auftragsverarbeitungsvereinbarung – Fishing-Club-Portal</h1>
+        <p><strong>Stand:</strong> 19.03.2026</p>
+        <p><strong>Version:</strong> 2026-03-19-v1</p>
+
+        <h2>1. Vertragsparteien</h2>
+        <p>
+          Diese Auftragsverarbeitungsvereinbarung wird geschlossen zwischen dem jeweiligen Verein als Verantwortlichem und Michael
+          Lauenroth, Gartenstraße 21, 77963 Schwanau, Deutschland, als Betreiber der Plattform "Fishing-Club-Portal" und
+          Auftragsverarbeiter.
+        </p>
+
+        <h2>2. Gegenstand und Dauer</h2>
+        <p>
+          Gegenstand der Vereinbarung ist die Verarbeitung personenbezogener Daten durch den Auftragsverarbeiter im Rahmen der technischen
+          Bereitstellung und des Betriebs des Fishing-Club-Portals für den jeweiligen Verein.
+        </p>
+        <p>Die Dauer der Verarbeitung richtet sich nach der Dauer des Nutzungs- bzw. Plattformverhältnisses.</p>
+
+        <h2>3. Art und Zweck der Verarbeitung</h2>
+        <ul>
+          <li>Bereitstellung des Mitgliederportals</li>
+          <li>Authentifizierung und Zugriffsschutz</li>
+          <li>Speicherung und Verarbeitung vereinsbezogener Daten</li>
+          <li>technische Betriebs-, Sicherheits- und Supportprozesse</li>
+          <li>Datenhaltung für Module wie Mitgliederverwaltung, Eventplanung, Dokumente, Fangliste und Ausweisfunktionen</li>
+        </ul>
+
+        <h2>4. Kategorien betroffener Personen</h2>
+        <ul>
+          <li>Vereinsmitglieder</li>
+          <li>Nutzerkonten des Vereins</li>
+          <li>Vorstände, Admins und Beauftragte</li>
+          <li>Interessenten und Antragsteller</li>
+          <li>Ansprechpartner des Vereins</li>
+        </ul>
+
+        <h2>5. Kategorien personenbezogener Daten</h2>
+        <ul>
+          <li>Stammdaten</li>
+          <li>Kontaktdaten</li>
+          <li>Rollen- und Berechtigungsdaten</li>
+          <li>Portal- und Nutzungsdaten</li>
+          <li>vereinsbezogene Inhalts- und Fachdaten</li>
+          <li>technische Protokoll- und Sicherheitsdaten</li>
+        </ul>
+
+        <h2>6. Weisungsgebundenheit</h2>
+        <p>
+          Der Auftragsverarbeiter verarbeitet personenbezogene Daten nur im Rahmen der dokumentierten Weisungen des jeweiligen Vereins,
+          soweit keine gesetzliche Verpflichtung zu einer abweichenden Verarbeitung besteht.
+        </p>
+
+        <h2>7. Vertraulichkeit</h2>
+        <p>
+          Der Auftragsverarbeiter stellt sicher, dass mit der Verarbeitung personenbezogener Daten befasste Personen auf Vertraulichkeit
+          verpflichtet sind oder einer angemessenen gesetzlichen Verschwiegenheitspflicht unterliegen.
+        </p>
+
+        <h2>8. Technische und organisatorische Maßnahmen</h2>
+        <p>
+          Der Auftragsverarbeiter trifft angemessene technische und organisatorische Maßnahmen zum Schutz personenbezogener Daten,
+          insbesondere in Bezug auf Zugriffskontrolle, Rollen- und Rechtekonzept, Mandantentrennung, Transportverschlüsselung,
+          Protokollierung sicherheitsrelevanter Ereignisse sowie Schutz vor unbefugter Kenntnisnahme, Veränderung oder Verlust.
+        </p>
+
+        <h2>9. Unterauftragsverarbeiter</h2>
+        <p>
+          Der Auftragsverarbeiter darf Unterauftragsverarbeiter einsetzen, soweit dies für den Plattformbetrieb erforderlich ist. Dazu können
+          insbesondere Hosting-, Datenbank- und Infrastrukturdienstleister gehören. Der Verein ist über eingesetzte
+          Unterauftragsverarbeiter zu informieren.
+        </p>
+
+        <h2>10. Unterstützung des Verantwortlichen</h2>
+        <p>
+          Der Auftragsverarbeiter unterstützt den Verein im angemessenen Umfang bei Betroffenenanfragen, Sicherheitsvorfällen und
+          Datenschutzverletzungen, Nachweis- und Dokumentationspflichten sowie bei Löschung, Berichtigung oder Export von Daten.
+        </p>
+
+        <h2>11. Rückgabe und Löschung</h2>
+        <p>
+          Nach Beendigung des Nutzungsverhältnisses werden personenbezogene Daten nach Wahl des Verantwortlichen gelöscht, gesperrt oder in
+          einem geeigneten Format exportiert, soweit keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
+        </p>
+
+        <h2>12. Nachweise und Kontrollen</h2>
+        <p>
+          Der Auftragsverarbeiter stellt dem Verantwortlichen auf angemessene Anforderung Informationen zur Verfügung, die zum Nachweis der
+          Einhaltung dieser Vereinbarung erforderlich sind.
+        </p>
+
+        <h2>13. Schlussbestimmungen</h2>
+        <p>
+          Ergänzend gelten die Nutzungsbedingungen, Datenschutzhinweise sowie die vertraglichen Leistungsunterlagen des
+          Fishing-Club-Portals.
+        </p>
+      </div>
+    </section>
+  ) : (
+    <section class="card" style="max-width:900px;margin:0 auto;">
+      <div class="card__body prose">
+        <h1>AVV</h1>
+        <p>Für den öffentlichen Vereinsauftritt des VDAN ist keine eigenständige AVV-Seite veröffentlicht.</p>
+      </div>
+    </section>
+  )}
+</Site>

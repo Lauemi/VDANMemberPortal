@@ -5,26 +5,26 @@ import { APP } from "../../../config/app";
 
 <Site
   title={`Kontrollboard • ${APP.name}`}
-  description="Interner Arbeitsraum fuer Masken-Audits, offene Punkte und Smoke-Tests."
+  description="Interner Arbeitsraum für Masken-Audits, offene Punkte und Smoke-Tests."
   robots="noindex"
   containerClass="container container--admin-wide"
 >
-  <section class="card" data-studio-component-id="control-board-shell" data-studio-component-type="section" data-studio-slot="main">
+  <section class="card control-board-page control-board-page--shell" data-studio-component-id="control-board-shell" data-studio-component-type="section" data-studio-slot="main">
     <div class="card__body" data-studio-component-id="control-board-header" data-studio-component-type="section" data-studio-slot="main">
       <h1>Kontrollboard</h1>
       <p class="small">
-        Lokales Arbeitsboard fuer Workflow-Audit, Komponenten-Audit, Smoke-Tests und Fehleruebergabe.
-        Keine Datenbank noetig, alles bleibt lokal im Browser.
+        Lokales Arbeitsboard für Workflow-Audit, Komponenten-Audit, Smoke-Tests und Fehlerübergabe.
+        Keine Datenbank nötig, alles bleibt lokal im Browser.
       </p>
       <div class="admin-actions admin-actions--toolbar">
-        <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardCopyOverview">Gesamtueberblick kopieren</button>
-        <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardResetState">Lokalen Stand zuruecksetzen</button>
+        <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardCopyOverview">Gesamtüberblick kopieren</button>
+        <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardResetState">Lokalen Stand zurücksetzen</button>
       </div>
       <p id="controlBoardMsg" class="small" aria-live="polite"></p>
     </div>
   </section>
 
-  <section class="card">
+  <section class="card control-board-page control-board-page--workspace">
     <div class="card__body admin-board control-board">
       <aside class="admin-board__nav control-board__nav" aria-label="Kontrollboard Navigation">
         <label class="control-board__search">
@@ -44,12 +44,12 @@ import { APP } from "../../../config/app";
           <article class="admin-card">
             <div class="admin-card-toolbar">
               <div class="admin-card-toolbar__meta">
-                <h2>Gesamtueberblick</h2>
+                <h2>Gesamtüberblick</h2>
                 <p class="small">Alle Masken, Querschnittsthemen und ihr aktueller Abarbeitungsstand.</p>
               </div>
             </div>
             <div class="admin-kpi-grid control-board__kpis">
-              <article class="admin-kpi"><h3>Eintraege</h3><p id="cbOverviewItems">-</p></article>
+              <article class="admin-kpi"><h3>Einträge</h3><p id="cbOverviewItems">-</p></article>
               <article class="admin-kpi"><h3>Offen</h3><p id="cbOverviewOpen">-</p></article>
               <article class="admin-kpi"><h3>Erledigt</h3><p id="cbOverviewDone">-</p></article>
               <article class="admin-kpi"><h3>Smoke OK</h3><p id="cbOverviewSmoke">-</p></article>
@@ -61,7 +61,7 @@ import { APP } from "../../../config/app";
             <div class="admin-card-toolbar">
               <div class="admin-card-toolbar__meta">
                 <h3>Fortschritt</h3>
-                <p class="small">Was ist erledigt, was kommt als Naechstes und wie weit ist jede Welle.</p>
+                <p class="small">Was ist erledigt, was kommt als Nächstes und wie weit ist jede Welle.</p>
               </div>
             </div>
             <div id="controlBoardWaveProgress" class="control-board__wave-grid"></div>
@@ -80,8 +80,8 @@ import { APP } from "../../../config/app";
           <article class="admin-card">
             <div class="admin-card-toolbar">
               <div class="admin-card-toolbar__meta">
-                <h3>Uebersichtstabelle</h3>
-                <p class="small">Mit einem Klick kannst du jeden Bereich direkt oeffnen.</p>
+                <h3>Übersichtstabelle</h3>
+                <p class="small">Mit einem Klick kannst du jeden Bereich direkt öffnen.</p>
               </div>
               <div class="admin-actions admin-actions--toolbar">
                 <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardCopyCompact">Kompakt-Report kopieren</button>
@@ -110,7 +110,7 @@ import { APP } from "../../../config/app";
             <div class="admin-card-toolbar">
               <div class="admin-card-toolbar__meta">
                 <h3>Report-Vorschau</h3>
-                <p class="small">Copy- und Druckansicht fuer den aktuellen Gesamtstand.</p>
+                <p class="small">Copy- und Druckansicht für den aktuellen Gesamtstand.</p>
               </div>
             </div>
             <pre id="controlBoardOverviewReport" class="control-board__report-preview"></pre>
@@ -169,7 +169,7 @@ import { APP } from "../../../config/app";
             <div class="admin-card-toolbar">
               <div class="admin-card-toolbar__meta">
                 <h3>Offen / Erledigt</h3>
-                <p class="small">Punkte koennen per Checkbox zwischen offen und erledigt verschoben werden.</p>
+                <p class="small">Punkte können per Checkbox zwischen offen und erledigt verschoben werden.</p>
               </div>
             </div>
             <div class="control-board__split">
@@ -181,7 +181,7 @@ import { APP } from "../../../config/app";
                     <span>Neuer offener Punkt</span>
                     <input id="controlBoardNewOpenTask" type="text" placeholder="z. B. Komponenten-Audit abschliessen" />
                   </label>
-                  <button type="button" class="control-board__btn control-board__btn--primary" id="controlBoardAddOpenTask">Hinzufuegen</button>
+                  <button type="button" class="control-board__btn control-board__btn--primary" id="controlBoardAddOpenTask">Hinzufügen</button>
                 </div>
               </div>
 
@@ -191,7 +191,7 @@ import { APP } from "../../../config/app";
                 <div class="control-board__composer">
                   <label>
                     <span>Erledigten Punkt nachtragen</span>
-                    <input id="controlBoardNewDoneTask" type="text" placeholder="z. B. Token-Mapping ueberprueft" />
+                    <input id="controlBoardNewDoneTask" type="text" placeholder="z. B. Token-Mapping überprüft" />
                   </label>
                   <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardAddDoneTask">Nachtragen</button>
                 </div>
@@ -203,7 +203,7 @@ import { APP } from "../../../config/app";
             <div class="admin-card-toolbar">
               <div class="admin-card-toolbar__meta">
                 <h3>Smoke-Tests</h3>
-                <p class="small">Durchfuehrung einfach per Checkbox bestaetigen. Offene Checks bleiben sichtbar.</p>
+                <p class="small">Durchführung einfach per Checkbox bestätigen. Offene Checks bleiben sichtbar.</p>
               </div>
             </div>
             <div id="controlBoardSmokeTests" class="control-board__task-list"></div>
@@ -212,7 +212,7 @@ import { APP } from "../../../config/app";
                 <span>Zusatz-Smoke-Test</span>
                 <input id="controlBoardNewSmoke" type="text" placeholder="z. B. Mobile Layout auf iPhone 13" />
               </label>
-              <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardAddSmoke">Hinzufuegen</button>
+              <button type="button" class="control-board__btn control-board__btn--ghost" id="controlBoardAddSmoke">Hinzufügen</button>
             </div>
           </article>
 
@@ -284,6 +284,15 @@ import { APP } from "../../../config/app";
   <script src="/js/control-board.js" defer></script>
 
   <style>
+    .control-board-page--shell,
+    .control-board-page--workspace {
+      border-color: rgba(124, 156, 255, 0.22);
+      background:
+        linear-gradient(180deg, rgba(18, 28, 46, 0.92), rgba(10, 18, 34, 0.94)),
+        radial-gradient(circle at top right, rgba(89, 138, 255, 0.14), transparent 40%);
+      box-shadow: 0 18px 40px rgba(3, 8, 18, 0.24);
+    }
+
     .control-board {
       grid-template-columns: 320px minmax(0, 1fr);
       gap: 16px;
@@ -872,6 +881,86 @@ import { APP } from "../../../config/app";
       overflow-wrap: anywhere;
       max-height: 420px;
       overflow: auto;
+    }
+
+    :global(body[data-app-theme="fcp_tactical"]) .control-board-page--shell,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board-page--workspace,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board .admin-card {
+      border-color: rgba(108, 112, 91, 0.24);
+      background:
+        linear-gradient(180deg, rgba(243, 239, 229, 0.98), rgba(237, 229, 214, 0.95)),
+        radial-gradient(circle at top right, rgba(255, 200, 48, 0.12), transparent 42%);
+      box-shadow: 0 14px 30px rgba(62, 56, 34, 0.12);
+    }
+
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__nav,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__search,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__filters,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__panel,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__wave-card,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__history-panel,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__detail-progress,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__list-row,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__issue,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__note,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__report-preview,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__nav .admin-nav-btn {
+      border-color: rgba(108, 112, 91, 0.2);
+      background: rgba(255, 252, 245, 0.82);
+      color: #2f3328;
+    }
+
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__btn,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__nav-count,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__group-badge,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__row-state,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__chip,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__status-chip,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__issue-meta span {
+      border-color: rgba(108, 112, 91, 0.24);
+      background: rgba(255, 252, 245, 0.86);
+      color: #2f3328;
+    }
+
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__btn--primary,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__filters .control-board__btn.is-active,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__nav .admin-nav-btn.is-active {
+      border-color: rgba(89, 90, 61, 0.42);
+      background: linear-gradient(180deg, rgba(89, 90, 61, 0.16), rgba(255, 248, 229, 0.96));
+      color: #2f3328;
+      box-shadow: none;
+    }
+
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__nav-group-title,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__nav-route,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__nav-progress-label,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__row-meta,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__wave-meta,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__history-meta,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__issue-meta,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__empty,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board .admin-card-toolbar__meta p {
+      color: rgba(89, 90, 61, 0.82);
+    }
+
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__issue-body,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__note-body,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board .admin-card-toolbar__meta h2,
+    :global(body[data-app-theme="fcp_tactical"]) .control-board .admin-card-toolbar__meta h3 {
+      color: #2f3328;
+    }
+
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__check {
+      accent-color: #595a3d;
+    }
+
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__progress-bar {
+      background: rgba(221, 212, 194, 0.66);
+      border-color: rgba(108, 112, 91, 0.18);
+    }
+
+    :global(body[data-app-theme="fcp_tactical"]) .control-board__progress-bar > span {
+      background: linear-gradient(90deg, rgba(89, 90, 61, 0.9), rgba(255, 200, 48, 0.9));
     }
 
     @media (max-width: 1200px) {

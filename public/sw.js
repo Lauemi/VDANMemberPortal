@@ -1,4 +1,4 @@
-const SW_VERSION = "v1.0.11";
+const SW_VERSION = new URL(self.location.href).searchParams.get("v") || "v1.0.13";
 const STATIC_CACHE = `vdan-static-${SW_VERSION}`;
 const PAGE_CACHE = `vdan-pages-${SW_VERSION}`;
 
@@ -22,6 +22,7 @@ const PRECACHE_URLS = [
   "/js/member-auth.js",
   "/js/member-guard.js",
   "/js/ui-session.js",
+  "/js/notifications-center.js",
   "/js/nav-burger.js",
   "/js/portal-quick.js",
   "/js/catchlist.js",
@@ -209,7 +210,20 @@ self.addEventListener("fetch", (event) => {
     url.pathname.startsWith("/js/") ||
     url.pathname.startsWith("/css/");
 
+  const isBrandingAsset =
+    request.destination === "image" &&
+    (
+      url.pathname.startsWith("/Branding/") ||
+      url.pathname.startsWith("/icon-") ||
+      url.pathname.startsWith("/apple-touch-icon")
+    );
+
   if (isScriptOrStyle) {
+    event.respondWith(networkFirstStatic(request));
+    return;
+  }
+
+  if (isBrandingAsset) {
     event.respondWith(networkFirstStatic(request));
     return;
   }

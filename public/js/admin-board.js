@@ -8,7 +8,7 @@
   const PAGE_INDEX_BASE = [
     { route: "/app/", kind: "PORTAL", label: "App Start" },
     { route: "/app/admin-panel/", kind: "PORTAL", label: "Admin Board" },
-    { route: "/app/arbeitseinsaetze/", kind: "PORTAL", label: "Arbeitseinsätze" },
+    { route: "/app/arbeitseinsaetze/", kind: "PORTAL", label: "Termine / Events" },
     { route: "/app/arbeitseinsaetze/cockpit", kind: "PORTAL", label: "Arbeitseinsätze Cockpit" },
     { route: "/app/ausweis/", kind: "PORTAL", label: "Ausweis" },
     { route: "/app/ausweis/verifizieren", kind: "PORTAL", label: "Ausweis Verifizieren" },
@@ -16,21 +16,26 @@
     { route: "/app/component-library/", kind: "PORTAL", label: "Component Library" },
     { route: "/app/dokumente/", kind: "PORTAL", label: "Dokumente" },
     { route: "/app/einstellungen/", kind: "PORTAL", label: "Einstellungen" },
+    { route: "/app/eventplaner/", kind: "PORTAL", label: "Eventplaner" },
+    { route: "/app/eventplaner/mitmachen/", kind: "PORTAL", label: "Eventplaner Mitmachen" },
     { route: "/app/feedback/", kind: "PORTAL", label: "Feedback" },
     { route: "/app/feedback/cockpit", kind: "PORTAL", label: "Feedback Cockpit" },
     { route: "/app/fangliste/", kind: "PORTAL", label: "Fangliste" },
     { route: "/app/fangliste/cockpit", kind: "PORTAL", label: "Fangliste Cockpit" },
     { route: "/app/gewaesserkarte/", kind: "PORTAL", label: "Gewässerkarte" },
+    { route: "/app/kontrollboard/", kind: "PORTAL", label: "Kontrollboard" },
     { route: "/app/lizenzen/", kind: "PORTAL", label: "Wetter & Karten API" },
     { route: "/app/mitglieder/", kind: "PORTAL", label: "Mitglieder" },
     { route: "/app/mitgliederverwaltung/", kind: "PORTAL", label: "Mitgliederverwaltung" },
     { route: "/app/notes/", kind: "PORTAL", label: "Notes" },
     { route: "/app/passwort-aendern/", kind: "PORTAL", label: "Passwort ändern" },
+    { route: "/app/rechtliches-bestaetigen/", kind: "PORTAL", label: "Rechtliches bestätigen" },
     { route: "/app/sitzungen/", kind: "PORTAL", label: "Sitzungen" },
     { route: "/app/template-studio/", kind: "PORTAL", label: "Template Studio" },
     { route: "/app/termine/cockpit", kind: "PORTAL", label: "Termine Cockpit" },
     { route: "/app/ui-neumorph-demo/", kind: "PORTAL", label: "UI Neumorph Demo" },
     { route: "/app/vereine/", kind: "PORTAL", label: "Vereine" },
+    { route: "/app/zugang-pruefen/", kind: "PORTAL", label: "Zugang prüfen" },
     { route: "/app/zustaendigkeiten/", kind: "PORTAL", label: "Zuständigkeiten" },
     { route: "/", kind: "WEB", label: "Startseite" },
     { route: "/anglerheim-ottenheim", kind: "WEB", label: "Anglerheim Ottenheim" },
@@ -111,6 +116,7 @@
     return [
       { id: "fishing", label: "Fishing", active: true, usecases: ["fangliste", "go_fishing", "fangliste_cockpit"] },
       { id: "work", label: "Arbeitseinsätze", active: true, usecases: ["arbeitseinsaetze", "arbeitseinsaetze_cockpit"] },
+      { id: "eventplaner", label: "Eventplaner", active: true, usecases: ["eventplaner", "eventplaner_mitmachen"] },
       { id: "feed", label: "Feed", active: true, usecases: ["feed"] },
       { id: "members", label: "Mitglieder", active: true, usecases: ["mitglieder", "mitglieder_registry"] },
       { id: "documents", label: "Dokumente", active: true, usecases: ["dokumente"] },
@@ -140,6 +146,15 @@
       out.push(n);
     });
     return out.length ? out : defaultModuleCatalog();
+  }
+
+  function mergeModuleCatalog(...sources) {
+    const merged = [];
+    sources.forEach((source) => {
+      if (!Array.isArray(source)) return;
+      source.forEach((entry) => merged.push(entry));
+    });
+    return normalizeModuleCatalog(merged);
   }
 
   function loadModuleCatalog() {
@@ -178,6 +193,7 @@
       return rightSet({ view: true, write: true, update: true, delete: false });
     }
     if (r === "member") {
+      if (uc === "eventplaner_mitmachen") return rightSet({ view: true, write: true, update: true, delete: false });
       if (["fangliste", "go_fishing", "arbeitseinsaetze", "feed", "einstellungen"].includes(uc)) return rightSet({ view: true });
       return rightSet({ view: false });
     }
@@ -533,7 +549,7 @@
     if (Array.isArray(moduleRows) && moduleRows.length) {
       const catalog = buildCatalogFromDb(moduleRows, usecaseRows);
       if (catalog.length) {
-        state.moduleCatalog = normalizeModuleCatalog(catalog);
+        state.moduleCatalog = mergeModuleCatalog(defaultModuleCatalog(), state.moduleCatalog, catalog);
       }
     }
     state.moduleDefaultRights = normalizeModuleRights(state.moduleDefaultRights, state.moduleCatalog);
@@ -1709,7 +1725,7 @@
     renderRoleDefaultsEditor();
     if (state.users.length === 0 && state.clubs.length === 0) {
       const diag = state.diagnostics.length ? ` Diagnose: ${state.diagnostics.slice(0, 4).join(" | ")}` : "";
-      setMsg("Keine Datensaetze sichtbar. Wahrscheinlich fehlen Select-Policies (RLS) oder Profile/Club-Daten fuer diesen User." + diag, true);
+      setMsg("Keine Datensätze sichtbar. Wahrscheinlich fehlen Select-Policies (RLS) oder Profile/Club-Daten für diesen User." + diag, true);
     }
     const clubRows = computeClubMetrics();
     state.clubMetrics = clubRows;

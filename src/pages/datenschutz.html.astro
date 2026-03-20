@@ -6,209 +6,301 @@ import { resolveSiteMode } from "../config/site-mode";
 const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
 ---
 
-<Site title={`Datenschutz • ${APP.name}`} description="Datenschutzhinweise für die Website und das Mitgliederportal des VDAN Ottenheim.">
+<Site
+  title={`Datenschutz • ${APP.name}`}
+  description={isFcp ? "Datenschutzhinweise für das Fishing-Club-Portal." : "Datenschutzhinweise für die Website und das Mitgliederportal des VDAN Ottenheim."}
+>
   {isFcp ? (
     <section class="card" style="max-width:980px;margin:0 auto;">
-      <div class="card__body">
-        <h1>Datenschutz</h1>
-        <p class="small">FCP-Modus aktiv.</p>
+      <div class="card__body prose">
+        <h1>Datenschutzhinweise – Fishing-Club-Portal</h1>
+        <p><strong>Stand:</strong> 19.03.2026</p>
+
+        <h2>1. Verantwortlicher</h2>
         <p>
-          Diese Datenschutzhinweise werden für das Fishing-Club-Portal separat finalisiert und veröffentlicht.
+          Michael Lauenroth<br />
+          Gartenstraße 21<br />
+          77963 Schwanau<br />
+          Deutschland<br />
+          E-Mail: <a href={`mailto:${APP.supportEmail}`}>{APP.supportEmail}</a>
         </p>
         <p>
-          Kontakt für Datenschutz- und Plattformfragen:
-          <a href={`mailto:${APP.supportEmail}`}> {APP.supportEmail}</a>
+          Weitere Informationen zum Anbieter finden Sie im <a href="/impressum.html/">Impressum</a>.
+        </p>
+
+        <h2>2. Rollenmodell: Plattform und Vereine</h2>
+        <p>
+          Das Fishing-Club-Portal ist eine mandantenfähige Vereinsplattform. Dabei sind zwei Ebenen zu unterscheiden:
+        </p>
+        <ul>
+          <li><strong>Plattformebene:</strong> Technische Bereitstellung, Hosting, Betrieb, Sicherheit, Authentifizierung und Mandantentrennung</li>
+          <li><strong>Vereinsebene:</strong> Vereinsbezogene Inhalte, Mitgliederdaten, Termine, Dokumente und vereinsinterne Prozesse</li>
+        </ul>
+        <p>
+          Grundsätzlich gilt:<br />
+          Der jeweilige Verein ist Verantwortlicher, soweit er über Zwecke und Mittel der vereinsbezogenen Verarbeitung entscheidet.<br />
+          Der Plattformbetreiber verarbeitet Daten auf dieser Ebene als Auftragsverarbeiter, soweit die Verarbeitung ausschließlich zur
+          technischen Bereitstellung der Plattform für den Verein erfolgt.
+        </p>
+        <p>
+          Soweit der Plattformbetreiber personenbezogene Daten im Auftrag eines Vereins verarbeitet, wird ein Vertrag zur
+          Auftragsverarbeitung gemäß Art. 28 DSGVO abgeschlossen.
+        </p>
+        <p>
+          Die Datenverarbeitung erfolgt mandantengetrennt, sodass Vereine ausschließlich Zugriff auf ihre eigenen Daten haben.
+        </p>
+        <p>
+          Für eigene plattformbezogene Verarbeitungen des Betreibers, z. B. Sicherheitsprotokolle, Hostingsteuerung, Support,
+          Missbrauchsabwehr oder öffentliche Inhalte, kann der Plattformbetreiber selbst Verantwortlicher sein.
+        </p>
+
+        <h2>3. Zwecke der Verarbeitung</h2>
+        <ul>
+          <li>Bereitstellung der öffentlichen Website und des geschützten Portals</li>
+          <li>Einrichtung und Verwaltung von Nutzerkonten</li>
+          <li>Authentifizierung und Zugriffsschutz</li>
+          <li>Mandanten- und Rechteverwaltung</li>
+          <li>Nutzung von Portalmodulen wie Eventplanung, Termine, Dokumente, Fangliste, Ausweis und Gewässerfunktionen</li>
+          <li>Durchführung von Invite-, Registrierungs- und Onboarding-Prozessen</li>
+          <li>technische Sicherheit, Fehleranalyse, Missbrauchsabwehr und Systemstabilität</li>
+          <li>Bearbeitung von Kontaktanfragen und Support</li>
+          <li>Erfüllung gesetzlicher Pflichten</li>
+        </ul>
+
+        <h2>4. Verarbeitete Datenkategorien</h2>
+        <ul>
+          <li>Stammdaten, z. B. Name, E-Mail-Adresse, Mitgliedsnummer, Vereinszuordnung</li>
+          <li>Account- und Zugangsdaten</li>
+          <li>Rollen- und Berechtigungsinformationen</li>
+          <li>Portalinhalte und vereinsbezogene Fachdaten</li>
+          <li>Kommunikationsdaten, z. B. Kontaktanfragen</li>
+          <li>technische Verbindungs- und Protokolldaten, z. B. IP-Adresse, Zeitstempel, Browser- und Geräteinformationen</li>
+        </ul>
+
+        <h2>5. Rechtsgrundlagen</h2>
+        <ul>
+          <li>Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung / Nutzung der Plattform)</li>
+          <li>Art. 6 Abs. 1 lit. c DSGVO (rechtliche Verpflichtungen)</li>
+          <li>Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse)</li>
+        </ul>
+        <p>
+          Das berechtigte Interesse liegt insbesondere in der Gewährleistung eines sicheren, stabilen und missbrauchsfreien Betriebs der
+          Plattform.
+        </p>
+        <ul>
+          <li>Art. 6 Abs. 1 lit. a DSGVO (Einwilligung, z. B. für optionale Funktionen)</li>
+        </ul>
+
+        <h2>6. Hosting, Infrastruktur und Dienstleister</h2>
+        <p>
+          Die Plattform wird technisch unter Einbeziehung von Infrastruktur- und Plattformdienstleistern betrieben.
+          Nach aktuellem Stand sind insbesondere <strong>IONOS</strong> sowie <strong>Supabase</strong> für Hosting, Datenbank,
+          Authentifizierung und Plattformfunktionen relevant.
+        </p>
+        <p>
+          Mit Dienstleistern werden – soweit erforderlich – Verträge zur Auftragsverarbeitung abgeschlossen.
+        </p>
+
+        <h2>7. Server-Logs, Sicherheits- und Systemprotokolle</h2>
+        <p>
+          Beim Aufruf der Website und bei Nutzung der Plattform werden technisch erforderliche Daten verarbeitet, um Inhalte auszuliefern, den
+          sicheren Betrieb zu gewährleisten und Angriffe oder Fehlfunktionen zu erkennen.
+        </p>
+        <p>Dabei können insbesondere folgende Daten verarbeitet werden:</p>
+        <ul>
+          <li>IP-Adresse</li>
+          <li>Datum und Uhrzeit des Zugriffs</li>
+          <li>angeforderte Ressource</li>
+          <li>Browser- und Geräteinformationen</li>
+          <li>Status- und Fehlerdaten</li>
+          <li>sicherheitsrelevante Audit- und Protokollinformationen</li>
+        </ul>
+        <p>
+          Externe Monitoring- oder Error-Tracking-Dienste wie Sentry, Bugsnag oder LogRocket sind nach aktuellem Stand nicht als aktive
+          Dritttools eingebunden.
+        </p>
+
+        <h2>8. Registrierung, Login und Mitgliederportal</h2>
+        <p>
+          Im geschützten Portal werden personenbezogene Daten zur Einrichtung und Verwaltung von Nutzerkonten, zur Authentifizierung und zur
+          rollenbasierten Freischaltung im jeweiligen Vereinskontext verarbeitet.
+        </p>
+
+        <h2>9. Web-Push-Benachrichtigungen</h2>
+        <p>Die Plattform unterstützt Web-Push-Benachrichtigungen.</p>
+        <ul>
+          <li>Push-Nachrichten werden nur nach aktiver Zustimmung des Nutzers versendet</li>
+          <li>es werden technische Subscription-Daten verarbeitet, um Push-Nachrichten an Endgeräte zustellen zu können</li>
+          <li>Push kann jederzeit über Browser- oder App-Einstellungen deaktiviert werden</li>
+        </ul>
+        <p>Rechtsgrundlage ist Art. 6 Abs. 1 lit. a DSGVO.</p>
+
+        <h2>10. Lokale Speichertechniken und technisch notwendige Funktionen</h2>
+        <p>
+          Die Plattform verwendet technisch erforderliche lokale Speichermechanismen, insbesondere <code>localStorage</code>,
+          <code>sessionStorage</code> und Service-Worker-Funktionen.
+        </p>
+        <p>Diese dienen u. a. für:</p>
+        <ul>
+          <li>Login- und Sitzungssteuerung</li>
+          <li>Sicherheits- und Offline-Funktionen</li>
+          <li>Speicherung von Datenschutz- und Consent-Einstellungen</li>
+          <li>Update- und Push-Funktionen</li>
+        </ul>
+        <p>
+          Dabei werden ausschließlich technisch erforderliche Informationen gespeichert. Eine Nutzung zu Marketing- oder Trackingzwecken
+          erfolgt nicht.
+        </p>
+
+        <h2>11. Externe Inhalte und Karten</h2>
+        <p>Einzelne Funktionen binden externe Inhalte ein. Dazu können gehören:</p>
+        <ul>
+          <li>Google Maps Embed</li>
+          <li>Leaflet-Ressourcen, z. B. über <code>unpkg.com</code></li>
+          <li>OpenStreetMap-Kartenkacheln</li>
+          <li>externe Shop-Inhalte, z. B. Spreadshirt</li>
+        </ul>
+        <p>
+          Soweit diese Inhalte nicht technisch zwingend erforderlich sind, werden sie erst nach entsprechender Einwilligung geladen.
+        </p>
+
+        <h2>12. Cookies und Einwilligungsmanagement</h2>
+        <p>
+          Die Plattform verwendet technisch erforderliche Cookies bzw. vergleichbare Technologien für den sicheren Betrieb.
+        </p>
+        <p>Ein Consent-Management ist vorhanden.</p>
+        <p>Externe Inhalte werden – soweit erforderlich – nur nach Einwilligung geladen.</p>
+
+        <h2>13. Analytics</h2>
+        <p>
+          Nach aktuellem Stand werden keine klassischen Web-Analytics-Tools eingesetzt.
+        </p>
+
+        <h2>14. Newsletter</h2>
+        <p>Nach aktuellem Stand wird kein Newsletter-System eingesetzt.</p>
+
+        <h2>15. Empfänger personenbezogener Daten</h2>
+        <p>Empfänger personenbezogener Daten können insbesondere sein:</p>
+        <ul>
+          <li>technische Hosting- und Infrastrukturdienstleister</li>
+          <li>Plattform- und Datenbankdienstleister</li>
+          <li>der jeweils zuständige Verein im zugeordneten Mandantenkontext</li>
+          <li>Behörden oder sonstige Stellen bei gesetzlicher Verpflichtung</li>
+        </ul>
+
+        <h2>16. Drittlandübermittlungen</h2>
+        <p>
+          Soweit Dienstleister in Drittstaaten, z. B. USA, eingebunden sind, erfolgt eine Übermittlung personenbezogener Daten nur auf
+          Grundlage der Art. 44 ff. DSGVO, insbesondere auf Basis geeigneter Garantien, z. B. Standardvertragsklauseln der EU-Kommission.
+        </p>
+
+        <h2>17. Speicherdauer</h2>
+        <p>
+          Personenbezogene Daten werden nur so lange gespeichert, wie dies für die jeweiligen Zwecke erforderlich ist oder gesetzliche
+          Aufbewahrungsfristen bestehen.
+        </p>
+
+        <h2>18. Betroffenenrechte</h2>
+        <ul>
+          <li>Auskunft</li>
+          <li>Berichtigung</li>
+          <li>Löschung</li>
+          <li>Einschränkung der Verarbeitung</li>
+          <li>Widerspruch</li>
+          <li>Datenübertragbarkeit</li>
+          <li>Widerruf erteilter Einwilligungen mit Wirkung für die Zukunft</li>
+          <li>Beschwerde bei einer Datenschutzaufsichtsbehörde</li>
+        </ul>
+        <p>
+          Es findet keine automatisierte Entscheidungsfindung im Sinne des Art. 22 DSGVO statt.
+        </p>
+
+        <h2>19. Kontakt Datenschutz</h2>
+        <p>
+          Bei Fragen zur Datenverarbeitung oder zum Datenschutz wenden Sie sich bitte an:<br />
+          <a href={`mailto:${APP.supportEmail}`}>{APP.supportEmail}</a>
+        </p>
+
+        <h2>20. Stand und Änderungen</h2>
+        <p>
+          Diese Datenschutzhinweise können angepasst werden, wenn rechtliche, technische oder organisatorische Änderungen dies erforderlich
+          machen.
         </p>
       </div>
     </section>
   ) : (
-  <section class="card" style="max-width:980px;margin:0 auto;">
-    <div class="card__body">
-      <h1>Datenschutzerklärung</h1>
-      <p class="small">Stand: 9. März 2026</p>
+    <section class="card" style="max-width:980px;margin:0 auto;">
+      <div class="card__body">
+        <h1>Datenschutzerklärung</h1>
+        <p class="small">Stand: 16. März 2026</p>
 
-      <h2>1. Verantwortlicher</h2>
-      <p>
-        Verein der Angler und Naturfreunde Ottenheim 1957 e.V.<br />
-        Georgenstr. 33, 77963 Schwanau<br />
-        E-Mail: <a href="mailto:vdan.ottenheim@freenet.de">vdan.ottenheim@freenet.de</a>
-      </p>
+        <h2>1. Verantwortlicher</h2>
+        <p>
+          Verein der Angler und Naturfreunde Ottenheim 1957 e.V.<br />
+          Georgenstr. 33, 77963 Schwanau<br />
+          E-Mail: <a href="mailto:vdan.ottenheim@freenet.de">vdan.ottenheim@freenet.de</a>
+        </p>
 
-      <h2>2. Gegenstand dieser Erklärung</h2>
-      <p>
-        Diese Datenschutzerklärung gilt für die öffentliche Website, das geschützte Mitgliederportal sowie zugehörige
-        Online-Formulare (z. B. Kontakt und Mitgliedsantrag).
-      </p>
+        <h2>2. Gegenstand dieser Erklärung</h2>
+        <p>
+          Diese Datenschutzerklärung gilt für die öffentliche Website, das geschützte Mitgliederportal sowie zugehörige Online-Formulare
+          (z. B. Kontakt und Mitgliedsantrag).
+        </p>
 
-      <h2>3. Kategorien verarbeiteter Daten</h2>
-      <ul>
-        <li>Stammdaten (z. B. Name, Mitgliedsnummer, Kontaktdaten)</li>
-        <li>Kommunikationsdaten (z. B. Inhalte aus Kontaktanfragen)</li>
-        <li>Portalnutzungsdaten (z. B. Login-Zeitpunkte, Rollen)</li>
-        <li>Vereinsbezogene Fachdaten (z. B. Fangmeldungen, Arbeitsstunden, Termine)</li>
-        <li>Technische Verbindungsdaten (z. B. IP-Adresse, Zeitstempel, Browserkennung)</li>
-      </ul>
+        <h2>3. Kategorien verarbeiteter Daten</h2>
+        <ul>
+          <li>Stammdaten (z. B. Name, Mitgliedsnummer, Kontaktdaten)</li>
+          <li>Kommunikationsdaten (z. B. Inhalte aus Kontaktanfragen)</li>
+          <li>Portalnutzungsdaten (z. B. Login-Zeitpunkte, Rollen)</li>
+          <li>Vereinsbezogene Fachdaten (z. B. Fangmeldungen, Arbeitsstunden, Termine)</li>
+          <li>Technische Verbindungsdaten (z. B. IP-Adresse, Zeitstempel, Browserkennung)</li>
+        </ul>
 
-      <h2>4. Zwecke und Rechtsgrundlagen</h2>
-      <p>
-        Wir verarbeiten personenbezogene Daten zur Bereitstellung und Sicherheit der Website, zur Durchführung
-        vereinsbezogener Prozesse und zur Erfüllung rechtlicher Verpflichtungen.
-      </p>
-      <p>
-        Rechtsgrundlagen sind insbesondere Art. 6 Abs. 1 lit. b DSGVO (mitgliedschaftsbezogene Leistungen),
-        Art. 6 Abs. 1 lit. c DSGVO (rechtliche Verpflichtungen), Art. 6 Abs. 1 lit. f DSGVO (sicherer technischer
-        Betrieb) und, soweit erforderlich, Art. 6 Abs. 1 lit. a DSGVO (Einwilligung).
-      </p>
-      <p>
-        Unser berechtigtes Interesse nach Art. 6 Abs. 1 lit. f DSGVO liegt in der Gewährleistung eines sicheren,
-        stabilen und wirtschaftlichen Portalbetriebs sowie der Missbrauchs- und Angriffserkennung.
-      </p>
+        <h2>4. Zwecke und Rechtsgrundlagen</h2>
+        <p>
+          Wir verarbeiten personenbezogene Daten zur Bereitstellung und Sicherheit der Website, zur Durchführung vereinsbezogener Prozesse und
+          zur Erfüllung rechtlicher Verpflichtungen.
+        </p>
+        <p>
+          Rechtsgrundlagen sind insbesondere Art. 6 Abs. 1 lit. b DSGVO, Art. 6 Abs. 1 lit. c DSGVO, Art. 6 Abs. 1 lit. f DSGVO und, soweit
+          erforderlich, Art. 6 Abs. 1 lit. a DSGVO.
+        </p>
 
-      <h2>5. Hosting, Auftragsverarbeitung und Rollen</h2>
-      <p>
-        Die Website wird bei IONOS gehostet. Für das Mitgliederportal nutzen wir Supabase als technischen Dienstleister
-        (Authentifizierung, Datenbank, Berechtigungen). Mit eingesetzten Dienstleistern werden, soweit erforderlich,
-        Verträge zur Auftragsverarbeitung gemäß Art. 28 DSGVO abgeschlossen.
-      </p>
-      <p>
-        Rollenklärung: Der Verein ist Verantwortlicher für die inhaltliche Verarbeitung der Vereinsdaten. Technische
-        Plattformleistungen erfolgen als Auftragsverarbeitung.
-      </p>
-      <p>
-        Die Plattform ist so konzipiert, dass Daten verschiedener Vereine technisch voneinander getrennt verarbeitet
-        werden (tenant-scope / mandantenbezogene Trennung).
-      </p>
+        <h2>5. Hosting, Auftragsverarbeitung und Rollen</h2>
+        <p>
+          Die Website wird bei IONOS gehostet. Für das Mitgliederportal nutzen wir Supabase als technischen Dienstleister (Authentifizierung,
+          Datenbank, Berechtigungen). Mit eingesetzten Dienstleistern werden, soweit erforderlich, Verträge zur Auftragsverarbeitung gemäß
+          Art. 28 DSGVO abgeschlossen.
+        </p>
 
-      <h2>6. Datenübermittlung in Drittländer</h2>
-      <p>
-        Sofern personenbezogene Daten in Drittländer (insbesondere USA) übermittelt werden, erfolgt dies ausschließlich
-        auf Grundlage der Art. 44 ff. DSGVO, insbesondere unter Verwendung von Standardvertragsklauseln der
-        EU-Kommission (Art. 46 DSGVO) oder auf Basis eines Angemessenheitsbeschlusses (Art. 45 DSGVO), soweit
-        einschlägig.
-      </p>
+        <h2>6. Datenübermittlung in Drittländer</h2>
+        <p>
+          Sofern personenbezogene Daten in Drittländer übermittelt werden, erfolgt dies ausschließlich auf Grundlage der Art. 44 ff. DSGVO.
+        </p>
 
-      <h2>7. Transportverschlüsselung und technische Schutzmaßnahmen</h2>
-      <p>
-        Die Datenübertragung zwischen Endgerät und unseren Systemen erfolgt TLS-verschlüsselt (HTTPS). Zusätzlich
-        setzen wir rollenbasierte Zugriffskontrollen, mandantenbezogene Zugriffstrennung und technische
-        Sicherheitsprotokollierung ein.
-      </p>
+        <h2>7. Transportverschlüsselung und technische Schutzmaßnahmen</h2>
+        <p>
+          Die Datenübertragung zwischen Endgerät und unseren Systemen erfolgt TLS-verschlüsselt (HTTPS). Zusätzlich setzen wir rollenbasierte
+          Zugriffskontrollen, mandantenbezogene Zugriffstrennung und technische Sicherheitsprotokollierung ein.
+        </p>
 
-      <h2>8. Protokoll- und Sicherheitsdaten</h2>
-      <p>
-        Beim Aufruf der Website werden technisch erforderliche Verbindungsdaten verarbeitet (z. B. IP-Adresse,
-        Zeitpunkt, aufgerufene Ressource, Browserkennung), um Stabilität und Sicherheit zu gewährleisten.
-      </p>
-      <p>
-        Protokolldaten werden nach einem definierten Retention-Konzept gespeichert und in der Regel nach 14 Tagen
-        gelöscht, soweit keine längere Aufbewahrung zur Missbrauchs- oder Sicherheitsaufklärung erforderlich ist.
-      </p>
+        <h2>8. Protokoll- und Sicherheitsdaten</h2>
+        <p>
+          Beim Aufruf der Website werden technisch erforderliche Verbindungsdaten verarbeitet, um Stabilität und Sicherheit zu gewährleisten.
+        </p>
 
-      <h2>9. Mitgliederportal und Zugriffsschutz</h2>
-      <p>
-        Der Zugriff auf geschützte Funktionen erfolgt nur nach Anmeldung. Die Datenverarbeitung im Portal erfolgt
-        rollenbasiert auf Basis technischer Zugriffskontrollen und Berechtigungsregeln.
-      </p>
-      <p>
-        Für die technische Authentifizierung ist die im Auth-System hinterlegte E-Mail-Adresse maßgeblich. Vereinsinterne
-        Kennungen (z. B. Mitgliedsnummern/Kürzel) können als Funktions- oder Anzeigeattribute genutzt werden, sind aber
-        nicht zwingend der primäre Login-Identifier.
-      </p>
+        <h2>9. Mitgliederportal und Zugriffsschutz</h2>
+        <p>
+          Der Zugriff auf geschützte Funktionen erfolgt nur nach Anmeldung. Die Datenverarbeitung im Portal erfolgt rollenbasiert auf Basis
+          technischer Zugriffskontrollen und Berechtigungsregeln.
+        </p>
 
-      <h2>10. Online-Bewerbung „Mitglied werden“</h2>
-      <p>
-        Bei Nutzung des öffentlichen Bewerbungsformulars verarbeiten wir die dort abgefragten Angaben ausschließlich
-        zur Prüfung einer Mitgliedschaftsanfrage.
-      </p>
-      <ul>
-        <li>Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (vorvertragliche Maßnahme)</li>
-        <li>SEPA-Freigabe ist Pflichtfeld und wird technisch erzwungen</li>
-        <li>IBAN wird verschlüsselt gespeichert, im normalen Bearbeitungsprozess nur maskiert (letzte 4 Stellen)</li>
-        <li>Zugriff auf Bewerbungen nur für Vorstand/Admin, Zugriff auf verschlüsselte IBAN nur administrativ</li>
-      </ul>
-      <p>
-        Nicht angenommene Bewerbungen werden nach Abschluss des Verfahrens nach den internen Aufbewahrungsfristen
-        gelöscht bzw. anonymisiert.
-      </p>
-      <p>
-        Für Mitgliederdaten ist ein technischer Lösch-/Anonymisierungsprozess implementiert. Dabei werden
-        personenbezogene Angaben entfernt oder pseudonymisiert, soweit keine gesetzlichen Aufbewahrungspflichten
-        entgegenstehen.
-      </p>
-
-      <h2>11. Kontaktformular / Spam-Schutz</h2>
-      <p>
-        Das Kontaktformular wird serverseitig verarbeitet. Zur Missbrauchsabwehr setzen wir technische
-        Schutzmechanismen ein (u. a. Turnstile/Bot-Prüfung, Honeypot, Plausibilitätsprüfungen und Rate-Limits).
-      </p>
-
-      <h2>12. Einsatz lokaler Speichertechniken</h2>
-      <p>
-        Wir verwenden notwendige lokale Speichermechanismen (z. B. `localStorage`, `sessionStorage`) für:
-      </p>
-      <ul>
-        <li>Login-/Sitzungsverwaltung im Mitgliederportal</li>
-        <li>Sicherheits- und Wartungszustände</li>
-        <li>Speicherung Ihrer Datenschutz-Einwilligung</li>
-      </ul>
-      <p>
-        Diese Funktionen sind für den technischen Betrieb erforderlich und dienen nicht dem Werbetracking.
-      </p>
-
-      <h2>13. Externe Inhalte und Einwilligungsmanagement</h2>
-      <p>
-        Externe Inhalte werden erst nach Ihrer Einwilligung geladen. Dazu gehören derzeit insbesondere:
-      </p>
-      <ul>
-        <li>Google Maps Embed (Seite „Anglerheim Ottenheim“)</li>
-        <li>Leaflet CDN (`unpkg.com`) und OpenStreetMap-Kacheln (Gewässerkarte)</li>
-        <li>Externer QR-Code-Bilddienst (`api.qrserver.com`)</li>
-        <li>Spreadshirt Shop-Client (Seite „Vereinsshop“)</li>
-      </ul>
-      <p>
-        Die Steuerung erfolgt über das Consent-Banner bzw. über „Datenschutz-Einstellungen“. Rechtsgrundlage für diese
-        optionalen externen Inhalte ist Ihre Einwilligung (Art. 6 Abs. 1 lit. a DSGVO).
-      </p>
-      <p>
-        Auf der Seite „Vereinsshop“ steht zusätzlich ein externer Direktlink zum Shop zur Verfügung. Beim Aufruf des
-        externen Shops gelten ergänzend die Datenschutz- und Cookie-Regelungen des Shop-Anbieters.
-      </p>
-      <p>
-        Soweit über externe Inhalte eine Übermittlung in Drittländer erfolgt, basiert diese auf den in Abschnitt 6
-        genannten Garantien nach Art. 44 ff. DSGVO.
-      </p>
-      <p>
-        Erteilte Einwilligungen können jederzeit mit Wirkung für die Zukunft widerrufen werden. Die Rechtmäßigkeit
-        der bis zum Widerruf erfolgten Verarbeitung bleibt unberührt.
-      </p>
-
-      <h2>14. Speicherdauer</h2>
-      <p>
-        Personenbezogene Daten werden nur so lange gespeichert, wie es für die genannten Zwecke erforderlich ist oder
-        gesetzliche Aufbewahrungspflichten bestehen.
-      </p>
-
-      <h2>15. Empfänger von Daten</h2>
-      <p>
-        Empfänger können insbesondere interne berechtigte Vereinsstellen, eingesetzte Auftragsverarbeiter sowie
-        öffentliche Stellen sein, soweit eine gesetzliche Verpflichtung besteht.
-      </p>
-
-      <h2>16. Ihre Rechte</h2>
-      <p>
-        Sie haben nach Maßgabe der Art. 15 ff. DSGVO insbesondere das Recht auf Auskunft, Berichtigung, Löschung,
-        Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch.
-      </p>
-      <p>
-        Außerdem haben Sie das Recht auf Beschwerde bei einer zuständigen Datenschutzaufsichtsbehörde.
-      </p>
-
-      <h2>17. Kontakt Datenschutz</h2>
-      <p>
-        Bei Fragen zum Datenschutz wenden Sie sich bitte an:<br />
-        <a href="mailto:vdan.ottenheim@freenet.de">vdan.ottenheim@freenet.de</a>
-      </p>
-    </div>
-  </section>
+        <h2>10. Kontakt Datenschutz</h2>
+        <p>
+          Bei Fragen zum Datenschutz wenden Sie sich bitte an:<br />
+          <a href="mailto:vdan.ottenheim@freenet.de">vdan.ottenheim@freenet.de</a>
+        </p>
+      </div>
+    </section>
   )}
 </Site>

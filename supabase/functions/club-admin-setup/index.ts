@@ -81,6 +81,14 @@ async function sbServiceFetch(path: string, init: RequestInit = {}) {
   return res;
 }
 
+async function callRpc<T>(fn: string, payload: Record<string, unknown>) {
+  const res = await sbServiceFetch(`/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    body: JSON.stringify(payload || {}),
+  });
+  return await res.json().catch(() => null) as T;
+}
+
 async function getAuthUser(req: Request, supabaseUrl: string, serviceKey: string) {
   const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
   if (!authHeader) return null;
@@ -262,6 +270,8 @@ async function ensureDefaultUsecaseAcl(clubId: string) {
     { role_key: "member", usecase_key: "fangliste_cockpit", can_view: false, can_read: false, can_write: false, can_update: false, can_delete: false },
     { role_key: "member", usecase_key: "arbeitseinsaetze", can_view: true, can_read: true, can_write: false, can_update: false, can_delete: false },
     { role_key: "member", usecase_key: "arbeitseinsaetze_cockpit", can_view: false, can_read: false, can_write: false, can_update: false, can_delete: false },
+    { role_key: "member", usecase_key: "eventplaner", can_view: false, can_read: false, can_write: false, can_update: false, can_delete: false },
+    { role_key: "member", usecase_key: "eventplaner_mitmachen", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
     { role_key: "member", usecase_key: "feed", can_view: true, can_read: true, can_write: false, can_update: false, can_delete: false },
     { role_key: "member", usecase_key: "mitglieder", can_view: false, can_read: false, can_write: false, can_update: false, can_delete: false },
     { role_key: "member", usecase_key: "mitglieder_registry", can_view: false, can_read: false, can_write: false, can_update: false, can_delete: false },
@@ -274,6 +284,8 @@ async function ensureDefaultUsecaseAcl(clubId: string) {
     { role_key: "vorstand", usecase_key: "fangliste_cockpit", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
     { role_key: "vorstand", usecase_key: "arbeitseinsaetze", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
     { role_key: "vorstand", usecase_key: "arbeitseinsaetze_cockpit", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
+    { role_key: "vorstand", usecase_key: "eventplaner", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
+    { role_key: "vorstand", usecase_key: "eventplaner_mitmachen", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
     { role_key: "vorstand", usecase_key: "feed", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
     { role_key: "vorstand", usecase_key: "mitglieder", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
     { role_key: "vorstand", usecase_key: "mitglieder_registry", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: false },
@@ -286,6 +298,8 @@ async function ensureDefaultUsecaseAcl(clubId: string) {
     { role_key: "admin", usecase_key: "fangliste_cockpit", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
     { role_key: "admin", usecase_key: "arbeitseinsaetze", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
     { role_key: "admin", usecase_key: "arbeitseinsaetze_cockpit", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
+    { role_key: "admin", usecase_key: "eventplaner", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
+    { role_key: "admin", usecase_key: "eventplaner_mitmachen", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
     { role_key: "admin", usecase_key: "feed", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
     { role_key: "admin", usecase_key: "mitglieder", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
     { role_key: "admin", usecase_key: "mitglieder_registry", can_view: true, can_read: true, can_write: true, can_update: true, can_delete: true },
@@ -505,6 +519,22 @@ Deno.serve(async (req: Request) => {
     }
     await ensureCreatorProfileBinding(actor, String(actor.id), clubId);
 
+    await callRpc("ensure_club_onboarding_state", { p_club_id: clubId });
+    const onboardingState = await callRpc<Record<string, unknown>>("upsert_club_onboarding_progress", {
+      p_club_id: clubId,
+      p_club_data_complete: true,
+      p_waters_complete: waters.length > 0,
+      p_cards_complete: cards.length > 0,
+      p_members_mode: "pending",
+      p_notes: {
+        source: "club-admin-setup",
+        created_at: createdAt,
+        initial_waters_count: waters.length,
+        initial_cards_count: cards.length,
+      },
+    });
+    const onboardingSnapshot = await callRpc<Array<Record<string, unknown>>>("club_onboarding_snapshot", { p_club_id: clubId });
+
     const reqOrigin = txt(req.headers.get("origin"));
     const registerUrl = reqOrigin
       ? `${reqOrigin.replace(/\/+$/, "")}/registrieren/?invite=${encodeURIComponent(inviteToken)}`
@@ -522,6 +552,8 @@ Deno.serve(async (req: Request) => {
         waters_created: waters,
         public_active_set: makePublicActive,
         creator_roles_assigned: assignCreatorRoles,
+        onboarding_state: onboardingState,
+        onboarding_snapshot: Array.isArray(onboardingSnapshot) ? onboardingSnapshot[0] || null : onboardingSnapshot,
         invite_token: inviteToken,
         invite_expires_at: inviteExpiresAt,
         invite_register_url: registerUrl,

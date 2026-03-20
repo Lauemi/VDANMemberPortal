@@ -35,9 +35,24 @@
 
   async function acceptCurrent() {
     const ua = String(navigator.userAgent || "").slice(0, 255);
+    const session = window.VDAN_AUTH?.loadSession?.();
+    const signerEmail = String(session?.user?.email || "").trim();
+    const avvCheck = document.getElementById("legalAcceptAvvCheck");
+    const authorityCheck = document.getElementById("legalAcceptAuthorityCheck");
+    const signerNameInput = document.getElementById("legalSignerName");
+    const signerFunctionInput = document.getElementById("legalSignerFunction");
     const rows = await sb("/rest/v1/rpc/accept_current_legal", {
       method: "POST",
-      body: JSON.stringify({ p_terms: true, p_privacy: true, p_user_agent: ua }),
+      body: JSON.stringify({
+        p_terms: true,
+        p_privacy: true,
+        p_avv: Boolean(avvCheck?.checked),
+        p_user_agent: ua,
+        p_authority_confirmed: Boolean(authorityCheck?.checked),
+        p_signer_name: String(signerNameInput?.value || "").trim(),
+        p_signer_function: String(signerFunctionInput?.value || "").trim(),
+        p_signer_email: signerEmail,
+      }),
     });
     if (!Array.isArray(rows) || !rows[0]?.ok) throw new Error("acceptance_failed");
     return rows[0];
@@ -48,13 +63,26 @@
     const info = document.getElementById("legalVersionInfo");
     const check = document.getElementById("legalAcceptCheck");
     const btn = document.getElementById("legalAcceptBtn");
+    const avvSection = document.getElementById("legalAvvSection");
+    const avvCheck = document.getElementById("legalAcceptAvvCheck");
+    const authorityCheck = document.getElementById("legalAcceptAuthorityCheck");
+    const signerNameInput = document.getElementById("legalSignerName");
+    const signerFunctionInput = document.getElementById("legalSignerFunction");
     const target = nextTarget();
+    let avvRequired = false;
 
     try {
       const state = await loadState();
       const termsV = String(state?.terms_version || "-");
       const privacyV = String(state?.privacy_version || "-");
-      if (info) info.textContent = `Aktuelle Versionen: Nutzungsbedingungen ${termsV}, Datenschutz ${privacyV}.`;
+      const avvV = String(state?.avv_version || "-");
+      avvRequired = Boolean(state?.avv_required && !state?.avv_accepted);
+      if (info) {
+        info.textContent = avvRequired
+          ? `Aktuelle Versionen: Nutzungsbedingungen ${termsV}, Datenschutz ${privacyV}, AVV ${avvV}.`
+          : `Aktuelle Versionen: Nutzungsbedingungen ${termsV}, Datenschutz ${privacyV}.`;
+      }
+      if (avvSection) avvSection.style.display = avvRequired ? "block" : "none";
       if (!state?.needs_acceptance) {
         window.location.replace(target);
         return;
@@ -69,6 +97,24 @@
       if (!check?.checked) {
         if (msg) msg.textContent = "Bitte bestätige die Bedingungen per Checkbox.";
         return;
+      }
+      if (avvRequired) {
+        if (!avvCheck?.checked) {
+          if (msg) msg.textContent = "Bitte bestätige zusätzlich den AVV.";
+          return;
+        }
+        if (!authorityCheck?.checked) {
+          if (msg) msg.textContent = "Bitte bestätige deine Vertretungs- oder Bevollmächtigungsrolle für den AVV.";
+          return;
+        }
+        if (!String(signerNameInput?.value || "").trim()) {
+          if (msg) msg.textContent = "Bitte trage deinen Vor- und Nachnamen für die AVV-Bestätigung ein.";
+          return;
+        }
+        if (!String(signerFunctionInput?.value || "").trim()) {
+          if (msg) msg.textContent = "Bitte trage deine Funktion im Verein für die AVV-Bestätigung ein.";
+          return;
+        }
       }
       if (msg) msg.textContent = "Speichere …";
       try {

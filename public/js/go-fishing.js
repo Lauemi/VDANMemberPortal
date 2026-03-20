@@ -24,7 +24,7 @@
     const live = session()?.user?.id;
     if (live) return String(live);
     try {
-      const raw = localStorage.getItem("vdan_member_session_v1");
+      const raw = localStorage.getItem("vdan_member_session_meta_v1");
       const parsed = raw ? JSON.parse(raw) : null;
       return String(parsed?.user?.id || "").trim() || null;
     } catch {

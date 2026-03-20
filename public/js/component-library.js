@@ -600,7 +600,7 @@ document.addEventListener("click", async (event) => {
       await navigator.clipboard.writeText(text);
       status("JSON exportiert und in die Zwischenablage kopiert.");
     } catch {
-      status("JSON exportiert (Zwischenablage nicht verfuegbar).");
+      status("JSON exportiert (Zwischenablage nicht verfügbar).");
     }
     return;
   }

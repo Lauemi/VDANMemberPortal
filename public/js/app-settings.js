@@ -334,7 +334,7 @@
 
   async function updateAuthEmail(email) {
     const nextEmail = val(email).toLowerCase();
-    if (!nextEmail || !nextEmail.includes("@")) throw new Error("Bitte eine gueltige E-Mail eingeben.");
+    if (!nextEmail || !nextEmail.includes("@")) throw new Error("Bitte eine gültige E-Mail eingeben.");
     const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/app/einstellungen/")}`;
     await sb("/auth/v1/user", {
       method: "PUT",
@@ -349,7 +349,7 @@
 
   async function updateProfileEmailOnly(email) {
     const nextEmail = val(email).toLowerCase();
-    if (!nextEmail || !nextEmail.includes("@")) throw new Error("Bitte eine gueltige E-Mail eingeben.");
+    if (!nextEmail || !nextEmail.includes("@")) throw new Error("Bitte eine gültige E-Mail eingeben.");
     await sb(`/rest/v1/profiles?id=eq.${encodeURIComponent(uid())}`, {
       method: "PATCH",
       headers: { Prefer: "return=minimal" },
@@ -399,7 +399,7 @@
       try {
         if (isAuthEmailChangeEnabled()) {
           await updateAuthEmail(nextEmail);
-          emailNote = " E-Mail-Aenderung angestossen; bitte Verifizierungs-Mail bestaetigen.";
+          emailNote = " E-Mail-Aenderung angestossen; bitte Verifizierungs-Mail bestätigen.";
         } else {
           await updateProfileEmailOnly(nextEmail);
           emailNote = " Kontakt-E-Mail gespeichert. Login bleibt weiterhin auf Mitgliedsnummer + Passwort.";

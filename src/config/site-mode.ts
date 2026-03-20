@@ -11,6 +11,8 @@ function normalizeFallbackMode(fallback: unknown): SiteMode {
 
 export function resolveSiteMode(hostname: string, fallback: unknown): SiteMode {
   const host = normalizeHost(hostname);
+  if (host.includes("vdan-member-portal")) return "vdan";
+  if (host.includes("fishing-club-portal")) return "fcp";
   if (host.includes("fishing-club-portal.de")) return "fcp";
   if (host.includes("vdan-ottenheim.com")) return "vdan";
   return normalizeFallbackMode(fallback);

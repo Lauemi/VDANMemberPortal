@@ -352,9 +352,18 @@ async function loadConfigForScope(scope: string) {
 Deno.serve(async (req: Request) => {
   const headers = cors(req);
   if (req.method === "OPTIONS") return new Response("ok", { status: 200, headers });
-  if (req.method !== "POST") return json({ ok: false, error: "method_not_allowed" }, 405, headers);
 
   try {
+    if (req.method === "GET") {
+      const url = new URL(req.url);
+      const action = txt(url.searchParams.get("action")) || "get";
+      const scope = normalizeScope(url.searchParams.get("scope"));
+      if (action !== "get") return json({ ok: false, error: "method_not_allowed" }, 405, headers);
+      return json({ ok: true, ...(await loadConfigForScope(scope)) }, 200, headers);
+    }
+
+    if (req.method !== "POST") return json({ ok: false, error: "method_not_allowed" }, 405, headers);
+
     const actor = await getAuthUser(req);
     const body = safeObject(await req.json().catch(() => ({}))) as AdminWebConfigPayload;
     const action = txt(body.action) || "get";

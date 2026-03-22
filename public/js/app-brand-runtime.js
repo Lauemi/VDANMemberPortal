@@ -23,15 +23,11 @@
   }
 
   async function loadConfig() {
-    const { url, key } = cfg();
-    if (!url || !key || isLocalDev()) return null;
-    const res = await fetch(`${url}/functions/v1/admin-web-config`, {
-      method: "POST",
-      headers: {
-        apikey: key,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ action: "get", scope: siteMode() }),
+    const { url } = cfg();
+    if (!url || isLocalDev()) return null;
+    const params = new URLSearchParams({ action: "get", scope: siteMode() });
+    const res = await fetch(`${url}/functions/v1/admin-web-config?${params.toString()}`, {
+      method: "GET",
     });
     const data = await res.json().catch(() => null);
     if (!res.ok || !data?.ok) return null;

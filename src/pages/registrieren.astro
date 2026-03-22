@@ -47,6 +47,7 @@ const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
               <input id="registerPass2" name="password_repeat" type="password" autocomplete="new-password" minlength="8" required />
             </label>
           </div>
+          <p id="registerPasswordHint" class="small" aria-live="polite"></p>
         </section>
 
         <section class="register-step register-step--mode">
@@ -149,7 +150,7 @@ const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
           <div class="register-billing-preview">
             <div>
               <strong>Billing-Vorbereitung</strong>
-              <p class="small">Die Billing-Stufe wird bereits vorbereitet. Die Preislogik nach Vereinsgröße ist hier sichtbar, Stripe wird in diesem Schritt aber noch nicht hart erzwungen.</p>
+              <p class="small">Die Billing-Stufe wird bereits vorbereitet. Die Preislogik nach Vereinsgröße ist hier sichtbar, Stripe wird in diesem Schritt aber noch nicht hart erzwungen. Im Superadmin-Kontext blockiert Billing diesen Test- und Setup-Schritt nicht.</p>
             </div>
             <div class="register-billing-preview__state small">
               Vorgesehener Status nach diesem Schritt: <code>billing_pending</code>

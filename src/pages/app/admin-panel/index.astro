@@ -1,6 +1,8 @@
 ---
 import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
+import { STATIC_WEB_ENV_HINTS, STATIC_WEB_PAGES } from "../../../config/static-web-pages";
+import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
 ---
 
 <Site
@@ -328,10 +330,108 @@ import { APP } from "../../../config/app";
               </table>
             </div>
           </article>
+
+          <article class="admin-card">
+            <h3>Statische Seiten nach Deploy-Ziel</h3>
+            <p class="small">
+              Die harte Guard-Grenze bleibt im Code. Sichtbarkeit und Brand der freigegebenen statischen Seiten koennen hier live als
+              Runtime-Ausblendung bzw. Brand-Umschaltung aus der DB gesteuert werden.
+            </p>
+            <p class="small" id="adminStaticWebMsg" aria-live="polite"></p>
+            <div class="admin-actions">
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminStaticWebSave">Web-Plan speichern</button>
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminStaticWebReset">Web-Draft reset</button>
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminStaticWebCopy">Web-JSON</button>
+            </div>
+
+            <details class="template-accordion" id="adminStaticWebFcpAccordion">
+              <summary>FCP</summary>
+              <div class="work-part-table-wrap">
+                <table class="work-part-table" id="adminStaticPagesFcpTable">
+                  <thead>
+                    <tr>
+                      <th>Seite</th><th>Route</th><th>Sichtbar</th><th>VDAN Brand</th><th>FCP Brand</th><th>Hinweis</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="template-accordion" id="adminStaticWebVdanAccordion">
+              <summary>VDAN</summary>
+              <div class="work-part-table-wrap">
+                <table class="work-part-table" id="adminStaticPagesVdanTable">
+                  <thead>
+                    <tr>
+                      <th>Seite</th><th>Route</th><th>Sichtbar</th><th>VDAN Brand</th><th>FCP Brand</th><th>Hinweis</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </details>
+          </article>
+
+          <article class="admin-card">
+            <h3>App-Masken Brand-Overrides</h3>
+            <p class="small">
+              Diese Overrides wirken live auf die App-Masken. Damit kannst du Farben und Brand-Switches unterwegs umstellen, ohne die statischen VDAN-Seiten anzutasten.
+            </p>
+            <p class="small" id="adminAppMaskBrandMsg" aria-live="polite"></p>
+            <div class="admin-actions">
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminAppMaskBrandSave">Masken-Brand speichern</button>
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminAppMaskBrandReset">Masken-Brand reset</button>
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminAppMaskBrandCopy">Masken-JSON</button>
+            </div>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminAppMaskBrandTable">
+                <thead>
+                  <tr>
+                    <th>Maske</th><th>Route</th><th>VDAN</th><th>FCP Tactical</th><th>FCP Brand</th><th>Hinweis</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="admin-card">
+            <h3>Brand- und Env-Hinweise</h3>
+            <p class="small">
+              Diese Keys muessen pro Ziel sauber gesetzt sein. Die statischen Seiten bleiben davon getrennt steuerbar.
+            </p>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminStaticEnvHintsTable">
+                <thead>
+                  <tr>
+                    <th>Ziel</th><th>Key</th><th>Wert</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(STATIC_WEB_ENV_HINTS).flatMap(([target, hints]) =>
+                    Object.entries(hints).map(([key, value]) => (
+                      <tr>
+                        <td>{target.toUpperCase()}</td>
+                        <td><code>{key}</code></td>
+                        <td><code>{value}</code></td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </article>
         </section>
       </div>
     </div>
   </section>
+
+  <div
+    id="adminStaticWebConfig"
+    data-static-web-pages={JSON.stringify(STATIC_WEB_PAGES)}
+    data-app-mask-brand-pages={JSON.stringify(APP_MASK_BRAND_PAGES)}
+  ></div>
 
   <script src="/js/admin-board.js" defer></script>
 </Site>

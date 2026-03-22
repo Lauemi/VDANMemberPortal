@@ -15,11 +15,13 @@ type Action =
 
 function cors(req: Request) {
   const origin = req.headers.get("origin") || "*";
+  const reqHeaders = req.headers.get("access-control-request-headers") || "authorization, x-client-info, apikey, content-type";
   return {
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Headers": reqHeaders,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    Vary: "Origin",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin, Access-Control-Request-Headers",
   };
 }
 
@@ -165,7 +167,7 @@ async function loadWorkspace(clubId: string) {
 
 Deno.serve(async (req: Request) => {
   const headers = cors(req);
-  if (req.method === "OPTIONS") return new Response("ok", { headers });
+  if (req.method === "OPTIONS") return new Response("ok", { status: 200, headers });
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers });
 
   try {

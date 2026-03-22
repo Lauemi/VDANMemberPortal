@@ -231,3 +231,69 @@ export async function sendContactForwardMail(params: {
 
   return { ok: true };
 }
+
+export async function sendResponsibleNotificationMail(params: {
+  to: string;
+  responsibleName: string;
+  clubName: string;
+  creatorEmail: string;
+  registerUrl: string;
+}) {
+  const resendKey = Deno.env.get("RESEND_API_KEY") || "";
+  const from = Deno.env.get("CONTACT_FROM_EMAIL") || "";
+  if (!resendKey || !from) {
+    return { ok: false, reason: "mail_provider_not_configured" };
+  }
+
+  const clubName = escHtml(params.clubName);
+  const responsibleName = escHtml(params.responsibleName || "verantwortliche Person");
+  const creatorEmail = escHtml(params.creatorEmail || "unbekannt");
+  const registerUrl = String(params.registerUrl || "").trim();
+  const safeUrl = escHtml(registerUrl);
+
+  const html = `
+    <h2>Information zur Vereinsanlage im Fishing-Club-Portal</h2>
+    <p>Hallo ${responsibleName},</p>
+    <p>du wurdest als verantwortliche Person fuer den Verein <strong>${clubName}</strong> eingetragen.</p>
+    <p>Angelegt wurde dieser Eintrag von: <strong>${creatorEmail}</strong></p>
+    <p>Falls du den Verein selbst weiter einrichten moechtest, kannst du diesen Link verwenden:</p>
+    <p><a href="${safeUrl}">${safeUrl}</a></p>
+    <p>Wenn du nicht die richtige Ansprechperson bist oder dem Eintrag widersprechen moechtest, antworte bitte direkt auf diese E-Mail.</p>
+  `;
+
+  const text = [
+    "Information zur Vereinsanlage im Fishing-Club-Portal",
+    `Hallo ${params.responsibleName || "verantwortliche Person"},`,
+    "",
+    `du wurdest als verantwortliche Person fuer den Verein ${params.clubName} eingetragen.`,
+    `Angelegt wurde dieser Eintrag von: ${params.creatorEmail || "unbekannt"}`,
+    "",
+    "Falls du den Verein selbst weiter einrichten moechtest, kannst du diesen Link verwenden:",
+    registerUrl,
+    "",
+    "Wenn du nicht die richtige Ansprechperson bist oder dem Eintrag widersprechen moechtest, antworte bitte direkt auf diese E-Mail.",
+  ].join("\n");
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${resendKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to: [params.to],
+      subject: `Verantwortliche Person fuer ${params.clubName}`,
+      html,
+      text,
+      reply_to: params.creatorEmail || undefined,
+    }),
+  });
+
+  if (!res.ok) {
+    const t = await res.text();
+    return { ok: false, reason: `mail_send_failed:${res.status}:${t}` };
+  }
+
+  return { ok: true };
+}

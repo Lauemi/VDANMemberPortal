@@ -29,13 +29,48 @@ import { APP } from "../../../config/app";
           <article class="admin-card">
             <h2>Vereinsdaten</h2>
             <p class="small">
-              Startbereich für Club-Stammdaten und Kennzahlen. Fachlogik wird im nächsten Schritt ergänzt.
+              Club-Stammdaten und Kennzahlen fuer den aktuell gewaehlten Verein.
             </p>
             <div class="admin-kpi-grid">
               <article class="admin-kpi"><h3>Verein</h3><p id="clubDataName">-</p></article>
               <article class="admin-kpi"><h3>Mitglieder</h3><p id="clubDataMembers">-</p></article>
               <article class="admin-kpi"><h3>Club-ID</h3><p id="clubDataClubId" class="admin-kpi__id">-</p></article>
             </div>
+            <form id="clubDataForm" class="resp-form-grid" style="margin-top:14px;">
+              <label class="resp-full">
+                <span>Vereinsname</span>
+                <input id="clubDataEditName" type="text" maxlength="160" />
+              </label>
+              <label>
+                <span>Strasse</span>
+                <input id="clubDataEditStreet" type="text" maxlength="160" />
+              </label>
+              <label>
+                <span>PLZ</span>
+                <input id="clubDataEditZip" type="text" maxlength="16" />
+              </label>
+              <label>
+                <span>Ort</span>
+                <input id="clubDataEditCity" type="text" maxlength="120" />
+              </label>
+              <label>
+                <span>Kontaktperson</span>
+                <input id="clubDataEditContactName" type="text" maxlength="120" />
+              </label>
+              <label>
+                <span>Kontakt-E-Mail</span>
+                <input id="clubDataEditContactEmail" type="email" maxlength="160" />
+              </label>
+              <label class="resp-full">
+                <span>Telefon</span>
+                <input id="clubDataEditContactPhone" type="text" maxlength="60" />
+              </label>
+              <div class="resp-full" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <button id="clubDataSaveBtn" type="button" class="feed-btn">Vereinsdaten speichern</button>
+                <button id="clubDataReloadBtn" type="button" class="feed-btn feed-btn--ghost">Neu laden</button>
+                <p id="clubDataFormMsg" class="small" aria-live="polite" style="margin:0;"></p>
+              </div>
+            </form>
           </article>
 
           <article class="admin-card">

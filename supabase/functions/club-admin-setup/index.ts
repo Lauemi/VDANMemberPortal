@@ -1,3 +1,5 @@
+import { sendResponsibleNotificationMail } from "../_shared/contact-utils.ts";
+
 declare const Deno: {
   env: {
     get(key: string): string | undefined;
@@ -14,6 +16,15 @@ type SetupBody = {
   waters?: string[];
   make_public_active?: boolean;
   assign_creator_roles?: boolean;
+  street?: string;
+  zip?: string;
+  city?: string;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  responsible_name?: string;
+  responsible_email?: string;
+  club_size?: string;
 };
 
 type InviteRecord = {
@@ -32,11 +43,13 @@ type InviteRecord = {
 
 function cors(req: Request) {
   const origin = req.headers.get("origin") || "*";
+  const reqHeaders = req.headers.get("access-control-request-headers") || "authorization, x-client-info, apikey, content-type";
   return {
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Headers": reqHeaders,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    Vary: "Origin",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin, Access-Control-Request-Headers",
   };
 }
 
@@ -46,6 +59,10 @@ function txt(value: unknown) {
 
 function upper(value: unknown) {
   return txt(value).toUpperCase();
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
 }
 
 function toList(input: unknown) {
@@ -178,6 +195,36 @@ async function upsertSetting(settingKey: string, settingValue: string) {
     headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
     body: JSON.stringify([{ setting_key: settingKey, setting_value: settingValue }]),
   });
+}
+
+async function readSetting(settingKey: string) {
+  const res = await sbServiceFetch(
+    `/rest/v1/app_secure_settings?select=setting_value&setting_key=eq.${encodeURIComponent(settingKey)}&limit=1`,
+    { method: "GET" },
+  );
+  const rows = await res.json().catch(() => []);
+  return Array.isArray(rows) && rows.length ? txt(rows[0]?.setting_value) : "";
+}
+
+async function allowResponsibleNotification(actorId: string, responsibleEmail: string) {
+  const normalizedEmail = txt(responsibleEmail).toLowerCase();
+  if (!normalizedEmail) return { ok: false, reason: "responsible_email_missing" };
+  if (!isValidEmail(normalizedEmail)) return { ok: false, reason: "responsible_email_invalid" };
+
+  const emailHash = await sha256Hex(normalizedEmail);
+  const settingKey = `club_responsible_notify_rate:${actorId}:${emailHash}`;
+  const lastSentRaw = await readSetting(settingKey);
+  const lastSentTs = Date.parse(lastSentRaw || "");
+  if (Number.isFinite(lastSentTs) && (Date.now() - lastSentTs) < 10 * 60 * 1000) {
+    return { ok: false, reason: "responsible_notification_rate_limited" };
+  }
+
+  return {
+    ok: true,
+    async commit() {
+      await upsertSetting(settingKey, new Date().toISOString());
+    },
+  };
 }
 
 async function insertMissingWaters(clubId: string, waters: string[]) {
@@ -421,7 +468,7 @@ async function ensureCreatorProfileBinding(actor: Record<string, unknown>, userI
 
 Deno.serve(async (req: Request) => {
   const headers = cors(req);
-  if (req.method === "OPTIONS") return new Response("ok", { headers });
+  if (req.method === "OPTIONS") return new Response("ok", { status: 200, headers });
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers });
 
   try {
@@ -457,9 +504,20 @@ Deno.serve(async (req: Request) => {
     const waters = toList(body?.waters);
     const makePublicActive = Boolean(body?.make_public_active);
     const assignCreatorRoles = body?.assign_creator_roles !== false;
+    const street = txt(body?.street);
+    const zip = txt(body?.zip);
+    const city = txt(body?.city);
+    const contactName = txt(body?.contact_name);
+    const contactEmail = txt(body?.contact_email).toLowerCase();
+    const contactPhone = txt(body?.contact_phone);
+    const responsibleName = txt(body?.responsible_name);
+    const responsibleEmail = txt(body?.responsible_email).toLowerCase();
+    const clubSize = txt(body?.club_size);
 
     if (!clubName) throw new Error("club_name_required");
     if (!defaultCard) throw new Error("default_fishing_card_required");
+    if (contactEmail && !isValidEmail(contactEmail)) throw new Error("contact_email_invalid");
+    if (responsibleEmail && !isValidEmail(responsibleEmail)) throw new Error("responsible_email_invalid");
 
     if (clubCode) {
       if (!/^[A-Z]{2}[0-9]{2}$/.test(clubCode)) throw new Error("club_code_invalid");
@@ -482,6 +540,16 @@ Deno.serve(async (req: Request) => {
       fishing_cards: cards,
       created_at: createdAt,
       created_by: String(actor.id),
+      street,
+      zip,
+      city,
+      contact_name: contactName || responsibleName,
+      contact_email: contactEmail || responsibleEmail,
+      contact_phone: contactPhone,
+      responsible_name: responsibleName,
+      responsible_email: responsibleEmail,
+      responsible_status: responsibleEmail ? "notification_pending" : "missing",
+      club_size: clubSize,
       version: 1,
     };
 
@@ -541,6 +609,31 @@ Deno.serve(async (req: Request) => {
       : `/registrieren/?invite=${encodeURIComponent(inviteToken)}`;
     const inviteQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(registerUrl)}`;
 
+    let responsibleNotification: { ok: boolean; reason?: string } | null = null;
+    if (responsibleEmail) {
+      const notifyGate = await allowResponsibleNotification(String(actor.id), responsibleEmail);
+      if (!notifyGate.ok) {
+        responsibleNotification = { ok: false, reason: notifyGate.reason };
+      } else {
+        responsibleNotification = await sendResponsibleNotificationMail({
+          to: responsibleEmail,
+          responsibleName: responsibleName || contactName || "verantwortliche Person",
+          clubName,
+          creatorEmail: txt((actor as { email?: string })?.email).toLowerCase(),
+          registerUrl,
+        });
+        if (responsibleNotification.ok) {
+          await notifyGate.commit();
+          meta.responsible_status = "notified";
+          Object.assign(meta, { responsible_notified_at: new Date().toISOString() });
+          await upsertSetting(`club_meta:${clubId}`, JSON.stringify(meta));
+        } else {
+          meta.responsible_status = "notification_failed";
+          await upsertSetting(`club_meta:${clubId}`, JSON.stringify(meta));
+        }
+      }
+    }
+
     return new Response(
       JSON.stringify({
         ok: true,
@@ -558,6 +651,7 @@ Deno.serve(async (req: Request) => {
         invite_expires_at: inviteExpiresAt,
         invite_register_url: registerUrl,
         invite_qr_url: inviteQrUrl,
+        responsible_notification: responsibleNotification,
       }),
       { status: 200, headers: { ...headers, "Content-Type": "application/json" } },
     );

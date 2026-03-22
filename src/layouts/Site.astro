@@ -2,6 +2,7 @@
 import "../styles/app-shell.css";
 import { APP } from "../config/app";
 import { resolveSiteMode } from "../config/site-mode";
+import { getStaticWebPageEntry, getStaticWebTargetConfig } from "../config/static-web-pages";
 import pkg from "../../package.json";
 
 function envText(value: unknown, fallback: string) {
@@ -54,6 +55,14 @@ const resolvedSiteMode = resolveSiteMode(Astro.url.hostname, APP.siteMode);
 const isFcpMode = resolvedSiteMode === "fcp";
 const path = Astro.url.pathname.toLowerCase();
 const isAppPath = path.startsWith("/app/");
+const staticPageEntry = !isAppPath ? getStaticWebPageEntry(path) : null;
+const staticPageTarget = staticPageEntry ? getStaticWebTargetConfig(path, resolvedSiteMode) : null;
+const staticPageVisible = staticPageTarget ? staticPageTarget.visible !== false : true;
+const staticPageInitialBrand = staticPageTarget?.brand || resolvedSiteMode;
+const staticPageBlocked = Boolean(staticPageEntry && !staticPageVisible);
+if (staticPageBlocked) {
+  Astro.response.status = 404;
+}
 const runtimeSiteName = isFcpMode ? "Fishing-Club-Portal" : "VDAN Ottenheim";
 const effectiveAppTheme = isFcpMode
   ? (APP.theme === "fcp_brand" && isAppPath ? "fcp_tactical" : (APP.theme || "fcp_tactical"))
@@ -121,6 +130,11 @@ const isTermsPath = path === "/nutzungsbedingungen.html/" || path === "/nutzungs
 const showPortalTermsLink = isAppPath || isTermsPath;
 const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
 const showHeaderAuthCta = false;
+const robotsMeta = staticPageBlocked
+  ? "noindex,nofollow"
+  : String(robots || "index").includes(",")
+    ? String(robots)
+    : `${robots},follow`;
 const publicMenuLinks = isFcpMode
   ? [
       { href: "/", label: "Start" },
@@ -151,7 +165,7 @@ const publicMenuLinks = isFcpMode
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{displayTitle}</title>
     {description && <meta name="description" content={description} />}
-    <meta name="robots" content={`${robots},follow`} />
+    <meta name="robots" content={robotsMeta} />
     <link rel="canonical" href={canonical} />
     <meta name="theme-color" content={themeColor} />
     <link rel="manifest" href={manifestPath} />
@@ -182,29 +196,39 @@ const publicMenuLinks = isFcpMode
     data-app-channel={appChannel}
     data-app-theme={effectiveAppTheme}
     data-site-mode={resolvedSiteMode}
+    data-static-web-route={staticPageEntry?.route || ""}
+    data-static-web-brand={staticPageInitialBrand}
     data-superadmin-user-ids={APP.superAdminUserIds.join(",")}
   >
     <header class="header">
       <div class="container">
         <nav class="nav" aria-label="Hauptnavigation">
-          {isFcpMode ? (
-            <div class="header-brand-fcp" aria-label="FCP Marke">
-              <a class="logo" href="/" aria-label={APP.name}>
-                <picture class="header-brand-fcp__logo" aria-hidden="true">
-                  <source srcset={fcpHeaderLogoSvg} type="image/svg+xml" />
-                  <img src={fcpHeaderLogoPng} alt="" loading="eager" decoding="async" />
-                </picture>
-              </a>
-              {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
-            </div>
-          ) : (
-            <div class="header-brand-vdan">
-              <a class="logo" href="/" aria-label={APP.name}>
-                <img src="/Bilder/logo300x300.png" alt={APP.name} />
-              </a>
-              {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
-            </div>
-          )}
+          <div
+            id="headerBrandFcp"
+            class={`header-brand-fcp${isFcpMode ? "" : " hidden"}`}
+            aria-label="FCP Marke"
+            hidden={!isFcpMode}
+            data-brand-block="fcp"
+          >
+            <a class="logo" href="/" aria-label={APP.name}>
+              <picture class="header-brand-fcp__logo" aria-hidden="true">
+                <source srcset={fcpHeaderLogoSvg} type="image/svg+xml" />
+                <img src={fcpHeaderLogoPng} alt="" loading="eager" decoding="async" />
+              </picture>
+            </a>
+            {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+          </div>
+          <div
+            id="headerBrandVdan"
+            class={`header-brand-vdan${isFcpMode ? " hidden" : ""}`}
+            hidden={isFcpMode}
+            data-brand-block="vdan"
+          >
+            <a class="logo" href="/" aria-label={APP.name}>
+              <img src="/Bilder/logo300x300.png" alt={APP.name} />
+            </a>
+            {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+          </div>
           <div class="header-utility">
             <div id="headerLoginEntryWrap" class="header-login-entry" data-ui-session-skip>
               <button
@@ -278,7 +302,7 @@ const publicMenuLinks = isFcpMode
                 <button type="button" id="burgerToggle" class="burger-toggle" aria-label="Menü">
                   <span>☰</span>
                 </button>
-                <div id="burgerPopover" class="burger-popover hidden" hidden>
+                <div id="burgerPopover" class="burger-popover hidden" hidden data-runtime-menu-scope={isFcpMode ? "fcp" : "vdan"}>
                   {publicMenuLinks.map((link) => (
                     (link.label === "Nutzungsbedingungen" && !showPortalTermsLink)
                       ? null
@@ -394,25 +418,48 @@ const publicMenuLinks = isFcpMode
 
     <main class="main">
       <div class={containerClass}>
-        <slot />
+        {staticPageVisible ? (
+          <slot />
+        ) : (
+          <section class="card" style="max-width:840px;margin:0 auto;">
+            <div class="card__body">
+              <h1>Diese Seite ist in diesem Deploy nicht freigegeben.</h1>
+              <p>
+                Die statische Seite <strong>{staticPageEntry?.label || path}</strong> ist fuer das Ziel <strong>{resolvedSiteMode.toUpperCase()}</strong>
+                aktuell auf <strong>nicht sichtbar</strong> gesetzt.
+              </p>
+              <p class="small">
+                Antwortstatus: <strong>404</strong>. So bleibt die Trennung zwischen VDAN-Spezialseiten und FCP-Seiten sauber, nicht indexierbar und pruefbar.
+              </p>
+            </div>
+          </section>
+        )}
       </div>
     </main>
 
     <footer class="site-footer">
       <div class="container site-footer__inner">
-        <p class="small">
-          {isFcpMode ? "© Fishing-Club-Portal" : "© VDAN Ottenheim"}<br />
+        <p id="siteFooterTextFcp" class={`small${isFcpMode ? "" : " hidden"}`} hidden={!isFcpMode} data-brand-block="fcp">
+          © Fishing-Club-Portal<br />
           Plattform: Fishing-Club-Portal - Software von Michael Lauenroth
         </p>
-        {!isFcpMode && (
-          <nav class="site-footer__links" aria-label="Rechtliche Links">
+        <p id="siteFooterTextVdan" class={`small${isFcpMode ? " hidden" : ""}`} hidden={isFcpMode} data-brand-block="vdan">
+          © VDAN Ottenheim<br />
+          Website des VDAN Ottenheim mit angeschlossenem Mitgliederportal
+        </p>
+        <nav
+          id="siteFooterLinksVdan"
+          class={`site-footer__links${isFcpMode ? " hidden" : ""}`}
+          aria-label="Rechtliche Links"
+          hidden={isFcpMode}
+          data-brand-block="vdan"
+        >
             <a href="/kontakt.html/">Kontakt</a>
             <a href="/datenschutz.html/">Datenschutz</a>
             {showPortalTermsLink && <a href="/nutzungsbedingungen.html/">Nutzungsbedingungen</a>}
             <a href="/impressum.html/">Impressum</a>
             <a href="#" data-open-consent-settings>Datenschutz-Einstellungen</a>
-          </nav>
-        )}
+        </nav>
       </div>
     </footer>
 
@@ -422,6 +469,8 @@ const publicMenuLinks = isFcpMode
     <script src="/js/offline-sync.js" defer></script>
     <script src="/js/consent-manager.js" defer></script>
     <script src="/js/member-auth.js" defer></script>
+    {isAppPath && <script src="/js/app-brand-runtime.js" defer></script>}
+    {!isAppPath && <script src="/js/static-web-runtime.js" defer></script>}
     <script src="/js/ui-standards-runtime.js" defer></script>
     {needsMemberGuard && <script src="/js/member-guard.js" defer></script>}
     <script src="/js/ui-session.js" defer></script>

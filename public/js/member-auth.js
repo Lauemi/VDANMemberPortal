@@ -169,6 +169,12 @@
     return data;
   }
 
+  async function callEdgeFunctionWithSession(functionName, payload = {}) {
+    const token = String(loadSession()?.access_token || "").trim();
+    if (!token) throw new Error("Bitte zuerst einloggen.");
+    return callEdgeFunction(functionName, payload, token);
+  }
+
   function memberNoToEmail(rawMemberNo) {
     const memberNo = String(rawMemberNo || "").trim();
     if (!memberNo) return "";
@@ -213,6 +219,7 @@
   function syncRegisterModeUi() {
     const createAllowed = isCurrentSuperadmin();
     const mode = readRegisterMode();
+    const authBypass = createAllowed && mode === "create_club";
     const joinSection = document.getElementById("registerJoinSection");
     const createSection = document.getElementById("registerCreateSection");
     const createCard = document.getElementById("registerModeCreateCard");
@@ -221,6 +228,10 @@
     const createFieldset = document.getElementById("registerCreateFieldset");
     const hint = document.getElementById("registerModeHint");
     const submitBtn = document.getElementById("registerSubmitBtn");
+    const passwordHint = document.getElementById("registerPasswordHint");
+    const emailInput = document.getElementById("registerEmail");
+    const passInput = document.getElementById("registerPass");
+    const pass2Input = document.getElementById("registerPass2");
 
     if (joinSection) {
       const isJoin = mode === "join_club";
@@ -248,12 +259,64 @@
       hint.textContent = !createAllowed
         ? "Der Vereinsanlage-Flow ist als Vorschau sichtbar. Die öffentliche Registrierung neuer Vereine ist noch nicht freigeschaltet, der Vereinsbeitritt per Invite ist aber nutzbar."
         : mode === "create_club"
-        ? "Der Vereinsanlage-Flow ist als vorbereitete Mehrphasenstrecke aufgebaut. Billing und Verantwortlichenprozess werden bereits mitgedacht."
+        ? "Du arbeitest im Superadmin-Kontext. Der Vereinsanlage-Flow nutzt dein bestehendes Konto, und Billing blockiert diesen internen Test- und Setup-Schritt nicht."
         : "Der Vereinsbeitritt läuft aktuell über Invite-Token und Mitgliedsnummer. Nach der Mailbestätigung folgt die Datenbestätigung im Vereinskontext.";
     }
     if (submitBtn) {
       submitBtn.textContent = mode === "create_club" && createAllowed ? "Verein vorbereiten" : "Konto anlegen";
     }
+    if (emailInput) emailInput.required = !authBypass;
+    if (passInput) passInput.required = !authBypass;
+    if (pass2Input) pass2Input.required = !authBypass;
+    if (passwordHint && createAllowed && mode === "create_club") {
+      passwordHint.textContent = "Superadmin-Hinweis: Fuer den internen Vereinssetup-Bypass wird dein bestehendes Konto verwendet. Die Passwortfelder bleiben nur fuer den oeffentlichen Auth-Flow relevant.";
+    } else if (passwordHint && !String(passwordHint.dataset.state || "").trim()) {
+      passwordHint.textContent = "";
+    }
+  }
+
+  function updateRegisterPasswordFeedback() {
+    const passInput = document.getElementById("registerPass");
+    const pass2Input = document.getElementById("registerPass2");
+    const hint = document.getElementById("registerPasswordHint");
+    if (!passInput || !pass2Input || !hint) return true;
+
+    const pass = String(passInput.value || "");
+    const pass2 = String(pass2Input.value || "");
+    const isCreateBypass = isCurrentSuperadmin() && readRegisterMode() === "create_club";
+
+    if (isCreateBypass && !pass && !pass2) {
+      hint.textContent = "Superadmin-Hinweis: Fuer den internen Vereinssetup-Bypass wird dein bestehendes Konto verwendet. Die Passwortfelder bleiben nur fuer den oeffentlichen Auth-Flow relevant.";
+      hint.dataset.state = "info";
+      pass2Input.setCustomValidity("");
+      return true;
+    }
+
+    if (!pass && !pass2) {
+      hint.textContent = "";
+      hint.dataset.state = "";
+      pass2Input.setCustomValidity("");
+      return true;
+    }
+
+    if (!pass || !pass2) {
+      hint.textContent = "Bitte beide Passwortfelder ausfuellen.";
+      hint.dataset.state = "pending";
+      pass2Input.setCustomValidity("");
+      return false;
+    }
+
+    if (pass !== pass2) {
+      hint.textContent = "Passwoerter stimmen nicht ueberein.";
+      hint.dataset.state = "error";
+      pass2Input.setCustomValidity("Passwoerter stimmen nicht ueberein.");
+      return false;
+    }
+
+    hint.textContent = "Passwoerter stimmen ueberein.";
+    hint.dataset.state = "ok";
+    pass2Input.setCustomValidity("");
+    return true;
   }
 
   function pageTarget(defaultTarget = "/") {
@@ -773,14 +836,22 @@
 
     if (registerForm) {
       const regMsg = document.getElementById("registerMsg");
+      const passInput = document.getElementById("registerPass");
+      const pass2Input = document.getElementById("registerPass2");
       const prefilledInviteToken = String(document.getElementById("registerInviteToken")?.value || "").trim();
       const modeInputs = Array.from(document.querySelectorAll('input[name="registration_mode"]'));
       if (prefilledInviteToken) {
         const join = document.getElementById("registerModeJoin");
         if (join) join.checked = true;
       }
-      modeInputs.forEach((input) => input.addEventListener("change", syncRegisterModeUi));
+      modeInputs.forEach((input) => input.addEventListener("change", () => {
+        syncRegisterModeUi();
+        updateRegisterPasswordFeedback();
+      }));
+      if (passInput) passInput.addEventListener("input", updateRegisterPasswordFeedback);
+      if (pass2Input) pass2Input.addEventListener("input", updateRegisterPasswordFeedback);
       syncRegisterModeUi();
+      updateRegisterPasswordFeedback();
       registerForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         if (regMsg) regMsg.textContent = "…";
@@ -805,8 +876,9 @@
           if (regMsg) regMsg.textContent = "Bitte Nutzungsbedingungen und Datenschutzerklärung bestätigen.";
           return;
         }
-        if (pass !== pass2) {
+        if (!updateRegisterPasswordFeedback()) {
           if (regMsg) regMsg.textContent = "Passwörter stimmen nicht überein.";
+          document.getElementById("registerPass2")?.reportValidity?.();
           return;
         }
         if (mode === "create_club" && !createAllowed) {
@@ -859,7 +931,7 @@
             return;
           }
 
-          if (!emailRaw || !isLikelyEmail(emailRaw)) {
+          if (!createAllowed && (!emailRaw || !isLikelyEmail(emailRaw))) {
             throw new Error("Bitte eine gültige E-Mail eingeben.");
           }
           if (!clubName) {
@@ -880,6 +952,35 @@
           if (!clubMailConfirm) {
             throw new Error("Bitte den Hinweis zur Vereinsadministrator-E-Mail bestätigen.");
           }
+          if (createAllowed) {
+            const data = await callEdgeFunctionWithSession("club-admin-setup", {
+              club_name: clubName,
+              default_fishing_card: "FCP Standard",
+              fishing_cards: ["FCP Standard"],
+              waters: [],
+              make_public_active: false,
+              assign_creator_roles: true,
+              street: clubAddress,
+              contact_name: responsibleName,
+              contact_email: responsibleEmail,
+              responsible_name: responsibleName,
+              responsible_email: responsibleEmail,
+              club_size: clubSize,
+            });
+            const mailState = data?.responsible_notification?.ok
+              ? " Die verantwortliche Person wurde per Mail informiert."
+              : data?.responsible_notification?.reason
+                ? " Vereinssetup angelegt, aber die Verantwortlichen-Mail konnte nicht bestaetigt versendet werden."
+                : "";
+            if (regMsg) regMsg.textContent = `Verein erfolgreich vorbereitet. Billing bleibt im Superadmin-Kontext sichtbar, blockiert diesen Schritt aber nicht.${mailState}`;
+            const nextClubId = String(data?.club_id || "").trim();
+            const nextUrl = nextClubId
+              ? `/app/vereine/?onboarding=1&club_id=${encodeURIComponent(nextClubId)}`
+              : "/app/vereine/?onboarding=1";
+            window.location.assign(nextUrl);
+            return;
+          }
+
           const result = await signUpWithPassword(emailRaw, pass, {
             registration_mode: "create_club_pending",
             onboarding_path: "create_club",

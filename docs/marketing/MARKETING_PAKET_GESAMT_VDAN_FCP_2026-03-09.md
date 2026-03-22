@@ -174,6 +174,7 @@ Antwort: "Die Plattform ist rollenbasiert aufgebaut, und Datenzugriffe sind je M
 ---
 
 ## Referenzen intern
+- docs/marketing/FCP_FUNNEL_UND_PREISPLAN_REFERENZ_2026-03-21.md
 - docs/marketing/MARKETING_STRATEGIE_MARKTSTAERKEN_VDAN_FCP_2026-03-09.md
 - docs/anwendungsdokumentation_gesamtstand_2026-03-08.md
 - docs/project/PROJECT_BRIEF_PACKAGE_VDAN_2026-02-26.md

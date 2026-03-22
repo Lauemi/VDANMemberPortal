@@ -8,6 +8,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "test": "node --test",
+    "check:deploy-gate": "node scripts/release-deploy-gate.mjs",
+    "check:remote-function-smoke": "node scripts/remote-function-smoke.mjs",
     "check:xss-guard": "node scripts/check-xss-guard.mjs",
     "check:studio-contract": "node scripts/check-studio-contract.mjs",
     "check:governance-health": "node scripts/governance-health-gate.mjs",

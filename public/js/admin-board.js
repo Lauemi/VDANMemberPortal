@@ -4,6 +4,8 @@
   const MODULE_CATALOG_STORAGE_KEY = "vdan_module_catalog_v1";
   const MODULE_DEFAULT_RIGHTS_STORAGE_KEY = "vdan_module_default_rights_v1";
   const CLUB_MODULE_CONFIG_STORAGE_KEY = "vdan_club_module_config_v1";
+  const STATIC_WEB_MATRIX_STORAGE_KEY = "vdan_static_web_matrix_v1";
+  const APP_MASK_BRAND_STORAGE_KEY = "vdan_app_mask_brand_matrix_v1";
   const CORE_ROLES = ["member", "vorstand", "admin"];
   const PAGE_INDEX_BASE = [
     { route: "/app/", kind: "PORTAL", label: "App Start" },
@@ -61,6 +63,11 @@
     return String(document.body?.getAttribute("data-site-mode") || window.__APP_SITE_MODE || "").trim().toLowerCase();
   }
 
+  function isLocalDev() {
+    const host = String(window.location.hostname || "").trim().toLowerCase();
+    return host === "127.0.0.1" || host === "localhost";
+  }
+
   const PAGE_INDEX = PAGE_INDEX_BASE.filter((page) => {
     const mode = siteMode();
     if (mode === "fcp" && page.route === "/app/gewaesserkarte/") return false;
@@ -84,6 +91,10 @@
     clubModuleConfig: {},
     governanceHealth: [],
     governanceIssues: [],
+    staticWebPages: [],
+    staticWebMatrix: {},
+    appMaskPages: [],
+    appMaskMatrix: {},
   };
   let rolePageMatrix = {};
 
@@ -423,6 +434,141 @@
     return String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   }
 
+  function normalizeStaticWebPages() {
+    const host = document.getElementById("adminStaticWebConfig");
+    const raw = String(host?.getAttribute("data-static-web-pages") || "").trim();
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function normalizeAppMaskPages() {
+    const host = document.getElementById("adminStaticWebConfig");
+    const raw = String(host?.getAttribute("data-app-mask-brand-pages") || "").trim();
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function defaultStaticWebMatrix() {
+    const out = {};
+    normalizeStaticWebPages().forEach((page) => {
+      const route = String(page?.route || "").trim();
+      if (!route) return;
+      out[route] = {
+        fcp: {
+          visible: Boolean(page?.targets?.fcp?.visible),
+          brand: String(page?.targets?.fcp?.brand || "fcp").trim().toLowerCase() === "vdan" ? "vdan" : "fcp",
+        },
+        vdan: {
+          visible: Boolean(page?.targets?.vdan?.visible),
+          brand: String(page?.targets?.vdan?.brand || "vdan").trim().toLowerCase() === "fcp" ? "fcp" : "vdan",
+        },
+      };
+    });
+    return out;
+  }
+
+  function normalizeStaticWebMatrix(input) {
+    const fallback = defaultStaticWebMatrix();
+    const source = input && typeof input === "object" ? input : {};
+    Object.keys(fallback).forEach((route) => {
+      const row = source?.[route] || {};
+      fallback[route] = {
+        fcp: {
+          visible: Boolean(row?.fcp?.visible ?? fallback[route].fcp.visible),
+          brand: String(row?.fcp?.brand || fallback[route].fcp.brand).trim().toLowerCase() === "vdan" ? "vdan" : "fcp",
+        },
+        vdan: {
+          visible: Boolean(row?.vdan?.visible ?? fallback[route].vdan.visible),
+          brand: String(row?.vdan?.brand || fallback[route].vdan.brand).trim().toLowerCase() === "fcp" ? "fcp" : "vdan",
+        },
+      };
+    });
+    return fallback;
+  }
+
+  function loadStaticWebMatrix() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(STATIC_WEB_MATRIX_STORAGE_KEY) || "{}");
+      return normalizeStaticWebMatrix(raw);
+    } catch {
+      return defaultStaticWebMatrix();
+    }
+  }
+
+  function saveStaticWebMatrix() {
+    try {
+      localStorage.setItem(STATIC_WEB_MATRIX_STORAGE_KEY, JSON.stringify(normalizeStaticWebMatrix(state.staticWebMatrix)));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function staticWebMatrixAsJson() {
+    return JSON.stringify({
+      version: "1.0",
+      generated_at: new Date().toISOString(),
+      pages: normalizeStaticWebMatrix(state.staticWebMatrix),
+    }, null, 2);
+  }
+
+  function defaultAppMaskMatrix() {
+    const out = {};
+    normalizeAppMaskPages().forEach((page) => {
+      const route = String(page?.route || "").trim();
+      if (!route) return;
+      const brand = String(page?.default_brand || "fcp_tactical").trim().toLowerCase();
+      out[route] = brand === "vdan_default" || brand === "fcp_brand" ? brand : "fcp_tactical";
+    });
+    return out;
+  }
+
+  function normalizeAppMaskMatrix(input) {
+    const fallback = defaultAppMaskMatrix();
+    const source = input && typeof input === "object" ? input : {};
+    Object.keys(fallback).forEach((route) => {
+      const raw = String(source?.[route] || fallback[route]).trim().toLowerCase();
+      fallback[route] = raw === "vdan_default" || raw === "fcp_brand" ? raw : "fcp_tactical";
+    });
+    return fallback;
+  }
+
+  function loadAppMaskMatrix() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(APP_MASK_BRAND_STORAGE_KEY) || "{}");
+      return normalizeAppMaskMatrix(raw);
+    } catch {
+      return defaultAppMaskMatrix();
+    }
+  }
+
+  function saveAppMaskMatrixLocal() {
+    try {
+      localStorage.setItem(APP_MASK_BRAND_STORAGE_KEY, JSON.stringify(normalizeAppMaskMatrix(state.appMaskMatrix)));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function appMaskMatrixAsJson() {
+    return JSON.stringify({
+      version: "1.0",
+      generated_at: new Date().toISOString(),
+      pages: normalizeAppMaskMatrix(state.appMaskMatrix),
+    }, null, 2);
+  }
+
   function roleMatrixDefaultFor(route, kind) {
     const r = String(route || "");
     if (kind === "WEB") return { guest: true, member: true, manager: true, admin: true, superadmin: true };
@@ -526,6 +672,70 @@
       throw err;
     }
     return res.json().catch(() => []);
+  }
+
+  async function callAdminWebConfig(action, payload = {}, withAuth = false) {
+    if (isLocalDev()) {
+      const err = new Error("admin_web_config_local_dev_skip");
+      err.status = 0;
+      throw err;
+    }
+    const { url, key } = cfg();
+    const headers = new Headers({
+      apikey: key,
+      "Content-Type": "application/json",
+    });
+    const token = session()?.access_token;
+    if (withAuth && token) headers.set("Authorization", `Bearer ${token}`);
+    const res = await fetch(`${url}/functions/v1/admin-web-config`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ action, scope: siteMode(), ...payload }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data?.ok === false) {
+      const err = new Error(String(data?.error || `admin_web_config_failed_${res.status}`));
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
+  async function loadRemoteAdminWebConfig() {
+    if (isLocalDev()) {
+      return false;
+    }
+    try {
+      const data = await callAdminWebConfig("get");
+      state.staticWebMatrix = normalizeStaticWebMatrix(data?.static_web_matrix || state.staticWebMatrix);
+      state.appMaskMatrix = normalizeAppMaskMatrix(data?.app_mask_matrix || state.appMaskMatrix);
+      saveStaticWebMatrix();
+      saveAppMaskMatrixLocal();
+      return true;
+    } catch (err) {
+      recordDiag("admin_web_config:get", err);
+      return false;
+    }
+  }
+
+  async function saveRemoteAdminWebConfig() {
+    const payload = {
+      static_web_matrix: normalizeStaticWebMatrix(state.staticWebMatrix),
+      app_mask_matrix: normalizeAppMaskMatrix(state.appMaskMatrix),
+    };
+    if (isLocalDev()) {
+      state.staticWebMatrix = normalizeStaticWebMatrix(payload.static_web_matrix);
+      state.appMaskMatrix = normalizeAppMaskMatrix(payload.app_mask_matrix);
+      saveStaticWebMatrix();
+      saveAppMaskMatrixLocal();
+      return { ok: true, local_only: true, ...payload };
+    }
+    const data = await callAdminWebConfig("save", payload, true);
+    state.staticWebMatrix = normalizeStaticWebMatrix(data?.static_web_matrix || payload.static_web_matrix);
+    state.appMaskMatrix = normalizeAppMaskMatrix(data?.app_mask_matrix || payload.app_mask_matrix);
+    saveStaticWebMatrix();
+    saveAppMaskMatrixLocal();
+    return data;
   }
 
   async function loadGovernanceFromDb() {
@@ -1027,6 +1237,72 @@
     }
   }
 
+  function renderStaticWebTables() {
+    const targets = ["fcp", "vdan"];
+    targets.forEach((target) => {
+      const body = document.querySelector(`#adminStaticPages${target === "fcp" ? "Fcp" : "Vdan"}Table tbody`);
+      if (!body) return;
+      body.innerHTML = state.staticWebPages.map((page) => {
+        const route = String(page?.route || "").trim();
+        const row = state.staticWebMatrix?.[route]?.[target] || { visible: false, brand: target };
+        const brand = String(row.brand || target) === "vdan" ? "vdan" : "fcp";
+        return `
+          <tr>
+            <td>${esc(page.label || route)}</td>
+            <td><code>${esc(route)}</code></td>
+            <td><input type="checkbox" data-static-web-route="${esc(route)}" data-static-web-target="${esc(target)}" data-static-web-field="visible" ${row.visible ? "checked" : ""} /></td>
+            <td><input type="checkbox" data-static-web-route="${esc(route)}" data-static-web-target="${esc(target)}" data-static-web-field="brand" data-static-web-brand="vdan" ${brand === "vdan" ? "checked" : ""} /></td>
+            <td><input type="checkbox" data-static-web-route="${esc(route)}" data-static-web-target="${esc(target)}" data-static-web-field="brand" data-static-web-brand="fcp" ${brand === "fcp" ? "checked" : ""} /></td>
+            <td class="small">${esc(page.note || "")}</td>
+          </tr>
+        `;
+      }).join("");
+    });
+  }
+
+  function renderAppMaskBrandTable() {
+    const body = document.querySelector("#adminAppMaskBrandTable tbody");
+    if (!body) return;
+    body.innerHTML = state.appMaskPages.map((page) => {
+      const route = String(page?.route || "").trim();
+      const brand = String(state.appMaskMatrix?.[route] || page?.default_brand || "fcp_tactical").trim().toLowerCase();
+      return `
+        <tr>
+          <td>${esc(page.label || route)}</td>
+          <td><code>${esc(route)}</code></td>
+          <td><input type="checkbox" data-app-mask-route="${esc(route)}" data-app-mask-brand="vdan_default" ${brand === "vdan_default" ? "checked" : ""} /></td>
+          <td><input type="checkbox" data-app-mask-route="${esc(route)}" data-app-mask-brand="fcp_tactical" ${brand === "fcp_tactical" ? "checked" : ""} /></td>
+          <td><input type="checkbox" data-app-mask-route="${esc(route)}" data-app-mask-brand="fcp_brand" ${brand === "fcp_brand" ? "checked" : ""} /></td>
+          <td class="small">${esc(page.note || "")}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function updateStaticWebField(route, target, field, value) {
+    const safeRoute = String(route || "").trim();
+    const safeTarget = String(target || "").trim().toLowerCase();
+    if (!safeRoute || !["fcp", "vdan"].includes(safeTarget)) return;
+    if (!state.staticWebMatrix[safeRoute]) state.staticWebMatrix[safeRoute] = defaultStaticWebMatrix()[safeRoute];
+    if (field === "visible") {
+      state.staticWebMatrix[safeRoute][safeTarget].visible = Boolean(value);
+    }
+    if (field === "brand") {
+      state.staticWebMatrix[safeRoute][safeTarget].brand = String(value || "").trim().toLowerCase() === "vdan" ? "vdan" : "fcp";
+    }
+    state.staticWebMatrix = normalizeStaticWebMatrix(state.staticWebMatrix);
+    renderStaticWebTables();
+  }
+
+  function updateAppMaskBrand(route, brand) {
+    const safeRoute = String(route || "").trim();
+    if (!safeRoute) return;
+    const safeBrand = String(brand || "").trim().toLowerCase();
+    state.appMaskMatrix[safeRoute] = safeBrand === "vdan_default" || safeBrand === "fcp_brand" ? safeBrand : "fcp_tactical";
+    state.appMaskMatrix = normalizeAppMaskMatrix(state.appMaskMatrix);
+    renderAppMaskBrandTable();
+  }
+
   function usecaseLabel(id) {
     return String(id || "").replaceAll("_", " ");
   }
@@ -1495,11 +1771,17 @@
 
   async function init() {
     state.diagnostics = [];
+    state.staticWebPages = normalizeStaticWebPages();
+    state.staticWebMatrix = loadStaticWebMatrix();
+    state.appMaskPages = normalizeAppMaskPages();
+    state.appMaskMatrix = loadAppMaskMatrix();
     rolePageMatrix = loadRoleMatrix();
     state.moduleCatalog = loadModuleCatalog();
     state.moduleDefaultRights = loadModuleRights(state.moduleCatalog);
     state.clubModuleConfig = loadAllClubConfigs(state.moduleCatalog);
     renderModulesTables();
+    renderStaticWebTables();
+    renderAppMaskBrandTable();
     renderModuleCatalogEditor();
     renderRoleDefaultsEditor();
     renderClubDetail();
@@ -1513,8 +1795,76 @@
     const allowed = await enforceSuperadmin();
     if (!allowed) return;
 
+    await loadRemoteAdminWebConfig();
+    renderStaticWebTables();
+    renderAppMaskBrandTable();
+
     document.querySelectorAll(".admin-nav-btn").forEach((btn) => {
       btn.addEventListener("click", () => switchSection(String(btn.getAttribute("data-admin-section") || "dashboard")));
+    });
+
+    document.getElementById("adminStaticWebSave")?.addEventListener("click", async () => {
+      try {
+        const data = await saveRemoteAdminWebConfig();
+        if (data?.local_only) {
+          setSmallMsg("adminStaticWebMsg", "Web-Plan lokal gespeichert. Live-Sync in die Runtime-DB greift ausserhalb von localhost.");
+        } else {
+          setSmallMsg("adminStaticWebMsg", "Web-Plan serverseitig gespeichert. Live-Trennung der statischen Seiten bleibt repo- und deploy-gesteuert.");
+        }
+      } catch (err) {
+        setSmallMsg("adminStaticWebMsg", `Web-Plan konnte nicht gespeichert werden: ${String(err?.message || "request_failed")}`, true);
+      }
+    });
+    document.getElementById("adminStaticWebReset")?.addEventListener("click", () => {
+      state.staticWebMatrix = defaultStaticWebMatrix();
+      renderStaticWebTables();
+      setSmallMsg("adminStaticWebMsg", "Web-Draft auf Repo-Stand zurückgesetzt.");
+    });
+    document.getElementById("adminStaticWebCopy")?.addEventListener("click", async (e) => {
+      await copyText(e.currentTarget, staticWebMatrixAsJson(), "Web JSON kopiert");
+      setSmallMsg("adminStaticWebMsg", "Web-JSON aus aktuellem Draft kopiert.");
+    });
+    document.getElementById("adminAppMaskBrandSave")?.addEventListener("click", async () => {
+      try {
+        const data = await saveRemoteAdminWebConfig();
+        if (data?.local_only) {
+          setSmallMsg("adminAppMaskBrandMsg", "Masken-Brand lokal gespeichert. Live-Sync in die Runtime-DB greift ausserhalb von localhost.");
+        } else {
+          setSmallMsg("adminAppMaskBrandMsg", "Masken-Brand serverseitig gespeichert. Die App-Masken ziehen den Override live beim Laden.");
+        }
+      } catch (err) {
+        setSmallMsg("adminAppMaskBrandMsg", `Masken-Brand konnte nicht gespeichert werden: ${String(err?.message || "request_failed")}`, true);
+      }
+    });
+    document.getElementById("adminAppMaskBrandReset")?.addEventListener("click", () => {
+      state.appMaskMatrix = defaultAppMaskMatrix();
+      renderAppMaskBrandTable();
+      setSmallMsg("adminAppMaskBrandMsg", "Masken-Brand auf Default zurueckgesetzt.");
+    });
+    document.getElementById("adminAppMaskBrandCopy")?.addEventListener("click", async (e) => {
+      await copyText(e.currentTarget, appMaskMatrixAsJson(), "Masken JSON kopiert");
+      setSmallMsg("adminAppMaskBrandMsg", "Masken-JSON aus aktuellem Stand kopiert.");
+    });
+    document.addEventListener("change", (e) => {
+      const input = e.target;
+      if (!(input instanceof HTMLInputElement)) return;
+      const route = String(input.getAttribute("data-static-web-route") || "").trim();
+      const target = String(input.getAttribute("data-static-web-target") || "").trim();
+      const field = String(input.getAttribute("data-static-web-field") || "").trim();
+      if (!route || !target || !field) return;
+      if (field === "visible") {
+        updateStaticWebField(route, target, "visible", input.checked);
+        return;
+      }
+      if (field === "brand") {
+        updateStaticWebField(route, target, "brand", String(input.getAttribute("data-static-web-brand") || "fcp"));
+        return;
+      }
+      const appMaskRoute = String(input.getAttribute("data-app-mask-route") || "").trim();
+      const appMaskBrand = String(input.getAttribute("data-app-mask-brand") || "").trim();
+      if (appMaskRoute && appMaskBrand) {
+        updateAppMaskBrand(appMaskRoute, appMaskBrand);
+      }
     });
 
     document.getElementById("adminMemberSearch")?.addEventListener("input", applyMemberFilter);

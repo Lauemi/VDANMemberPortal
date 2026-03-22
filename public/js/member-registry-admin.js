@@ -3,6 +3,7 @@
   const STORAGE_SORT = "admin:member_registry:sort:v1";
   const STORAGE_PAGE = "admin:member_registry:page:v1";
   const STORAGE_ACL = "club:registry:acl_stub:v1";
+  const STORAGE_CLUB_DATA_DRAFT_PREFIX = "club:registry:club_data_draft:v1:";
   const ACL_EDITABLE_KEYS = ["write", "update", "delete"];
   const ACL_PERMISSION_KEYS = ["read", "write", "update", "delete"];
   const ACL_MODULES = [
@@ -60,6 +61,7 @@
     selectedInviteClubId: "",
     clubIdentityById: new Map(),
     clubAclCountsById: new Map(),
+    clubWorkspaceById: new Map(),
     dialogMode: "edit",
   };
 
@@ -108,12 +110,32 @@
     return window.VDAN_AUTH?.loadSession?.() || null;
   }
 
+  function isLocalDev() {
+    const host = String(window.location.hostname || "").trim().toLowerCase();
+    return host === "127.0.0.1" || host === "localhost";
+  }
+
+  async function waitForAuthReady(timeoutMs = 3000) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (window.VDAN_AUTH?.loadSession) return true;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    return Boolean(window.VDAN_AUTH?.loadSession);
+  }
+
   async function sb(path, init = {}, withAuth = false) {
+    await waitForAuthReady();
     const { url, key } = cfg();
     const headers = new Headers(init.headers || {});
     headers.set("apikey", key);
     headers.set("Content-Type", "application/json");
-    const token = session()?.access_token;
+    let token = session()?.access_token;
+    if (withAuth && !token && navigator.onLine && window.VDAN_AUTH?.refreshSession) {
+      const refreshed = await window.VDAN_AUTH.refreshSession().catch(() => null);
+      token = refreshed?.access_token || session()?.access_token || "";
+    }
+    if (withAuth && !token) throw new Error("login_required");
     if (withAuth && token) headers.set("Authorization", `Bearer ${token}`);
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
@@ -147,6 +169,16 @@
     return data;
   }
 
+  async function callWorkspace(action, clubId, payload = {}) {
+    const cid = String(clubId || "").trim();
+    if (!cid) throw new Error("club_id_required");
+    return await callFn("club-onboarding-workspace", {
+      action,
+      club_id: cid,
+      ...payload,
+    });
+  }
+
   function esc(v) {
     return String(v || "").replace(/[&<>"']/g, (c) => ({
       "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;",
@@ -178,6 +210,13 @@
 
   function setInviteMsg(text = "", danger = false) {
     const el = document.getElementById("clubInviteMsg");
+    if (!el) return;
+    el.textContent = text;
+    el.style.color = danger ? "var(--danger)" : "";
+  }
+
+  function setClubDataMsg(text = "", danger = false) {
+    const el = document.getElementById("clubDataFormMsg");
     if (!el) return;
     el.textContent = text;
     el.style.color = danger ? "var(--danger)" : "";
@@ -609,7 +648,7 @@
       profileRows = [];
     }
     try {
-      signinRows = await sb("/rest/v1/admin_user_last_signins?select=user_id,last_sign_in_at", { method: "GET" }, true);
+      signinRows = await sb("/rest/v1/rpc/admin_user_last_signins", { method: "POST", body: "{}" }, true);
     } catch {
       signinRows = [];
     }
@@ -833,8 +872,7 @@
     const focusClubId = String(state.clubIdFilter || (clubIds.length === 1 ? clubIds[0] : "") || "").trim();
     const meta = focusClubId ? (state.clubIdentityById.get(focusClubId) || {}) : {};
     const code = String((clubCodes.length === 1 ? clubCodes[0] : "") || meta.code || "").trim();
-    const aclCount = focusClubId ? Number(state.clubAclCountsById.get(focusClubId) || 0) : 0;
-    const membersCount = focusClubId ? Math.max(scopedRows.length, aclCount) : scopedRows.length;
+    const membersCount = focusClubId ? scopedRows.length : scopedRows.length;
 
     if (nameEl) {
       if (focusClubId) {
@@ -885,6 +923,118 @@
       state.selectedInviteClubId = state.clubContext.club_id;
     }
     renderInviteClubSelect();
+    renderClubDataForm();
+  }
+
+  function currentFocusClubId() {
+    return String(state.clubContext?.club_id || state.clubIdFilter || "").trim();
+  }
+
+  function currentClubWorkspace() {
+    const clubId = currentFocusClubId();
+    return clubId ? state.clubWorkspaceById.get(clubId) || null : null;
+  }
+
+  function fillValue(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = String(value || "");
+  }
+
+  function clubDataDraftKey(clubId) {
+    return `${STORAGE_CLUB_DATA_DRAFT_PREFIX}${String(clubId || "").trim()}`;
+  }
+
+  function loadLocalClubDataDraft(clubId) {
+    const cid = String(clubId || "").trim();
+    if (!cid) return null;
+    try {
+      const raw = JSON.parse(localStorage.getItem(clubDataDraftKey(cid)) || "{}");
+      return raw && typeof raw === "object" ? raw : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveLocalClubDataDraft(clubId, payload) {
+    const cid = String(clubId || "").trim();
+    if (!cid) return;
+    const draft = {
+      club_data: { ...(payload || {}) },
+      saved_locally_at: new Date().toISOString(),
+    };
+    localStorage.setItem(clubDataDraftKey(cid), JSON.stringify(draft));
+    state.clubWorkspaceById.set(cid, draft);
+  }
+
+  function renderClubDataForm() {
+    const clubId = currentFocusClubId();
+    const workspace = currentClubWorkspace() || loadLocalClubDataDraft(clubId);
+    const clubData = workspace?.club_data || {};
+    const fallbackMeta = state.clubIdentityById.get(currentFocusClubId()) || {};
+    fillValue("clubDataEditName", clubData.club_name || fallbackMeta.name || "");
+    fillValue("clubDataEditStreet", clubData.street || "");
+    fillValue("clubDataEditZip", clubData.zip || "");
+    fillValue("clubDataEditCity", clubData.city || "");
+    fillValue("clubDataEditContactName", clubData.contact_name || "");
+    fillValue("clubDataEditContactEmail", clubData.contact_email || "");
+    fillValue("clubDataEditContactPhone", clubData.contact_phone || "");
+  }
+
+  async function loadClubWorkspace(clubId) {
+    const cid = String(clubId || "").trim();
+    if (!cid) return null;
+    if (isLocalDev()) {
+      const draft = loadLocalClubDataDraft(cid);
+      if (draft) {
+        state.clubWorkspaceById.set(cid, draft);
+        renderClubDataForm();
+        return draft;
+      }
+      return null;
+    }
+    const data = await callWorkspace("get", cid);
+    if (data?.workspace) {
+      state.clubWorkspaceById.set(cid, data.workspace);
+      renderClubDataForm();
+    }
+    return data?.workspace || null;
+  }
+
+  async function saveClubData() {
+    const clubId = currentFocusClubId();
+    if (!clubId) throw new Error("club_id_required");
+    const payload = {
+      club_name: String(document.getElementById("clubDataEditName")?.value || "").trim(),
+      street: String(document.getElementById("clubDataEditStreet")?.value || "").trim(),
+      zip: String(document.getElementById("clubDataEditZip")?.value || "").trim(),
+      city: String(document.getElementById("clubDataEditCity")?.value || "").trim(),
+      contact_name: String(document.getElementById("clubDataEditContactName")?.value || "").trim(),
+      contact_email: String(document.getElementById("clubDataEditContactEmail")?.value || "").trim(),
+      contact_phone: String(document.getElementById("clubDataEditContactPhone")?.value || "").trim(),
+    };
+    if (!payload.club_name) throw new Error("club_name_required");
+    if (isLocalDev()) {
+      saveLocalClubDataDraft(clubId, payload);
+      const meta = state.clubIdentityById.get(clubId) || {};
+      state.clubIdentityById.set(clubId, {
+        ...meta,
+        name: String(payload.club_name || meta.name || "").trim(),
+      });
+      renderClubOverview();
+      return { ok: true, local_only: true, workspace: state.clubWorkspaceById.get(clubId) };
+    }
+    const data = await callWorkspace("save_club_data", clubId, payload);
+    if (data?.workspace) {
+      state.clubWorkspaceById.set(clubId, data.workspace);
+      const meta = state.clubIdentityById.get(clubId) || {};
+      state.clubIdentityById.set(clubId, {
+        ...meta,
+        name: String(data.workspace?.club_data?.club_name || payload.club_name).trim(),
+      });
+      renderClubOverview();
+    }
+    return data;
   }
 
   async function submitInviteCreate() {
@@ -1120,10 +1270,13 @@
     renderHead();
     renderRows();
     renderStatsAndPager();
+    const scopedRows = state.clubIdFilter
+      ? state.rows.filter((r) => String(r.club_id || "").trim() === state.clubIdFilter)
+      : state.rows;
     if (roleOnlyRows.length) {
-      setMsg(`Mitglieder geladen: ${state.rows.length} (${roleOnlyRows.length} ohne Vereins-Mitgliedsnummer).`);
+      setMsg(`Mitglieder geladen im aktuellen Vereinskontext: ${scopedRows.length} (${roleOnlyRows.length} ohne Vereins-Mitgliedsnummer).`);
     } else {
-      setMsg(`Mitglieder geladen: ${state.rows.length}`);
+      setMsg(`Mitglieder geladen im aktuellen Vereinskontext: ${scopedRows.length}`);
     }
   }
 
@@ -1153,6 +1306,26 @@
 
     document.getElementById("memberRegistryReload")?.addEventListener("click", () => {
       refresh().catch((e) => setMsg(e.message || "Laden fehlgeschlagen", true));
+    });
+    document.getElementById("clubDataReloadBtn")?.addEventListener("click", async () => {
+      try {
+        setClubDataMsg("Vereinsdaten werden geladen ...");
+        await loadClubWorkspace(currentFocusClubId());
+        setClubDataMsg("Vereinsdaten geladen.");
+      } catch (e) {
+        setClubDataMsg(e.message || "Laden fehlgeschlagen", true);
+      }
+    });
+    document.getElementById("clubDataSaveBtn")?.addEventListener("click", async () => {
+      try {
+        setClubDataMsg("Vereinsdaten werden gespeichert ...");
+        const result = await saveClubData();
+        setClubDataMsg(result?.local_only
+          ? "Vereinsdaten lokal gespeichert. Remote-Sync greift erst nach Deploy der Club-Function."
+          : "Vereinsdaten gespeichert.");
+      } catch (e) {
+        setClubDataMsg(e.message || "Speichern fehlgeschlagen", true);
+      }
     });
     document.getElementById("memberRegistryCreateBtn")?.addEventListener("click", () => {
       openCreateDialog();

@@ -230,58 +230,60 @@ const publicMenuLinks = isFcpMode
             {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
           </div>
           <div class="header-utility">
-            <div id="headerLoginEntryWrap" class="header-login-entry" data-ui-session-skip>
-              <button
-                type="button"
-                id="headerLoginEntryToggle"
-                class="header-login-toggle"
-                aria-label="Login öffnen"
-                aria-expanded="false"
-                data-ui-session-skip
-              >
-                Login
-              </button>
-              <div id="headerLoginEntryPopover" class="header-login-popover hidden" hidden data-ui-session-skip>
-                <div class="header-login-popover__section">
-                  <h3>Anmelden</h3>
-                  <form id="headerQuickLoginForm" class="header-login-form">
-                    <label>
-                      <span>Mitgliedsnummer oder E-Mail</span>
-                      <input id="headerQuickLoginIdentifier" type="text" autocomplete="username" placeholder="name@beispiel.de" />
-                    </label>
-                    <label>
-                      <span>Passwort</span>
-                      <input id="headerQuickLoginPassword" type="password" autocomplete="current-password" placeholder="Passwort" />
+            {isFcpMode && (
+              <div id="headerLoginEntryWrap" class="header-login-entry" data-ui-session-skip>
+                <button
+                  type="button"
+                  id="headerLoginEntryToggle"
+                  class="header-login-toggle"
+                  aria-label="Login öffnen"
+                  aria-expanded="false"
+                  data-ui-session-skip
+                >
+                  Login
+                </button>
+                <div id="headerLoginEntryPopover" class="header-login-popover hidden" hidden data-ui-session-skip>
+                  <div class="header-login-popover__section">
+                    <h3>Anmelden</h3>
+                    <form id="headerQuickLoginForm" class="header-login-form">
+                      <label>
+                        <span>Mitgliedsnummer oder E-Mail</span>
+                        <input id="headerQuickLoginIdentifier" type="text" autocomplete="username" placeholder="name@beispiel.de" />
+                      </label>
+                      <label>
+                        <span>Passwort</span>
+                        <input id="headerQuickLoginPassword" type="password" autocomplete="current-password" placeholder="Passwort" />
+                      </label>
+                      <div class="header-login-form__actions">
+                        <button type="submit" class="feed-btn">Login</button>
+                        <a class="feed-btn feed-btn--ghost" href="/login/">Zur Login-Seite</a>
+                      </div>
+                      <p id="headerQuickLoginMsg" class="small" aria-live="polite"></p>
+                    </form>
+                  </div>
+
+                  <div class="header-login-popover__section">
+                    <h3>Invite-Link</h3>
+                    <label class="header-login-field">
+                      <span>Invite-Link oder Token einfügen</span>
+                      <input id="headerInviteEntryInput" type="text" autocomplete="off" placeholder="https://... oder Token" />
                     </label>
                     <div class="header-login-form__actions">
-                      <button type="submit" class="feed-btn">Login</button>
-                      <a class="feed-btn feed-btn--ghost" href="/login/">Zur Login-Seite</a>
+                      <button type="button" id="headerInviteEntryBtn" class="feed-btn feed-btn--ghost">Invite öffnen</button>
                     </div>
-                    <p id="headerQuickLoginMsg" class="small" aria-live="polite"></p>
-                  </form>
-                </div>
-
-                <div class="header-login-popover__section">
-                  <h3>Invite-Link</h3>
-                  <label class="header-login-field">
-                    <span>Invite-Link oder Token einfügen</span>
-                    <input id="headerInviteEntryInput" type="text" autocomplete="off" placeholder="https://... oder Token" />
-                  </label>
-                  <div class="header-login-form__actions">
-                    <button type="button" id="headerInviteEntryBtn" class="feed-btn feed-btn--ghost">Invite öffnen</button>
+                    <p class="small">Der Link führt direkt in die Vereins-Registrierung mit vorausgefülltem Invite.</p>
                   </div>
-                  <p class="small">Der Link führt direkt in die Vereins-Registrierung mit vorausgefülltem Invite.</p>
-                </div>
 
-                <div class="header-login-popover__section">
-                  <h3>Verein registrieren</h3>
-                  <p class="small">Kein Invite zur Hand? Dann direkt in die Registrierungsstrecke wechseln.</p>
-                  <div class="header-login-form__actions">
-                    <a id="headerRegisterClubBtn" class="feed-btn" href="/registrieren/">Verein registrieren</a>
+                  <div class="header-login-popover__section">
+                    <h3>Verein registrieren</h3>
+                    <p class="small">Kein Invite zur Hand? Dann direkt in die Registrierungsstrecke wechseln.</p>
+                    <div class="header-login-form__actions">
+                      <a id="headerRegisterClubBtn" class="feed-btn" href="/registrieren/">Verein registrieren</a>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
             <div id="headerNotificationWrap" class="header-notification-wrap hidden" hidden data-ui-session-skip>
               <button
                 type="button"

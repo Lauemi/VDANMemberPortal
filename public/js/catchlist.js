@@ -31,6 +31,8 @@
     quantity: "",
   };
   let activeTripColumnFilter = "";
+  let toolbarFiltersOpen = false;
+  let tripTable = null;
   let didAutoRecoverEmptyView = false;
   let syncInProgress = false;
   let queueMem = [];
@@ -470,6 +472,133 @@
     } catch {
       // ignore
     }
+  }
+
+  function ensureTripTable() {
+    if (tripTable || !(window.FCPDataTable && typeof window.FCPDataTable.createV1 === "function")) return tripTable;
+    const root = document.getElementById("tripList");
+    const filterPanel = document.getElementById("tripColumnFiltersPanel");
+    if (!(root instanceof HTMLElement)) return null;
+
+    tripTable = window.FCPDataTable.createV1({
+      root,
+      filterPanel,
+      componentId: "fangliste",
+      ariaLabel: "Meine Angeltage",
+      rowInteractionMode: "dialog",
+      selectionMode: "single",
+      viewMode: "both",
+      wrapClassName: "fangliste-table-wrap",
+      tableClassName: "data-table--fangliste",
+      headClassName: "data-table__head--fangliste",
+      rowClassName: "data-table__row--fangliste",
+      emptyStateHtml: `<p class="small">Noch keine Angeltage vorhanden.</p>`,
+      initialState: {
+        sortKey: tripSort.key,
+        sortDir: tripSort.dir,
+        filters: tripFilters,
+      },
+      columns: [
+        {
+          key: "trip_date",
+          label: "Tag",
+          type: "date",
+          sortable: true,
+          filterable: true,
+          align: "left",
+          placeholder: "z. B. 04.03.2026",
+          emptyValue: "-",
+          cellClass: "data-table__cell--primary fangliste-table__cell fangliste-table__cell--trip_date",
+          value: (row) => row.trip_date_label || "-",
+          sortValue: (row) => row.trip_date || "",
+          filterValue: (row) => `${row.trip_date || ""} ${row.trip_date_label || ""}`,
+        },
+        {
+          key: "water",
+          label: "Gewässer",
+          type: "primary",
+          sortable: true,
+          filterable: true,
+          align: "left",
+          placeholder: "z. B. Mühlbach",
+          emptyValue: "-",
+          cellClass: "fangliste-table__cell",
+          value: (row) => row.water || "-",
+        },
+        {
+          key: "summary",
+          label: "Fang",
+          type: "meta",
+          sortable: true,
+          filterable: true,
+          align: "left",
+          placeholder: "z. B. Karpfen",
+          emptyValue: "-",
+          cellClass: "data-table__cell--meta fangliste-table__cell",
+          value: (row) => row.summary || "-",
+        },
+        {
+          key: "weight",
+          label: "Gewicht",
+          type: "numeric",
+          sortable: true,
+          filterable: true,
+          align: "right",
+          placeholder: "z. B. 1500",
+          emptyValue: "-",
+          numeric: true,
+          sortType: "number",
+          cellClass: "data-table__cell--numeric fangliste-table__cell",
+          value: (row) => row.weight || "-",
+          sortValue: (row) => Number.parseFloat(String(row.weight || "").replace(",", ".")),
+        },
+        {
+          key: "quantity",
+          label: "Anzahl",
+          type: "numeric",
+          sortable: true,
+          filterable: true,
+          align: "right",
+          placeholder: "z. B. 2",
+          emptyValue: "-",
+          numeric: true,
+          sortType: "number",
+          cellClass: "data-table__cell--numeric fangliste-table__cell",
+          value: (row) => row.quantity || "-",
+          sortValue: (row) => Number.parseFloat(String(row.quantity || "").replace(",", ".")),
+        },
+      ],
+      onStateChange(nextState) {
+        tripSort.key = nextState.sortKey;
+        tripSort.dir = nextState.sortDir;
+        tripFilters = {
+          trip_date: String(nextState.filters.trip_date || ""),
+          water: String(nextState.filters.water || ""),
+          summary: String(nextState.filters.summary || ""),
+          weight: String(nextState.filters.weight || ""),
+          quantity: String(nextState.filters.quantity || ""),
+        };
+        saveTablePrefs();
+        syncFilterMeta();
+      },
+      onFilterInput(key) {
+        activeTripColumnFilter = key;
+      },
+      onSortChange() {
+        saveTablePrefs();
+      },
+      onFilterChange() {
+        saveTablePrefs();
+      },
+      onReset() {
+        saveTablePrefs();
+      },
+      onRowClick(row) {
+        if (row?.id) openDetailDialog(row.id);
+      },
+    });
+
+    return tripTable;
   }
 
   function sbHeaders(withAuth = false, extraHeaders = {}) {
@@ -1291,11 +1420,7 @@
   function activeFilterCount() {
     let count = 0;
     if (String(tripSearch || "").trim()) count += 1;
-    if (String(tripFilters.trip_date || "").trim()) count += 1;
-    if (String(tripFilters.water || "").trim()) count += 1;
-    if (String(tripFilters.summary || "").trim()) count += 1;
-    if (String(tripFilters.weight || "").trim()) count += 1;
-    if (String(tripFilters.quantity || "").trim()) count += 1;
+    count += ensureTripTable()?.getActiveFilterCount?.() || 0;
     if (Boolean(document.getElementById("tripOnlyNoCatch")?.checked)) count += 1;
     return count;
   }
@@ -1309,7 +1434,7 @@
   }
 
   function sortIconFor(key) {
-    if (tripSort.key !== key) return "↕";
+    if (tripSort.key !== key) return "";
     return tripSort.dir === "asc" ? "↑" : "↓";
   }
 
@@ -1317,89 +1442,15 @@
     return Boolean(String(tripFilters[key] || "").trim());
   }
 
-  function renderTripsTableView(rows) {
-    return `
-      <div class="fangliste-table-wrap">
-        <div class="catch-table catch-table--fangliste" role="table" aria-label="Meine Angeltage">
-          <div class="catch-table__head catch-table__head--fangliste" role="row">
-            <span class="fangliste-table-headcell" role="columnheader">
-              <span class="fangliste-th-label">Tag</span>
-              <span class="fangliste-th-actions">
-                <button type="button" class="fangliste-th-icon ${tripSort.key === "trip_date" ? "is-active" : ""}" data-trip-sort-key="trip_date" aria-label="Tag sortieren">${sortIconFor("trip_date")}</button>
-                <button type="button" class="fangliste-th-icon ${filterHasValue("trip_date") ? "has-filter" : ""}" data-trip-filter-trigger="trip_date" aria-label="Tag filtern">⏷</button>
-              </span>
-              <div class="fangliste-col-filter" data-trip-col-filter-popover="trip_date">
-                <label>
-                  <span>Enthält</span>
-                  <input type="text" data-trip-col-filter="trip_date" value="${esc(tripFilters.trip_date)}" placeholder="z. B. 04.03.2026" />
-                </label>
-              </div>
-            </span>
-            <span class="fangliste-table-headcell" role="columnheader">
-              <span class="fangliste-th-label">Gewässer</span>
-              <span class="fangliste-th-actions">
-                <button type="button" class="fangliste-th-icon ${tripSort.key === "water" ? "is-active" : ""}" data-trip-sort-key="water" aria-label="Gewässer sortieren">${sortIconFor("water")}</button>
-                <button type="button" class="fangliste-th-icon ${filterHasValue("water") ? "has-filter" : ""}" data-trip-filter-trigger="water" aria-label="Gewässer filtern">⏷</button>
-              </span>
-              <div class="fangliste-col-filter" data-trip-col-filter-popover="water">
-                <label>
-                  <span>Enthält</span>
-                  <input type="text" data-trip-col-filter="water" value="${esc(tripFilters.water)}" placeholder="z. B. Mühlbach" />
-                </label>
-              </div>
-            </span>
-            <span class="fangliste-table-headcell" role="columnheader">
-              <span class="fangliste-th-label">Fang</span>
-              <span class="fangliste-th-actions">
-                <button type="button" class="fangliste-th-icon ${tripSort.key === "summary" ? "is-active" : ""}" data-trip-sort-key="summary" aria-label="Fang sortieren">${sortIconFor("summary")}</button>
-                <button type="button" class="fangliste-th-icon ${filterHasValue("summary") ? "has-filter" : ""}" data-trip-filter-trigger="summary" aria-label="Fang filtern">⏷</button>
-              </span>
-              <div class="fangliste-col-filter" data-trip-col-filter-popover="summary">
-                <label>
-                  <span>Enthält</span>
-                  <input type="text" data-trip-col-filter="summary" value="${esc(tripFilters.summary)}" placeholder="z. B. Karpfen" />
-                </label>
-              </div>
-            </span>
-            <span class="fangliste-table-headcell" role="columnheader">
-              <span class="fangliste-th-label">Gewicht</span>
-              <span class="fangliste-th-actions">
-                <button type="button" class="fangliste-th-icon ${tripSort.key === "weight" ? "is-active" : ""}" data-trip-sort-key="weight" aria-label="Gewicht sortieren">${sortIconFor("weight")}</button>
-                <button type="button" class="fangliste-th-icon ${filterHasValue("weight") ? "has-filter" : ""}" data-trip-filter-trigger="weight" aria-label="Gewicht filtern">⏷</button>
-              </span>
-              <div class="fangliste-col-filter" data-trip-col-filter-popover="weight">
-                <label>
-                  <span>Enthält</span>
-                  <input type="text" data-trip-col-filter="weight" value="${esc(tripFilters.weight)}" placeholder="z. B. 1500" />
-                </label>
-              </div>
-            </span>
-            <span class="fangliste-table-headcell" role="columnheader">
-              <span class="fangliste-th-label">Anzahl</span>
-              <span class="fangliste-th-actions">
-                <button type="button" class="fangliste-th-icon ${tripSort.key === "quantity" ? "is-active" : ""}" data-trip-sort-key="quantity" aria-label="Anzahl sortieren">${sortIconFor("quantity")}</button>
-                <button type="button" class="fangliste-th-icon ${filterHasValue("quantity") ? "has-filter" : ""}" data-trip-filter-trigger="quantity" aria-label="Anzahl filtern">⏷</button>
-              </span>
-              <div class="fangliste-col-filter" data-trip-col-filter-popover="quantity">
-                <label>
-                  <span>Enthält</span>
-                  <input type="text" data-trip-col-filter="quantity" value="${esc(tripFilters.quantity)}" placeholder="z. B. 2" />
-                </label>
-              </div>
-            </span>
-          </div>
-          ${rows.map((row) => `
-            <button type="button" class="catch-table__row catch-table__row--fangliste" data-trip-id="${row.id}">
-              <span class="fangliste-table__cell fangliste-table__cell--trip_date" data-label="Tag">${esc(row.trip_date_label || "-")}</span>
-              <span class="fangliste-table__cell" data-label="Gewässer">${esc(row.water || "-")}</span>
-              <span class="fangliste-table__cell" data-label="Fang">${esc(row.summary || "-")}</span>
-              <span class="fangliste-table__cell" data-label="Gewicht">${esc(row.weight || "-")}</span>
-              <span class="fangliste-table__cell" data-label="Anzahl">${esc(row.quantity || "-")}</span>
-            </button>
-          `).join("")}
-        </div>
-      </div>
-    `;
+  function setToolbarFiltersOpen(nextOpen) {
+    toolbarFiltersOpen = Boolean(nextOpen);
+    const panel = document.getElementById("tripColumnFiltersPanel");
+    const btn = document.getElementById("tripColumnFiltersToggle");
+    if (panel) {
+      panel.classList.toggle("hidden", !toolbarFiltersOpen);
+      panel.toggleAttribute("hidden", !toolbarFiltersOpen);
+    }
+    if (btn) btn.setAttribute("aria-expanded", toolbarFiltersOpen ? "true" : "false");
   }
 
   function renderTripsCardView(rows) {
@@ -1426,6 +1477,7 @@
   function renderTrips() {
     const root = document.getElementById("tripList");
     if (!root) return;
+    const table = ensureTripTable();
     const rows = filteredTripRows();
     const activeColumnFilter = activeTripColumnFilter;
 
@@ -1446,7 +1498,11 @@
       saveTablePrefs();
       const recoveredRows = filteredTripRows();
       if (recoveredRows.length) {
-        root.innerHTML = currentView === "karte" ? renderTripsCardView(recoveredRows) : renderTripsTableView(recoveredRows);
+        if (currentView === "karte" || !table) {
+          root.innerHTML = renderTripsCardView(recoveredRows);
+        } else {
+          table.setRows(recoveredRows);
+        }
         syncFilterMeta();
         reopenActiveColumnFilter(activeColumnFilter);
         setMsg("Filter wurden zurückgesetzt, um vorhandene Einträge anzuzeigen.");
@@ -1455,32 +1511,22 @@
     }
 
     if (!rows.length) {
-      root.innerHTML = `<p class="small">Noch keine Angeltage vorhanden.</p>`;
+      if (currentView === "karte" || !table) root.innerHTML = `<p class="small">Noch keine Angeltage vorhanden.</p>`;
+      else table.setRows(rows);
       syncFilterMeta();
       return;
     }
 
-    root.innerHTML = currentView === "karte" ? renderTripsCardView(rows) : renderTripsTableView(rows);
+    if (currentView === "karte" || !table) root.innerHTML = renderTripsCardView(rows);
+    else table.setRows(rows);
     syncFilterMeta();
     reopenActiveColumnFilter(activeColumnFilter);
   }
 
   function reopenActiveColumnFilter(filterKey) {
     if (!filterKey || currentView !== "zeile") return;
-    const trigger = document.querySelector(`[data-trip-filter-trigger="${filterKey}"]`);
-    const panel = document.querySelector(`[data-trip-col-filter-popover="${filterKey}"]`);
-    if (!trigger || !panel) return;
-    panel.classList.add("open");
-    trigger.classList.add("is-active");
-    const input = panel.querySelector("input[type='text'], input[type='checkbox']");
-    if (!(input instanceof HTMLElement)) return;
-    window.requestAnimationFrame(() => {
-      input.focus();
-      if (input instanceof HTMLInputElement && input.type === "text") {
-        const len = input.value.length;
-        input.setSelectionRange(len, len);
-      }
-    });
+    setToolbarFiltersOpen(true);
+    ensureTripTable()?.focusFilter?.(filterKey);
   }
 
   async function loadOwnStats() {
@@ -1609,20 +1655,17 @@
   }
 
   function setFabMenuOpen(open) {
-    const isDesktop = window.matchMedia?.(DESKTOP_ADD_ACTION_BREAKPOINT)?.matches;
     const fabMenu = document.getElementById("tripFabMenu");
     const topMenu = document.getElementById("tripTopMenu");
     const fab = document.getElementById("tripCreateFab");
     const top = document.getElementById("tripCreateOpenTop");
     if (fabMenu) {
-      const showFab = open && !isDesktop;
-      fabMenu.classList.toggle("hidden", !showFab);
-      fabMenu.toggleAttribute("hidden", !showFab);
+      fabMenu.classList.toggle("hidden", !open);
+      fabMenu.toggleAttribute("hidden", !open);
     }
     if (topMenu) {
-      const showTop = open && !!isDesktop;
-      topMenu.classList.toggle("hidden", !showTop);
-      topMenu.toggleAttribute("hidden", !showTop);
+      topMenu.classList.add("hidden");
+      topMenu.setAttribute("hidden", "");
     }
     if (fab) fab.setAttribute("aria-expanded", open ? "true" : "false");
     if (top) top.setAttribute("aria-expanded", open ? "true" : "false");
@@ -1891,6 +1934,7 @@
     await hydratePersistentState();
     currentView = loadViewMode();
     loadTablePrefs();
+    ensureTripTable();
     loadWaterFavorites();
     const searchEl = document.getElementById("tripSearch");
     if (searchEl) searchEl.value = tripSearch;
@@ -1921,12 +1965,20 @@
       tripFilters.summary = "";
       tripFilters.weight = "";
       tripFilters.quantity = "";
+      ensureTripTable()?.resetFilters({ render: false, silent: true });
       const search = document.getElementById("tripSearch");
       if (search) search.value = "";
       const noCatch = document.getElementById("tripOnlyNoCatch");
       if (noCatch) noCatch.checked = false;
+      setToolbarFiltersOpen(false);
       saveTablePrefs();
       renderTrips();
+    });
+    document.getElementById("tripColumnFiltersToggle")?.addEventListener("click", () => {
+      setToolbarFiltersOpen(!toolbarFiltersOpen);
+      if (!toolbarFiltersOpen) return;
+      const firstInput = document.querySelector("#tripColumnFiltersPanel [data-fcp-col-filter]");
+      if (firstInput instanceof HTMLElement) firstInput.focus();
     });
     document.getElementById("tripViewZeileBtn")?.addEventListener("click", () => {
       currentView = "zeile";
@@ -1937,6 +1989,7 @@
     document.getElementById("tripViewKarteBtn")?.addEventListener("click", () => {
       currentView = "karte";
       activeTripColumnFilter = "";
+      setToolbarFiltersOpen(false);
       saveViewMode(currentView);
       syncViewButtons();
       renderTrips();
@@ -2050,13 +2103,6 @@
       }
     });
 
-    document.getElementById("tripList")?.addEventListener("click", (e) => {
-      const btn = e.target?.closest?.("[data-trip-id]");
-      if (!btn) return;
-      const id = btn.getAttribute("data-trip-id");
-      if (id) openDetailDialog(id);
-    });
-
     document.getElementById("tripDetailBody")?.addEventListener("click", async (e) => {
       const del = e.target?.closest?.("[data-delete-catch-id]");
       if (!del) return;
@@ -2072,15 +2118,6 @@
       }
     });
 
-    document.addEventListener("input", (e) => {
-      const filterKey = e.target?.getAttribute?.("data-trip-col-filter");
-      if (!filterKey) return;
-      if (!(filterKey in tripFilters)) return;
-      tripFilters[filterKey] = String(e.target.value || "");
-      saveTablePrefs();
-      renderTrips();
-    });
-
     document.addEventListener("click", (e) => {
       const fab = e.target?.closest?.("#tripCreateFab");
       const fabMenu = e.target?.closest?.("#tripFabMenu");
@@ -2090,53 +2127,7 @@
         setFabMenuOpen(false);
       }
 
-      const trigger = e.target?.closest?.("[data-trip-filter-trigger]");
-      if (trigger) {
-        e.stopPropagation();
-        const key = String(trigger.getAttribute("data-trip-filter-trigger") || "");
-        const popovers = [...document.querySelectorAll("[data-trip-col-filter-popover]")];
-        const isOpen = popovers.some((p) => p.classList.contains("open") && p.getAttribute("data-trip-col-filter-popover") === key);
-        popovers.forEach((p) => p.classList.remove("open"));
-        document.querySelectorAll("[data-trip-filter-trigger]").forEach((b) => b.classList.remove("is-active"));
-        if (!isOpen) {
-          const panel = document.querySelector(`[data-trip-col-filter-popover="${key}"]`);
-          panel?.classList.add("open");
-          trigger.classList.add("is-active");
-          activeTripColumnFilter = key;
-        } else {
-          activeTripColumnFilter = "";
-        }
-        return;
-      }
-
-      if (e.target?.closest?.("[data-trip-col-filter-popover]")) return;
-
-      const sortBtn = e.target?.closest?.("[data-trip-sort-key]");
-      if (sortBtn) {
-        const key = String(sortBtn.getAttribute("data-trip-sort-key") || "");
-        if (!key) return;
-        if (tripSort.key === key) tripSort.dir = tripSort.dir === "asc" ? "desc" : "asc";
-        else {
-          tripSort.key = key;
-          tripSort.dir = "asc";
-        }
-        saveTablePrefs();
-        renderTrips();
-        return;
-      }
-
-      document.querySelectorAll("[data-trip-col-filter-popover]").forEach((p) => p.classList.remove("open"));
-      document.querySelectorAll("[data-trip-filter-trigger]").forEach((b) => b.classList.remove("is-active"));
       activeTripColumnFilter = "";
-    });
-
-    document.getElementById("tripList")?.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      const row = e.target?.closest?.("[data-trip-id]");
-      if (!row) return;
-      e.preventDefault();
-      const id = row.getAttribute("data-trip-id");
-      if (id) openDetailDialog(id);
     });
 
     window.addEventListener("online", () => {

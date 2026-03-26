@@ -3,86 +3,119 @@ import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
 ---
 
-<Site title={`Fangliste • ${APP.name}`} description="Digitale Fangliste" robots="noindex">
-  <section class="card" data-studio-component-id="fangliste-header-card" data-studio-component-type="card" data-studio-slot="main">
-    <div class="card__body" data-studio-component-id="fangliste-header-content" data-studio-component-type="section" data-studio-slot="main">
-      <div class="catch-table-toolbar">
+<Site title={`Fangliste • ${APP.name}`} description="Digitale Fangliste" robots="noindex" density="compact">
+  <div class="workscreen catch-screen">
+  <section class="workscreen__header catch-screen__header" data-studio-component-id="fangliste-header-card" data-studio-component-type="section" data-studio-slot="main">
+    <div class="catch-table-toolbar ui-toolbar" data-studio-component-id="fangliste-header-content" data-studio-component-type="section" data-studio-slot="main">
+      <div class="catch-screen__header-copy">
         <h1>Fangliste / Angeltage</h1>
-        <div class="fangliste-add-anchor">
-          <button
-            type="button"
-            id="tripCreateOpenTop"
-            class="catch-add-btn catch-add-btn--top"
-            aria-label="Fang hinzufügen"
-            aria-expanded="false"
-            aria-controls="tripTopMenu"
-            data-studio-component-id="fangliste-open-create-top-btn"
-            data-studio-component-type="button"
-            data-studio-slot="main"
-          >+</button>
-          <div id="tripTopMenu" class="fangliste-action-menu fangliste-action-menu--top hidden" hidden>
-            <button type="button" id="tripTopCatch" class="fangliste-fab-action">
-              <span class="fangliste-fab-action__label">Fang erfassen</span>
-            </button>
-            <button type="button" id="tripTopNoCatch" class="fangliste-fab-action fangliste-fab-action--ghost">
-              <span class="fangliste-fab-action__label">Kein Fang</span>
-            </button>
-          </div>
+        
+      </div>
+      <div class="fangliste-add-anchor">
+        <button
+          type="button"
+          id="tripCreateOpenTop"
+          class="catch-add-btn catch-add-btn--top"
+          aria-label="Fang hinzufügen"
+          aria-expanded="false"
+          aria-controls="tripTopMenu"
+          data-studio-component-id="fangliste-open-create-top-btn"
+          data-studio-component-type="button"
+          data-studio-slot="main"
+        >+</button>
+        <div id="tripTopMenu" class="fangliste-action-menu fangliste-action-menu--top hidden" hidden>
+          <button type="button" id="tripTopCatch" class="fangliste-fab-action">
+            <span class="fangliste-fab-action__label">Fang erfassen</span>
+          </button>
+          <button type="button" id="tripTopNoCatch" class="fangliste-fab-action fangliste-fab-action--ghost">
+            <span class="fangliste-fab-action__label">Kein Fang</span>
+          </button>
         </div>
       </div>
-      <p class="small">Klicke auf eine Zeile für Details. Bilder können im Dialog hinterlegt werden.</p>
-
-      <p id="tripMsg" class="small" aria-live="polite"></p>
     </div>
+    <p id="tripMsg" class="small catch-screen__status" aria-live="polite"></p>
   </section>
 
-  <section class="card" data-studio-component-id="fangliste-main-card" data-studio-component-type="card" data-studio-slot="main">
-    <div class="card__body" data-studio-component-id="fangliste-main-content" data-studio-component-type="section" data-studio-slot="main">
-      <h2>Meine Angeltage</h2>
+  <section class="card ui-card workscreen__main catch-screen__table data-table-shell" data-studio-component-id="fangliste-main-card" data-studio-component-type="card" data-studio-slot="main">
+    <div class="card__body ui-card__body" data-studio-component-id="fangliste-main-content" data-studio-component-type="section" data-studio-slot="main">
+      <div class="catch-screen__table-head">
+        <h2>Meine Angeltage</h2>
+        <div class="ui-view-toggle trip-view-toggle catch-screen__table-mode" role="group" aria-label="Ansicht">
+          <button type="button" class="feed-btn" id="tripViewZeileBtn" data-ansicht="zeile">Tabelle</button>
+          <button type="button" class="feed-btn feed-btn--ghost" id="tripViewKarteBtn" data-ansicht="karte">Cards</button>
+        </div>
+      </div>
 
-      <div class="trip-table-toolbar" role="region" aria-label="Tabellensteuerung" data-studio-component-id="fangliste-table-toolbar" data-studio-component-type="section" data-studio-slot="main">
-        <label class="trip-table-search">
-          <span class="visually-hidden">Suche in der Fangliste</span>
+      <div class="trip-table-toolbar ui-toolbar data-table-shell__toolbar catch-screen__toolbar" role="region" aria-label="Tabellensteuerung" data-studio-component-id="fangliste-table-toolbar" data-studio-component-type="section" data-studio-slot="main">
+        <label class="trip-table-search ui-field">
+          <!-- <span class="visually-hidden">Suche in der Fangliste</span> -->
           <input id="tripSearch" type="search" placeholder="Suche Tag, Gewässer, Fang, Gewicht, Anzahl..." data-studio-component-id="fangliste-search-input" data-studio-component-type="input" data-studio-slot="main" />
         </label>
-        <div class="trip-table-toolbar__actions">
+        <div class="trip-table-toolbar__actions ui-toolbar__group">
           <span id="tripActiveFilterCount" class="trip-filter-meta hidden" aria-live="polite">0 Filter aktiv</span>
           <label class="trip-inline-check">
             <input id="tripOnlyNoCatch" type="checkbox" /> Nur Kein Fang
           </label>
-          <div class="ui-view-toggle" role="group" aria-label="Ansicht">
-            <button type="button" class="feed-btn" id="tripViewZeileBtn" data-ansicht="zeile">Tabelle</button>
-            <button type="button" class="feed-btn feed-btn--ghost" id="tripViewKarteBtn" data-ansicht="karte">Cards</button>
-          </div>
-          <button type="button" class="feed-btn feed-btn--ghost" id="tripResetFiltersBtn">Reset Filter</button>
+          <button
+            type="button"
+            class="feed-btn feed-btn--ghost trip-toolbar-btn trip-toolbar-btn--secondary trip-toolbar-btn--icon"
+            id="tripColumnFiltersToggle"
+            aria-expanded="false"
+            aria-controls="tripColumnFiltersPanel"
+            aria-label="Spaltenfilter öffnen"
+            title="Spaltenfilter"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="feed-btn feed-btn--ghost trip-toolbar-btn trip-toolbar-btn--reset trip-toolbar-btn--icon"
+            id="tripResetFiltersBtn"
+            aria-label="Filter zurücksetzen"
+            title="Reset Filter"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M20 11a8 8 0 1 1-2.34-5.66M20 4v7h-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+          </button>
         </div>
       </div>
 
+      <section
+        id="tripColumnFiltersPanel"
+        class="trip-column-filters hidden"
+        hidden
+        aria-label="Spaltenfilter"
+        data-fcp-component="FCP Data Table v1"
+      ></section>
+
       <div
         id="tripList"
-        class="fangliste-list"
-        style="margin-top:10px"
+        class="fangliste-list data-table-shell__table"
         data-studio-component-id="fangliste-list-table"
         data-studio-component-type="table"
         data-studio-slot="main"
         data-studio-library-id="lists--standard-tabelle"
         data-table-id="fangliste"
         data-row-click="dialog"
+        data-fcp-component="FCP Data Table v1"
       ></div>
     </div>
   </section>
 
-  <section class="card" data-studio-component-id="fangliste-stats-card" data-studio-component-type="card" data-studio-slot="main">
-    <div class="card__body" data-studio-component-id="fangliste-stats-content" data-studio-component-type="section" data-studio-slot="main">
+  <section class="workscreen__stats catch-screen__stats ui-section" data-studio-component-id="fangliste-stats-card" data-studio-component-type="section" data-studio-slot="main">
+    <div data-studio-component-id="fangliste-stats-content" data-studio-component-type="section" data-studio-slot="main">
       <h2>Meine Stats</h2>
-      <p class="small">Deine Angeltage, Kein-Fang-Tage, Gesamtfänge und letzter Eintrag.</p>
+      <p class="small">Übersicht zu Angeltagen, Kein-Fang-Tagen und letztem Eintrag.</p>
       <p id="tripStatsMsg" class="small" aria-live="polite"></p>
-      <div id="tripStatsBox" class="fangliste-list"></div>
+      <div id="tripStatsBox" class="fangliste-list catch-screen__stats-box"></div>
     </div>
   </section>
 
   <section id="tripCreateDialog" class="catch-dialog catch-dialog--panel hidden" data-guard-sheet="1" hidden data-studio-component-id="fangliste-create-dialog" data-studio-component-type="dialog" data-studio-slot="main">
-    <form id="tripCreateForm" class="catch-dialog__form">
+    <form id="tripCreateForm" class="catch-dialog__form ui-panel">
       <h3 id="tripCreateTitle">Eintrag erfassen</h3>
 
       <div class="fangliste-form-grid">
@@ -143,7 +176,7 @@ import { APP } from "../../../config/app";
   </section>
 
   <section id="tripDetailDialog" class="catch-dialog catch-dialog--panel hidden" data-guard-sheet="1" hidden data-studio-component-id="fangliste-detail-dialog" data-studio-component-type="dialog" data-studio-slot="main">
-    <form id="tripDetailForm" class="catch-dialog__form">
+    <form id="tripDetailForm" class="catch-dialog__form ui-panel">
       <h3>Eintragsdetails</h3>
       <div id="tripDetailBody" class="catch-dialog__body"></div>
       <div class="catch-dialog__actions">
@@ -177,7 +210,9 @@ import { APP } from "../../../config/app";
     >+</button>
   </div>
 
+  <script src="/js/fcp-data-table.js" defer></script>
   <script src="/js/catchlist.js" defer></script>
+  </div>
 
   <style>
     .fangliste-add-anchor {
@@ -209,22 +244,28 @@ import { APP } from "../../../config/app";
 
     .fangliste-action-menu--fab {
       justify-items: end;
+      align-self: flex-end;
+      min-width: 220px;
     }
 
     .fangliste-fab-action {
       min-height: 42px;
-      padding: 0 14px;
+      padding: 0 16px;
       border-radius: 999px;
-      border: 1px solid rgba(78, 161, 255, .44);
-      background: linear-gradient(180deg, rgba(64, 103, 182, .92), rgba(31, 57, 109, .96));
-      color: var(--text);
+      border: 1px solid rgba(255, 193, 94, .88);
+      background: linear-gradient(180deg, rgba(255, 186, 58, .98), rgba(244, 144, 20, .99));
+      color: #2f2415;
       font: inherit;
       font-weight: 700;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, .26);
+      justify-content: center;
+      box-shadow: 0 10px 24px rgba(62, 56, 34, .22), 0 0 0 1px rgba(255, 228, 167, .16) inset;
     }
 
     .fangliste-fab-action--ghost {
-      background: rgba(17, 27, 45, .96);
+      border-color: rgba(221, 212, 194, .78);
+      background: linear-gradient(180deg, rgba(89, 90, 61, .9), rgba(75, 76, 51, .94));
+      color: #f5f1e8;
+      box-shadow: 0 10px 24px rgba(35, 33, 24, .22);
     }
 
     .fangliste-fab-action__label {
@@ -233,13 +274,13 @@ import { APP } from "../../../config/app";
 
     #tripCreateFab[aria-expanded="true"],
     #tripCreateOpenTop[aria-expanded="true"] {
-      background: rgba(78, 161, 255, .36);
-      border-color: rgba(120, 184, 255, .7);
+      background: linear-gradient(180deg, rgba(255, 205, 96, .99), rgba(250, 163, 34, .99));
+      border-color: rgba(255, 223, 148, .94);
     }
 
     @media (min-width: 900px) {
-      .fangliste-fab-stack {
-        display: none;
+      .fangliste-action-menu--fab {
+        justify-items: end;
       }
     }
 

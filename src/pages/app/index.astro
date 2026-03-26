@@ -27,8 +27,8 @@ const assetVersion = encodeURIComponent(appVersionEnv && appVersionEnv !== "dev-
 ---
 
 <Site title={`Fishing-Club-Portal • ${APP.name}`} description="Memberbereich." robots="noindex">
-  <section class="card" data-studio-component-id="app-home-shell" data-studio-component-type="section" data-studio-slot="main">
-    <div class="card__body app-portal" data-studio-component-id="app-home-content" data-studio-component-type="section" data-studio-slot="main">
+  <section class="app-portal-shell" data-studio-component-id="app-home-shell" data-studio-component-type="section" data-studio-slot="main">
+    <div class="app-portal" data-studio-component-id="app-home-content" data-studio-component-type="section" data-studio-slot="main">
       <div class="app-portal-guest hidden" data-guest-only hidden data-studio-component-id="app-home-guest-hero" data-studio-component-type="card" data-studio-slot="main">
         <picture class="app-portal-guest__logo" aria-hidden="true">
           <source srcset={`/Branding/New_FCP_GoFishing.svg?v=${assetVersion}`} type="image/svg+xml" />
@@ -38,20 +38,96 @@ const assetVersion = encodeURIComponent(appVersionEnv && appVersionEnv !== "dev-
         <a class="feed-btn" href="/login/?next=%2Fapp%2F">{APP.guestLoginCtaLabel}</a>
       </div>
 
-      <div data-member-only hidden data-studio-component-id="app-home-member-header" data-studio-component-type="section" data-studio-slot="main">
-        <h1>Fishing-Club-Portal</h1>
-        <p class="small">Diese Startmaske wird aktuell nicht mehr genutzt.</p>
-        <p><a class="feed-btn feed-btn--ghost" href="/app/einstellungen/">Einstellungen öffnen</a></p>
-      </div>
+      <section class="app-dashboard hidden" data-member-only hidden data-studio-component-id="app-home-dashboard" data-studio-component-type="section" data-studio-slot="main">
 
-      <div class="app-portal-guest app-portal-guest--member" data-member-only hidden data-studio-component-id="app-home-app-grid" data-studio-component-type="card" data-studio-slot="main">
-        <picture class="app-portal-guest__logo" aria-hidden="true">
-          <source srcset={`/Branding/New_FCP_GoFishing.svg?v=${assetVersion}`} type="image/svg+xml" />
-          <img src={`/Branding/New_FCP_GoFishing.png?v=${assetVersion}`} alt="" loading="eager" decoding="async" />
-        </picture>
-        <p class="app-portal-guest__message">Bitte logge dich ein.</p>
-        <a class="feed-btn" href="/login/?next=%2Fapp%2F">Zum Login</a>
-      </div>
+
+       
+
+        <div class="app-dashboard__hero" data-studio-component-id="app-home-member-layout-head" data-studio-component-type="section" data-studio-slot="main">
+          <div class="app-dashboard__copy">
+            <p class="app-dashboard__layout-title">Dashboard Layout</p>
+      
+          </div>
+          <a class="app-dashboard__settings" href="/app/einstellungen/" aria-label="Einstellungen öffnen" title="Einstellungen öffnen">⚙</a>
+        </div>
+
+        <div class="fcp-dashboard-grid" data-studio-component-id="app-home-app-grid" data-studio-component-type="section" data-studio-slot="main">
+          <section
+            id="portalDecisionWidget"
+            class="fcp-dashboard-slot fcp-dashboard-slot--hero"
+            data-fcp-component="FCP Dashboard Widget v1"
+            data-dashboard-widget-kind="decision"
+          ></section>
+          <section
+            id="portalPressureWidget"
+            class="fcp-dashboard-slot fcp-dashboard-slot--narrow"
+            data-fcp-component="FCP Dashboard Widget v1"
+            data-dashboard-widget-kind="stat"
+          ></section>
+          <section
+            id="portalWindWidget"
+            class="fcp-dashboard-slot fcp-dashboard-slot--narrow"
+            data-fcp-component="FCP Dashboard Widget v1"
+            data-dashboard-widget-kind="stat"
+          ></section>
+          <section
+            id="portalTempWidget"
+            class="fcp-dashboard-slot fcp-dashboard-slot--narrow"
+            data-fcp-component="FCP Dashboard Widget v1"
+            data-dashboard-widget-kind="stat"
+          ></section>
+          <section
+            id="portalTasksWidget"
+            class="fcp-dashboard-slot fcp-dashboard-slot--wide fcp-dashboard-slot--action"
+            data-fcp-component="FCP Dashboard Widget v1"
+            data-dashboard-widget-kind="list"
+          ></section>
+          <section
+            id="portalEventsWidget"
+            class="fcp-dashboard-slot fcp-dashboard-slot--wide fcp-dashboard-slot--action"
+            data-fcp-component="FCP Dashboard Widget v1"
+            data-dashboard-widget-kind="list"
+          ></section>
+          <section
+            id="portalCatchRatioWidget"
+            class="fcp-dashboard-slot fcp-dashboard-slot--narrow fcp-dashboard-slot--identity"
+            data-fcp-component="FCP Dashboard Widget v1"
+            data-dashboard-widget-kind="stat"
+          ></section>
+          <section
+            id="portalTripDaysWidget"
+            class="fcp-dashboard-slot fcp-dashboard-slot--narrow fcp-dashboard-slot--identity"
+            data-fcp-component="FCP Dashboard Widget v1"
+            data-dashboard-widget-kind="stat"
+          ></section>
+          <section
+            id="portalCalendarWidget"
+            class="fcp-dashboard-slot fcp-dashboard-slot--compact fcp-dashboard-slot--tool"
+            data-fcp-component="FCP Dashboard Widget v1"
+            data-dashboard-widget-kind="calendar"
+          ></section>
+          <section
+            id="portalCompassWidget"
+            class="fcp-dashboard-slot fcp-dashboard-slot--compact fcp-dashboard-slot--tool"
+            data-fcp-component="FCP Dashboard Widget v1"
+            data-dashboard-widget-kind="stat"
+          ></section>
+          <section
+            id="portalLastCatchWidget"
+            class="fcp-dashboard-slot fcp-dashboard-slot--compact fcp-dashboard-slot--tool"
+            data-fcp-component="FCP Dashboard Widget v1"
+            data-dashboard-widget-kind="stat"
+          ></section>
+          <section
+            id="portalSunWidget"
+            class="fcp-dashboard-slot fcp-dashboard-slot--compact fcp-dashboard-slot--tool"
+            data-fcp-component="FCP Dashboard Widget v1"
+            data-dashboard-widget-kind="chart"
+          ></section>
+        </div>
+      </section>
     </div>
   </section>
+  <script src="/js/fcp-dashboard.js" defer></script>
+  <script src="/js/app-dashboard.js" defer></script>
 </Site>

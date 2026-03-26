@@ -212,8 +212,21 @@
   }
 
   function readRegisterMode() {
+    const hiddenInput = document.getElementById("registerModeValue");
+    const hiddenValue = String(hiddenInput?.value || "").trim();
+    if (hiddenValue) return hiddenValue;
     const checked = document.querySelector('input[name="registration_mode"]:checked');
     return String(checked?.value || "join_club").trim();
+  }
+
+  function writeRegisterMode(mode) {
+    const normalized = String(mode || "join_club").trim() || "join_club";
+    const hiddenInput = document.getElementById("registerModeValue");
+    if (hiddenInput) hiddenInput.value = normalized;
+    const modeInput = document.querySelector(`input[name="registration_mode"][value="${normalized}"]`);
+    if (modeInput && "checked" in modeInput) modeInput.checked = true;
+    syncRegisterModeUi();
+    updateRegisterPasswordFeedback();
   }
 
   function syncRegisterModeUi() {
@@ -232,6 +245,9 @@
     const emailInput = document.getElementById("registerEmail");
     const passInput = document.getElementById("registerPass");
     const pass2Input = document.getElementById("registerPass2");
+    const internalEntry = document.getElementById("registerInternalEntry");
+    const showCreateBtn = document.getElementById("registerShowCreateFlow");
+    const backToJoinBtn = document.getElementById("registerBackToJoinFlow");
 
     if (joinSection) {
       const isJoin = mode === "join_club";
@@ -255,12 +271,22 @@
       createFieldset.disabled = !createAllowed;
       createFieldset.classList.toggle("is-locked", !createAllowed);
     }
+    if (internalEntry) {
+      internalEntry.hidden = !createAllowed || mode === "create_club";
+      internalEntry.classList.toggle("hidden", !createAllowed || mode === "create_club");
+    }
+    if (showCreateBtn) {
+      showCreateBtn.hidden = !createAllowed || mode === "create_club";
+    }
+    if (backToJoinBtn) {
+      backToJoinBtn.hidden = !createAllowed || mode !== "create_club";
+    }
     if (hint) {
       hint.textContent = !createAllowed
-        ? "Der Vereinsanlage-Flow ist als Vorschau sichtbar. Die öffentliche Registrierung neuer Vereine ist noch nicht freigeschaltet, der Vereinsbeitritt per Invite ist aber nutzbar."
+        ? "Tritt mit deiner Einladung einem bestehenden Verein bei. Der öffentliche Einstieg bleibt bewusst auf diesen einen Flow fokussiert."
         : mode === "create_club"
-        ? "Du arbeitest im Superadmin-Kontext. Der Vereinsanlage-Flow nutzt dein bestehendes Konto, und Billing blockiert diesen internen Test- und Setup-Schritt nicht."
-        : "Der Vereinsbeitritt läuft aktuell über Invite-Token und Mitgliedsnummer. Nach der Mailbestätigung folgt die Datenbestätigung im Vereinskontext.";
+        ? "Du arbeitest im Superadmin-Kontext. Der interne Vereins-Setup nutzt dein bestehendes Konto, und Billing blockiert diesen Test- und Setup-Schritt nicht."
+        : "Tritt mit deiner Einladung einem bestehenden Verein bei. Wenn du internen Setup-Zugang brauchst, kannst du ihn getrennt aufrufen.";
     }
     if (submitBtn) {
       submitBtn.textContent = mode === "create_club" && createAllowed ? "Verein vorbereiten" : "Konto anlegen";
@@ -840,14 +866,21 @@
       const pass2Input = document.getElementById("registerPass2");
       const prefilledInviteToken = String(document.getElementById("registerInviteToken")?.value || "").trim();
       const modeInputs = Array.from(document.querySelectorAll('input[name="registration_mode"]'));
+      const showCreateBtn = document.getElementById("registerShowCreateFlow");
+      const backToJoinBtn = document.getElementById("registerBackToJoinFlow");
       if (prefilledInviteToken) {
-        const join = document.getElementById("registerModeJoin");
-        if (join) join.checked = true;
+        writeRegisterMode("join_club");
       }
       modeInputs.forEach((input) => input.addEventListener("change", () => {
         syncRegisterModeUi();
         updateRegisterPasswordFeedback();
       }));
+      if (showCreateBtn) {
+        showCreateBtn.addEventListener("click", () => writeRegisterMode("create_club"));
+      }
+      if (backToJoinBtn) {
+        backToJoinBtn.addEventListener("click", () => writeRegisterMode("join_club"));
+      }
       if (passInput) passInput.addEventListener("input", updateRegisterPasswordFeedback);
       if (pass2Input) pass2Input.addEventListener("input", updateRegisterPasswordFeedback);
       syncRegisterModeUi();

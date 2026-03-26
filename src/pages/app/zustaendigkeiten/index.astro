@@ -3,73 +3,71 @@ import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
 ---
 
-<Site title={`Meine Zuständigkeiten • ${APP.name}`} description="Meine Aufgaben und Leitungen" robots="noindex">
-  <section class="card">
-    <div class="card__body">
-      <h1>Meine Zuständigkeiten</h1>
-      <p class="small">Hier siehst du nur deine zugewiesenen Aufgaben und Leitungen.</p>
-      <p id="myRespMsg" class="small" aria-live="polite"></p>
-
-      <h2>Sitzungstasks</h2>
-      <div class="ui-filter-row">
-        <label>
-          <span>Suche</span>
-          <input id="myRespTaskSearch" type="search" placeholder="Task durchsuchen" />
-        </label>
-        <label>
-          <span>Status</span>
-          <select id="myRespTaskStatusFilter">
-            <option value="alle">Alle</option>
-            <option value="open">offen</option>
-            <option value="done">erledigt</option>
-            <option value="blocked">blockiert</option>
-          </select>
-        </label>
-        <label>
-          <span>Ansicht</span>
-          <div class="ui-view-toggle" role="group" aria-label="Ansicht">
-            <button type="button" class="feed-btn" id="myRespTaskViewZeileBtn">Ansicht Zeile</button>
-            <button type="button" class="feed-btn feed-btn--ghost" id="myRespTaskViewKarteBtn">Ansicht Karte</button>
-          </div>
-        </label>
-      </div>
-      <div id="myRespMeetingTasksTableWrap" class="catch-table" data-studio-component-type="table" data-studio-library-id="lists--standard-tabelle" data-table-id="my-resp-tasks" data-row-click="dialog">
-        <div class="catch-table__head" style="grid-template-columns:2fr 1fr 1fr">
-          <span>Task</span>
-          <span>Status</span>
-          <span>Fällig</span>
+<Site title={`Meine Zuständigkeiten • ${APP.name}`} description="Meine Aufgaben und Leitungen" robots="noindex" density="compact">
+  <div class="workscreen catch-screen">
+    <section class="workscreen__header catch-screen__header">
+      <div class="catch-table-toolbar ui-toolbar">
+        <div class="catch-screen__header-copy">
+          <h1>Meine Zuständigkeiten</h1>
+       
         </div>
-        <div id="myRespMeetingTasksTable"></div>
       </div>
-      <div id="myRespMeetingTasksCards" class="grid hidden" hidden></div>
+ 
+    </section>
 
-      <hr />
-      <h2>Arbeitseinsatz-Leitungen</h2>
-      <div class="ui-filter-row">
-        <label>
-          <span>Suche</span>
-          <input id="myRespLeadSearch" type="search" placeholder="Titel oder Ort durchsuchen" />
-        </label>
-        <label>
-          <span>Ansicht</span>
-          <div class="ui-view-toggle" role="group" aria-label="Ansicht">
-            <button type="button" class="feed-btn" id="myRespLeadViewZeileBtn">Ansicht Zeile</button>
-            <button type="button" class="feed-btn feed-btn--ghost" id="myRespLeadViewKarteBtn">Ansicht Karte</button>
-          </div>
-        </label>
-      </div>
-      <div id="myRespWorkLeadsTableWrap" class="catch-table" data-studio-component-type="table" data-studio-library-id="lists--standard-tabelle" data-table-id="my-resp-leads" data-row-click="dialog">
-        <div class="catch-table__head" style="grid-template-columns:1.8fr 1fr 1fr 1fr">
-          <span>Titel</span>
-          <span>Status</span>
-          <span>Start</span>
-          <span>Ort</span>
+    <section class="card ui-card workscreen__main catch-screen__table data-table-shell">
+      <div class="card__body ui-card__body">
+        <div class="catch-screen__table-head">
+          <h2>Offene Aufgaben und Zuständigkeiten</h2>
         </div>
-        <div id="myRespWorkLeadsTable"></div>
+
+        <div class="trip-table-toolbar trip-table-toolbar--icons-right ui-toolbar data-table-shell__toolbar catch-screen__toolbar" role="region" aria-label="Tabellensteuerung">
+          <label class="trip-table-search ui-field">
+            <input id="myRespSearch" type="search" placeholder="Suche Fälligkeit, Status, Aufgabe, Ort..." />
+          </label>
+          <div class="trip-table-toolbar__actions ui-toolbar__group">
+            <span id="myRespActiveFilterCount" class="trip-filter-meta hidden" aria-live="polite">0 Filter aktiv</span>
+            <button
+              type="button"
+              class="feed-btn feed-btn--ghost trip-toolbar-btn trip-toolbar-btn--secondary trip-toolbar-btn--icon"
+              id="myRespColumnFiltersToggle"
+              aria-expanded="false"
+              aria-controls="myRespColumnFiltersPanel"
+              aria-label="Spaltenfilter öffnen"
+              title="Spaltenfilter"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="feed-btn feed-btn--ghost trip-toolbar-btn trip-toolbar-btn--reset trip-toolbar-btn--icon"
+              id="myRespResetFiltersBtn"
+              aria-label="Filter zurücksetzen"
+              title="Reset Filter"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M20 11a8 8 0 1 1-2.34-5.66M20 4v7h-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <section id="myRespColumnFiltersPanel" class="trip-column-filters hidden" hidden aria-label="Spaltenfilter"></section>
+
+        <div
+          id="myRespTable"
+          class="data-table-shell__table"
+          data-studio-component-type="table"
+          data-studio-library-id="lists--standard-tabelle"
+          data-table-id="my-resp-open-items"
+          data-row-click="dialog"
+          data-fcp-component="FCP Data Table v1"
+        ></div>
       </div>
-      <div id="myRespWorkLeadsCards" class="grid hidden" hidden></div>
-    </div>
-  </section>
+    </section>
+  </div>
 
   <dialog id="myRespTaskDialog" class="catch-dialog">
     <form method="dialog" class="catch-dialog__form">
@@ -106,5 +104,6 @@ import { APP } from "../../../config/app";
     </form>
   </dialog>
 
+  <script src="/js/fcp-data-table.js" defer></script>
   <script src="/js/responsibilities-my.js" defer></script>
 </Site>

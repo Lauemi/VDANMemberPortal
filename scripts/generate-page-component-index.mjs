@@ -48,6 +48,7 @@ function parseComponents(source) {
       type: attr(tagRaw, "data-studio-component-type") || "-",
       slot: attr(tagRaw, "data-studio-slot") || "-",
       tableId: attr(tagRaw, "data-table-id") || "-",
+      fcpComponent: attr(tagRaw, "data-fcp-component") || "-",
     });
   }
   return components;
@@ -85,10 +86,10 @@ function render(pages) {
       lines.push("");
       continue;
     }
-    lines.push("| ID | Tag | Type | Slot | Table-ID |");
-    lines.push("|---|---|---|---|---|");
+    lines.push("| ID | Tag | Type | Slot | Table-ID | FCP-Komponente |");
+    lines.push("|---|---|---|---|---|---|");
     for (const c of page.components) {
-      lines.push(`| \`${c.id}\` | \`${c.tag}\` | \`${c.type}\` | \`${c.slot}\` | \`${c.tableId}\` |`);
+      lines.push(`| \`${c.id}\` | \`${c.tag}\` | \`${c.type}\` | \`${c.slot}\` | \`${c.tableId}\` | \`${c.fcpComponent}\` |`);
     }
     lines.push("");
   }

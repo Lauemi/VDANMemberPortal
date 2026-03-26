@@ -1,0 +1,277 @@
+{
+  "generated_at": "2026-03-26T11:19:15.785Z",
+  "component": {
+    "id": "fcp-dashboard-widget-v1",
+    "name": "FCP Dashboard Widget v1",
+    "family": "dashboard",
+    "version": "v1",
+    "status": "standard",
+    "summary": "Neumorphes Portal-Dashboard-Widget fuer die Entscheidungszentrale des Fishing-Club-Portals mit priorisierten Rollen fuer Entscheidung, Handlung, Identitaet und Kontext.",
+    "files": {
+      "runtime": [
+        "public/js/fcp-dashboard.js"
+      ],
+      "styles": [
+        "public/css/main.css"
+      ],
+      "firstReference": [
+        "src/pages/app/index.astro",
+        "public/js/app-dashboard.js"
+      ]
+    },
+    "designGoal": {
+      "primaryUserQuestion": "Lohnt es sich heute zu angeln?",
+      "secondaryQuestions": [
+        "Habe ich heute etwas zu tun?",
+        "Wie ist mein aktueller Stand?"
+      ],
+      "uxRule": "Das Portal wird in unter 2 Sekunden gescannt und nicht gelesen.",
+      "portalCharacter": "Entscheidungszentrale fuer Angler, nicht Wetter-Showcase und nicht Tabellenarbeitsflaeche."
+    },
+    "dom": {
+      "rootAttributes": [
+        "data-fcp-component=\"FCP Dashboard Widget v1\"",
+        "data-dashboard-widget-kind",
+        "data-dashboard-widget-role",
+        "data-dashboard-widget-priority"
+      ],
+      "generatedStructure": [
+        ".fcp-dashboard-widget",
+        ".fcp-dashboard-widget__surface",
+        ".fcp-dashboard-widget__header",
+        ".fcp-dashboard-widget__body",
+        ".fcp-dashboard-widget__footer"
+      ],
+      "optionalCompanions": [
+        "Portal-Dashboard-Grid fuer 1x1, 2x1 und 2x2 Widgets",
+        "Deep-Link CTA oder Badge im Header",
+        "Spezialisierte Wetter-Visualisierung mit Sonnenverlauf"
+      ]
+    },
+    "css": {
+      "selectors": [
+        ".app-dashboard",
+        ".fcp-dashboard-grid",
+        ".fcp-dashboard-widget",
+        ".fcp-decision-widget",
+        ".fcp-dashboard-stat"
+      ],
+      "notes": [
+        "Widget-Huelle basiert auf dunklem Oliv-Neumorphism, nicht auf den hellen Tabellen-Surfaces",
+        "Orange wird nur fuer Entscheidung, CTAs und aktive States genutzt"
+      ]
+    },
+    "parameters": [
+      {
+        "name": "root",
+        "type": "HTMLElement",
+        "required": true,
+        "description": "Mount-Punkt fuer das Widget"
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "required": false,
+        "description": "Widget-Titel"
+      },
+      {
+        "name": "subtitle",
+        "type": "string",
+        "required": false,
+        "description": "Zusatztext unter dem Titel"
+      },
+      {
+        "name": "eyebrow",
+        "type": "string",
+        "required": false,
+        "description": "Kleine Standardzeile ueber dem Titel"
+      },
+      {
+        "name": "badge",
+        "type": "string",
+        "required": false,
+        "description": "Status-Badge im Header"
+      },
+      {
+        "name": "size",
+        "type": "\"hero\"|\"wide\"|\"stack\"|\"compact\"|\"micro\"",
+        "required": false,
+        "description": "Dashboard-Groessenklasse fuer das Widget"
+      },
+      {
+        "name": "role",
+        "type": "\"decision\"|\"action\"|\"identity\"|\"context\"",
+        "required": false,
+        "description": "Fuehrungsrolle innerhalb des Portals"
+      },
+      {
+        "name": "kind",
+        "type": "\"decision\"|\"stat\"|\"chart\"|\"weather\"|\"list\"|\"calendar\"|\"compass\"",
+        "required": false,
+        "description": "Inhaltstyp fuer Layout-Defaults"
+      },
+      {
+        "name": "bodyHtml",
+        "type": "string",
+        "required": false,
+        "description": "Gerenderter Body-Inhalt"
+      },
+      {
+        "name": "footerHtml",
+        "type": "string",
+        "required": false,
+        "description": "Optionaler Footer-Inhalt"
+      },
+      {
+        "name": "clickMode",
+        "type": "\"none\"|\"deeplink\"|\"custom\"",
+        "required": false,
+        "description": "Klickverhalten des Widgets"
+      },
+      {
+        "name": "deeplink",
+        "type": "string",
+        "required": false,
+        "description": "Optionales Ziel fuer klickbare Widgets"
+      },
+      {
+        "name": "priorityDesktop",
+        "type": "number",
+        "required": false,
+        "description": "Prioritaet fuer Desktop-Anordnung"
+      },
+      {
+        "name": "priorityMobile",
+        "type": "number",
+        "required": false,
+        "description": "Prioritaet fuer Mobile-Anordnung"
+      },
+      {
+        "name": "coords",
+        "type": "object",
+        "required": false,
+        "description": "Koordinaten fuer Wetter-Widgets"
+      },
+      {
+        "name": "placeLabel",
+        "type": "string",
+        "required": false,
+        "description": "Anzeigeort fuer Wetter-Widgets"
+      },
+      {
+        "name": "onData",
+        "type": "function",
+        "required": false,
+        "description": "Callback fuer nachgelagerte Widgets nach erfolgreichem Load"
+      }
+    ],
+    "stateModel": {
+      "title": "string",
+      "subtitle": "string",
+      "badge": "string",
+      "size": "\"hero\"|\"wide\"|\"stack\"|\"compact\"|\"micro\"",
+      "role": "\"decision\"|\"action\"|\"identity\"|\"context\"",
+      "kind": "\"decision\"|\"stat\"|\"chart\"|\"weather\"|\"list\"|\"calendar\"|\"compass\"",
+      "loading": "boolean",
+      "error": "string|null"
+    },
+    "interactionContract": {
+      "clickMode": {
+        "supported": [
+          "none",
+          "deeplink",
+          "custom"
+        ],
+        "default": "none"
+      },
+      "hoverDepthShift": true,
+      "realisticWeatherIcons": true,
+      "mobileTapFriendly": true
+    },
+    "eventsContract": {
+      "callbacks": [
+        "onData"
+      ],
+      "notes": [
+        "Weather-Widgets koennen geladene Daten an weitere Widgets im Dashboard weiterreichen"
+      ]
+    },
+    "visualContract": {
+      "shellStyle": "dark-olive neumorphism",
+      "borderStyle": "subtile Kante mit Border und dunkler Outline fuer lesbare Tiefe",
+      "iconStrategy": "Widget-Shell neumorph, Wetterpiktogramme illustrativ-realistisch",
+      "textTreatment": "klare, ruhige Typografie ohne weichgezeichnete Schrift",
+      "accentRule": "Orange nur fuer Entscheidung, CTAs und aktive States",
+      "supportedSizes": [
+        "hero",
+        "wide",
+        "stack",
+        "compact",
+        "micro"
+      ]
+    },
+    "priorityModel": {
+      "roles": [
+        {
+          "role": "decision",
+          "description": "Beantwortet sofort die Frage, ob heute ein guter Angeltag ist."
+        },
+        {
+          "role": "action",
+          "description": "Zeigt, was der Nutzer heute tun muss."
+        },
+        {
+          "role": "identity",
+          "description": "Zeigt persoenlichen Stand und Bindung."
+        },
+        {
+          "role": "context",
+          "description": "Liefert Ursache und Hintergrund auf zweiter Ebene."
+        }
+      ],
+      "desktopOrder": [
+        "decision",
+        "action",
+        "identity",
+        "context"
+      ],
+      "mobileOrder": [
+        "decision",
+        "action",
+        "identity",
+        "context"
+      ]
+    },
+    "defaultBehavior": {
+      "componentFactory": "FCPDashboard.createWidgetV1(config)",
+      "weatherFactory": "FCPDashboard.fetchWeatherBundle(coords) + createWidgetV1(config)",
+      "size": "Hero fuer Angelfenster, wide fuer Handlung, compact fuer Identitaet und Kontext",
+      "kind": "Decision fuer Angelfenster, stat fuer KPI, list fuer Aufgaben/Termine, chart/calendar/compass fuer Zusatztools",
+      "dataSource": "Open-Meteo fuer Wetterdaten in v1",
+      "decisionLogic": "Dokumentierte Uebergangslogik v1 aus Luftdrucktrend, Wind, Regen und Temperatur"
+    },
+    "functions": [
+      "Neumorphe Widget-Huelle",
+      "Standard-Loading- und Error-States",
+      "Decision-Hero fuer Angelfenster heute",
+      "CTA-Links als kleiner orangener Text statt Vollbutton",
+      "Realistischere Wetter-Illustrationen als Inline-SVG",
+      "Kleine Stat- und Identity-Widgets fuer Portal-KPIs"
+    ],
+    "usageContract": {
+      "whenToUse": [
+        "Wenn das Portal als Entscheidungs- und Steuerzentrale fuer Angler dienen soll",
+        "Wenn Widgets priorisiert nach Entscheidung, Handlung, Identitaet und Kontext angeordnet werden muessen"
+      ],
+      "whenNotToUse": [
+        "Wenn strukturierte Datentabellen oder Formulare im Fokus stehen",
+        "Wenn die Ansicht bewusst der hellen FCP-Table-Optik folgen soll"
+      ],
+      "futureVariants": [
+        "FCP Portal Dashboard Layout v2",
+        "FCP Dashboard Widget v1 / chart",
+        "FCP Dashboard Widget v1 / mini-list"
+      ]
+    }
+  }
+}

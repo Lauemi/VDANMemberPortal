@@ -1,0 +1,313 @@
+{
+  "generated_at": "2026-03-26T11:19:15.785Z",
+  "component": {
+    "id": "fcp-data-table-v1",
+    "name": "FCP Data Table v1",
+    "family": "table",
+    "version": "v1",
+    "status": "standard",
+    "summary": "Standardisierte Datentabelle fuer Control-Panel-Masken mit gleicher Optik, gleicher Reihenfolge und zentraler Funktionslogik.",
+    "files": {
+      "runtime": [
+        "public/js/fcp-data-table.js"
+      ],
+      "styles": [
+        "public/css/main.css"
+      ],
+      "firstReference": [
+        "src/pages/app/fangliste/index.astro",
+        "public/js/catchlist.js"
+      ]
+    },
+    "dom": {
+      "rootAttributes": [
+        "data-fcp-component=\"FCP Data Table v1\"",
+        "data-table-id",
+        "data-row-click"
+      ],
+      "generatedStructure": [
+        ".data-table",
+        ".data-table__head",
+        ".data-table__headcell",
+        ".data-table__sort",
+        ".data-table__row",
+        ".data-table__cell"
+      ],
+      "optionalCompanions": [
+        "Toolbar fuer Suche / Zusatzfilter",
+        "Filterpanel mit data-fcp-col-filter Inputs",
+        "Dialog fuer Row-Click Detailansicht"
+      ]
+    },
+    "css": {
+      "selectors": [
+        ".data-table-shell",
+        ".data-table",
+        ".data-table__head",
+        ".data-table__headcell",
+        ".data-table__sort",
+        ".data-table__row",
+        ".data-table__cell"
+      ],
+      "notes": [
+        "Grundoptik kommt aus public/css/main.css",
+        "Maskenspezifische Klassen duerfen nur die Datenbelegung verfeinern, nicht das Grundverhalten brechen"
+      ]
+    },
+    "parameters": [
+      {
+        "name": "root",
+        "type": "HTMLElement",
+        "required": true,
+        "description": "Mount-Punkt fuer die Tabelle"
+      },
+      {
+        "name": "filterPanel",
+        "type": "HTMLElement",
+        "required": false,
+        "description": "Optionaler Mount-Punkt fuer Spaltenfilter"
+      },
+      {
+        "name": "columns",
+        "type": "Array<ColumnConfig>",
+        "required": true,
+        "description": "Spaltendefinition inkl. Label, Renderwert, Sort- und Filtermapping"
+      },
+      {
+        "name": "rowKeyField",
+        "type": "string",
+        "required": false,
+        "description": "Feldname fuer den SQL-basierten Row-Key, wenn kein eigener rowKey uebergeben wird"
+      },
+      {
+        "name": "gridTemplateColumns",
+        "type": "string",
+        "required": false,
+        "description": "Verbindliches Spaltenlayout fuer Header und Rows"
+      },
+      {
+        "name": "initialState",
+        "type": "object",
+        "required": false,
+        "description": "Startzustand fuer Sortierung und Spaltenfilter"
+      },
+      {
+        "name": "rowKey",
+        "type": "function",
+        "required": false,
+        "description": "Liefert den stabilen Row-Identifier"
+      },
+      {
+        "name": "rowInteractionMode",
+        "type": "\"dialog\"|\"inline\"|\"custom\"|\"none\"",
+        "required": false,
+        "description": "Vertrag fuer Standard-Row-Interaktion"
+      },
+      {
+        "name": "selectionMode",
+        "type": "\"none\"|\"single\"|\"multi\"",
+        "required": false,
+        "description": "Vertrag fuer Zeilenauswahl"
+      },
+      {
+        "name": "viewMode",
+        "type": "\"table\"|\"cards\"|\"both\"",
+        "required": false,
+        "description": "Deklariert, ob die Maske einen Tabellen-/Card-Switch fuehrt"
+      },
+      {
+        "name": "onRowClick",
+        "type": "function",
+        "required": false,
+        "description": "Zentrale Row-Klick-Aktion, z. B. Detaildialog"
+      },
+      {
+        "name": "onRowAction",
+        "type": "function",
+        "required": false,
+        "description": "Event fuer Icon-Aktionen in der Actions-Spalte"
+      },
+      {
+        "name": "onSortChange",
+        "type": "function",
+        "required": false,
+        "description": "Event fuer Sort-Aenderungen"
+      },
+      {
+        "name": "onFilterChange",
+        "type": "function",
+        "required": false,
+        "description": "Event fuer Spaltenfilter-Aenderungen"
+      },
+      {
+        "name": "onReset",
+        "type": "function",
+        "required": false,
+        "description": "Event fuer Filter-Reset"
+      },
+      {
+        "name": "onSelectionChange",
+        "type": "function",
+        "required": false,
+        "description": "Event fuer Selection-State"
+      },
+      {
+        "name": "onStateChange",
+        "type": "function",
+        "required": false,
+        "description": "Rueckmeldung fuer Persistenz und gemeinsame Funktionen"
+      }
+    ],
+    "columnContract": {
+      "summary": "Verbindlicher Vertrag fuer ColumnConfig in FCP Data Table v1.",
+      "requiredFields": [
+        "key",
+        "label",
+        "type"
+      ],
+      "optionalFields": [
+        "sortable",
+        "filterable",
+        "align",
+        "width",
+        "placeholder",
+        "emptyValue",
+        "value",
+        "sortValue",
+        "filterValue",
+        "renderHtml",
+        "cellClass"
+      ],
+      "fieldSchema": {
+        "key": "string",
+        "label": "string",
+        "type": "\"primary\"|\"meta\"|\"numeric\"|\"date\"|\"text\"",
+        "sortable": "boolean",
+        "filterable": "boolean",
+        "align": "\"left\"|\"right\"|\"center\"",
+        "width": "string|null",
+        "placeholder": "string|null",
+        "emptyValue": "string|null",
+        "value": "function(row) => string|number|null",
+        "sortValue": "function(row) => string|number|null",
+        "filterValue": "function(row) => string|number|null",
+        "renderHtml": "function(row, rendered) => html-string",
+        "cellClass": "string|null"
+      },
+      "defaults": {
+        "sortable": true,
+        "filterable": true,
+        "align": "left fuer Text, right fuer Zahlenfelder und Actions",
+        "emptyValue": "-"
+      }
+    },
+    "stateModel": {
+      "sortKey": "string|null",
+      "sortDir": "\"asc\"|\"desc\"",
+      "filters": "Record<string,string>",
+      "activeFilterCount": "number",
+      "selectedRowId": "string|null",
+      "viewMode": "\"table\"|\"cards\"|\"both\""
+    },
+    "interactionContract": {
+      "rowInteractionMode": {
+        "supported": [
+          "dialog",
+          "inline",
+          "custom",
+          "none"
+        ],
+        "default": "dialog"
+      },
+      "selectionMode": {
+        "supported": [
+          "none",
+          "single",
+          "multi"
+        ],
+        "default": "single"
+      },
+      "contextMenuReady": false,
+      "columnResizeReady": false,
+      "viewModeSwitch": {
+        "supported": [
+          "table",
+          "cards",
+          "both"
+        ],
+        "default": "table"
+      }
+    },
+    "eventsContract": {
+      "callbacks": [
+        "onRowClick",
+        "onRowAction",
+        "onSortChange",
+        "onFilterChange",
+        "onReset",
+        "onSelectionChange",
+        "onStateChange"
+      ],
+      "notes": [
+        "onStateChange liefert den aggregierten Tabellenzustand",
+        "spezifische Events liefern fokussierte Payloads fuer Integrationen"
+      ]
+    },
+    "visualContract": {
+      "headerStyle": "flat-column-header",
+      "headerLabelStyle": "uppercase segmented labels",
+      "rowStyle": "clickable-data-row",
+      "numericAlignment": "right",
+      "columnSeparation": "subtle vertical separators in header",
+      "activeColumnState": true,
+      "rowHoverState": true,
+      "densitySupport": [
+        "compact"
+      ],
+      "toolbarPattern": "search-left tools-right",
+      "workscreenCompatibility": [
+        "data-table-shell",
+        "compact workscreen",
+        "sticky table header"
+      ]
+    },
+    "defaultBehavior": {
+      "componentFactory": "FCPDataTable.createStandardV1(config)",
+      "sorting": "Alle Spalten sortierbar, ausser explizit anders angegeben oder Actions",
+      "filtering": "Alle Spalten filterbar, ausser explizit anders angegeben oder Actions",
+      "alignment": {
+        "text": "left",
+        "numeric": "right",
+        "actions": "right"
+      },
+      "rowInteraction": "Dialog per Row-Klick, ausser explizit anders angegeben",
+      "actionsColumn": "Nur wenn explizit konfiguriert",
+      "rowKey": "Kommt standardmaessig aus SQL-ID-Feldern oder explizitem rowKey / rowKeyField",
+      "inlineVariant": "FCP Inline-Data Table v1 nutzt dieselbe Optik, aber oeffnet Inline-Erfassung statt Dialog"
+    },
+    "functions": [
+      "Sortierbare Header",
+      "Spaltenfilter aus Definition erzeugen",
+      "Konsistentes Row-Rendering",
+      "Row-Klick Callback",
+      "Zentrale Filteranzahl auslesbar",
+      "Reset / Focus / State Sync fuer spaetere globale Erweiterungen",
+      "Spezifische Events fuer Sort, Filter, Reset und Selection",
+      "Actions-Spalte mit Icon-Buttons und eigenem Event-Contract",
+      "Standard-Factory mit Fanglisten-Optik und Default-Contracts"
+    ],
+    "usageContract": {
+      "whenToUse": [
+        "Wenn eine Maske eine klassische Datenliste mit wiederkehrender Tabellenoptik braucht",
+        "Wenn Row-Klick eine Detailansicht oder Folgeaktion ausloesen soll"
+      ],
+      "whenNotToUse": [
+        "Wenn Inline-Erfassung in der Zeile benoetigt wird",
+        "Wenn die Tabelle bewusst von der Standardoptik oder vom Standardverhalten abweichen soll"
+      ],
+      "futureVariants": [
+        "FCP Inline-Data Table v1"
+      ]
+    }
+  }
+}

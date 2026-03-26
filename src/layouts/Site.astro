@@ -16,12 +16,14 @@ const {
   robots = "index",
   canonical: canonicalProp,
   containerClass = "container",
+  density,
 } = Astro.props as {
   title?: string;
   description?: string;
   robots?: string;
   canonical?: string;
   containerClass?: string;
+  density?: "comfortable" | "compact";
 };
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
@@ -116,8 +118,8 @@ const schemaGraphJson = JSON.stringify({
   "@graph": [schemaOrganization, schemaWebsite, schemaWebPage],
 });
 const manifestPath = isFcpMode ? "/manifest-fcp.webmanifest" : "/manifest-vdan.webmanifest";
-const favicon16 = isFcpMode ? "/Branding/FCPIcons/favicon-16.png" : "/favicon.ico";
-const favicon32 = isFcpMode ? "/Branding/FCPIcons/favicon-32.png" : "/favicon.ico";
+const favicon16 = isFcpMode ? "/Branding/FCPIcons/favicon-16.png" : "/Bilder/logo180x180.png";
+const favicon32 = isFcpMode ? "/Branding/FCPIcons/favicon-32.png" : "/Bilder/logo192x192.png";
 const favicon192 = isFcpMode ? "/Branding/FCPIcons/icon-192.png" : "/Bilder/logo192x192.png";
 const favicon512 = isFcpMode ? "/Branding/FCPIcons/icon-512.png" : "/Bilder/logo512x512.png";
 const appleTouch = isFcpMode ? "/Branding/FCPIcons/apple-touch-icon.png" : "/Bilder/logo180x180.png";
@@ -159,7 +161,7 @@ const publicMenuLinks = isFcpMode
 ---
 
 <!doctype html>
-<html lang="de">
+<html lang="de" data-density={density}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

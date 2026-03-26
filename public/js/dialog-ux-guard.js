@@ -176,19 +176,25 @@
         #${SHEET_ID}{
           position:fixed; inset:0; z-index:4000;
           display:grid; place-items:end center;
-          background:rgba(8,12,20,.42); backdrop-filter:blur(3px);
+          background:rgba(31,35,27,.42); backdrop-filter:blur(3px);
           padding:16px;
         }
         #${SHEET_ID} .sheet{
           width:min(100%, 460px);
-          border:1px solid rgba(220,228,241,.24);
-          border-radius:14px;
-          background:linear-gradient(180deg, rgba(23,31,47,.98), rgba(14,20,32,.98));
-          box-shadow:0 16px 32px rgba(0,0,0,.4);
-          padding:14px;
-          color:#e8eaf0;
+          border:1px solid rgba(221,212,194,.88);
+          border-radius:18px;
+          background:linear-gradient(180deg, rgba(243,239,229,.99), rgba(237,229,214,.98));
+          box-shadow:0 14px 28px rgba(62,56,34,.22);
+          padding:16px;
+          color:var(--text, #2f3328);
           display:grid;
           gap:10px;
+        }
+        #${SHEET_ID} h3{
+          color:var(--text, #2f3328);
+        }
+        #${SHEET_ID} .small{
+          color:var(--muted, rgba(108,112,91,.92));
         }
         #${SHEET_ID} .actions{
           display:grid;
@@ -197,12 +203,32 @@
         }
         #${SHEET_ID} button{
           min-height:44px;
-          border-radius:10px;
-          border:1px solid rgba(220,228,241,.24);
-          background:rgba(255,255,255,.04);
-          color:#e8eaf0;
+          border-radius:12px;
+          border:1px solid rgba(108,112,91,.24);
+          background:rgba(243,239,229,.95);
+          color:var(--text, #2f3328);
           font:inherit;
+          font-weight:600;
           cursor:pointer;
+          transition:background .15s ease, border-color .15s ease, color .15s ease;
+        }
+        #${SHEET_ID} button:hover,
+        #${SHEET_ID} button:focus-visible{
+          border-color:rgba(108,112,91,.38);
+          background:rgba(237,229,214,.98);
+          outline:none;
+        }
+        #${SHEET_ID} [data-action="keep"]{
+          border-color:rgba(89,90,61,.32);
+          background:rgba(89,90,61,.14);
+        }
+        #${SHEET_ID} [data-action="discard"]{
+          border-color:rgba(185,56,56,.28);
+          color:#8b2f2f;
+          background:rgba(185,56,56,.08);
+        }
+        #${SHEET_ID} [data-action="continue"]{
+          background:rgba(243,239,229,.95);
         }
       `;
       document.head.appendChild(style);

@@ -1,4 +1,4 @@
-import { sendResponsibleNotificationMail } from "../_shared/contact-utils.ts";
+﻿import { sendResponsibleNotificationMail } from "../_shared/contact-utils.ts";
 
 declare const Deno: {
   env: {
@@ -25,6 +25,10 @@ type SetupBody = {
   responsible_name?: string;
   responsible_email?: string;
   club_size?: string;
+  creator_user_id?: string;
+  creator_email?: string;
+  creator_display_name?: string;
+  request_id?: string;
 };
 
 type InviteRecord = {
@@ -128,6 +132,16 @@ async function isAdmin(userId: string) {
   );
   const rows = await res.json().catch(() => []);
   return Array.isArray(rows) && rows.length > 0;
+}
+
+async function loadApprovedOwnRequest(requestId: string, actorId: string) {
+  if (!requestId || !actorId) return null;
+  const res = await sbServiceFetch(
+    `/rest/v1/club_registration_requests?select=*&id=eq.${encodeURIComponent(requestId)}&requester_user_id=eq.${encodeURIComponent(actorId)}&status=eq.approved&limit=1`,
+    { method: "GET" },
+  );
+  const rows = await res.json().catch(() => []);
+  return Array.isArray(rows) && rows.length ? rows[0] : null;
 }
 
 async function ensureClubCodeFree(clubCode: string) {
@@ -423,28 +437,27 @@ async function sha256Hex(value: string) {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function ensureCreatorProfileBinding(actor: Record<string, unknown>, userId: string, clubId: string) {
+async function ensureCreatorProfileBinding(identity: { email?: string; display_name?: string }, userId: string, clubId: string) {
   const profileRes = await sbServiceFetch(
-    `/rest/v1/profiles?select=id,club_id,member_no&limit=1&id=eq.${encodeURIComponent(userId)}`,
+    `/rest/v1/profiles?select=id,club_id,member_no,display_name,email&limit=1&id=eq.${encodeURIComponent(userId)}`,
     { method: "GET" },
   );
   const profileRows = await profileRes.json().catch(() => []);
   const row = Array.isArray(profileRows) && profileRows.length ? profileRows[0] : null;
 
-  const nextClubId = txt(row?.club_id) || clubId;
+  const nextClubId = clubId;
   const nextMemberNo = txt(row?.member_no) || autoMemberNo(clubId, userId);
+  const nextDisplayName = txt(row?.display_name) || txt(identity?.display_name) || txt(identity?.email) || userId;
+  const nextEmail = txt(row?.email) || txt(identity?.email) || null;
 
   if (!row?.id) {
-    const displayName = txt((actor as { user_metadata?: { first_name?: string; last_name?: string } })?.user_metadata?.first_name)
-      || txt((actor as { email?: string })?.email)
-      || userId;
     await sbServiceFetch("/rest/v1/profiles", {
       method: "POST",
       headers: { Prefer: "return=minimal" },
       body: JSON.stringify([{
         id: userId,
-        display_name: displayName,
-        email: txt((actor as { email?: string })?.email) || null,
+        display_name: nextDisplayName,
+        email: nextEmail,
         club_id: nextClubId,
         member_no: nextMemberNo,
       }]),
@@ -454,7 +467,9 @@ async function ensureCreatorProfileBinding(actor: Record<string, unknown>, userI
 
   const needsClubPatch = txt(row?.club_id) !== nextClubId;
   const needsMemberPatch = txt(row?.member_no) !== nextMemberNo;
-  if (!needsClubPatch && !needsMemberPatch) return;
+  const needsDisplayNamePatch = txt(row?.display_name) !== nextDisplayName && Boolean(nextDisplayName);
+  const needsEmailPatch = txt(row?.email) !== txt(nextEmail) && Boolean(nextEmail);
+  if (!needsClubPatch && !needsMemberPatch && !needsDisplayNamePatch && !needsEmailPatch) return;
 
   await sbServiceFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`, {
     method: "PATCH",
@@ -462,6 +477,8 @@ async function ensureCreatorProfileBinding(actor: Record<string, unknown>, userI
     body: JSON.stringify({
       club_id: nextClubId,
       member_no: nextMemberNo,
+      ...(needsDisplayNamePatch ? { display_name: nextDisplayName } : {}),
+      ...(needsEmailPatch ? { email: nextEmail } : {}),
     }),
   });
 }
@@ -489,14 +506,17 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    if (!(await isAdmin(String(actor.id)))) {
+    const body = (await req.json().catch(() => null)) as SetupBody | null;
+    const requestId = txt(body?.request_id);
+    const actorIsAdmin = await isAdmin(String(actor.id));
+    const approvedOwnRequest = actorIsAdmin ? null : await loadApprovedOwnRequest(requestId, String(actor.id));
+    if (!actorIsAdmin && !approvedOwnRequest) {
       return new Response(JSON.stringify({ ok: false, error: "forbidden_admin_only" }), {
         status: 403,
         headers: { ...headers, "Content-Type": "application/json" },
       });
     }
 
-    const body = (await req.json().catch(() => null)) as SetupBody | null;
     const clubName = txt(body?.club_name);
     let clubCode = upper(body?.club_code);
     const defaultCard = txt(body?.default_fishing_card) || txt(body?.default_card) || firstListValue(body?.fishing_cards) || "FCP Standard";
@@ -504,15 +524,18 @@ Deno.serve(async (req: Request) => {
     const waters = toList(body?.waters);
     const makePublicActive = Boolean(body?.make_public_active);
     const assignCreatorRoles = body?.assign_creator_roles !== false;
-    const street = txt(body?.street);
+    const street = txt(body?.street) || txt(approvedOwnRequest?.club_address);
     const zip = txt(body?.zip);
     const city = txt(body?.city);
-    const contactName = txt(body?.contact_name);
-    const contactEmail = txt(body?.contact_email).toLowerCase();
+    const contactName = txt(body?.contact_name) || txt(approvedOwnRequest?.responsible_name);
+    const contactEmail = (txt(body?.contact_email) || txt(approvedOwnRequest?.responsible_email)).toLowerCase();
     const contactPhone = txt(body?.contact_phone);
-    const responsibleName = txt(body?.responsible_name);
-    const responsibleEmail = txt(body?.responsible_email).toLowerCase();
-    const clubSize = txt(body?.club_size);
+    const responsibleName = txt(body?.responsible_name) || txt(approvedOwnRequest?.responsible_name);
+    const responsibleEmail = (txt(body?.responsible_email) || txt(approvedOwnRequest?.responsible_email)).toLowerCase();
+    const clubSize = txt(body?.club_size) || txt(approvedOwnRequest?.club_size);
+    const creatorUserId = txt(body?.creator_user_id) || txt(approvedOwnRequest?.requester_user_id) || String(actor.id);
+    const creatorEmail = (txt(body?.creator_email) || txt(approvedOwnRequest?.requester_email) || txt((actor as { email?: string })?.email)).toLowerCase();
+    const creatorDisplayName = txt(body?.creator_display_name) || txt((actor as { user_metadata?: { first_name?: string } })?.user_metadata?.first_name) || creatorEmail || creatorUserId;
 
     if (!clubName) throw new Error("club_name_required");
     if (!defaultCard) throw new Error("default_fishing_card_required");
@@ -539,7 +562,7 @@ Deno.serve(async (req: Request) => {
       default_fishing_card: defaultCard,
       fishing_cards: cards,
       created_at: createdAt,
-      created_by: String(actor.id),
+      created_by: creatorUserId,
       street,
       zip,
       city,
@@ -564,7 +587,7 @@ Deno.serve(async (req: Request) => {
       club_code: clubCode,
       club_name: clubName,
       created_at: createdAt,
-      created_by: String(actor.id),
+      created_by: creatorUserId,
       expires_at: inviteExpiresAt,
       max_uses: 25,
       used_count: 0,
@@ -583,9 +606,9 @@ Deno.serve(async (req: Request) => {
     await ensureDefaultUsecaseAcl(clubId);
 
     if (assignCreatorRoles) {
-      await ensureCreatorRoles(String(actor.id), clubId);
+      await ensureCreatorRoles(creatorUserId, clubId);
     }
-    await ensureCreatorProfileBinding(actor, String(actor.id), clubId);
+    await ensureCreatorProfileBinding({ email: creatorEmail, display_name: creatorDisplayName }, creatorUserId, clubId);
 
     await callRpc("ensure_club_onboarding_state", { p_club_id: clubId });
     const onboardingState = await callRpc<Record<string, unknown>>("upsert_club_onboarding_progress", {
@@ -619,7 +642,7 @@ Deno.serve(async (req: Request) => {
           to: responsibleEmail,
           responsibleName: responsibleName || contactName || "verantwortliche Person",
           clubName,
-          creatorEmail: txt((actor as { email?: string })?.email).toLowerCase(),
+          creatorEmail: creatorEmail,
           registerUrl,
         });
         if (responsibleNotification.ok) {
@@ -645,6 +668,7 @@ Deno.serve(async (req: Request) => {
         waters_created: waters,
         public_active_set: makePublicActive,
         creator_roles_assigned: assignCreatorRoles,
+        creator_user_id: creatorUserId,
         onboarding_state: onboardingState,
         onboarding_snapshot: Array.isArray(onboardingSnapshot) ? onboardingSnapshot[0] || null : onboardingSnapshot,
         invite_token: inviteToken,
@@ -662,3 +686,9 @@ Deno.serve(async (req: Request) => {
     });
   }
 });
+
+
+
+
+
+

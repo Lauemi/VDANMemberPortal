@@ -1,4 +1,4 @@
----
+﻿---
 import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
 
@@ -17,7 +17,7 @@ const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
           Tritt mit deiner Einladung einem bestehenden Verein bei.
         </p>
         <p class="register-flow__context small">
-          Aktuell ist hier der Beitritt per Invite aktiv. Die Vereinsanlage läuft getrennt als interner Setup-Pfad.
+          Du kannst entweder einem bestehenden Verein per Invite beitreten oder einen neuen Verein anfragen.
         </p>
       </div>
 
@@ -74,69 +74,39 @@ const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
           </div>
         </section>
 
-        <div id="registerInternalEntry" class="register-internal-entry small hidden" hidden>
-          <button id="registerShowCreateFlow" class="feed-btn feed-btn--ghost" type="button">Interner Vereins-Setup</button>
-          <span>Nur für Superadmin und interne Tests.</span>
+        <div id="registerInternalEntry" class="register-internal-entry small">
+          <button id="registerShowCreateFlow" class="feed-btn feed-btn--ghost" type="button">Verein anfragen</button>
+          <span>Für neue Vereine wird zunächst nur eine Anfrage an den Betreiber gesendet.</span>
         </div>
 
         <section id="registerCreateSection" class="register-step hidden" hidden>
           <div class="register-step__head">
-            <span class="register-step__index">INT</span>
+            <span class="register-step__index">2</span>
             <div>
-              <span class="register-step__status">Interner Setup-Pfad</span>
-              <h2>Verein vorbereiten</h2>
-              <p>Dieser Bereich ist nicht Teil des öffentlichen Einstiegs und bleibt auf den internen Setup-Fall begrenzt.</p>
+              <span class="register-step__status">Neue Vereinsanfrage</span>
+              <h2>Verein anfragen</h2>
+              <p>Dein Benutzerkonto wird normal angelegt. Die Vereinsfreigabe erfolgt abhängig von deinem Status automatisch oder nach Prüfung.</p>
             </div>
-          </div>
-          <div id="registerCreateLockedNote" class="register-note small">
-            Diese Strecke ist aktuell nur als Vorschau sichtbar. Die öffentliche Registrierung neuer Vereine ist derzeit noch nicht freigeschaltet.
           </div>
           <div class="register-note small">
-            Der Zugang wird als Vereinsadministrator-Zugang erstellt. Nach Möglichkeit sollte hierfür eine offizielle Vereins-E-Mail-Adresse verwendet werden und keine private Einzeladresse.
+            Nach Möglichkeit sollte hierfür eine offizielle Vereins-E-Mail-Adresse verwendet werden und keine private Einzeladresse.
           </div>
-          <fieldset id="registerCreateFieldset" class="register-create-fieldset is-locked" disabled>
-          <div class="register-grid">
-            <label>
-              <span>Vereinsname</span>
-              <input id="registerClubName" name="club_name" type="text" autocomplete="organization" />
-            </label>
-            <label>
-              <span>Vereinsgröße</span>
-              <select id="registerClubSize" name="club_size">
-                <option value="">Bitte auswählen</option>
-                <option value="small">Bis 100 Mitglieder</option>
-                <option value="medium">101 bis 300 Mitglieder</option>
-                <option value="large">301 bis 700 Mitglieder</option>
-                <option value="xlarge">Mehr als 700 Mitglieder</option>
-              </select>
-            </label>
-            <label class="register-grid__full">
-              <span>Vereinsanschrift</span>
-              <textarea id="registerClubAddress" name="club_address" rows="3" autocomplete="street-address"></textarea>
-            </label>
-            <label>
-              <span>Verantwortliche Person</span>
-              <input id="registerResponsibleName" name="responsible_name" type="text" autocomplete="name" />
-            </label>
-            <label>
-              <span>E-Mail der verantwortlichen Person</span>
-              <input id="registerResponsibleEmail" name="responsible_email" type="email" autocomplete="email" />
-            </label>
-          </div>
-          <label class="small register-check">
-            <input id="registerClubMailConfirm" type="checkbox" />
-            <span>Ich bestätige, dass für diesen Zugang nach Möglichkeit eine offizielle Vereins-E-Mail-Adresse verwendet wird und mir bewusst ist, dass der benannte Verantwortliche dem Eintrag widersprechen kann.</span>
-          </label>
-
-          <div class="register-billing-preview">
-            <div>
-              <strong>Billing-Vorbereitung</strong>
-              <p class="small">Die Billing-Stufe wird bereits vorbereitet. Die Preislogik nach Vereinsgröße ist hier sichtbar, Stripe wird in diesem Schritt aber noch nicht hart erzwungen. Im Superadmin-Kontext blockiert Billing diesen Test- und Setup-Schritt nicht.</p>
+          <fieldset id="registerCreateFieldset" class="register-create-fieldset">
+            <div class="register-grid">
+              <label><span>Vereinsname</span><input id="registerClubName" name="club_name" type="text" autocomplete="organization" /></label>
+              <label><span>Vereinsgröße</span><select id="registerClubSize" name="club_size"><option value="">Bitte auswählen</option><option value="small">Bis 100 Mitglieder</option><option value="medium">101 bis 300 Mitglieder</option><option value="large">301 bis 700 Mitglieder</option><option value="xlarge">Mehr als 700 Mitglieder</option></select></label>
+              <label class="register-grid__full"><span>Vereinsanschrift</span><textarea id="registerClubAddress" name="club_address" rows="3" autocomplete="street-address"></textarea></label>
+              <label><span>Verantwortliche Person</span><input id="registerResponsibleName" name="responsible_name" type="text" autocomplete="name" /></label>
+              <label><span>E-Mail der verantwortlichen Person</span><input id="registerResponsibleEmail" name="responsible_email" type="email" autocomplete="email" /></label>
             </div>
-            <div class="register-billing-preview__state small">
-              Vorgesehener Status nach diesem Schritt: <code>billing_pending</code>
+            <label class="small register-check">
+              <input id="registerClubMailConfirm" type="checkbox" />
+              <span>Ich bestätige, dass für diesen Zugang nach Möglichkeit eine offizielle Vereins-E-Mail-Adresse verwendet wird und mir bewusst ist, dass der benannte Verantwortliche dem Eintrag widersprechen kann.</span>
+            </label>
+            <div class="register-billing-preview">
+              <div><strong>Freigabe vor Portalzugang</strong><p class="small">Die Daten werden als Vereinsanfrage gespeichert. Erst nach Freigabe wird der Verein im System angelegt und der Zugang als Admin aktiviert.</p></div>
+              <div class="register-billing-preview__state small">Vorgesehener Status nach diesem Schritt: <code>club_request_pending</code></div>
             </div>
-          </div>
           </fieldset>
           <div class="register-create-actions">
             <button id="registerBackToJoinFlow" class="feed-btn feed-btn--ghost" type="button">Zurück zum Invite-Beitritt</button>
@@ -144,21 +114,10 @@ const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
         </section>
 
         <section class="register-step register-step--legal">
-          <div class="register-step__head">
-            <span class="register-step__index">3</span>
-            <div>
-              <h2>Rechtstexte und Zustimmungen</h2>
-              <p>Ohne bestätigte Rechtstexte wird der Auth-Prozess nicht abgeschlossen.</p>
-            </div>
-          </div>
+          <div class="register-step__head"><span class="register-step__index">3</span><div><h2>Rechtstexte und Zustimmungen</h2><p>Ohne bestätigte Rechtstexte wird der Auth-Prozess nicht abgeschlossen.</p></div></div>
           <label class="small register-check">
             <input id="registerAccept" type="checkbox" required />
-            <span>
-              Ich akzeptiere die
-              <a href="/nutzungsbedingungen.html/" target="_blank" rel="noopener noreferrer">Nutzungsbedingungen</a>
-              und die
-              <a href="/datenschutz.html/" target="_blank" rel="noopener noreferrer">Datenschutzerklärung</a>.
-            </span>
+            <span>Ich akzeptiere die <a href="/nutzungsbedingungen.html/" target="_blank" rel="noopener noreferrer">Nutzungsbedingungen</a> und die <a href="/datenschutz.html/" target="_blank" rel="noopener noreferrer">Datenschutzerklärung</a>.</span>
           </label>
         </section>
 

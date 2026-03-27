@@ -1,4 +1,4 @@
-;(() => {
+﻿;(() => {
   const ROLE_MATRIX_STORAGE_KEY = "vdan_role_page_matrix_v1";
   const ROLE_KEYS = ["guest", "member", "manager", "admin", "superadmin"];
   const MODULE_CATALOG_STORAGE_KEY = "vdan_module_catalog_v1";
@@ -11,7 +11,7 @@
     { route: "/app/", kind: "PORTAL", label: "App Start" },
     { route: "/app/admin-panel/", kind: "PORTAL", label: "Admin Board" },
     { route: "/app/arbeitseinsaetze/", kind: "PORTAL", label: "Termine / Events" },
-    { route: "/app/arbeitseinsaetze/cockpit", kind: "PORTAL", label: "Arbeitseinsätze Cockpit" },
+    { route: "/app/arbeitseinsaetze/cockpit", kind: "PORTAL", label: "ArbeitseinsÃ¤tze Cockpit" },
     { route: "/app/ausweis/", kind: "PORTAL", label: "Ausweis" },
     { route: "/app/ausweis/verifizieren", kind: "PORTAL", label: "Ausweis Verifizieren" },
     { route: "/app/bewerbungen/", kind: "PORTAL", label: "Bewerbungen" },
@@ -24,27 +24,27 @@
     { route: "/app/feedback/cockpit", kind: "PORTAL", label: "Feedback Cockpit" },
     { route: "/app/fangliste/", kind: "PORTAL", label: "Fangliste" },
     { route: "/app/fangliste/cockpit", kind: "PORTAL", label: "Fangliste Cockpit" },
-    { route: "/app/gewaesserkarte/", kind: "PORTAL", label: "Gewässerkarte" },
+    { route: "/app/gewaesserkarte/", kind: "PORTAL", label: "GewÃ¤sserkarte" },
     { route: "/app/kontrollboard/", kind: "PORTAL", label: "Kontrollboard" },
     { route: "/app/lizenzen/", kind: "PORTAL", label: "Wetter & Karten API" },
     { route: "/app/mitglieder/", kind: "PORTAL", label: "Mitglieder" },
     { route: "/app/mitgliederverwaltung/", kind: "PORTAL", label: "Mitgliederverwaltung" },
     { route: "/app/notes/", kind: "PORTAL", label: "Notes" },
-    { route: "/app/passwort-aendern/", kind: "PORTAL", label: "Passwort ändern" },
-    { route: "/app/rechtliches-bestaetigen/", kind: "PORTAL", label: "Rechtliches bestätigen" },
+    { route: "/app/passwort-aendern/", kind: "PORTAL", label: "Passwort Ã¤ndern" },
+    { route: "/app/rechtliches-bestaetigen/", kind: "PORTAL", label: "Rechtliches bestÃ¤tigen" },
     { route: "/app/sitzungen/", kind: "PORTAL", label: "Sitzungen" },
     { route: "/app/template-studio/", kind: "PORTAL", label: "Template Studio" },
     { route: "/app/termine/cockpit", kind: "PORTAL", label: "Termine Cockpit" },
     { route: "/app/ui-neumorph-demo/", kind: "PORTAL", label: "UI Neumorph Demo" },
     { route: "/app/vereine/", kind: "PORTAL", label: "Vereine" },
-    { route: "/app/zugang-pruefen/", kind: "PORTAL", label: "Zugang prüfen" },
-    { route: "/app/zustaendigkeiten/", kind: "PORTAL", label: "Zuständigkeiten" },
+    { route: "/app/zugang-pruefen/", kind: "PORTAL", label: "Zugang prÃ¼fen" },
+    { route: "/app/zustaendigkeiten/", kind: "PORTAL", label: "ZustÃ¤ndigkeiten" },
     { route: "/", kind: "WEB", label: "Startseite" },
     { route: "/anglerheim-ottenheim", kind: "WEB", label: "Anglerheim Ottenheim" },
     { route: "/datenschutz", kind: "WEB", label: "Datenschutz" },
     { route: "/docs", kind: "WEB", label: "Docs" },
     { route: "/downloads", kind: "WEB", label: "Downloads" },
-    { route: "/fischereipruefung", kind: "WEB", label: "Fischereiprüfung" },
+    { route: "/fischereipruefung", kind: "WEB", label: "FischereiprÃ¼fung" },
     { route: "/impressum", kind: "WEB", label: "Impressum" },
     { route: "/kontakt", kind: "WEB", label: "Kontakt" },
     { route: "/login", kind: "WEB", label: "Login" },
@@ -95,6 +95,7 @@
     staticWebMatrix: {},
     appMaskPages: [],
     appMaskMatrix: {},
+    clubRequests: [],
   };
   let rolePageMatrix = {};
 
@@ -102,10 +103,10 @@
     return String(value || "")
       .trim()
       .toLowerCase()
-      .replaceAll("ä", "ae")
-      .replaceAll("ö", "oe")
-      .replaceAll("ü", "ue")
-      .replaceAll("ß", "ss")
+      .replaceAll("Ã¤", "ae")
+      .replaceAll("Ã¶", "oe")
+      .replaceAll("Ã¼", "ue")
+      .replaceAll("ÃŸ", "ss")
       .replace(/[^a-z0-9 _-]/g, "")
       .replace(/\s+/g, "_")
       .replace(/_+/g, "_")
@@ -126,7 +127,7 @@
   function defaultModuleCatalog() {
     return [
       { id: "fishing", label: "Fishing", active: true, usecases: ["fangliste", "go_fishing", "fangliste_cockpit"] },
-      { id: "work", label: "Arbeitseinsätze", active: true, usecases: ["arbeitseinsaetze", "arbeitseinsaetze_cockpit"] },
+      { id: "work", label: "ArbeitseinsÃ¤tze", active: true, usecases: ["arbeitseinsaetze", "arbeitseinsaetze_cockpit"] },
       { id: "eventplaner", label: "Eventplaner", active: true, usecases: ["eventplaner", "eventplaner_mitmachen"] },
       { id: "feed", label: "Feed", active: true, usecases: ["feed"] },
       { id: "members", label: "Mitglieder", active: true, usecases: ["mitglieder", "mitglieder_registry"] },
@@ -935,7 +936,7 @@
   function clubDisplayName(club) {
     const code = String(club?.code || "").trim();
     const name = String(club?.name || "").trim();
-    if (code && name && code !== name) return `${code} · ${name}`;
+    if (code && name && code !== name) return `${code} Â· ${name}`;
     if (code) return code;
     if (name && !/^club\s+[0-9a-f]{6,}$/i.test(name)) return name;
     return "Unbenannter Verein";
@@ -1223,7 +1224,7 @@
               <td><code>${esc(page.route)}</code></td>
               <td>${esc(page.kind)}</td>
               ${cells}
-              <td><a class="feed-btn feed-btn--ghost" href="${esc(page.route)}">Öffnen</a></td>
+              <td><a class="feed-btn feed-btn--ghost" href="${esc(page.route)}">Ã–ffnen</a></td>
             </tr>
           `;
         })
@@ -1312,6 +1313,57 @@
     if (!el) return;
     el.textContent = text;
     el.style.color = isError ? "var(--danger)" : "";
+  }
+
+  async function callEdge(functionName, payload = {}) {
+    const { url, key } = cfg();
+    const token = session()?.access_token;
+    if (!token) throw new Error("auth_required");
+    const res = await fetch(`${url}/functions/v1/${functionName}`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload || {}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data?.ok === false) throw new Error(String(data?.error || `function_${functionName}_failed_${res.status}`));
+    return data;
+  }
+
+  function setClubRequestsMsg(text = "", isError = false) {
+    setSmallMsg("adminClubRequestsMsg", text, isError);
+  }
+
+  function renderClubRequests() {
+    const body = document.querySelector("#adminClubRequestsTable tbody");
+    if (!body) return;
+    const rows = Array.isArray(state.clubRequests) ? state.clubRequests : [];
+    body.innerHTML = rows.map((row) => `
+      <tr>
+        <td>${esc(row.club_name || "-")}</td>
+        <td>${esc(row.requester_email || "-")}</td>
+        <td>
+          <button type="button" class="feed-btn feed-btn--ghost" data-club-request-approve="${esc(row.id)}">Freigabe</button>
+          <button type="button" class="feed-btn feed-btn--ghost" data-club-request-reject="${esc(row.id)}">Ablehnen</button>
+        </td>
+      </tr>
+    `).join("") || `<tr><td colspan="3" class="small">Keine offenen Vereinsanfragen.</td></tr>`;
+  }
+
+  async function loadClubRequests() {
+    try {
+      const rows = await sb("/rest/v1/club_registration_requests?select=id,club_name,requester_email,status,created_at&status=eq.pending&order=created_at.desc", { method: "GET" }, true);
+      state.clubRequests = Array.isArray(rows) ? rows : [];
+      renderClubRequests();
+      setClubRequestsMsg(state.clubRequests.length ? `${state.clubRequests.length} offene Vereinsanfragen.` : "Keine offenen Vereinsanfragen.");
+    } catch (err) {
+      state.clubRequests = [];
+      renderClubRequests();
+      setClubRequestsMsg(`Vereinsanfragen konnten nicht geladen werden: ${String(err?.message || "request_failed")}`, true);
+    }
   }
 
   function renderModuleCatalogEditor() {
@@ -1416,7 +1468,7 @@
     card.classList.remove("hidden");
     card.removeAttribute("hidden");
     title.textContent = `Club-Detail: ${clubDisplayName(club)}`;
-    meta.textContent = `Club-ID: ${club.id} • Mitglieder (Personen): ${club.members || 0} • Rollen-Zuordnungen: ${club.roleAssignments || 0} • Status: ${club.status || "active"}`;
+    meta.textContent = `Club-ID: ${club.id} â€¢ Mitglieder (Personen): ${club.members || 0} â€¢ Rollen-Zuordnungen: ${club.roleAssignments || 0} â€¢ Status: ${club.status || "active"}`;
     const cfg = ensureClubConfig(club.id);
     body.innerHTML = state.moduleCatalog.map((m) => {
       const mc = cfg.modules[m.id] || { enabled: false, usecases: {} };
@@ -1644,7 +1696,7 @@
     if (govMsg) {
       govMsg.textContent = healthRows.length
         ? "Zentrale Audit-Quelle aktiv (Snapshot + Drilldown)."
-        : "Keine Governance-Health-Daten sichtbar (RPC/Permissions prüfen).";
+        : "Keine Governance-Health-Daten sichtbar (RPC/Permissions prÃ¼fen).";
     }
 
     const healthBody = document.querySelector("#adminGovernanceHealthTable tbody");
@@ -1785,8 +1837,9 @@
     renderModuleCatalogEditor();
     renderRoleDefaultsEditor();
     renderClubDetail();
+    renderClubRequests();
     if (!hasRuntimeConfig()) {
-      setMsg("Preflight: Supabase Runtime-Config fehlt oder ist Platzhalter. Admin-Board läuft im Readiness-Modus (kein Live-Connect).", true);
+      setMsg("Preflight: Supabase Runtime-Config fehlt oder ist Platzhalter. Admin-Board lÃ¤uft im Readiness-Modus (kein Live-Connect).", true);
       document.querySelectorAll(".admin-card").forEach((card) => card.classList.add("is-missing"));
       return;
     }
@@ -1798,6 +1851,7 @@
     await loadRemoteAdminWebConfig();
     renderStaticWebTables();
     renderAppMaskBrandTable();
+    await loadClubRequests();
 
     document.querySelectorAll(".admin-nav-btn").forEach((btn) => {
       btn.addEventListener("click", () => switchSection(String(btn.getAttribute("data-admin-section") || "dashboard")));
@@ -1818,7 +1872,7 @@
     document.getElementById("adminStaticWebReset")?.addEventListener("click", () => {
       state.staticWebMatrix = defaultStaticWebMatrix();
       renderStaticWebTables();
-      setSmallMsg("adminStaticWebMsg", "Web-Draft auf Repo-Stand zurückgesetzt.");
+      setSmallMsg("adminStaticWebMsg", "Web-Draft auf Repo-Stand zurÃ¼ckgesetzt.");
     });
     document.getElementById("adminStaticWebCopy")?.addEventListener("click", async (e) => {
       await copyText(e.currentTarget, staticWebMatrixAsJson(), "Web JSON kopiert");
@@ -1889,6 +1943,38 @@
       if (!btn) return;
       openClubDetail(String(btn.getAttribute("data-open-club-id") || ""));
     });
+    document.querySelector("#adminClubRequestsTable tbody")?.addEventListener("click", async (event) => {
+      const src = event.target;
+      if (!(src instanceof Element)) return;
+      const approveBtn = src.closest("[data-club-request-approve]");
+      const rejectBtn = src.closest("[data-club-request-reject]");
+      if (!approveBtn && !rejectBtn) return;
+      const requestId = String((approveBtn || rejectBtn)?.getAttribute(approveBtn ? "data-club-request-approve" : "data-club-request-reject") || "").trim();
+      if (!requestId) return;
+      try {
+        if (approveBtn) {
+          setClubRequestsMsg("Freigabe wird verarbeitet...");
+          await callEdge("club-request-decision", { request_id: requestId, action: "approve" });
+          setClubRequestsMsg("Vereinsanfrage freigegeben.");
+        } else {
+          const reason = String(window.prompt("Optionaler Hinweis fuer die Ablehnung:", "") || "").trim();
+          setClubRequestsMsg("Ablehnung wird verarbeitet...");
+          await callEdge("club-request-decision", { request_id: requestId, action: "reject", rejection_reason: reason || null });
+          setClubRequestsMsg("Vereinsanfrage abgelehnt.");
+        }
+        await loadClubRequests();
+        await loadCoreData();
+        const clubRows = computeClubMetrics();
+        const userRows = computeUserMetrics();
+        state.clubMetrics = clubRows;
+        state.membersFiltered = userRows;
+        renderDashboard(clubRows, userRows);
+        renderClubs(clubRows);
+        applyMemberFilter();
+      } catch (err) {
+        setClubRequestsMsg(`Aktion fehlgeschlagen: ${String(err?.message || "request_failed")}`, true);
+      }
+    });
     document.getElementById("adminClubDetailClose")?.addEventListener("click", () => {
       state.selectedClubId = "";
       renderClubDetail();
@@ -1906,14 +1992,14 @@
       }
       const localOk = saveAllClubConfigs(state.clubModuleConfig, state.moduleCatalog);
       const ok = dbOk && localOk;
-      setSmallMsg("adminClubDetailMsg", ok ? "Modulzusammensetzung gespeichert." : "Speichern nur teilweise erfolgreich (DB/Local prüfen).", !ok);
+      setSmallMsg("adminClubDetailMsg", ok ? "Modulzusammensetzung gespeichert." : "Speichern nur teilweise erfolgreich (DB/Local prÃ¼fen).", !ok);
     });
     document.getElementById("adminClubDetailReset")?.addEventListener("click", () => {
       const club = selectedClub();
       if (!club) return;
       state.clubModuleConfig[club.id] = defaultClubConfigFor(state.moduleCatalog);
       renderClubDetail();
-      setSmallMsg("adminClubDetailMsg", "Standardmodell für diesen Club geladen.");
+      setSmallMsg("adminClubDetailMsg", "Standardmodell fÃ¼r diesen Club geladen.");
     });
     document.querySelector("#adminClubModulesTable tbody")?.addEventListener("change", (event) => {
       const target = event.target;
@@ -1960,7 +2046,7 @@
       renderModuleCatalogEditor();
       renderRoleDefaultsEditor();
       renderClubDetail();
-      setSmallMsg("adminModuleCatalogMsg", ok1 && ok2 && ok3 && ok4 ? "Modul-Katalog gespeichert." : "Konnte Modul-Katalog nicht vollständig speichern.", !(ok1 && ok2 && ok3 && ok4));
+      setSmallMsg("adminModuleCatalogMsg", ok1 && ok2 && ok3 && ok4 ? "Modul-Katalog gespeichert." : "Konnte Modul-Katalog nicht vollstÃ¤ndig speichern.", !(ok1 && ok2 && ok3 && ok4));
     });
     document.getElementById("adminModuleCatalogReset")?.addEventListener("click", () => {
       state.moduleCatalog = defaultModuleCatalog();
@@ -1974,7 +2060,7 @@
       renderModuleCatalogEditor();
       renderRoleDefaultsEditor();
       renderClubDetail();
-      setSmallMsg("adminModuleCatalogMsg", "Modul-Katalog auf Standard zurückgesetzt.");
+      setSmallMsg("adminModuleCatalogMsg", "Modul-Katalog auf Standard zurÃ¼ckgesetzt.");
     });
 
     document.getElementById("adminRoleDefaultsRole")?.addEventListener("change", () => {
@@ -2001,13 +2087,13 @@
         dbOk = false;
       }
       const ok = localOk && dbOk;
-      setSmallMsg("adminRoleDefaultsMsg", ok ? "Standard-Rollenrechte gespeichert." : "Speichern nur teilweise erfolgreich (DB/Local prüfen).", !ok);
+      setSmallMsg("adminRoleDefaultsMsg", ok ? "Standard-Rollenrechte gespeichert." : "Speichern nur teilweise erfolgreich (DB/Local prÃ¼fen).", !ok);
     });
     document.getElementById("adminRoleDefaultsReset")?.addEventListener("click", () => {
       state.moduleDefaultRights = defaultModuleRights(state.moduleCatalog);
       saveModuleRights(state.moduleDefaultRights, state.moduleCatalog);
       renderRoleDefaultsEditor();
-      setSmallMsg("adminRoleDefaultsMsg", "Standard-Rollenrechte auf App-Default zurückgesetzt.");
+      setSmallMsg("adminRoleDefaultsMsg", "Standard-Rollenrechte auf App-Default zurÃ¼ckgesetzt.");
     });
     document.querySelector("#adminModulesTable tbody")?.addEventListener("change", (event) => {
       const target = event.target;
@@ -2067,7 +2153,7 @@
       renderModulesTables();
     });
 
-    setMsg("Admin-Board lädt...");
+    setMsg("Admin-Board lÃ¤dt...");
     await loadCoreData();
     await loadGovernanceFromDb();
     await loadGovernanceHealth();
@@ -2075,7 +2161,7 @@
     renderRoleDefaultsEditor();
     if (state.users.length === 0 && state.clubs.length === 0) {
       const diag = state.diagnostics.length ? ` Diagnose: ${state.diagnostics.slice(0, 4).join(" | ")}` : "";
-      setMsg("Keine Datensätze sichtbar. Wahrscheinlich fehlen Select-Policies (RLS) oder Profile/Club-Daten für diesen User." + diag, true);
+      setMsg("Keine DatensÃ¤tze sichtbar. Wahrscheinlich fehlen Select-Policies (RLS) oder Profile/Club-Daten fÃ¼r diesen User." + diag, true);
     }
     const clubRows = computeClubMetrics();
     state.clubMetrics = clubRows;
@@ -2090,7 +2176,7 @@
     if (!state.loginSignalAvailable) {
       const sourceLabel = state.sources.length ? ` Quellen: ${state.sources.join(", ")}.` : "";
       const diag = state.diagnostics.length ? ` Diagnose: ${state.diagnostics.slice(0, 3).join(" | ")}` : "";
-      setMsg(`Hinweis: Last-Login-Signal nicht verfügbar. KPIs/Spalten wurden als n/a markiert.${sourceLabel}${diag}`, false);
+      setMsg(`Hinweis: Last-Login-Signal nicht verfÃ¼gbar. KPIs/Spalten wurden als n/a markiert.${sourceLabel}${diag}`, false);
       document.querySelectorAll('[data-admin-panel="dashboard"] .admin-card').forEach((card) => card.classList.add("is-missing"));
     } else {
       const sourceLabel = state.sources.length ? ` Datenquellen: ${state.sources.join(", ")}.` : "";
@@ -2102,3 +2188,4 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => init().catch((err) => setMsg(`Fehler: ${err?.message || err}`, true)), { once: true });
   else init().catch((err) => setMsg(`Fehler: ${err?.message || err}`, true));
 })();
+

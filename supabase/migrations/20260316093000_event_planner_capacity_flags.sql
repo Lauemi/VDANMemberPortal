@@ -15,7 +15,7 @@ drop function if exists public.event_planner_upsert_for_base(
   text
 );
 
-create function public.event_planner_upsert_for_base(
+create or replace function public.event_planner_upsert_for_base(
   p_base_kind public.event_planner_base_kind,
   p_base_id uuid,
   p_approval_mode public.event_planner_approval_mode default 'manual',
@@ -130,7 +130,7 @@ drop function if exists public.event_planner_slot_upsert(
   integer
 );
 
-create function public.event_planner_slot_upsert(
+create or replace function public.event_planner_slot_upsert(
   p_planner_config_id uuid,
   p_slot_id uuid default null,
   p_title text default null,
@@ -401,3 +401,4 @@ grant execute on function public.event_planner_slot_upsert(
 ) to authenticated;
 
 commit;
+

@@ -1,19 +1,16 @@
 ;(() => {
   const OFFLINE_NS = "my_responsibilities";
   const OFFLINE_LIST_KEY = "list";
-  const VIEW_TASK_KEY = "app:viewMode:my-resp-task:v1";
-  const VIEW_LEAD_KEY = "app:viewMode:my-resp-lead:v1";
-  const FILTER_KEY = "app:viewFilter:my-resp:v1";
+  const TABLE_PREF_KEY = "app:viewSettings:my-resp-table:v2";
 
   let activeTaskId = null;
-  let meetingTasks = [];
-  let allMeetingTasks = [];
-  let allWorkLeads = [];
-  let filteredMeetingTasks = [];
-  let filteredWorkLeads = [];
-  let taskView = "zeile";
-  let leadView = "zeile";
+  let allResponsibilities = [];
+  let visibleResponsibilities = [];
+  let tableSearch = "";
+  let toolbarFiltersOpen = false;
+  let responsibilityTable = null;
   let bound = false;
+  let didAutoRecoverEmptyView = false;
 
   function cfg() {
     return {
@@ -76,6 +73,10 @@
     return value || "-";
   }
 
+  function responsibilityTypeLabel(type) {
+    return String(type || "") === "meeting_task" ? "Aufgabe" : "Zuständigkeit";
+  }
+
   function setMsg(text = "") {
     const el = document.getElementById("myRespMsg");
     if (el) el.textContent = text;
@@ -86,59 +87,83 @@
     if (el) el.textContent = text;
   }
 
-  function loadView(key, fallback = "zeile") {
-    try {
-      return String(localStorage.getItem(key) || fallback) === "karte" ? "karte" : "zeile";
-    } catch {
-      return fallback;
+  function openDialog(dialog) {
+    if (!dialog) return;
+    if (typeof dialog.showModal === "function") {
+      if (!dialog.open) dialog.showModal();
+      return;
     }
+    dialog.setAttribute("open", "open");
   }
 
-  function saveView(key, value) {
-    try { localStorage.setItem(key, value); } catch {}
+  function closeDialog(dialog) {
+    if (!dialog) return;
+    if (typeof dialog.close === "function" && dialog.open) {
+      dialog.close();
+      return;
+    }
+    dialog.removeAttribute("open");
   }
 
-  function loadFilter() {
+  function loadPrefs() {
     try {
-      return JSON.parse(localStorage.getItem(FILTER_KEY) || "{}") || {};
+      return JSON.parse(localStorage.getItem(TABLE_PREF_KEY) || "{}") || {};
     } catch {
       return {};
     }
   }
 
-  function saveFilter(payload) {
-    try { localStorage.setItem(FILTER_KEY, JSON.stringify(payload || {})); } catch {}
+  function savePrefs(extra = {}) {
+    const state = responsibilityTable?.getState?.() || {};
+    const payload = {
+      search: tableSearch,
+      sortKey: state.sortKey || "due_at",
+      sortDir: state.sortDir || "asc",
+      filters: state.filters || {},
+      ...extra,
+    };
+    try {
+      localStorage.setItem(TABLE_PREF_KEY, JSON.stringify(payload));
+    } catch {
+      // ignore
+    }
+  }
+
+  function loadTableSearch() {
+    const prefs = loadPrefs();
+    tableSearch = String(prefs.search || "");
+  }
+
+  function normalizeResponsibility(row) {
+    const type = String(row?.responsibility_type || "").trim();
+    const dueAt = String(row?.due_date || row?.starts_at || row?.created_at || "").trim();
+    return {
+      ...row,
+      responsibility_type: type,
+      due_at: dueAt,
+      due_display: row?.due_date ? fmtDate(row.due_date) : fmtTs(row?.starts_at || row?.created_at || ""),
+      title_display: row?.title || (type === "meeting_task" ? "Aufgabe" : "Zuständigkeit"),
+      location_display: row?.location || "-",
+      status_display: statusLabel(row?.status),
+      type_label: responsibilityTypeLabel(type),
+      is_task: type === "meeting_task",
+      is_done: String(row?.status || "").toLowerCase() === "done",
+      can_complete: type === "meeting_task" && String(row?.status || "").toLowerCase() !== "done",
+    };
   }
 
   async function loadResponsibilities() {
     const path = "/rest/v1/v_my_responsibilities?select=responsibility_type,source_id,title,status,due_date,status_note,starts_at,ends_at,location,created_at,updated_at&order=due_date.asc.nullslast,starts_at.asc.nullslast,created_at.desc";
     try {
       const rows = await sb(path, { method: "GET" }, true);
-      const list = Array.isArray(rows) ? rows : [];
+      const list = (Array.isArray(rows) ? rows : []).map(normalizeResponsibility);
       await saveCachedResponsibilities(list);
       return list;
     } catch (err) {
       const cached = await loadCachedResponsibilities();
-      if (cached.length) return cached;
+      if (cached.length) return cached.map(normalizeResponsibility);
       throw err;
     }
-  }
-
-  function applyTaskPatchLocal(taskId, patch) {
-    const id = String(taskId || "");
-    const now = new Date().toISOString();
-    meetingTasks = (meetingTasks || []).map((t) =>
-      String(t.source_id) === id
-        ? { ...t, ...patch, updated_at: now, _offline_pending: true }
-        : t
-    );
-    allMeetingTasks = allMeetingTasks.map((t) =>
-      String(t.source_id) === id
-        ? { ...t, ...patch, updated_at: now, _offline_pending: true }
-        : t
-    );
-    applyFilters();
-    renderMeetingTasks();
   }
 
   async function queueTaskPatch(taskId, patch) {
@@ -161,140 +186,207 @@
     });
   }
 
-  function applyView() {
-    const taskCard = taskView === "karte";
-    const leadCard = leadView === "karte";
-
-    const tt = document.getElementById("myRespMeetingTasksTableWrap");
-    const tc = document.getElementById("myRespMeetingTasksCards");
-    tt?.classList.toggle("hidden", taskCard);
-    tt?.toggleAttribute("hidden", taskCard);
-    tc?.classList.toggle("hidden", !taskCard);
-    tc?.toggleAttribute("hidden", !taskCard);
-
-    const lt = document.getElementById("myRespWorkLeadsTableWrap");
-    const lc = document.getElementById("myRespWorkLeadsCards");
-    lt?.classList.toggle("hidden", leadCard);
-    lt?.toggleAttribute("hidden", leadCard);
-    lc?.classList.toggle("hidden", !leadCard);
-    lc?.toggleAttribute("hidden", !leadCard);
-
-    document.getElementById("myRespTaskViewZeileBtn")?.classList.toggle("feed-btn--ghost", taskCard);
-    document.getElementById("myRespTaskViewKarteBtn")?.classList.toggle("feed-btn--ghost", !taskCard);
-    document.getElementById("myRespLeadViewZeileBtn")?.classList.toggle("feed-btn--ghost", leadCard);
-    document.getElementById("myRespLeadViewKarteBtn")?.classList.toggle("feed-btn--ghost", !leadCard);
+  function setToolbarFiltersOpen(nextOpen) {
+    toolbarFiltersOpen = Boolean(nextOpen);
+    const panel = document.getElementById("myRespColumnFiltersPanel");
+    const btn = document.getElementById("myRespColumnFiltersToggle");
+    if (panel) {
+      panel.classList.toggle("hidden", !toolbarFiltersOpen);
+      panel.toggleAttribute("hidden", !toolbarFiltersOpen);
+    }
+    if (btn) btn.setAttribute("aria-expanded", toolbarFiltersOpen ? "true" : "false");
   }
 
-  function applyFilters() {
-    const taskSearch = String(document.getElementById("myRespTaskSearch")?.value || "").trim().toLowerCase();
-    const taskStatus = String(document.getElementById("myRespTaskStatusFilter")?.value || "alle").trim().toLowerCase();
-    const leadSearch = String(document.getElementById("myRespLeadSearch")?.value || "").trim().toLowerCase();
-
-    saveFilter({ taskSearch, taskStatus, leadSearch });
-
-    filteredMeetingTasks = allMeetingTasks.filter((r) => {
-      if (taskStatus !== "alle" && String(r.status || "").toLowerCase() !== taskStatus) return false;
-      if (!taskSearch) return true;
-      const hay = `${r.title || ""} ${r.status || ""} ${r.status_note || ""}`.toLowerCase();
-      return hay.includes(taskSearch);
-    });
-
-    filteredWorkLeads = allWorkLeads.filter((r) => {
-      if (!leadSearch) return true;
-      const hay = `${r.title || ""} ${r.status || ""} ${r.location || ""}`.toLowerCase();
-      return hay.includes(leadSearch);
-    });
-
-    meetingTasks = filteredMeetingTasks;
+  function syncFilterMeta() {
+    const meta = document.getElementById("myRespActiveFilterCount");
+    if (!meta) return;
+    let count = 0;
+    if (String(tableSearch || "").trim()) count += 1;
+    count += responsibilityTable?.getActiveFilterCount?.() || 0;
+    meta.textContent = `${count} Filter aktiv`;
+    meta.classList.toggle("hidden", count === 0);
   }
 
-  function renderMeetingTasks() {
-    const tableRoot = document.getElementById("myRespMeetingTasksTable");
-    const cardsRoot = document.getElementById("myRespMeetingTasksCards");
-    if (!tableRoot || !cardsRoot) return;
+  function ensureTable() {
+    if (responsibilityTable || !window.FCPDataTable || typeof window.FCPDataTable.createStandardV1 !== "function") return responsibilityTable;
+    const root = document.getElementById("myRespTable");
+    const filterPanel = document.getElementById("myRespColumnFiltersPanel");
+    if (!(root instanceof HTMLElement)) return null;
 
-    if (!filteredMeetingTasks.length) {
-      tableRoot.innerHTML = `<p class="small" style="padding:12px;">Keine zugewiesenen Sitzungstasks.</p>`;
-      cardsRoot.innerHTML = `<p class="small">Keine zugewiesenen Sitzungstasks.</p>`;
+    const prefs = loadPrefs();
+    responsibilityTable = window.FCPDataTable.createStandardV1({
+      root,
+      filterPanel,
+      componentId: "my-resp-open-items",
+      ariaLabel: "Offene Aufgaben und Zuständigkeiten",
+      viewMode: "table",
+      rowKey: (row) => `${String(row?.responsibility_type || "row")}:${String(row?.source_id || "")}`,
+      gridTemplateColumns: "1.15fr .9fr 2.1fr 1.2fr 112px",
+      tableClassName: "data-table--my-resp",
+      rowClassName: "data-table__row--my-resp",
+      emptyStateHtml: `<p class="small">Keine offenen Aufgaben oder Zuständigkeiten vorhanden.</p>`,
+      initialState: {
+        sortKey: String(prefs.sortKey || "due_at"),
+        sortDir: String(prefs.sortDir || "asc"),
+        filters: prefs.filters || {},
+      },
+      columns: [
+        {
+          key: "due_at",
+          label: "Fälligkeit",
+          type: "date",
+          sortable: true,
+          filterable: true,
+          align: "left",
+          emptyValue: "-",
+          cellClass: "data-table__cell--primary fangliste-table__cell fangliste-table__cell--trip_date",
+          value: (row) => row.due_display || "-",
+          sortValue: (row) => row.due_at || "",
+          filterValue: (row) => `${row.due_display || ""} ${row.due_at || ""}`,
+        },
+        {
+          key: "status",
+          label: "Status",
+          type: "meta",
+          sortable: true,
+          filterable: true,
+          align: "left",
+          emptyValue: "-",
+          cellClass: "data-table__cell--meta fangliste-table__cell",
+          value: (row) => row.status_display || "-",
+          sortValue: (row) => row.status_display || "",
+        },
+        {
+          key: "title",
+          label: "Aufgabe",
+          type: "text",
+          sortable: true,
+          filterable: true,
+          align: "left",
+          emptyValue: "-",
+          cellClass: "fangliste-table__cell",
+          value: (row) => row.title_display || "-",
+          sortValue: (row) => row.title_display || "",
+          filterValue: (row) => `${row.title_display || ""} ${row.status_note || ""} ${row.type_label || ""}`,
+        },
+        {
+          key: "location",
+          label: "Ort",
+          type: "text",
+          sortable: true,
+          filterable: true,
+          align: "left",
+          emptyValue: "-",
+          cellClass: "fangliste-table__cell",
+          value: (row) => row.location_display || "-",
+          sortValue: (row) => row.location_display || "",
+        },
+        {
+          key: "actions",
+          label: "Aktionen",
+          type: "text",
+          sortable: false,
+          filterable: false,
+          align: "right",
+          emptyValue: "",
+          cellClass: "data-table__cell--numeric fangliste-table__cell my-resp-table__actions",
+          value: () => "",
+          renderHtml: (row) => {
+            if (!row.is_task) return `<span class="my-resp-table__action-placeholder">-</span>`;
+            return `
+              <button
+                type="button"
+                class="feed-btn feed-btn--ghost trip-toolbar-btn trip-toolbar-btn--icon fcp-table-icon-btn fcp-table-icon-btn--success"
+                data-fcp-action="done"
+                aria-label="Erledigt"
+                title="Erledigt"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="feed-btn feed-btn--ghost trip-toolbar-btn trip-toolbar-btn--icon fcp-table-icon-btn fcp-table-icon-btn--danger"
+                data-fcp-action="undone"
+                aria-label="Nicht erledigt"
+                title="Nicht erledigt"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
+                </svg>
+              </button>
+            `;
+          },
+        },
+      ],
+      onRowClick(row) {
+        if (String(row.responsibility_type || "") === "meeting_task") {
+          openTaskDialog(String(row.source_id || ""));
+          return;
+        }
+        renderLeadDetail(String(row.source_id || ""));
+      },
+      onRowAction({ action, row }) {
+        if (action === "done") {
+          void markTaskDone(row);
+          return;
+        }
+        if (action === "undone") {
+          void markTaskOpen(row);
+        }
+      },
+      onStateChange() {
+        savePrefs();
+        syncFilterMeta();
+      },
+      onFilterChange() {
+        syncFilterMeta();
+      },
+      onReset() {
+        syncFilterMeta();
+      },
+    });
+
+    return responsibilityTable;
+  }
+
+  function applySearchFilter() {
+    const q = String(tableSearch || "").trim().toLowerCase();
+    if (!q) {
+      visibleResponsibilities = allResponsibilities.slice();
       return;
     }
-
-    tableRoot.innerHTML = filteredMeetingTasks.map((r) => `
-      <button type="button" class="catch-table__row resp-task-row" data-task-id="${esc(r.source_id)}" style="grid-template-columns:2fr 1fr 1fr;">
-        <span>
-          <strong>${esc(r.title || "Task")}</strong>
-          ${r.status_note ? `<small class="small">Hinweis: ${esc(r.status_note)}</small>` : ""}
-          <small class="small">Aktualisiert: ${esc(fmtTs(r.updated_at))}</small>
-        </span>
-        <span>${esc(statusLabel(r.status))}</span>
-        <span>${esc(fmtDate(r.due_date))}</span>
-      </button>
-    `).join("");
-
-    cardsRoot.innerHTML = filteredMeetingTasks.map((r) => `
-      <button type="button" class="card" data-task-id="${esc(r.source_id)}" style="text-align:left;">
-        <div class="card__body">
-          <h3>${esc(r.title || "Task")}</h3>
-          <p class="small">Status: <strong>${esc(statusLabel(r.status))}</strong></p>
-          <p class="small">Fällig: ${esc(fmtDate(r.due_date))}</p>
-          ${r.status_note ? `<p class="small">Hinweis: ${esc(r.status_note)}</p>` : ""}
-          <p class="small">Aktualisiert: ${esc(fmtTs(r.updated_at))}</p>
-        </div>
-      </button>
-    `).join("");
+    visibleResponsibilities = allResponsibilities.filter((row) => {
+      const hay = [
+        row.due_display,
+        row.status_display,
+        row.title_display,
+        row.location_display,
+        row.status_note,
+        row.type_label,
+      ].join(" ").toLowerCase();
+      return hay.includes(q);
+    });
   }
 
   function renderLeadDetail(id) {
-    const row = allWorkLeads.find((r) => String(r.source_id) === String(id));
+    const row = allResponsibilities.find((item) => String(item.source_id) === String(id));
     if (!row) return;
     const body = document.getElementById("myRespLeadDetailBody");
     const dlg = document.getElementById("myRespLeadDetailDialog");
     if (!body || !dlg) return;
     body.innerHTML = `
-      <p><strong>Titel:</strong> ${esc(row.title || "Arbeitseinsatz")}</p>
-      <p><strong>Status:</strong> ${esc(statusLabel(row.status))}</p>
-      <p><strong>Start:</strong> ${esc(fmtTs(row.starts_at))}</p>
-      <p><strong>Ende:</strong> ${esc(fmtTs(row.ends_at))}</p>
-      <p><strong>Ort:</strong> ${esc(row.location || "-")}</p>
+      <p><strong>Aufgabe:</strong> ${esc(row.title_display || "Zuständigkeit")}</p>
+      <p><strong>Status:</strong> ${esc(row.status_display || "-")}</p>
+      <p><strong>Fälligkeit:</strong> ${esc(row.due_display || "-")}</p>
+      <p><strong>Ort:</strong> ${esc(row.location_display || "-")}</p>
     `;
-    dlg.showModal?.();
-  }
-
-  function renderWorkLeads() {
-    const tableRoot = document.getElementById("myRespWorkLeadsTable");
-    const cardsRoot = document.getElementById("myRespWorkLeadsCards");
-    if (!tableRoot || !cardsRoot) return;
-
-    if (!filteredWorkLeads.length) {
-      tableRoot.innerHTML = `<p class="small" style="padding:12px;">Keine zugewiesenen Arbeitseinsätze.</p>`;
-      cardsRoot.innerHTML = `<p class="small">Keine zugewiesenen Arbeitseinsätze.</p>`;
-      return;
-    }
-
-    tableRoot.innerHTML = filteredWorkLeads.map((r) => `
-      <button type="button" class="catch-table__row" data-lead-id="${esc(r.source_id)}" style="grid-template-columns:1.8fr 1fr 1fr 1fr;">
-        <span>${esc(r.title || "Arbeitseinsatz")}</span>
-        <span>${esc(statusLabel(r.status))}</span>
-        <span>${esc(fmtTs(r.starts_at))}</span>
-        <span>${esc(r.location || "-")}</span>
-      </button>
-    `).join("");
-
-    cardsRoot.innerHTML = filteredWorkLeads.map((r) => `
-      <button type="button" class="card" data-lead-id="${esc(r.source_id)}" style="text-align:left;">
-        <div class="card__body">
-          <h3>${esc(r.title || "Arbeitseinsatz")}</h3>
-          <p class="small">Status: <strong>${esc(statusLabel(r.status))}</strong></p>
-          <p class="small">Start: ${esc(fmtTs(r.starts_at))}</p>
-          <p class="small">Ende: ${esc(fmtTs(r.ends_at))}</p>
-          <p class="small">Ort: ${esc(r.location || "-")}</p>
-        </div>
-      </button>
-    `).join("");
+    openDialog(dlg);
   }
 
   function openTaskDialog(taskId) {
-    const task = meetingTasks.find((t) => String(t.source_id) === String(taskId)) || allMeetingTasks.find((t) => String(t.source_id) === String(taskId));
+    const task = allResponsibilities.find((row) => String(row.source_id) === String(taskId));
     if (!task) return;
     activeTaskId = String(taskId);
 
@@ -305,86 +397,135 @@
 
     setEditMsg("");
     const dlg = document.getElementById("myRespTaskDialog");
-    if (dlg && !dlg.open) dlg.showModal();
+    openDialog(dlg);
   }
 
   function closeTaskDialog() {
     const dlg = document.getElementById("myRespTaskDialog");
-    if (dlg?.open) dlg.close();
+    closeDialog(dlg);
     activeTaskId = null;
     setEditMsg("");
   }
 
+  function patchResponsibilityLocal(taskId, patch) {
+    const id = String(taskId || "");
+    const now = new Date().toISOString();
+    allResponsibilities = allResponsibilities.map((row) => (
+      String(row.source_id) === id
+        ? normalizeResponsibility({ ...row, ...patch, updated_at: now, _offline_pending: true })
+        : row
+    ));
+    renderAll();
+  }
+
+  async function markTaskDone(row) {
+    const taskId = String(row?.source_id || "").trim();
+    if (!taskId) return;
+    const patch = { status: "done" };
+    patchResponsibilityLocal(taskId, patch);
+    try {
+      setMsg("Aufgabe wird als erledigt markiert...");
+      await sb(`/rest/v1/meeting_tasks?id=eq.${encodeURIComponent(taskId)}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify(patch),
+      }, true);
+      setMsg("Aufgabe als erledigt markiert.");
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueTaskPatch(taskId, patch);
+        setMsg("Aufgabe offline als erledigt markiert. Wird synchronisiert.");
+        return;
+      }
+      await refresh().catch(() => {});
+      setMsg(err?.message || "Aktion konnte nicht gespeichert werden.");
+    }
+  }
+
+  async function markTaskOpen(row) {
+    const taskId = String(row?.source_id || "").trim();
+    if (!taskId) return;
+    const patch = { status: "open" };
+    patchResponsibilityLocal(taskId, patch);
+    try {
+      setMsg("Aufgabe wird als nicht erledigt markiert...");
+      await sb(`/rest/v1/meeting_tasks?id=eq.${encodeURIComponent(taskId)}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify(patch),
+      }, true);
+      setMsg("Aufgabe als nicht erledigt markiert.");
+    } catch (err) {
+      if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
+        await queueTaskPatch(taskId, patch);
+        setMsg("Aufgabe offline als nicht erledigt markiert. Wird synchronisiert.");
+        return;
+      }
+      await refresh().catch(() => {});
+      setMsg(err?.message || "Aktion konnte nicht gespeichert werden.");
+    }
+  }
+
   function renderAll() {
-    applyFilters();
-    renderMeetingTasks();
-    renderWorkLeads();
-    applyView();
+    ensureTable();
+    applySearchFilter();
+    if (!visibleResponsibilities.length && allResponsibilities.length > 0 && !didAutoRecoverEmptyView) {
+      didAutoRecoverEmptyView = true;
+      tableSearch = "";
+      const search = document.getElementById("myRespSearch");
+      if (search) search.value = "";
+      responsibilityTable?.resetFilters({ render: false, silent: true });
+      savePrefs({ search: "", filters: {} });
+      applySearchFilter();
+      setToolbarFiltersOpen(false);
+      setMsg("Filter wurden zurückgesetzt, um vorhandene Einträge anzuzeigen.");
+    }
+    responsibilityTable?.setRows(visibleResponsibilities);
+    syncFilterMeta();
   }
 
   async function refresh() {
-    const rows = await loadResponsibilities();
-    allMeetingTasks = rows.filter((r) => r.responsibility_type === "meeting_task");
-    allWorkLeads = rows.filter((r) => r.responsibility_type === "work_event_lead");
+    allResponsibilities = await loadResponsibilities();
     renderAll();
-    setMsg(`Geladen: ${rows.length}`);
+    setMsg(`Geladen: ${allResponsibilities.length}`);
   }
 
   function bind() {
     if (bound) return;
     bound = true;
-    document.addEventListener("click", (e) => {
-      const task = e.target?.closest?.("[data-task-id]");
-      if (task) {
-        openTaskDialog(String(task.getAttribute("data-task-id") || ""));
-        return;
-      }
-
-      const lead = e.target?.closest?.("[data-lead-id]");
-      if (lead) {
-        renderLeadDetail(String(lead.getAttribute("data-lead-id") || ""));
-        return;
-      }
-
-      if (e.target?.closest?.("#myRespTaskViewZeileBtn")) {
-        taskView = "zeile";
-        saveView(VIEW_TASK_KEY, taskView);
-        applyView();
-        return;
-      }
-      if (e.target?.closest?.("#myRespTaskViewKarteBtn")) {
-        taskView = "karte";
-        saveView(VIEW_TASK_KEY, taskView);
-        applyView();
-        return;
-      }
-      if (e.target?.closest?.("#myRespLeadViewZeileBtn")) {
-        leadView = "zeile";
-        saveView(VIEW_LEAD_KEY, leadView);
-        applyView();
-        return;
-      }
-      if (e.target?.closest?.("#myRespLeadViewKarteBtn")) {
-        leadView = "karte";
-        saveView(VIEW_LEAD_KEY, leadView);
-        applyView();
-      }
+    document.getElementById("myRespSearch")?.addEventListener("input", (event) => {
+      tableSearch = String(event.target?.value || "");
+      savePrefs();
+      renderAll();
     });
 
-    document.getElementById("myRespTaskSearch")?.addEventListener("input", renderAll);
-    document.getElementById("myRespTaskStatusFilter")?.addEventListener("change", renderAll);
-    document.getElementById("myRespLeadSearch")?.addEventListener("input", renderAll);
+    document.getElementById("myRespColumnFiltersToggle")?.addEventListener("click", () => {
+      setToolbarFiltersOpen(!toolbarFiltersOpen);
+      if (!toolbarFiltersOpen) return;
+      const firstInput = document.querySelector("#myRespColumnFiltersPanel [data-fcp-col-filter]");
+      if (firstInput instanceof HTMLElement) firstInput.focus();
+    });
+
+    document.getElementById("myRespResetFiltersBtn")?.addEventListener("click", () => {
+      tableSearch = "";
+      const search = document.getElementById("myRespSearch");
+      if (search) search.value = "";
+      responsibilityTable?.resetFilters({ render: false, silent: true });
+      setToolbarFiltersOpen(false);
+      savePrefs({ filters: {} });
+      renderAll();
+    });
 
     document.getElementById("myRespEditClose")?.addEventListener("click", closeTaskDialog);
 
     document.getElementById("myRespEditSave")?.addEventListener("click", async () => {
       if (!activeTaskId) return;
+      const patch = {
+        status: String(document.getElementById("myRespEditStatus")?.value || "open"),
+        status_note: String(document.getElementById("myRespEditNote")?.value || "").trim() || null,
+      };
       try {
         setEditMsg("Speichere...");
-        const patch = {
-          status: String(document.getElementById("myRespEditStatus")?.value || "open"),
-          status_note: String(document.getElementById("myRespEditNote")?.value || "").trim() || null,
-        };
         await sb(`/rest/v1/meeting_tasks?id=eq.${encodeURIComponent(activeTaskId)}`, {
           method: "PATCH",
           headers: { Prefer: "return=minimal" },
@@ -394,11 +535,7 @@
         setEditMsg("Gespeichert.");
       } catch (err) {
         if (!navigator.onLine || window.VDAN_OFFLINE_SYNC?.isNetworkError?.(err)) {
-          const patch = {
-            status: String(document.getElementById("myRespEditStatus")?.value || "open"),
-            status_note: String(document.getElementById("myRespEditNote")?.value || "").trim() || null,
-          };
-          applyTaskPatchLocal(activeTaskId, patch);
+          patchResponsibilityLocal(activeTaskId, patch);
           await queueTaskPatch(activeTaskId, patch);
           setEditMsg("Offline gespeichert. Wird bei Empfang synchronisiert.");
           return;
@@ -419,20 +556,13 @@
       return;
     }
 
-    taskView = loadView(VIEW_TASK_KEY, "zeile");
-    leadView = loadView(VIEW_LEAD_KEY, "zeile");
-    const filter = loadFilter();
-    const taskSearch = document.getElementById("myRespTaskSearch");
-    const taskStatus = document.getElementById("myRespTaskStatusFilter");
-    const leadSearch = document.getElementById("myRespLeadSearch");
-    if (taskSearch && filter.taskSearch) taskSearch.value = String(filter.taskSearch);
-    if (taskStatus && (filter.taskStatus === "alle" || filter.taskStatus === "open" || filter.taskStatus === "done" || filter.taskStatus === "blocked")) {
-      taskStatus.value = String(filter.taskStatus);
-    }
-    if (leadSearch && filter.leadSearch) leadSearch.value = String(filter.leadSearch);
+    loadTableSearch();
+    const search = document.getElementById("myRespSearch");
+    if (search) search.value = tableSearch;
+
+    bind();
 
     try {
-      bind();
       await flushOfflineQueue().catch(() => {});
       await refresh();
     } catch (err) {

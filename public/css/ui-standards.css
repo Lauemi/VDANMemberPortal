@@ -17,6 +17,17 @@
   --space-2: 16px;
   --space-3: 24px;
   --space-4: 32px;
+
+  /* Semantic density tokens */
+  --density-mode: comfortable;
+  --form-control-height: var(--control-height);
+  --form-control-pad-x: var(--space-2);
+  --form-gap: var(--space-2);
+  --field-gap: var(--space-1);
+  --card-padding: var(--space-2);
+  --section-gap: var(--space-2);
+  --button-font-size: 1rem;
+  --secondary-action-opacity: 0.78;
 }
 
 html {
@@ -29,4 +40,18 @@ body {
 
 .small {
   font-size: var(--font-secondary-rem);
+}
+
+@media (min-width: 761px) {
+  html[data-density="compact"] {
+    --density-mode: compact;
+    --form-control-height: 38px;
+    --form-control-pad-x: 10px;
+    --form-gap: 10px;
+    --field-gap: 4px;
+    --card-padding: 12px;
+    --section-gap: 12px;
+    --button-font-size: 0.95rem;
+    --secondary-action-opacity: 0.72;
+  }
 }

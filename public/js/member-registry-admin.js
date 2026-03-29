@@ -6,6 +6,7 @@
   const STORAGE_CLUB_DATA_DRAFT_PREFIX = "club:registry:club_data_draft:v1:";
   const ACL_EDITABLE_KEYS = ["write", "update", "delete"];
   const ACL_PERMISSION_KEYS = ["read", "write", "update", "delete"];
+  const MANAGER_ROLES = new Set(["admin", "vorstand"]);
   const ACL_MODULES = [
     { id: "club_data", label: "Vereinsdaten", hint: "Stammdaten und Kerninfos des Vereins" },
     { id: "members", label: "Mitglieder", hint: "Mitgliederstammdaten und Pflege" },
@@ -20,7 +21,8 @@
   const CORE_ROLE_IDS = new Set(["member", "vorstand", "admin"]);
   const COLUMNS = [
     { key: "club_code", label: "Club", default: true, width: 100 },
-    { key: "member_no", label: "Mitgliedsnummer", default: true, width: 150 },
+    { key: "club_member_no", label: "Vereins-Nr.", default: true, width: 150 },
+    { key: "member_no", label: "FCP-ID", default: false, width: 170 },
     { key: "last_name", label: "Name", default: true, width: 160 },
     { key: "first_name", label: "Vorname", default: true, width: 150 },
     { key: "status", label: "Status", default: true, width: 120 },
@@ -28,6 +30,7 @@
     { key: "login_dot", label: "Login", default: true, width: 90 },
     { key: "last_sign_in_at", label: "Zuletzt angemeldet", default: false, width: 190 },
     { key: "street", label: "Adresse", default: false, width: 220 },
+    { key: "email", label: "E-Mail", default: false, width: 220 },
     { key: "zip", label: "PLZ", default: false, width: 110 },
     { key: "city", label: "Ort", default: false, width: 150 },
     { key: "phone", label: "Tel", default: false, width: 140 },
@@ -47,7 +50,7 @@
     clubFilter: "all",
     loginFilter: "all",
     visibleCols: new Set(COLUMNS.filter((c) => c.default).map((c) => c.key)),
-    sortKey: "member_no",
+    sortKey: "club_member_no",
     sortDir: "asc",
     page: 1,
     pageSize: 50,
@@ -155,13 +158,20 @@
       method: "POST",
       headers: {
         apikey: key,
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${key}`,
+        "x-vdan-access-token": token,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload || {}),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data?.ok === false) {
+      console.error(`[member-registry:${functionName}] request failed`, {
+        status: res.status,
+        url: `${url}/functions/v1/${functionName}`,
+        payload,
+        response: data,
+      });
       if (res.status === 401) throw new Error("unauthorized");
       if (res.status === 403) throw new Error("forbidden");
       throw new Error(String(data?.error || `${functionName}_failed_${res.status}`));
@@ -584,6 +594,57 @@
     return Array.isArray(rows) ? rows : [];
   }
 
+  async function loadCurrentProfileClubId() {
+    const uid = String(session()?.user?.id || "").trim();
+    if (!uid) return "";
+    const rows = await sb(`/rest/v1/profiles?select=club_id&id=eq.${encodeURIComponent(uid)}&limit=1`, { method: "GET" }, true).catch(() => []);
+    return String(rows?.[0]?.club_id || "").trim();
+  }
+
+  async function loadManagedClubIds() {
+    const uid = String(session()?.user?.id || "").trim();
+    if (!uid) return new Set();
+
+    const managed = new Set();
+    const [aclRows, legacyRows, profileClubId] = await Promise.all([
+      sb(`/rest/v1/club_user_roles?select=club_id,role_key&user_id=eq.${encodeURIComponent(uid)}`, { method: "GET" }, true).catch(() => []),
+      sb(`/rest/v1/user_roles?select=club_id,role&user_id=eq.${encodeURIComponent(uid)}`, { method: "GET" }, true).catch(() => []),
+      loadCurrentProfileClubId().catch(() => ""),
+    ]);
+
+    (Array.isArray(aclRows) ? aclRows : []).forEach((row) => {
+      const clubId = String(row?.club_id || "").trim();
+      const roleKey = String(row?.role_key || "").trim().toLowerCase();
+      if (!clubId) return;
+      if (MANAGER_ROLES.has(roleKey)) managed.add(clubId);
+    });
+
+    (Array.isArray(legacyRows) ? legacyRows : []).forEach((row) => {
+      const clubId = String(row?.club_id || "").trim();
+      const roleKey = String(row?.role || "").trim().toLowerCase();
+      if (!clubId) return;
+      if (MANAGER_ROLES.has(roleKey)) managed.add(clubId);
+    });
+
+    if (profileClubId) managed.add(profileClubId);
+    return managed;
+  }
+
+  function filterRowsByClubIds(rows, allowedClubIds) {
+    if (!(allowedClubIds instanceof Set) || !allowedClubIds.size) return Array.isArray(rows) ? rows : [];
+    return (Array.isArray(rows) ? rows : []).filter((row) => allowedClubIds.has(String(row?.club_id || "").trim()));
+  }
+
+  function filterMapByClubIds(mapLike, allowedClubIds) {
+    const out = new Map();
+    if (!(mapLike instanceof Map)) return out;
+    if (!(allowedClubIds instanceof Set) || !allowedClubIds.size) return new Map(mapLike);
+    mapLike.forEach((value, key) => {
+      if (allowedClubIds.has(String(key || "").trim())) out.set(key, value);
+    });
+    return out;
+  }
+
   async function loadClubIdentityMap() {
     const byId = new Map();
     try {
@@ -701,6 +762,7 @@
         last_sign_in_at: lastSignInAt,
         profile_user_id: userId,
         street: "",
+        email: "",
         zip: "",
         city: "",
         phone: "",
@@ -709,6 +771,7 @@
         sepa_approved: null,
         iban_last4: "",
         guardian_member_no: "",
+        club_member_no: "",
         row_kind: "role_only",
       });
     });
@@ -734,7 +797,7 @@
     }
     if (q) {
       rows = rows.filter((r) => [
-        r.club_code, r.member_no, r.first_name, r.last_name, r.status, r.city, r.zip, r.fishing_card_type,
+        r.club_code, r.club_member_no, r.member_no, r.first_name, r.last_name, r.email, r.status, r.city, r.zip, r.fishing_card_type,
       ].some((v) => String(v || "").toLowerCase().includes(q)));
     }
     const key = state.sortKey;
@@ -984,21 +1047,22 @@
   async function loadClubWorkspace(clubId) {
     const cid = String(clubId || "").trim();
     if (!cid) return null;
-    if (isLocalDev()) {
+    try {
+      const data = await callWorkspace("get", cid);
+      if (data?.workspace) {
+        state.clubWorkspaceById.set(cid, data.workspace);
+        renderClubDataForm();
+      }
+      return data?.workspace || null;
+    } catch (err) {
       const draft = loadLocalClubDataDraft(cid);
       if (draft) {
         state.clubWorkspaceById.set(cid, draft);
         renderClubDataForm();
         return draft;
       }
-      return null;
+      throw err;
     }
-    const data = await callWorkspace("get", cid);
-    if (data?.workspace) {
-      state.clubWorkspaceById.set(cid, data.workspace);
-      renderClubDataForm();
-    }
-    return data?.workspace || null;
   }
 
   async function saveClubData() {
@@ -1014,7 +1078,19 @@
       contact_phone: String(document.getElementById("clubDataEditContactPhone")?.value || "").trim(),
     };
     if (!payload.club_name) throw new Error("club_name_required");
-    if (isLocalDev()) {
+    try {
+      const data = await callWorkspace("save_club_data", clubId, payload);
+      if (data?.workspace) {
+        state.clubWorkspaceById.set(clubId, data.workspace);
+        const meta = state.clubIdentityById.get(clubId) || {};
+        state.clubIdentityById.set(clubId, {
+          ...meta,
+          name: String(data.workspace?.club_data?.club_name || payload.club_name).trim(),
+        });
+        renderClubOverview();
+      }
+      return data;
+    } catch (err) {
       saveLocalClubDataDraft(clubId, payload);
       const meta = state.clubIdentityById.get(clubId) || {};
       state.clubIdentityById.set(clubId, {
@@ -1022,19 +1098,13 @@
         name: String(payload.club_name || meta.name || "").trim(),
       });
       renderClubOverview();
-      return { ok: true, local_only: true, workspace: state.clubWorkspaceById.get(clubId) };
+      return {
+        ok: true,
+        local_only: true,
+        fallback_reason: err instanceof Error ? err.message : "workspace_save_failed",
+        workspace: state.clubWorkspaceById.get(clubId),
+      };
     }
-    const data = await callWorkspace("save_club_data", clubId, payload);
-    if (data?.workspace) {
-      state.clubWorkspaceById.set(clubId, data.workspace);
-      const meta = state.clubIdentityById.get(clubId) || {};
-      state.clubIdentityById.set(clubId, {
-        ...meta,
-        name: String(data.workspace?.club_data?.club_name || payload.club_name).trim(),
-      });
-      renderClubOverview();
-    }
-    return data;
   }
 
   async function submitInviteCreate() {
@@ -1092,7 +1162,8 @@
     dialogUiForMode("edit");
     body.innerHTML = `
       <div class="grid cols2">
-        <label><span>Mitgliedsnummer</span><input value="${esc(row.member_no)}" disabled /></label>
+        <label><span>Vereins-Mitgliedsnummer</span><input id="mrClubMemberNo" value="${esc(row.club_member_no || row.member_no || "")}" /></label>
+        <label><span>FCP-ID</span><input value="${esc(row.member_no)}" disabled /></label>
         <label><span>Club-Kürzel</span><input value="${esc(row.club_code || "-")}" disabled /></label>
         <label><span>ClubID</span><input value="${esc(row.club_id || "-")}" disabled /></label>
         <label><span>Vorname</span><input id="mrFirstName" value="${esc(row.first_name || "")}" /></label>
@@ -1105,6 +1176,7 @@
         </label>
         <label><span>Angelkarte</span><input id="mrFishingCard" value="${esc(row.fishing_card_type || "")}" /></label>
         <label><span>Straße</span><input id="mrStreet" value="${esc(row.street || "")}" /></label>
+        <label><span>E-Mail</span><input id="mrEmail" type="email" value="${esc(row.email || "")}" /></label>
         <label><span>PLZ</span><input id="mrZip" value="${esc(row.zip || "")}" /></label>
         <label><span>Ort</span><input id="mrCity" value="${esc(row.city || "")}" /></label>
         <label><span>Tel</span><input id="mrPhone" value="${esc(row.phone || "")}" /></label>
@@ -1148,7 +1220,7 @@
           <select id="mrCreateClubId">${options}</select>
         </label>
         <label><span>Club-Code</span><input id="mrCreateClubCode" value="${esc(defaultCode)}" readonly /></label>
-        <label><span>Mitgliedsnummer (optional)</span><input id="mrCreateMemberNo" placeholder="z. B. VD02-0003" /></label>
+        <label><span>Vereins-Mitgliedsnummer (optional)</span><input id="mrClubMemberNo" placeholder="z. B. 598" /></label>
         <label><span>Status</span>
           <select id="mrStatus">
             <option value="active" selected>Aktiv</option>
@@ -1160,6 +1232,7 @@
         <label><span>Angelkarte</span><input id="mrFishingCard" value="-" /></label>
         <label><span>Geburtstag</span><input id="mrBirthdate" type="date" /></label>
         <label><span>Straße</span><input id="mrStreet" /></label>
+        <label><span>E-Mail</span><input id="mrEmail" type="email" autocomplete="email" /></label>
         <label><span>PLZ</span><input id="mrZip" /></label>
         <label><span>Ort</span><input id="mrCity" /></label>
         <label><span>Tel</span><input id="mrPhone" /></label>
@@ -1167,8 +1240,8 @@
         <label><span>Bezugsperson (Mitglieds-Nr.)</span><input id="mrGuardian" /></label>
         <label><span>SEPA bestätigt</span>
           <select id="mrSepaApproved">
-            <option value="true" selected>Ja</option>
-            <option value="false">Nein</option>
+            <option value="false" selected>Nein</option>
+            <option value="true">Ja</option>
           </select>
         </label>
         <label><span>IBAN (optional)</span><input id="mrIban" /></label>
@@ -1192,12 +1265,14 @@
       const payloadCreate = {
         p_club_id: clubId || null,
         p_club_code: clubCode || null,
-        p_member_no: String(document.getElementById("mrCreateMemberNo")?.value || "").trim().toUpperCase() || null,
+        p_member_no: null,
+        p_club_member_no: String(document.getElementById("mrClubMemberNo")?.value || "").trim().toUpperCase() || null,
         p_first_name: String(document.getElementById("mrFirstName")?.value || "").trim() || null,
         p_last_name: String(document.getElementById("mrLastName")?.value || "").trim() || null,
         p_status: String(document.getElementById("mrStatus")?.value || "").trim() || "active",
         p_fishing_card_type: String(document.getElementById("mrFishingCard")?.value || "").trim() || "-",
         p_street: String(document.getElementById("mrStreet")?.value || "").trim() || null,
+        p_email: String(document.getElementById("mrEmail")?.value || "").trim().toLowerCase() || null,
         p_zip: String(document.getElementById("mrZip")?.value || "").trim() || null,
         p_city: String(document.getElementById("mrCity")?.value || "").trim() || null,
         p_phone: String(document.getElementById("mrPhone")?.value || "").trim() || null,
@@ -1220,11 +1295,13 @@
     const memberNo = String(state.activeRow.member_no || "");
     const payload = {
       p_member_no: memberNo,
+      p_club_member_no: String(document.getElementById("mrClubMemberNo")?.value || "").trim().toUpperCase() || null,
       p_first_name: String(document.getElementById("mrFirstName")?.value || "").trim() || null,
       p_last_name: String(document.getElementById("mrLastName")?.value || "").trim() || null,
       p_status: String(document.getElementById("mrStatus")?.value || "").trim() || null,
       p_fishing_card_type: String(document.getElementById("mrFishingCard")?.value || "").trim() || null,
       p_street: String(document.getElementById("mrStreet")?.value || "").trim() || null,
+      p_email: String(document.getElementById("mrEmail")?.value || "").trim().toLowerCase() || null,
       p_zip: String(document.getElementById("mrZip")?.value || "").trim() || null,
       p_city: String(document.getElementById("mrCity")?.value || "").trim() || null,
       p_phone: String(document.getElementById("mrPhone")?.value || "").trim(),
@@ -1255,28 +1332,47 @@
 
   async function refresh() {
     setMsg("Lade Mitglieder...");
-    const [rows, clubIdentityById, clubAclCountsById] = await Promise.all([
+    const [profileClubId, managedClubIds, rows, clubIdentityById, clubAclCountsById] = await Promise.all([
+      loadCurrentProfileClubId().catch(() => ""),
+      loadManagedClubIds().catch(() => new Set()),
       loadRows(),
       loadClubIdentityMap(),
       loadClubAclCounts(),
     ]);
-    const roleOnlyRows = await loadRoleOnlyRows(rows, clubIdentityById);
-    state.rows = [...rows, ...roleOnlyRows];
-    state.clubIdentityById = clubIdentityById;
-    state.clubAclCountsById = clubAclCountsById;
+    if (!state.clubIdFilter) {
+      state.clubIdFilter = profileClubId || "";
+    }
+    if (managedClubIds.size && state.clubIdFilter && !managedClubIds.has(state.clubIdFilter)) {
+      state.clubIdFilter = profileClubId && managedClubIds.has(profileClubId)
+        ? profileClubId
+        : [...managedClubIds][0] || "";
+    }
+
+    const scopedRows = filterRowsByClubIds(rows, managedClubIds);
+    const scopedClubIdentityById = filterMapByClubIds(clubIdentityById, managedClubIds);
+    const scopedClubAclCountsById = filterMapByClubIds(clubAclCountsById, managedClubIds);
+    const roleOnlyRows = filterRowsByClubIds(
+      await loadRoleOnlyRows(scopedRows, scopedClubIdentityById),
+      managedClubIds,
+    );
+
+    state.rows = [...scopedRows, ...roleOnlyRows];
+    state.clubIdentityById = scopedClubIdentityById;
+    state.clubAclCountsById = scopedClubAclCountsById;
     renderClubOverview();
+    await loadClubWorkspace(currentFocusClubId()).catch(() => null);
     renderClubFilter();
     applyFilterSort();
     renderHead();
     renderRows();
     renderStatsAndPager();
-    const scopedRows = state.clubIdFilter
+    const focusedRows = state.clubIdFilter
       ? state.rows.filter((r) => String(r.club_id || "").trim() === state.clubIdFilter)
       : state.rows;
     if (roleOnlyRows.length) {
-      setMsg(`Mitglieder geladen im aktuellen Vereinskontext: ${scopedRows.length} (${roleOnlyRows.length} ohne Vereins-Mitgliedsnummer).`);
+      setMsg(`Mitglieder geladen im aktuellen Vereinskontext: ${focusedRows.length} (${roleOnlyRows.length} ohne Vereins-Mitgliedsnummer).`);
     } else {
-      setMsg(`Mitglieder geladen im aktuellen Vereinskontext: ${scopedRows.length}`);
+      setMsg(`Mitglieder geladen im aktuellen Vereinskontext: ${focusedRows.length}`);
     }
   }
 

@@ -1,0 +1,25 @@
+﻿---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site title={`Vereinsanfrage • ${APP.name}`} description="Status deiner Vereinsanfrage." robots="noindex">
+  <section class="card ui-card form-shell" style="max-width:760px;margin:0 auto;">
+    <div class="card__body ui-card__body">
+      <span class="register-flow__eyebrow">Vereinsanfrage</span>
+      <h1 id="clubRequestPendingTitle">Dein Verein wurde erfolgreich angefragt.</h1>
+      <p id="clubRequestPendingLead" class="small"></p>
+      <div class="register-note small" id="clubRequestPendingBox">
+        Lade Status...
+      </div>
+      <div class="register-flow__actions" style="margin-top:20px;">
+        <a class="feed-btn feed-btn--ghost" href="/app/einstellungen/">Einstellungen</a>
+        <button id="clubRequestPendingReload" class="feed-btn" type="button">Status aktualisieren</button>
+        <span id="clubRequestPendingMsg" class="small" aria-live="polite"></span>
+      </div>
+    </div>
+  </section>
+  <script src="/js/club-request-pending.js" defer></script>
+</Site>
+
+

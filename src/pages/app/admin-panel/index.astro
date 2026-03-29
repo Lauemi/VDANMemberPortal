@@ -1,4 +1,4 @@
----
+﻿---
 import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
 import { STATIC_WEB_ENV_HINTS, STATIC_WEB_PAGES } from "../../../config/static-web-pages";
@@ -6,15 +6,15 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
 ---
 
 <Site
-  title={`Admin Board • ${APP.name}`}
-  description="Zentrales Admin-Board für Onboarding, Auth und Plattform-Überblick"
+  title={`Admin Board â€¢ ${APP.name}`}
+  description="Zentrales Admin-Board fÃ¼r Onboarding, Auth und Plattform-Ãœberblick"
   robots="noindex"
   containerClass="container container--admin-wide"
 >
   <section class="card">
     <div class="card__body">
       <h1>Admin Board</h1>
-      <p class="small">P0 Steuerzentrale für Onboarding/Auth/Übersicht vor dem großen Umbau.</p>
+      <p class="small">P0 Steuerzentrale fÃ¼r Onboarding/Auth/Ãœbersicht vor dem groÃŸen Umbau.</p>
       <p id="adminBoardMsg" class="small" aria-live="polite"></p>
     </div>
   </section>
@@ -23,6 +23,7 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
     <div class="card__body admin-board">
       <aside class="admin-board__nav" aria-label="Admin Navigation">
         <button type="button" class="admin-nav-btn is-active" data-admin-section="dashboard">Dashboard</button>
+        <button type="button" class="admin-nav-btn" data-admin-section="club-requests">Vereinsanfragen</button>
         <button type="button" class="admin-nav-btn" data-admin-section="clubs">Clubs</button>
         <button type="button" class="admin-nav-btn" data-admin-section="members">Mitglieder</button>
         <button type="button" class="admin-nav-btn" data-admin-section="analytics">Analytics</button>
@@ -53,7 +54,7 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
               <table class="work-part-table" id="adminClubsTopTable" data-studio-component-type="table" data-studio-library-id="lists--standard-tabelle" data-table-id="admin-clubs-top">
                 <thead>
                   <tr>
-                    <th>Verein</th><th>Mitglieder (Personen)</th><th>Rollen-Zuordnungen</th><th>Aktiv</th><th>Letzte Aktivität</th><th>Status</th><th>Club-ID</th>
+                    <th>Verein</th><th>Mitglieder (Personen)</th><th>Rollen-Zuordnungen</th><th>Aktiv</th><th>Letzte AktivitÃ¤t</th><th>Status</th><th>Club-ID</th>
                   </tr>
                 </thead>
                 <tbody><tr><td colspan="7" class="small">Lade Daten...</td></tr></tbody>
@@ -76,7 +77,24 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
           </article>
         </section>
 
-        <section class="admin-section" data-admin-panel="clubs">
+                <section class="admin-section" data-admin-panel="club-requests">
+          <article class="admin-card">
+            <h2>Vereinsanfragen</h2>
+            <p class="small">Öffentliche Vereinsanfragen an den Plattformbetreiber. Erst nach Freigabe wird der Verein im System angelegt.</p>
+            <p class="small" id="adminClubRequestsMsg" aria-live="polite"></p>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminClubRequestsTable" data-fcp-component="FCP Data Table v1">
+                <thead>
+                  <tr>
+                    <th>Vereinsname</th><th>Mailadresse</th><th>Aktionen</th>
+                  </tr>
+                </thead>
+                <tbody><tr><td colspan="3" class="small">Lade Daten...</td></tr></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+<section class="admin-section" data-admin-panel="clubs">
           <article class="admin-card">
             <h2>Clubs</h2>
             <div class="admin-actions">
@@ -103,8 +121,8 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
               </div>
               <div class="admin-actions admin-actions--toolbar">
                 <button type="button" class="feed-btn feed-btn--ghost" id="adminClubDetailSave">Modulzusammensetzung speichern</button>
-                <button type="button" class="feed-btn feed-btn--ghost" id="adminClubDetailReset">Standard für Club laden</button>
-                <button type="button" class="feed-btn feed-btn--ghost" id="adminClubDetailClose">Schließen</button>
+                <button type="button" class="feed-btn feed-btn--ghost" id="adminClubDetailReset">Standard fÃ¼r Club laden</button>
+                <button type="button" class="feed-btn feed-btn--ghost" id="adminClubDetailClose">SchlieÃŸen</button>
               </div>
             </div>
             <div class="work-part-table-wrap">
@@ -148,7 +166,7 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
         <section class="admin-section" data-admin-panel="analytics">
           <article class="admin-card">
             <h2>Analytics</h2>
-            <p class="small">Governance-Monitoring aus zentralem Snapshot (Source of Truth für Board + Nightly + CI).</p>
+            <p class="small">Governance-Monitoring aus zentralem Snapshot (Source of Truth fÃ¼r Board + Nightly + CI).</p>
             <div class="admin-kpi-grid">
               <article class="admin-kpi"><h3>Clubs gruen</h3><p id="kpiGovGreen">-</p></article>
               <article class="admin-kpi"><h3>Clubs gelb</h3><p id="kpiGovYellow">-</p></article>
@@ -202,7 +220,7 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
 
         <section class="admin-section" data-admin-panel="bugs">
           <article class="admin-card is-missing">
-            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">âœ–</span>
             <h2>Bugs</h2>
             <p class="small">Bug-Board mit P0/P1/P2, Owner und Referenzen wird hier zentral aggregiert.</p>
           </article>
@@ -210,15 +228,15 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
 
         <section class="admin-section" data-admin-panel="finance">
           <article class="admin-card is-missing">
-            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">âœ–</span>
             <h2>Finanzen</h2>
-            <p class="small">Einnahmen/Entitlements/Export als spätere Billing-Ausbaustufe.</p>
+            <p class="small">Einnahmen/Entitlements/Export als spÃ¤tere Billing-Ausbaustufe.</p>
           </article>
         </section>
 
         <section class="admin-section" data-admin-panel="dsgvo">
           <article class="admin-card is-missing">
-            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">âœ–</span>
             <h2>DSGVO Board</h2>
             <ul class="small">
               <li>Verantwortlicher / Kontakt</li>
@@ -231,7 +249,7 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
 
         <section class="admin-section" data-admin-panel="security">
           <article class="admin-card is-missing">
-            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">âœ–</span>
             <h2>Security Board</h2>
             <ul class="small">
               <li>Auth-Konzept / Rollenmodell</li>
@@ -284,7 +302,7 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
 
           <article class="admin-card">
             <h3>Standard-Rollenrechte (Superadmin)</h3>
-            <p class="small">Diese Defaults gelten für Vereine und können dort nur innerhalb freigegebener Module feinjustiert werden.</p>
+            <p class="small">Diese Defaults gelten fÃ¼r Vereine und kÃ¶nnen dort nur innerhalb freigegebener Module feinjustiert werden.</p>
             <p class="small" id="adminRoleDefaultsMsg" aria-live="polite"></p>
             <div class="admin-actions">
               <label class="small" style="display:flex;align-items:center;gap:8px;">
@@ -302,7 +320,7 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
               <table class="work-part-table" id="adminRoleDefaultsTable" data-studio-component-type="table" data-studio-library-id="lists--standard-tabelle" data-table-id="admin-role-defaults">
                 <thead>
                   <tr>
-                    <th>Modul</th><th>Usecase</th><th>Anzeigen</th><th>Lesen</th><th>Schreiben</th><th>Bearbeiten</th><th>Löschen</th>
+                    <th>Modul</th><th>Usecase</th><th>Anzeigen</th><th>Lesen</th><th>Schreiben</th><th>Bearbeiten</th><th>LÃ¶schen</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -313,7 +331,7 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
 
         <section class="admin-section" data-admin-panel="webmodules">
           <article class="admin-card">
-            <h2>Modul Web (Burger-Menü)</h2>
+            <h2>Modul Web (Burger-MenÃ¼)</h2>
             <div class="admin-actions">
               <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixSaveWeb">Web speichern</button>
               <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixResetWeb">Web reset</button>
@@ -435,3 +453,4 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
 
   <script src="/js/admin-board.js" defer></script>
 </Site>
+

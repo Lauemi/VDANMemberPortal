@@ -1,4 +1,4 @@
-;(() => {
+﻿;(() => {
   const ADMIN_PATHS = ["/app/mitglieder/", "/app/mitgliederverwaltung/", "/app/fangliste/cockpit/", "/app/lizenzen/", "/app/feedback/cockpit/"];
   const SUPERADMIN_PATHS = ["/app/admin-panel/", "/app/vereine/", "/app/kontrollboard/", "/app/ui-neumorph-demo/", "/app/component-library/", "/app/template-studio/"];
   const MANAGER_PATHS = [
@@ -13,57 +13,34 @@
   const FCP_ONLY_PATHS = ["/app/lizenzen/", "/app/feedback/"];
 
   function onReady(fn){ if (document.readyState !== "loading") fn(); else document.addEventListener("DOMContentLoaded", fn); }
-
   function cfg() {
     return {
       url: String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, ""),
       key: String(window.__APP_SUPABASE_KEY || "").trim(),
     };
   }
-
   function currentPath() {
     const p = String(window.location.pathname || "/").toLowerCase();
     return p.endsWith("/") ? p : `${p}/`;
   }
-
-  function needsAdmin(path) {
-    return ADMIN_PATHS.some((x) => path.startsWith(x));
-  }
-
-  function needsSuperadmin(path) {
-    return SUPERADMIN_PATHS.some((x) => path.startsWith(x));
-  }
-
-  function needsManager(path) {
-    return MANAGER_PATHS.some((x) => path.startsWith(x));
-  }
-
-  function needsMemberOnly(path) {
-    return MEMBER_ALWAYS_PATHS.some((x) => path.startsWith(x));
-  }
-
-  function siteMode() {
-    return String(document.body?.getAttribute("data-site-mode") || window.__APP_SITE_MODE || "").trim().toLowerCase();
-  }
-
-  function isFcpOnlyPath(path) {
-    return FCP_ONLY_PATHS.some((x) => path.startsWith(x));
-  }
-
+  function needsAdmin(path) { return ADMIN_PATHS.some((x) => path.startsWith(x)); }
+  function needsSuperadmin(path) { return SUPERADMIN_PATHS.some((x) => path.startsWith(x)); }
+  function needsManager(path) { return MANAGER_PATHS.some((x) => path.startsWith(x)); }
+  function needsMemberOnly(path) { return MEMBER_ALWAYS_PATHS.some((x) => path.startsWith(x)); }
+  function siteMode() { return String(document.body?.getAttribute("data-site-mode") || window.__APP_SITE_MODE || "").trim().toLowerCase(); }
+  function isFcpOnlyPath(path) { return FCP_ONLY_PATHS.some((x) => path.startsWith(x)); }
   function allowOfflineWithoutSession(path) {
     if (path.startsWith("/app/fangliste/") && !path.startsWith("/app/fangliste/cockpit/")) return true;
     if (path.startsWith("/app/arbeitseinsaetze/")) return true;
     if (path.startsWith("/app/zustaendigkeiten/")) return true;
     return false;
   }
-
   function configuredSuperadmins() {
     return String(document.body?.getAttribute("data-superadmin-user-ids") || "")
       .split(",")
       .map((v) => v.trim())
       .filter(Boolean);
   }
-
   async function sb(path, init = {}, withAuth = false) {
     const { url, key } = cfg();
     const headers = new Headers(init.headers || {});
@@ -75,17 +52,17 @@
     if (!res.ok) throw new Error(`Request failed (${res.status})`);
     return res.json().catch(() => ({}));
   }
-
   async function loadRoles() {
     const uid = window.VDAN_AUTH?.loadSession?.()?.user?.id;
     if (!uid) return [];
     const rows = await sb(`/rest/v1/user_roles?select=role&user_id=eq.${encodeURIComponent(uid)}`, { method: "GET" }, true);
     return Array.isArray(rows) ? rows.map((r) => String(r.role || "").toLowerCase()) : [];
   }
-
-  function forbid() {
-    window.location.replace("/app/?forbidden=1");
+  async function loadClubRequestGateState() {
+    const rows = await sb("/rest/v1/rpc/club_request_gate_state", { method: "POST", body: "{}" }, true).catch(() => []);
+    return Array.isArray(rows) && rows[0] ? rows[0] : null;
   }
+  function forbid() { window.location.replace("/app/?forbidden=1"); }
 
   onReady(() => {
     const run = async () => {
@@ -101,46 +78,35 @@
         session = await VDAN_AUTH.refreshSession().catch(() => null);
       }
       if (!session) {
-        if (!navigator.onLine && allowOfflineWithoutSession(path)) {
-          return;
-        }
+        if (!navigator.onLine && allowOfflineWithoutSession(path)) return;
         const next = encodeURIComponent(window.location.pathname + window.location.search);
         window.location.replace(`/login/?next=${next}`);
         return;
       }
 
-      if (needsMemberOnly(path)) return;
-
-      if (needsSuperadmin(path)) {
-        const superadmins = configuredSuperadmins();
-        if (!superadmins.length) {
-          forbid();
+      if (!path.startsWith("/app/anfrage-offen/")) {
+        const requestGate = await loadClubRequestGateState().catch(() => null);
+        const requestStatus = String(requestGate?.status || "").trim().toLowerCase();
+        if (requestStatus && requestStatus !== "approved") {
+          window.location.replace("/app/anfrage-offen/");
           return;
         }
-        const currentUid = String(session?.user?.id || "");
-        if (!superadmins.includes(currentUid)) {
-          forbid();
-          return;
-        }
-        return;
       }
 
+      if (needsMemberOnly(path)) return;
+      if (needsSuperadmin(path)) {
+        const superadmins = configuredSuperadmins();
+        if (!superadmins.length) { forbid(); return; }
+        const currentUid = String(session?.user?.id || "");
+        if (!superadmins.includes(currentUid)) { forbid(); return; }
+        return;
+      }
       if (!needsAdmin(path) && !needsManager(path)) return;
-
       const roles = await loadRoles().catch(() => []);
       const isAdmin = roles.includes("admin");
       const isManager = isAdmin || roles.includes("vorstand");
-
-      if (needsAdmin(path) && !isAdmin) {
-        forbid();
-        return;
-      }
-
-      if (needsManager(path) && !isManager) {
-        forbid();
-        return;
-      }
-
+      if (needsAdmin(path) && !isAdmin) { forbid(); return; }
+      if (needsManager(path) && !isManager) { forbid(); return; }
     };
 
     run().catch(() => {

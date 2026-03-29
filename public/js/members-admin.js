@@ -5,6 +5,7 @@
     rows: [],
     search: "",
     ansicht: "zeile",
+    activeClubId: "",
     filters: {
       name: "",
       memberNo: "",
@@ -78,31 +79,40 @@
   async function loadMyRoles() {
     const uid = currentUserId();
     if (!uid) return [];
-    const rows = await sb(`/rest/v1/user_roles?select=role&user_id=eq.${encodeURIComponent(uid)}`, { method: "GET" }, true);
-    return Array.isArray(rows) ? rows.map((r) => String(r.role || "").toLowerCase()) : [];
+    const [globalRows, clubRows, profileRows] = await Promise.all([
+      sb(`/rest/v1/user_roles?select=role&user_id=eq.${encodeURIComponent(uid)}`, { method: "GET" }, true).catch(() => []),
+      sb(`/rest/v1/club_user_roles?select=club_id,role_key&user_id=eq.${encodeURIComponent(uid)}`, { method: "GET" }, true).catch(() => []),
+      sb(`/rest/v1/profiles?select=club_id&id=eq.${encodeURIComponent(uid)}&limit=1`, { method: "GET" }, true).catch(() => []),
+    ]);
+    state.activeClubId = String(profileRows?.[0]?.club_id || "").trim();
+    const globalRoles = Array.isArray(globalRows) ? globalRows.map((r) => String(r.role || "").toLowerCase()) : [];
+    const scopedClubRoles = (Array.isArray(clubRows) ? clubRows : [])
+      .filter((row) => !state.activeClubId || String(row?.club_id || "").trim() === state.activeClubId)
+      .map((row) => String(row?.role_key || "").toLowerCase())
+      .filter(Boolean);
+    return [...new Set([...globalRoles, ...scopedClubRoles])];
   }
 
   async function listProfiles() {
-    const rows = await sb("/rest/v1/profiles?select=id,email,display_name,member_no,member_card_valid,member_card_valid_from,member_card_valid_until,created_at&order=created_at.asc", { method: "GET" }, true);
+    if (!state.activeClubId) return [];
+    const rows = await sb(`/rest/v1/profiles?select=id,email,display_name,member_no,member_card_valid,member_card_valid_from,member_card_valid_until,created_at&club_id=eq.${encodeURIComponent(state.activeClubId)}&order=created_at.asc`, { method: "GET" }, true);
     return Array.isArray(rows) ? rows : [];
   }
 
   async function listRoles() {
-    const rows = await sb("/rest/v1/user_roles?select=user_id,role&order=user_id.asc", { method: "GET" }, true);
-    return Array.isArray(rows) ? rows : [];
+    if (!state.activeClubId) return [];
+    const rows = await sb(`/rest/v1/club_user_roles?select=user_id,role_key&club_id=eq.${encodeURIComponent(state.activeClubId)}&order=user_id.asc`, { method: "GET" }, true);
+    return Array.isArray(rows)
+      ? rows.map((row) => ({ user_id: row.user_id, role: row.role_key }))
+      : [];
   }
 
   async function listOnlineUsage() {
-    const rows = await sb("/rest/v1/v_admin_online_users?select=user_id,first_login_at,last_seen_at,is_online", { method: "GET" }, true);
-    return Array.isArray(rows) ? rows : [];
+    return [];
   }
 
   async function listAuthLastSignins() {
-    const rows = await sb("/rest/v1/rpc/admin_user_last_signins", {
-      method: "POST",
-      body: JSON.stringify({}),
-    }, true);
-    return Array.isArray(rows) ? rows : [];
+    return [];
   }
 
   function primaryRole(roles) {
@@ -447,6 +457,14 @@
     const isAdmin = roles.some((r) => ADMIN_ROLES.has(r));
     if (!isAdmin) {
       setMsg("Kein Zugriff: nur Admin.");
+      const root = document.getElementById("membersAdminRows");
+      if (root) root.innerHTML = "";
+      const cards = document.getElementById("membersAdminCards");
+      if (cards) cards.innerHTML = "";
+      return;
+    }
+    if (!state.activeClubId) {
+      setMsg("Kein aktiver Vereinskontext gefunden.");
       const root = document.getElementById("membersAdminRows");
       if (root) root.innerHTML = "";
       const cards = document.getElementById("membersAdminCards");

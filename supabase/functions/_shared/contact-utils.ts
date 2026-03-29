@@ -1,4 +1,4 @@
-declare const Deno: {
+﻿declare const Deno: {
   env: {
     get(key: string): string | undefined;
   };
@@ -146,9 +146,9 @@ export async function sendConfirmationMail(email: string, name: string, confirmU
 
   const html = `
     <p>Hallo ${name},</p>
-    <p>bitte bestätige deine Kontaktanfrage über diesen Link:</p>
+    <p>bitte bestÃ¤tige deine Kontaktanfrage Ã¼ber diesen Link:</p>
     <p><a href="${confirmUrl}">${confirmUrl}</a></p>
-    <p>Der Link ist 24 Stunden gültig.</p>
+    <p>Der Link ist 24 Stunden gÃ¼ltig.</p>
   `;
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -159,7 +159,7 @@ export async function sendConfirmationMail(email: string, name: string, confirmU
     body: JSON.stringify({
       from,
       to: [email],
-      subject: "Bitte Kontaktanfrage bestätigen",
+      subject: "Bitte Kontaktanfrage bestÃ¤tigen",
       html,
     }),
   });
@@ -189,7 +189,7 @@ export async function sendContactForwardMail(params: {
   }
 
   const html = `
-    <h2>Neue bestätigte Kontaktanfrage</h2>
+    <h2>Neue bestÃ¤tigte Kontaktanfrage</h2>
     <p><strong>ID:</strong> ${escHtml(params.requestId)}</p>
     <p><strong>Name:</strong> ${escHtml(params.requesterName)}</p>
     <p><strong>E-Mail:</strong> ${escHtml(params.requesterEmail)}</p>
@@ -295,5 +295,72 @@ export async function sendResponsibleNotificationMail(params: {
     return { ok: false, reason: `mail_send_failed:${res.status}:${t}` };
   }
 
+  return { ok: true };
+}
+
+export async function sendClubRequestDecisionMail(params: {
+  to: string;
+  clubName: string;
+  status: "approved" | "rejected";
+  loginUrl?: string;
+  rejectionReason?: string;
+}) {
+  const resendKey = Deno.env.get("RESEND_API_KEY") || "";
+  const from = Deno.env.get("CONTACT_FROM_EMAIL") || "";
+  if (!resendKey || !from) return { ok: false, reason: "mail_provider_not_configured" };
+
+  const clubName = escHtml(params.clubName);
+  const loginUrl = String(params.loginUrl || "").trim();
+  const safeUrl = escHtml(loginUrl);
+  const rejectionReason = escHtml(String(params.rejectionReason || "").trim());
+  const approved = params.status === "approved";
+  const subject = approved ? `Vereinsanfrage freigegeben: ${params.clubName}` : `Vereinsanfrage abgelehnt: ${params.clubName}`;
+  const html = approved
+    ? `<h2>Deine Vereinsanfrage wurde freigegeben</h2><p>Der Verein <strong>${clubName}</strong> wurde für das Fishing-Club-Portal freigeschaltet.</p><p>Du kannst dich jetzt im Portal anmelden:</p><p><a href="${safeUrl}">${safeUrl}</a></p>`
+    : `<h2>Deine Vereinsanfrage wurde derzeit nicht freigegeben</h2><p>Die Anfrage für den Verein <strong>${clubName}</strong> wurde abgelehnt.</p>${rejectionReason ? `<p><strong>Hinweis:</strong> ${rejectionReason}</p>` : ""}`;
+  const text = approved
+    ? ["Deine Vereinsanfrage wurde freigegeben.", `Verein: ${params.clubName}`, "", "Du kannst dich jetzt im Portal anmelden:", loginUrl].join("\n")
+    : ["Deine Vereinsanfrage wurde derzeit nicht freigegeben.", `Verein: ${params.clubName}`, rejectionReason ? `Hinweis: ${params.rejectionReason}` : ""].filter(Boolean).join("\n");
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from, to: [params.to], subject, html, text }),
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    return { ok: false, reason: `mail_send_failed:${res.status}:${t}` };
+  }
+  return { ok: true };
+}
+
+export async function sendClubRequestPendingMail(params: {
+  to: string;
+  clubName: string;
+}) {
+  const resendKey = Deno.env.get("RESEND_API_KEY") || "";
+  const from = Deno.env.get("CONTACT_FROM_EMAIL") || "";
+  if (!resendKey || !from) return { ok: false, reason: "mail_provider_not_configured" };
+
+  const clubName = escHtml(params.clubName);
+  const subject = `Vereinsanfrage eingegangen: ${params.clubName}`;
+  const html = `<h2>Deine Vereinsanfrage ist eingegangen</h2><p>Die Anfrage fuer den Verein <strong>${clubName}</strong> wurde gespeichert und wird nun geprueft.</p><p>Bis zur Freigabe bleibt der Portalzugang auf die Statusseite fuer die Vereinsanfrage beschraenkt.</p>`;
+  const text = [
+    "Deine Vereinsanfrage ist eingegangen.",
+    `Verein: ${params.clubName}`,
+    "",
+    "Die Anfrage wurde gespeichert und wird nun geprueft.",
+    "Bis zur Freigabe bleibt der Portalzugang auf die Statusseite fuer die Vereinsanfrage beschraenkt.",
+  ].join("\n");
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from, to: [params.to], subject, html, text }),
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    return { ok: false, reason: `mail_send_failed:${res.status}:${t}` };
+  }
   return { ok: true };
 }

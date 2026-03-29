@@ -58,6 +58,24 @@ export const STATIC_WEB_PAGES: StaticWebPageEntry[] = [
     },
   },
   {
+    route: "/vereinssignin",
+    label: "VereinsSignIn",
+    note: "Getrennter Einstieg fuer bestehende Vereine und Invite-Flow.",
+    targets: {
+      fcp: { visible: true, brand: "fcp" },
+      vdan: { visible: true, brand: "vdan" },
+    },
+  },
+  {
+    route: "/verein-anfragen",
+    label: "Verein anfragen",
+    note: "Getrennter Einstieg fuer neue Vereine mit Pending- und Freigabeprozess.",
+    targets: {
+      fcp: { visible: true, brand: "fcp" },
+      vdan: { visible: true, brand: "vdan" },
+    },
+  },
+  {
     route: "/passwort-vergessen",
     label: "Passwort vergessen",
     note: "Gemeinsame Utility-Seite, Brand folgt dem Deploy-Ziel.",

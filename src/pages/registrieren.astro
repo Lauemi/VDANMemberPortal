@@ -4,186 +4,90 @@ import { APP } from "../config/app";
 
 const nextRaw = Astro.url.searchParams.get("next") ?? "/app/";
 const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
-const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
+const clubRequestHref = `/verein-anfragen/?next=${encodeURIComponent(nextTarget)}`;
+const clubSignInHref = `/vereinssignin/?next=${encodeURIComponent(nextTarget)}`;
 ---
 
-<Site title={`Registrieren • ${APP.name}`} description="Auth-Account für das Portal erstellen." robots="noindex">
-  <section class="card register-flow-card" style="max-width:920px;margin:0 auto;">
-    <div class="card__body register-flow">
+<Site title={`Registrieren • ${APP.name}`} description="Einstieg in den passenden Onboarding-Pfad." robots="noindex" density="compact">
+  <section class="card ui-card register-flow-card form-shell" style="max-width:840px;margin:0 auto;">
+    <div class="card__body ui-card__body register-flow">
       <div class="register-flow__intro">
         <span class="register-flow__eyebrow">Onboarding</span>
-        <h1>Jetzt Loslegen</h1>
-        <p id="registerModeHint" class="small">
-          Der Einstieg ist jetzt als geführter Flow vorbereitet: zuerst nur Auth-Daten, danach der passende Vereinsprozess.
+        <div class="register-current-path">Startpunkt wählen</div>
+        <h1>Wie möchtest du einsteigen?</h1>
+        <p class="small register-flow__lede">
+          VereinsSignIn und Verein anfragen sind jetzt als eigene Masken getrennt. Wähle direkt den passenden Weg.
         </p>
-        <p class="register-flow__soon">COMING SOON</p>
+        <p class="register-flow__context small">
+          Bestehende Vereine nutzen Invite und Mitgliedsnummer. Neue Vereine starten mit einer eigenen Anfrage inklusive Stammdaten, Pending-Status und Freigabeprozess.
+        </p>
       </div>
 
-      <div class="register-flow__baseline small">
-        <strong>Security-Baseline</strong><br />
-        Auth nur über bestätigte E-Mail. Passwort mindestens 8 Zeichen. Vereinsbeitritt aktuell nur über gültigen Invite-Flow.
-      </div>
-
-      <form id="registerForm" class="register-flow__form" data-next-target={nextTarget}>
-        <section class="register-step register-step--auth">
+      <div class="register-flow__form form-shell__section">
+        <section class="register-step register-step--mode is-active">
           <div class="register-step__head">
-            <span class="register-step__index">1</span>
+            <span class="register-step__index">0</span>
             <div>
-              <h2>Auth-Daten</h2>
-              <p>Hier erfassen wir nur die Daten, die wir für das Benutzerkonto wirklich brauchen.</p>
-            </div>
-          </div>
-          <div class="register-grid">
-            <label>
-              <span>E-Mail</span>
-              <input id="registerEmail" name="email" type="email" autocomplete="email" required />
-            </label>
-            <label>
-              <span>Passwort</span>
-              <input id="registerPass" name="password" type="password" autocomplete="new-password" minlength="8" required />
-            </label>
-            <label>
-              <span>Passwort wiederholen</span>
-              <input id="registerPass2" name="password_repeat" type="password" autocomplete="new-password" minlength="8" required />
-            </label>
-          </div>
-          <p id="registerPasswordHint" class="small" aria-live="polite"></p>
-        </section>
-
-        <section class="register-step register-step--mode">
-          <div class="register-step__head">
-            <span class="register-step__index">2</span>
-            <div>
-              <h2>Anmeldeart</h2>
-              <p>Wähle, ob du einem bestehenden Verein beitrittst oder einen neuen Verein für FCP anlegst.</p>
+              <h2>Getrennte Einstiege</h2>
+              <p>Keine Sammelmaske mehr: beide Prozesse starten jetzt mit einer eigenen Maske und eigenem Fokus.</p>
             </div>
           </div>
           <div class="register-mode-grid">
-            <label class="register-mode-card">
-              <input id="registerModeJoin" type="radio" name="registration_mode" value="join_club" checked />
-              <span class="register-mode-card__title">Bei bestehendem Verein anmelden</span>
-              <span class="register-mode-card__copy">Invite-Token, Mitgliedsnummer und später Datenbestätigung im Vereinskontext.</span>
-            </label>
-            <label id="registerModeCreateCard" class="register-mode-card">
-              <input id="registerModeCreate" type="radio" name="registration_mode" value="create_club" />
-              <span class="register-mode-card__title">Neuen Verein anlegen</span>
-              <span class="register-mode-card__copy">Vereinsbasisdaten, Verantwortlichenkontakt und vorbereitete Billing-Stufe.</span>
-            </label>
+            <a class="register-mode-card" href={clubSignInHref}>
+              <span class="register-mode-card__badge">Bestehender Verein</span>
+              <span class="register-mode-card__title">VereinsSignIn</span>
+              <span class="register-mode-card__copy">Für Invite-Link, Invite-Token und Vereins-Mitgliedsnummer. Direkter Einstieg in den Join-Flow.</span>
+            </a>
+            <a class="register-mode-card is-active" href={clubRequestHref}>
+              <span class="register-mode-card__badge">Neuer Verein</span>
+              <span class="register-mode-card__title">Verein anfragen</span>
+              <span class="register-mode-card__copy">Für neue Vereine mit eigenen Pflichtangaben, Pending-Zustand und Freigabe durch das Admin-Board.</span>
+            </a>
           </div>
-        </section>
-
-        <section id="registerJoinSection" class="register-step">
-          <div class="register-step__head">
-            <span class="register-step__index">3A</span>
-            <div>
-              <h2>Bestehendem Verein beitreten</h2>
-              <p>Aktuell läuft der Beitritt über Invite-Link oder Invite-Token. Später kann hier auch ein Vereinscode wie <code>VD01</code> oder ein Vereins-QR genutzt werden.</p>
-            </div>
-          </div>
-          <div class="register-note small">
-            Bitte verwende die E-Mail-Adresse, die deinem Verein bereits bekannt ist.
-          </div>
-          <div class="register-grid">
-            <label>
-              <span>Einladungs-Token</span>
-              <input id="registerInviteToken" name="invite_token" type="text" value={inviteToken} autocomplete="off" />
-            </label>
-            <label>
-              <span>Vereins-Mitgliedsnummer</span>
-              <input id="registerMemberNo" name="member_no" type="text" inputmode="text" autocomplete="username" />
-            </label>
-          </div>
-          <div class="register-step__foot small">
-            Nach dem Auth-Abschluss und der Mailverifikation wirst du auf die Bestätigung deiner beim Verein hinterlegten Daten weitergeleitet, bevor du ins Portal gelangst.
-          </div>
-        </section>
-
-        <section id="registerCreateSection" class="register-step hidden" hidden>
-          <div class="register-step__head">
-            <span class="register-step__index">3B</span>
-            <div>
-              <span class="register-step__status">Vorschau / derzeit nicht öffentlich</span>
-              <h2>Neuen Verein anlegen</h2>
-              <p>Hier erfassen wir nur die rechtlich und organisatorisch für FCP relevanten Basisdaten, nicht schon die spätere Vereinsverwaltung.</p>
-            </div>
-          </div>
-          <div id="registerCreateLockedNote" class="register-note small">
-            Diese Strecke ist aktuell nur als Vorschau sichtbar. Die öffentliche Registrierung neuer Vereine ist derzeit noch nicht freigeschaltet.
-          </div>
-          <div class="register-note small">
-            Der Zugang wird als Vereinsadministrator-Zugang erstellt. Nach Möglichkeit sollte hierfür eine offizielle Vereins-E-Mail-Adresse verwendet werden und keine private Einzeladresse.
-          </div>
-          <fieldset id="registerCreateFieldset" class="register-create-fieldset is-locked" disabled>
-          <div class="register-grid">
-            <label>
-              <span>Vereinsname</span>
-              <input id="registerClubName" name="club_name" type="text" autocomplete="organization" />
-            </label>
-            <label>
-              <span>Vereinsgröße</span>
-              <select id="registerClubSize" name="club_size">
-                <option value="">Bitte auswählen</option>
-                <option value="small">Bis 100 Mitglieder</option>
-                <option value="medium">101 bis 300 Mitglieder</option>
-                <option value="large">301 bis 700 Mitglieder</option>
-                <option value="xlarge">Mehr als 700 Mitglieder</option>
-              </select>
-            </label>
-            <label class="register-grid__full">
-              <span>Vereinsanschrift</span>
-              <textarea id="registerClubAddress" name="club_address" rows="3" autocomplete="street-address"></textarea>
-            </label>
-            <label>
-              <span>Verantwortliche Person</span>
-              <input id="registerResponsibleName" name="responsible_name" type="text" autocomplete="name" />
-            </label>
-            <label>
-              <span>E-Mail der verantwortlichen Person</span>
-              <input id="registerResponsibleEmail" name="responsible_email" type="email" autocomplete="email" />
-            </label>
-          </div>
-          <label class="small register-check">
-            <input id="registerClubMailConfirm" type="checkbox" />
-            <span>Ich bestätige, dass für diesen Zugang nach Möglichkeit eine offizielle Vereins-E-Mail-Adresse verwendet wird und mir bewusst ist, dass der benannte Verantwortliche dem Eintrag widersprechen kann.</span>
-          </label>
-
-          <div class="register-billing-preview">
-            <div>
-              <strong>Billing-Vorbereitung</strong>
-              <p class="small">Die Billing-Stufe wird bereits vorbereitet. Die Preislogik nach Vereinsgröße ist hier sichtbar, Stripe wird in diesem Schritt aber noch nicht hart erzwungen. Im Superadmin-Kontext blockiert Billing diesen Test- und Setup-Schritt nicht.</p>
-            </div>
-            <div class="register-billing-preview__state small">
-              Vorgesehener Status nach diesem Schritt: <code>billing_pending</code>
-            </div>
-          </div>
-          </fieldset>
-        </section>
-
-        <section class="register-step register-step--legal">
-          <div class="register-step__head">
-            <span class="register-step__index">4</span>
-            <div>
-              <h2>Rechtstexte und Zustimmungen</h2>
-              <p>Ohne bestätigte Rechtstexte wird der Auth-Prozess nicht abgeschlossen.</p>
-            </div>
-          </div>
-          <label class="small register-check">
-            <input id="registerAccept" type="checkbox" required />
-            <span>
-              Ich akzeptiere die
-              <a href="/nutzungsbedingungen.html/" target="_blank" rel="noopener noreferrer">Nutzungsbedingungen</a>
-              und die
-              <a href="/datenschutz.html/" target="_blank" rel="noopener noreferrer">Datenschutzerklärung</a>.
-            </span>
-          </label>
         </section>
 
         <div class="register-flow__actions">
-          <button id="registerSubmitBtn" class="feed-btn fcp-brand-btn--primary" type="submit">Konto anlegen</button>
-          <a class="feed-btn feed-btn--ghost" href={`/login/?next=${encodeURIComponent(nextTarget)}`}>Zur Anmeldung</a>
-          <span id="registerMsg" class="small" aria-live="polite"></span>
+          <a class="feed-btn fcp-brand-btn--primary" href={clubRequestHref}>Verein anfragen</a>
+          <a class="feed-btn feed-btn--ghost" href={clubSignInHref}>Zum VereinsSignIn</a>
+          <a class="register-flow__secondary-link" href={`/login/?next=${encodeURIComponent(nextTarget)}`}>Zur Anmeldung</a>
         </div>
-      </form>
+      </div>
     </div>
   </section>
+
+  <script is:inline>
+    (() => {
+      const params = new URLSearchParams(window.location.search);
+      const invite = String(params.get("invite") || "").trim();
+      const clubId = String(params.get("club_id") || "").trim();
+      const clubCode = String(params.get("club_code") || "").trim();
+      const clubName = String(params.get("club_name") || "").trim();
+      const mode = String(params.get("mode") || "").trim().toLowerCase();
+      const next = String(params.get("next") || "/app/").trim();
+      const nextSafe = next.startsWith("/") ? next : "/app/";
+
+      const buildJoinQuery = () => {
+        const query = new URLSearchParams({ next: nextSafe });
+        if (invite) query.set("invite", invite);
+        if (clubId) query.set("club_id", clubId);
+        if (clubCode) query.set("club_code", clubCode);
+        if (clubName) query.set("club_name", clubName);
+        return query.toString();
+      };
+
+      if (invite) {
+        window.location.replace(`/vereinssignin/?${buildJoinQuery()}`);
+        return;
+      }
+
+      if (mode === "join_club") {
+        window.location.replace(`/vereinssignin/?${buildJoinQuery()}`);
+        return;
+      }
+
+      if (mode === "create_club") {
+        window.location.replace(`/verein-anfragen/?next=${encodeURIComponent(nextSafe)}`);
+      }
+    })();
+  </script>
 </Site>

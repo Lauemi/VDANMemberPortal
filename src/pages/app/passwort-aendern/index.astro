@@ -6,24 +6,39 @@ const nextRaw = Astro.url.searchParams.get("next") ?? "/app/";
 const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
 ---
 
-<Site title={`Passwort ändern • ${APP.name}`} description="Passwortänderung für den Mitgliederbereich." robots="noindex">
-  <section class="card" style="max-width:520px;margin:0 auto;">
-    <div class="card__body">
-      <h1>Passwort ändern</h1>
-      <p class="small">Aus Sicherheitsgründen musst du jetzt ein neues Passwort setzen.</p>
+<Site title={`Passwort ändern • ${APP.name}`} description="Passwortänderung für den Mitgliederbereich." robots="noindex" density="compact">
+  <section class="card ui-card register-flow-card form-shell" style="max-width:720px;margin:0 auto;">
+    <div class="card__body ui-card__body register-flow">
+      <div class="register-flow__intro">
+        <span class="register-flow__eyebrow">Zugang</span>
+        <div class="register-current-path">Aktiver Pfad: Passwort ändern</div>
+        <h1>Neues Passwort setzen</h1>
+        <p class="small register-flow__lede">Du befindest dich in einem geschützten Recovery-Schritt.</p>
+        <p class="register-flow__context small">Nach dem Speichern wird dein Zugang mit dem neuen Passwort weitergeführt und du wirst in den nächsten Schritt weitergeleitet.</p>
+      </div>
 
-      <form id="passwordChangeForm" data-next-target={nextTarget}>
-        <label>
-          <span>Neues Passwort</span>
-          <input id="newPassword" name="new_password" type="password" autocomplete="new-password" minlength="8" required />
-        </label>
-        <label>
-          <span>Neues Passwort wiederholen</span>
-          <input id="newPasswordRepeat" name="new_password_repeat" type="password" autocomplete="new-password" minlength="8" required />
-        </label>
+      <form id="passwordChangeForm" class="register-flow__form form-shell__section register-step is-active" data-next-target={nextTarget}>
+        <div class="register-step__head">
+          <span class="register-step__index">1</span>
+          <div>
+            <h2>Neues Passwort festlegen</h2>
+            <p>Wähle ein neues Passwort mit mindestens 8 Zeichen und bestätige es zur Sicherheit erneut.</p>
+          </div>
+        </div>
 
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button class="primary" type="submit">Passwort speichern</button>
+        <div class="register-grid">
+          <label>
+            <span>Neues Passwort</span>
+            <input id="newPassword" name="new_password" type="password" autocomplete="new-password" minlength="8" required />
+          </label>
+          <label>
+            <span>Neues Passwort wiederholen</span>
+            <input id="newPasswordRepeat" name="new_password_repeat" type="password" autocomplete="new-password" minlength="8" required />
+          </label>
+        </div>
+
+        <div class="register-flow__actions">
+          <button class="feed-btn fcp-brand-btn--primary" type="submit">Passwort speichern</button>
           <span id="passwordChangeMsg" class="small" aria-live="polite"></span>
         </div>
       </form>

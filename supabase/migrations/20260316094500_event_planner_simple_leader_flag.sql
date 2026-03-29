@@ -13,7 +13,7 @@ drop function if exists public.event_planner_upsert_for_base(
   boolean
 );
 
-create function public.event_planner_upsert_for_base(
+create or replace function public.event_planner_upsert_for_base(
   p_base_kind public.event_planner_base_kind,
   p_base_id uuid,
   p_approval_mode public.event_planner_approval_mode default 'manual',

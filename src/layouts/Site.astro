@@ -249,7 +249,7 @@ const publicMenuLinks = isFcpMode
                     <h3>Anmelden</h3>
                     <form id="headerQuickLoginForm" class="header-login-form">
                       <label>
-                        <span>Mitgliedsnummer oder E-Mail</span>
+                        <span>E-Mail</span>
                         <input id="headerQuickLoginIdentifier" type="text" autocomplete="username" placeholder="name@beispiel.de" />
                       </label>
                       <label>
@@ -260,28 +260,9 @@ const publicMenuLinks = isFcpMode
                         <button type="submit" class="feed-btn">Login</button>
                         <a class="feed-btn feed-btn--ghost" href="/login/">Zur Login-Seite</a>
                       </div>
+                      <p class="small"><a href="/passwort-vergessen/">Passwort vergessen?</a></p>
                       <p id="headerQuickLoginMsg" class="small" aria-live="polite"></p>
                     </form>
-                  </div>
-
-                  <div class="header-login-popover__section">
-                    <h3>Invite-Link</h3>
-                    <label class="header-login-field">
-                      <span>Invite-Link oder Token einfügen</span>
-                      <input id="headerInviteEntryInput" type="text" autocomplete="off" placeholder="https://... oder Token" />
-                    </label>
-                    <div class="header-login-form__actions">
-                      <button type="button" id="headerInviteEntryBtn" class="feed-btn feed-btn--ghost">Invite öffnen</button>
-                    </div>
-                    <p class="small">Der Link führt direkt in die Vereins-Registrierung mit vorausgefülltem Invite.</p>
-                  </div>
-
-                  <div class="header-login-popover__section">
-                    <h3>Verein registrieren</h3>
-                    <p class="small">Kein Invite zur Hand? Dann direkt in die Registrierungsstrecke wechseln.</p>
-                    <div class="header-login-form__actions">
-                      <a id="headerRegisterClubBtn" class="feed-btn" href="/registrieren/">Verein registrieren</a>
-                    </div>
                   </div>
                 </div>
               </div>

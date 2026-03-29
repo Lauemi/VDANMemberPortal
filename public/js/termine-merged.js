@@ -5,6 +5,7 @@
     all: [],
     rows: [],
     ansicht: "zeile",
+    activeClubId: "",
   };
   let profileLabelById = new Map();
 
@@ -15,11 +16,33 @@
     };
   }
 
-  async function sb(path) {
+  function session() {
+    return window.VDAN_AUTH?.loadSession?.() || null;
+  }
+
+  async function waitForAuthReady(timeoutMs = 3000) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (window.VDAN_AUTH?.loadSession) return true;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    return Boolean(window.VDAN_AUTH?.loadSession);
+  }
+
+  async function sb(path, withAuth = false) {
+    await waitForAuthReady();
     const { url, key } = cfg();
     const headers = new Headers();
     headers.set("apikey", key);
     headers.set("Content-Type", "application/json");
+    let token = session()?.access_token || "";
+    if (withAuth && !token && navigator.onLine && window.VDAN_AUTH?.refreshSession) {
+      const refreshed = await window.VDAN_AUTH.refreshSession().catch(() => null);
+      token = String(refreshed?.access_token || session()?.access_token || "").trim();
+    }
+    if (withAuth && token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
     const res = await fetch(`${url}${path}`, { method: "GET", headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -42,15 +65,22 @@
     if (el) el.textContent = text;
   }
 
-  async function loadProfileLabels(ids = []) {
+  async function loadProfileLabels(ids = [], withAuth = false) {
     const unique = [...new Set((Array.isArray(ids) ? ids : []).map((id) => String(id || "").trim()).filter(Boolean))];
     if (!unique.length) return new Map();
     const inList = unique.map((id) => `"${id}"`).join(",");
-    const rows = await sb(`/rest/v1/profiles?select=id,display_name,email,member_no&id=in.(${inList})`);
+    const rows = await sb(`/rest/v1/profiles?select=id,display_name,email,member_no&id=in.(${inList})`, withAuth);
     return new Map((Array.isArray(rows) ? rows : []).map((row) => [
       String(row.id || "").trim(),
       String(row.display_name || row.member_no || row.email || row.id || "").trim(),
     ]));
+  }
+
+  async function loadActiveClubId() {
+    const uid = String(session()?.user?.id || "").trim();
+    if (!uid) return "";
+    const rows = await sb(`/rest/v1/profiles?select=club_id&id=eq.${encodeURIComponent(uid)}&limit=1`, true).catch(() => []);
+    return String(rows?.[0]?.club_id || "").trim();
   }
 
   function creatorLabel(row) {
@@ -84,15 +114,17 @@
 
   async function listCombinedUpcoming() {
     const nowIso = new Date().toISOString();
+    const withAuth = Boolean(session()?.access_token);
+    const clubFilter = state.activeClubId ? `&club_id=eq.${encodeURIComponent(state.activeClubId)}` : "";
     const [terms, works] = await Promise.all([
-      sb(`/rest/v1/club_events?select=id,title,description,location,starts_at,ends_at,status,created_by&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`),
-      sb(`/rest/v1/work_events?select=id,title,description,location,starts_at,ends_at,status,created_by&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}&order=starts_at.asc`),
+      sb(`/rest/v1/club_events?select=id,club_id,title,description,location,starts_at,ends_at,status,created_by&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}${clubFilter}&order=starts_at.asc`, withAuth),
+      sb(`/rest/v1/work_events?select=id,club_id,title,description,location,starts_at,ends_at,status,created_by&status=eq.published&ends_at=gte.${encodeURIComponent(nowIso)}${clubFilter}&order=starts_at.asc`, withAuth),
     ]);
 
     profileLabelById = await loadProfileLabels([
       ...(Array.isArray(terms) ? terms : []).map((row) => row?.created_by),
       ...(Array.isArray(works) ? works : []).map((row) => row?.created_by),
-    ]).catch(() => new Map());
+    ], withAuth).catch(() => new Map());
 
     const t = (Array.isArray(terms) ? terms : []).map((x) => ({ ...x, kind: "termin", badge: "Termin", row_id: `termin:${x.id}` }));
     const w = (Array.isArray(works) ? works : []).map((x) => ({ ...x, kind: "arbeitseinsatz", badge: "Arbeitseinsatz", row_id: `arbeit:${x.id}` }));
@@ -189,6 +221,7 @@
   }
 
   async function init() {
+    await waitForAuthReady();
     const { url, key } = cfg();
     if (!url || !key) {
       setMsg("Supabase-Konfiguration fehlt.");
@@ -204,6 +237,13 @@
 
     try {
       setMsg("");
+      state.activeClubId = await loadActiveClubId().catch(() => "");
+      if (session()?.access_token && !state.activeClubId) {
+        state.all = [];
+        renderAll();
+        setMsg("Kein aktiver Vereinskontext für Termine gefunden.");
+        return;
+      }
       state.all = await listCombinedUpcoming();
       renderAll();
     } catch (err) {
@@ -234,4 +274,5 @@
   }
 
   document.addEventListener("DOMContentLoaded", init);
+  document.addEventListener("vdan:session", init);
 })();

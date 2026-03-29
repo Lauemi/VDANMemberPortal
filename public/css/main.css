@@ -52,7 +52,7 @@ body[data-app-theme="fcp_tactical"]{
   --muted: rgba(108,112,91,.92);
   --line: rgba(108,112,91,.26);
   --accent: #595a3d;
-  --accent-warm: #ffc830;
+  --accent-warm: #ddd4c2;
   --accent-warm-soft: rgba(255,200,48,.22);
   --accent-cool-soft: rgba(89,90,61,.22);
   --shadow: 0 14px 32px rgba(62,56,34,.15);
@@ -123,14 +123,14 @@ body[data-app-theme="fcp_brand"] select{
 }
 
 body[data-app-theme="fcp_brand"] .feed-btn{
-  border-color:rgba(89,90,61,.34);
-  background:linear-gradient(180deg, rgba(89,90,61,.3), rgba(18,22,17,.95));
+  border-color:rgba(89,90,61,.52);
+  background:linear-gradient(180deg, rgba(109,111,78,.96), rgba(75,76,51,.96));
   color:var(--text);
 }
 
 body[data-app-theme="fcp_brand"] .feed-btn--ghost{
-  border-color:rgba(217,193,111,.24);
-  background:rgba(16,20,16,.84);
+  border-color:rgba(89,90,61,.28);
+  background:rgba(89,90,61,.16);
   color:var(--text);
 }
 
@@ -1554,7 +1554,7 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
 }
 
 .fcp-brand-kicker{
-  color:var(--accent);
+  color:var(--accent-warm);
   font-size:.78rem;
   font-weight:800;
   letter-spacing:.12em;
@@ -1563,11 +1563,12 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
 
 .fcp-brand-hero__content h1{
   margin:0;
+  color:var(--accent-warm);
   font-size:clamp(2.45rem, 3.9vw, 4.9rem);
   line-height:1.01;
   letter-spacing:-.04em;
-  /* max-width:9ch; */
   text-wrap:balance;
+  overflow-wrap:anywhere;
 }
 
 .fcp-brand-hero__content p{
@@ -1590,7 +1591,10 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
   color:#f5f1e8;
   border-color:transparent;
 }
-
+span.fcp-brand-soon-note,
+a.feed-btn.feed-btn--ghost[href="/login/"] {
+  display: none;
+}
 .fcp-brand-soon-note{
   display:inline-flex;
   align-items:center;
@@ -1665,6 +1669,7 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
   border-radius:22px;
   background:linear-gradient(180deg, rgba(245,241,232,.1), rgba(40,45,37,.94));
   min-height:220px;
+  min-width:0;
 }
 
 .fcp-brand-card--accent{
@@ -1674,7 +1679,7 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
 }
 
 .fcp-brand-card__eyebrow{
-  color:var(--accent);
+  color:var(--accent-warm);
   font-size:.75rem;
   font-weight:700;
   letter-spacing:.12em;
@@ -1685,9 +1690,12 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
 .fcp-brand-showcase__copy h2,
 .fcp-brand-story__copy h2{
   margin:0;
+  color:var(--accent-warm);
   font-size:clamp(1.6rem, 3vw, 2.8rem);
   line-height:1;
   letter-spacing:-.03em;
+  text-wrap:balance;
+  overflow-wrap:anywhere;
 }
 
 .fcp-brand-card p,
@@ -1728,6 +1736,8 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
   border:1px solid rgba(232,217,181,.1);
   border-radius:16px;
   background:rgba(245,241,232,.04);
+  min-width:0;
+  overflow-wrap:anywhere;
 }
 
 .fcp-brand-bullets div{
@@ -1783,8 +1793,11 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
 
 .fcp-brand-panel__hero h3{
   margin:6px 0 0;
+  color:var(--accent-warm);
   font-size:1.9rem;
   line-height:1;
+  text-wrap:balance;
+  overflow-wrap:anywhere;
 }
 
 .fcp-brand-chip{
@@ -1794,7 +1807,7 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
   border-radius:999px;
   border:1px solid rgba(89,90,61,.22);
   background:rgba(89,90,61,.12);
-  color:var(--accent);
+  color:var(--accent-warm);
   font-size:.78rem;
   font-weight:700;
 }
@@ -1812,6 +1825,7 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
   border:1px solid rgba(232,217,181,.09);
   border-radius:18px;
   background:rgba(245,241,232,.04);
+  min-width:0;
 }
 
 .fcp-brand-panel__stats span,
@@ -1826,7 +1840,7 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
 }
 
 .fcp-brand-tile span{
-  color:var(--accent);
+  color:var(--accent-warm);
   font-weight:800;
   letter-spacing:.08em;
 }
@@ -1886,10 +1900,33 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
 .fcp-brand-about__copy h2,
 .fcp-brand-about__founder h2{
   margin:0;
+  color:var(--accent-warm);
   font-size:clamp(1.7rem, 3vw, 3rem);
   line-height:1.02;
   letter-spacing:-.03em;
   text-wrap:balance;
+  overflow-wrap:anywhere;
+}
+
+.fcp-brand-showcase__copy,
+.fcp-brand-showcase__visual,
+.fcp-brand-story__copy,
+.fcp-brand-about__copy,
+.fcp-brand-about__founder,
+.fcp-brand-panel__hero > div,
+.fcp-brand-panel__stats > div,
+.fcp-brand-panel__tiles > div{
+  min-width:0;
+}
+
+.fcp-brand-card p,
+.fcp-brand-showcase__copy p,
+.fcp-brand-story__copy p,
+.fcp-brand-about__copy p,
+.fcp-brand-about__founder p,
+.fcp-brand-panel__stats span,
+.fcp-brand-tile strong{
+  overflow-wrap:anywhere;
 }
 
 .fcp-brand-about__copy{
@@ -6267,7 +6304,7 @@ body[data-portal-rail-side="left"] .feedback-fab{
 /* FCP Tactical final overrides (keep at file end for precedence) */
 body[data-app-theme="fcp_tactical"] p,
 body[data-app-theme="fcp_tactical"] .small{
-  color: var(--muted);
+  color: var(--accent-warm);
 }
 
 body[data-app-theme="fcp_tactical"] .card,
@@ -6280,7 +6317,9 @@ body[data-app-theme="fcp_tactical"] .burger-popover{
   color: var(--text);
   padding: 0.5em;
 }
-
+.header-login-popover__section + .header-login-popover__section p .small{
+color:var(--accent-strong)
+}
 body[data-app-theme="fcp_tactical"] .card p,
 body[data-app-theme="fcp_tactical"] .feed-post p,
 body[data-app-theme="fcp_tactical"] .portal-quick-panel p{
@@ -6352,8 +6391,27 @@ body[data-app-theme="fcp_tactical"] .header-notification-badge{
   margin-bottom:8px;
 }
 
+.register-current-path{
+  display:inline-flex;
+  width:max-content;
+  align-items:center;
+  padding:7px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,166,74,.24);
+  background:rgba(255,166,74,.08);
+  color:#f5e6c3;
+  font-size:.72rem;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
 .register-flow__intro h1{
   margin:0;
+}
+
+.register-flow__lede{
+  max-width:54ch;
 }
 
 .register-flow__eyebrow{
@@ -6391,6 +6449,16 @@ body[data-app-theme="fcp_tactical"] .header-notification-badge{
   border-radius:14px;
   border:1px solid rgba(232,217,181,.08);
   background:rgba(255,255,255,.012);
+}
+
+.register-step--mode{
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+}
+
+.register-step.is-active{
+  border-color:rgba(255,166,74,.24);
+  background:linear-gradient(180deg, rgba(255,166,74,.09), rgba(255,255,255,.02));
+  box-shadow:0 18px 34px rgba(8,10,8,.18);
 }
 
 .register-step__head{
@@ -6465,6 +6533,7 @@ body[data-app-theme="fcp_tactical"] .header-notification-badge{
   border:1px solid rgba(232,217,181,.18);
   background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
   cursor:pointer;
+  transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
 }
 
 .register-mode-card input{
@@ -6473,13 +6542,36 @@ body[data-app-theme="fcp_tactical"] .header-notification-badge{
   right:16px;
 }
 
+.register-mode-card:hover{
+  transform:translateY(-1px);
+}
+
 .register-mode-card:has(input:checked){
   border-color:rgba(255,166,74,.5);
   box-shadow:0 16px 30px rgba(8,10,8,.24);
 }
 
+.register-mode-card.is-active{
+  border-color:rgba(255,166,74,.58);
+  background:linear-gradient(180deg, rgba(255,166,74,.16), rgba(255,255,255,.03));
+  box-shadow:0 16px 30px rgba(8,10,8,.24);
+}
+
 .register-mode-card.is-locked{
   border-style:dashed;
+}
+
+.register-mode-card__badge{
+  display:inline-flex;
+  width:max-content;
+  padding:4px 8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.06);
+  color:var(--muted);
+  font-size:.68rem;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
 }
 
 .register-mode-card__title{
@@ -6491,6 +6583,7 @@ body[data-app-theme="fcp_tactical"] .header-notification-badge{
 .register-mode-card__copy{
   color:var(--muted);
   line-height:1.55;
+  overflow-wrap:anywhere;
 }
 
 .register-note{
@@ -6506,6 +6599,14 @@ body[data-app-theme="fcp_tactical"] .header-notification-badge{
   color:var(--muted);
   font-size:.82rem;
   line-height:1.4;
+}
+
+body[data-app-theme="fcp_brand"] #registerForm[data-register-mode="create_club"] .register-step--join{
+  display:none;
+}
+
+body[data-app-theme="fcp_brand"] #registerForm[data-register-mode="join_club"] .register-step--create{
+  display:none;
 }
 
 .register-internal-entry{
@@ -6623,6 +6724,296 @@ body[data-app-theme="fcp_tactical"] .header-notification-badge{
   gap:6px;
 }
 
+body[data-app-theme="fcp_brand"] .register-flow-card{
+  border-color:rgba(232,217,181,.28);
+  background:linear-gradient(180deg, rgba(247,241,229,.97), rgba(235,224,205,.96));
+  box-shadow:
+    0 22px 44px rgba(8,10,8,.26),
+    0 10px 24px rgba(66,58,38,.12),
+    inset 0 1px 0 rgba(255,249,238,.72);
+}
+
+body[data-app-theme="fcp_brand"] .register-flow-card .card__body,
+body[data-app-theme="fcp_brand"] .register-flow-card .ui-card__body{
+  color:#3e3a31;
+}
+
+body[data-app-theme="fcp_brand"] .register-flow__intro h1,
+body[data-app-theme="fcp_brand"] .register-step__head h2,
+body[data-app-theme="fcp_brand"] .register-mode-card__title,
+body[data-app-theme="fcp_brand"] .register-billing-preview strong,
+body[data-app-theme="fcp_brand"] .register-flow label > span:first-child{
+  color:#3e3a31;
+}
+
+body[data-app-theme="fcp_brand"] .register-flow__eyebrow{
+  border-color:rgba(170,134,74,.22);
+  background:transparent;
+  color:#8d7545;
+}
+
+body[data-app-theme="fcp_brand"] .register-current-path{
+  padding:5px 10px;
+  border-color:rgba(170,134,74,.18);
+  background:rgba(255,248,235,.42);
+  color:#9a8660;
+  font-size:.66rem;
+  letter-spacing:.12em;
+}
+
+body[data-app-theme="fcp_brand"] .register-flow__lede,
+body[data-app-theme="fcp_brand"] .register-flow__context,
+body[data-app-theme="fcp_brand"] .register-step__head p,
+body[data-app-theme="fcp_brand"] .register-mode-card__badge,
+body[data-app-theme="fcp_brand"] .register-mode-card__copy,
+body[data-app-theme="fcp_brand"] .register-note,
+body[data-app-theme="fcp_brand"] .register-step__foot,
+body[data-app-theme="fcp_brand"] .register-flow__secondary-link,
+body[data-app-theme="fcp_brand"] .register-billing-preview p,
+body[data-app-theme="fcp_brand"] .register-billing-preview__state,
+body[data-app-theme="fcp_brand"] .register-check{
+  color:rgba(76,70,58,.86);
+}
+
+body[data-app-theme="fcp_brand"] .register-step{
+  border-color:rgba(170,134,74,.18);
+  background:linear-gradient(180deg, rgba(250,245,236,.88), rgba(239,229,211,.84));
+}
+
+body[data-app-theme="fcp_brand"] .register-step.is-active,
+body[data-app-theme="fcp_brand"] .register-step--mode{
+  border-color:rgba(214,170,96,.34);
+  background:linear-gradient(180deg, rgba(252,246,235,.96), rgba(243,231,212,.9));
+  box-shadow:0 18px 34px rgba(66,58,38,.12);
+}
+
+body[data-app-theme="fcp_brand"] .register-step__index{
+  background:linear-gradient(180deg, rgba(232,195,131,.58), rgba(167,132,75,.62));
+  color:#fff8ec;
+}
+
+body[data-app-theme="fcp_brand"] .register-step__status{
+  border-color:rgba(214,170,96,.34);
+  background:rgba(240,195,121,.16);
+  color:#8d6a2f;
+}
+
+body[data-app-theme="fcp_brand"] .register-mode-card{
+  border-color:rgba(170,134,74,.16);
+  background:linear-gradient(180deg, rgba(255,252,247,.82), rgba(242,232,214,.84));
+  box-shadow:0 8px 22px rgba(66,58,38,.08);
+}
+
+body[data-app-theme="fcp_brand"] .register-mode-card.is-active,
+body[data-app-theme="fcp_brand"] .register-mode-card:has(input:checked){
+  border-color:rgba(214,170,96,.54);
+  background:linear-gradient(180deg, rgba(255,249,239,.98), rgba(244,230,208,.94));
+  box-shadow:0 16px 30px rgba(66,58,38,.16);
+}
+
+body[data-app-theme="fcp_brand"] .register-mode-card__badge{
+  background:rgba(240,195,121,.14);
+}
+
+body[data-app-theme="fcp_brand"] .register-note,
+body[data-app-theme="fcp_brand"] .register-billing-preview{
+  border-color:rgba(214,170,96,.24);
+  background:linear-gradient(180deg, rgba(255,250,241,.78), rgba(244,233,214,.74));
+}
+
+body[data-app-theme="fcp_brand"] .register-flow input:not([type="checkbox"]):not([type="radio"]),
+body[data-app-theme="fcp_brand"] .register-flow select,
+body[data-app-theme="fcp_brand"] .register-flow textarea{
+  background:rgba(255,251,245,.96);
+  border-color:rgba(170,134,74,.2);
+  color:#353128;
+}
+
+body[data-app-theme="fcp_brand"] .register-flow input::placeholder,
+body[data-app-theme="fcp_brand"] .register-flow textarea::placeholder{
+  color:rgba(116,103,79,.72);
+}
+
+body[data-app-theme="fcp_brand"] .register-flow__secondary-link:hover,
+body[data-app-theme="fcp_brand"] .register-flow__secondary-link:focus-visible{
+  color:#3e3a31;
+}
+
+body[data-app-theme="fcp_brand"] .register-flow{
+  gap:24px;
+}
+
+body[data-app-theme="fcp_brand"] .register-flow__intro{
+  gap:10px;
+  margin-bottom:0;
+}
+
+body[data-app-theme="fcp_brand"] .register-flow__intro h1{
+  font-size:clamp(2rem, 3vw, 2.55rem);
+  line-height:1.02;
+}
+
+body[data-app-theme="fcp_brand"] .register-flow__lede{
+  font-size:.98rem;
+  line-height:1.55;
+}
+
+body[data-app-theme="fcp_brand"] .register-flow__context{
+  font-size:.84rem;
+  line-height:1.5;
+  max-width:52ch;
+}
+
+body[data-app-theme="fcp_brand"] .register-step{
+  gap:14px;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+
+body[data-app-theme="fcp_brand"] .register-step.is-active,
+body[data-app-theme="fcp_brand"] .register-step--mode{
+  border:0;
+  background:transparent;
+  box-shadow:none;
+}
+
+body[data-app-theme="fcp_brand"] .register-step + .register-step{
+  padding-top:22px;
+  border-top:1px solid rgba(170,134,74,.14);
+}
+
+body[data-app-theme="fcp_brand"] .register-step--legal{
+  padding-top:18px;
+  border-top:1px solid rgba(170,134,74,.14);
+}
+
+body[data-app-theme="fcp_brand"] .register-step__head{
+  gap:10px;
+}
+
+body[data-app-theme="fcp_brand"] .register-step__head h2{
+  margin-bottom:4px;
+  font-size:1rem;
+}
+
+body[data-app-theme="fcp_brand"] .register-step__head p{
+  max-width:58ch;
+}
+
+body[data-app-theme="fcp_brand"] .register-step__index{
+  min-width:26px;
+  height:26px;
+  border-radius:999px;
+  background:rgba(240,195,121,.22);
+  color:#8d6a2f;
+  font-size:.68rem;
+  box-shadow:none;
+}
+
+body[data-app-theme="fcp_brand"] .register-step__status{
+  margin-bottom:4px;
+}
+
+body[data-app-theme="fcp_brand"] .register-mode-grid{
+  gap:12px;
+}
+
+body[data-app-theme="fcp_brand"] .register-mode-card{
+  gap:6px;
+  padding:14px 16px;
+  border-color:rgba(170,134,74,.12);
+  background:rgba(255,252,247,.44);
+  box-shadow:none;
+}
+
+body[data-app-theme="fcp_brand"] .register-mode-card:hover{
+  transform:none;
+}
+
+body[data-app-theme="fcp_brand"] .register-mode-card.is-active,
+body[data-app-theme="fcp_brand"] .register-mode-card:has(input:checked){
+  border-color:rgba(214,170,96,.54);
+  background:rgba(252,243,227,.96);
+  box-shadow:0 10px 22px rgba(66,58,38,.12);
+}
+
+body[data-app-theme="fcp_brand"] .register-mode-card__badge{
+  color:#8d7545;
+}
+
+body[data-app-theme="fcp_brand"] .register-note,
+body[data-app-theme="fcp_brand"] .register-billing-preview{
+  padding:12px 14px;
+  border:1px solid rgba(198,173,103,.16);
+  border-radius:14px;
+  background:rgba(255,249,232,.42);
+  box-shadow:none;
+}
+
+body[data-app-theme="fcp_brand"] .register-note{
+  font-size:.84rem;
+}
+
+body[data-app-theme="fcp_brand"] .register-billing-preview{
+  gap:8px;
+}
+
+body[data-app-theme="fcp_brand"] .register-billing-preview strong{
+  display:block;
+  margin-bottom:2px;
+}
+
+body[data-app-theme="fcp_brand"] .register-grid{
+  gap:12px 14px;
+}
+
+body[data-app-theme="fcp_brand"] .register-flow input:not([type="checkbox"]):not([type="radio"]),
+body[data-app-theme="fcp_brand"] .register-flow select,
+body[data-app-theme="fcp_brand"] .register-flow textarea{
+  background:#fff;
+  border-color:rgba(62,58,49,.12);
+  box-shadow:none;
+}
+
+body[data-app-theme="fcp_brand"] .register-flow input:focus,
+body[data-app-theme="fcp_brand"] .register-flow select:focus,
+body[data-app-theme="fcp_brand"] .register-flow textarea:focus{
+  border-color:rgba(214,170,96,.48);
+  box-shadow:0 0 0 3px rgba(240,195,121,.14);
+}
+
+body[data-app-theme="fcp_brand"] .register-flow__actions{
+  padding-top:18px;
+  border-top:1px solid rgba(170,134,74,.14);
+  align-items:center;
+}
+
+body[data-app-theme="fcp_brand"] .register-flow__actions .feed-btn--ghost{
+  border-color:rgba(170,134,74,.14);
+  background:rgba(255,252,247,.7);
+  color:#5a5143;
+}
+
+body[data-app-theme="fcp_brand"] #registerForm[data-auth-bypass="true"][data-register-mode="create_club"] #registerAuthSection{
+  gap:8px;
+}
+
+body[data-app-theme="fcp_brand"] #registerForm[data-auth-bypass="true"][data-register-mode="create_club"] #registerAuthSection .register-grid{
+  display:none;
+}
+
+body[data-app-theme="fcp_brand"] #registerForm[data-auth-bypass="true"][data-register-mode="create_club"] #registerPasswordHint{
+  margin:0;
+  padding:12px 14px;
+  border:1px solid rgba(198,173,103,.16);
+  border-radius:14px;
+  background:rgba(255,249,232,.42);
+  color:rgba(76,70,58,.86);
+}
+
 @media (max-width: 760px){
   .register-flow-card .card__body{
     padding:16px;
@@ -6664,14 +7055,117 @@ body[data-app-theme="fcp_tactical"] .header-notification-badge{
   margin:0 auto;
 }
 
+body[data-app-theme="fcp_brand"] .login-shell{
+  max-width:840px;
+}
+
 .login-shell .ui-card__body{
   display:grid;
   gap:var(--section-gap);
 }
 
+body[data-app-theme="fcp_brand"] .login-shell .ui-card__body{
+  color:#353128;
+}
+
 .login-shell__intro{
   display:grid;
   gap:var(--field-gap);
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__intro{
+  gap:10px;
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__intro h1{
+  margin:0;
+  color:#2f2b22;
+  font-size:clamp(2rem, 3vw, 2.55rem);
+  line-height:1.02;
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__mode,
+body[data-app-theme="fcp_brand"] .login-shell__form-step{
+  border-color:rgba(214,170,96,.34);
+  background:linear-gradient(180deg, rgba(252,246,235,.96), rgba(243,231,212,.9));
+  box-shadow:0 18px 34px rgba(66,58,38,.12);
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__mode .register-step__head h2,
+body[data-app-theme="fcp_brand"] .login-shell__form-step .register-step__head h2{
+  color:#2f2b22;
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__mode .register-step__head p,
+body[data-app-theme="fcp_brand"] .login-shell__form-step .register-step__head p,
+body[data-app-theme="fcp_brand"] .login-shell__links,
+body[data-app-theme="fcp_brand"] .login-shell__links .small{
+  color:rgba(76,70,58,.86);
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__mode .register-mode-card{
+  border-color:rgba(170,134,74,.16);
+  background:linear-gradient(180deg, rgba(255,252,247,.82), rgba(242,232,214,.84));
+  box-shadow:0 8px 22px rgba(66,58,38,.08);
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__mode .register-mode-card:hover,
+body[data-app-theme="fcp_brand"] .login-shell__mode .register-mode-card:focus-visible{
+  border-color:rgba(214,170,96,.38);
+  background:linear-gradient(180deg, rgba(255,250,242,.94), rgba(246,235,216,.92));
+  box-shadow:0 14px 26px rgba(66,58,38,.14);
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__mode .register-mode-card.is-active{
+  border-color:rgba(214,170,96,.54);
+  background:linear-gradient(180deg, rgba(255,249,239,.98), rgba(244,230,208,.94));
+  box-shadow:0 16px 30px rgba(66,58,38,.16);
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__mode .register-mode-card__title{
+  color:#2f2b22;
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__form-step .ui-field > span{
+  color:#3e3a31;
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__form-step input:not([type="checkbox"]):not([type="radio"]){
+  background:rgba(255,251,245,.96);
+  border-color:rgba(170,134,74,.2);
+  color:#353128;
+  box-shadow:none;
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__form-step input::placeholder{
+  color:rgba(116,103,79,.72);
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__form-step input:focus{
+  border-color:rgba(214,170,96,.48);
+  box-shadow:0 0 0 3px rgba(240,195,121,.14);
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__form-step .ui-actions{
+  padding-top:4px;
+  align-items:center;
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__form-step .primary{
+  border-color:transparent;
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__links a{
+  color:#6f5527;
+}
+
+body[data-app-theme="fcp_brand"] .login-shell__links a:hover,
+body[data-app-theme="fcp_brand"] .login-shell__links a:focus-visible{
+  color:#4d3b19;
+}
+
+body[data-app-theme="fcp_brand"] .login-shell hr{
+  border-color:rgba(170,134,74,.14);
 }
 
 .login-shell__legacy-note{
@@ -6943,6 +7437,12 @@ body[data-app-theme="fcp_tactical"] .portal-quick-row{
   background: rgba(243,239,229,.94);
 }
 
+body[data-app-theme="fcp_tactical"] .portal-quick-user-badge{
+  border-color: rgba(221,212,194,.75);
+  background: rgba(243,239,229,.95);
+  color: var(--text);
+}
+
 body[data-app-theme="fcp_tactical"] .member-notification-card{
   border-color: rgba(221,212,194,.88);
   background: rgba(243,239,229,.94);
@@ -6955,11 +7455,40 @@ body[data-app-theme="fcp_tactical"] .member-notifications-empty{
 }
 
 body[data-app-theme="fcp_tactical"] .portal-quick-star{
-  color: rgba(89,90,61,.72);
+  width:32px;
+  height:32px;
+  min-width:32px;
+  min-height:32px;
+  border-radius:999px;
+  background:rgba(89,90,61,.92);
+  color:rgba(232,217,181,.72);
 }
 
 body[data-app-theme="fcp_tactical"] .portal-quick-star.is-active{
-  color: var(--accent-warm);
+  color:#ffc830;
+}
+
+body[data-app-theme="fcp_tactical"] .portal-quick-star:hover,
+body[data-app-theme="fcp_tactical"] .portal-quick-star:focus-visible{
+  background:rgba(104,106,72,.96);
+}
+
+body[data-app-theme="fcp_tactical"] .portal-quick-logout-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:32px;
+  padding:0 12px;
+  border:1px solid rgba(89,90,61,.24);
+  border-radius:14px;
+  background:rgba(89,90,61,.16);
+  text-decoration:none;
+}
+
+body[data-app-theme="fcp_tactical"] .portal-quick-logout-link:hover,
+body[data-app-theme="fcp_tactical"] .portal-quick-logout-link:focus-visible{
+  background:rgba(89,90,61,.22);
+  color:#4b4c33;
 }
 
 body[data-app-theme="fcp_tactical"] .account-popover{
@@ -7041,11 +7570,77 @@ body[data-app-theme="fcp_brand"] .member-notifications-mark-all{
 }
 
 body[data-app-theme="fcp_brand"] .portal-quick-star{
-  color: rgba(89,90,61,.72);
+  width:32px;
+  height:32px;
+  min-width:32px;
+  min-height:32px;
+  border-radius:999px;
+  background:rgba(89,90,61,.92);
+  color:rgba(232,217,181,.72);
 }
 
 body[data-app-theme="fcp_brand"] .portal-quick-star.is-active{
   color: #ffc830;
+}
+
+body[data-app-theme="fcp_brand"] .portal-quick-star:hover,
+body[data-app-theme="fcp_brand"] .portal-quick-star:focus-visible{
+  background:rgba(104,106,72,.96);
+}
+
+body[data-app-theme="fcp_brand"] .portal-quick-logout-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:32px;
+  padding:0 12px;
+  border:1px solid rgba(89,90,61,.24);
+  border-radius:14px;
+  background:rgba(89,90,61,.16);
+  text-decoration:none;
+}
+
+body[data-app-theme="fcp_brand"] .portal-quick-logout-link:hover,
+body[data-app-theme="fcp_brand"] .portal-quick-logout-link:focus-visible{
+  background:rgba(89,90,61,.22);
+  color:#4b4c33;
+}
+
+body[data-app-theme="fcp_brand"] .portal-tile-star{
+  width:36px;
+  height:36px;
+  min-width:36px;
+  border-radius:999px;
+  background:rgba(89,90,61,.92);
+  color:rgba(232,217,181,.72);
+  font-size:25px;
+}
+
+body[data-app-theme="fcp_brand"] .portal-tile-star:hover,
+body[data-app-theme="fcp_brand"] .portal-tile-star.is-active{
+  background:rgba(104,106,72,.98);
+  color:#ffd24a;
+}
+
+body[data-app-theme="fcp_brand"] .member-entry__btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:40px;
+  padding:0 14px;
+  border:1px solid rgba(89,90,61,.48);
+  border-radius:16px;
+  background:linear-gradient(180deg, rgba(109,111,78,.96), rgba(75,76,51,.96));
+  color:#f5f1e8;
+  text-decoration:none;
+  box-shadow:0 10px 20px rgba(62,56,34,.18);
+}
+
+body[data-app-theme="fcp_brand"] .member-entry__btn--ghost{
+  border-color:rgba(89,90,61,.24);
+  background:rgba(89,90,61,.16);
+  color:#4b4c33;
+  box-shadow:none;
 }
 
 body[data-app-theme="fcp_tactical"] .feedback-fab{

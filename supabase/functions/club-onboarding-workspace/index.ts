@@ -64,17 +64,31 @@ async function sbServiceFetch(path: string, init: RequestInit = {}) {
 async function getAuthUser(req: Request) {
   const base = Deno.env.get("SUPABASE_URL") || "";
   const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-  const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+  const bearerHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+  const customToken = txt(req.headers.get("x-vdan-access-token"));
+  const authHeader = customToken ? `Bearer ${customToken}` : bearerHeader;
   if (!base || !service || !authHeader) return null;
-  const res = await fetch(`${base}/auth/v1/user`, {
-    method: "GET",
-    headers: {
-      apikey: service,
-      Authorization: authHeader,
-    },
-  });
-  if (!res.ok) return null;
-  return await res.json().catch(() => null);
+  const requestApiKey = txt(req.headers.get("apikey") || req.headers.get("Apikey") || "");
+  const apiKeys = [
+    requestApiKey,
+    service,
+    Deno.env.get("SUPABASE_ANON_KEY") || "",
+    Deno.env.get("PUBLIC_SUPABASE_ANON_KEY") || "",
+  ].map((value) => txt(value)).filter(Boolean);
+
+  for (const apiKey of apiKeys) {
+    const res = await fetch(`${base}/auth/v1/user`, {
+      method: "GET",
+      headers: {
+        apikey: apiKey,
+        Authorization: authHeader,
+      },
+    }).catch(() => null);
+    if (!res?.ok) continue;
+    const user = await res.json().catch(() => null);
+    if (user?.id) return user;
+  }
+  return null;
 }
 
 async function loadJson(path: string) {
@@ -137,7 +151,7 @@ async function loadWorkspace(clubId: string) {
     readSetting(`club_meta:${clubId}`),
     readSetting(`club_cards:${clubId}`),
     loadJson(`/rest/v1/water_bodies?select=id,name,area_kind,is_active&club_id=eq.${encodeURIComponent(clubId)}&order=name.asc`),
-    loadJson(`/rest/v1/club_members?select=member_no,first_name,last_name,status,fishing_card_type,city&club_id=eq.${encodeURIComponent(clubId)}&order=member_no.asc`),
+    loadJson(`/rest/v1/club_members?select=member_no,first_name,last_name,status,fishing_card_type&club_id=eq.${encodeURIComponent(clubId)}&order=member_no.asc`),
   ]);
 
   const meta = parseJsonObject(clubMetaRaw);
@@ -188,9 +202,15 @@ Deno.serve(async (req: Request) => {
     if (action === "save_club_data") {
       const clubName = txt(body.club_name);
       if (!clubName) throw new Error("club_name_required");
+      const existingClubCode = await findClubCode(clubId);
+      const submittedClubCode = upper(body.club_code);
+      if (submittedClubCode && existingClubCode && submittedClubCode !== existingClubCode) {
+        throw new Error("club_code_readonly");
+      }
       const clubMeta = {
         club_id: clubId,
         club_name: clubName,
+        club_code: existingClubCode,
         street: txt(body.street),
         zip: txt(body.zip),
         city: txt(body.city),

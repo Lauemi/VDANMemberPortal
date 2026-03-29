@@ -56,21 +56,73 @@ async function callRpc<T>(fn: string, payload: Record<string, unknown>) {
 }
 
 async function getAuthUser(req: Request, supabaseUrl: string, serviceKey: string) {
-  const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
-  if (!authHeader) return null;
-  const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    method: "GET",
-    headers: {
-      apikey: serviceKey,
-      Authorization: authHeader,
-    },
-  });
-  if (!res.ok) return null;
-  const user = await res.json().catch(() => null);
-  return user?.id ? user : null;
+  const bearerHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+  const customToken = String(req.headers.get("x-vdan-access-token") || "").trim();
+  const authHeader = customToken ? `Bearer ${customToken}` : bearerHeader;
+  const debug: Record<string, unknown> = {
+    hasAuthorizationHeader: Boolean(bearerHeader),
+    hasCustomToken: Boolean(customToken),
+    bearerHeaderPrefix: bearerHeader ? `${bearerHeader.slice(0, 24)}...` : "",
+    customTokenPrefix: customToken ? `${customToken.slice(0, 24)}...` : "",
+    customTokenSegments: customToken ? customToken.split(".").length : 0,
+    authHeaderPrefix: authHeader ? `${authHeader.slice(0, 32)}...` : "",
+  };
+  if (!authHeader) return { user: null, debug };
+  const requestApiKey = String(
+    req.headers.get("apikey")
+    || req.headers.get("Apikey")
+    || "",
+  ).trim();
+  debug.requestApiKeyPrefix = requestApiKey ? `${requestApiKey.slice(0, 16)}...` : "";
+  const apiKeys = [
+    requestApiKey,
+    serviceKey,
+    Deno.env.get("SUPABASE_ANON_KEY") || "",
+    Deno.env.get("PUBLIC_SUPABASE_ANON_KEY") || "",
+  ].map((value) => String(value || "").trim()).filter(Boolean);
+  const attempts: Array<Record<string, unknown>> = [];
+
+  for (const apiKey of apiKeys) {
+    const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      method: "GET",
+      headers: {
+        apikey: apiKey,
+        Authorization: authHeader,
+      },
+    }).catch(() => null);
+    if (!res) {
+      attempts.push({ apiKeyPrefix: `${apiKey.slice(0, 16)}...`, ok: false, status: "fetch_failed" });
+      continue;
+    }
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      attempts.push({ apiKeyPrefix: `${apiKey.slice(0, 16)}...`, ok: false, status: res.status, body });
+      continue;
+    }
+    const user = await res.json().catch(() => null);
+    attempts.push({ apiKeyPrefix: `${apiKey.slice(0, 16)}...`, ok: true, status: res.status, userId: user?.id || "" });
+    if (user?.id) {
+      debug.attempts = attempts;
+      return { user, debug };
+    }
+  }
+  debug.attempts = attempts;
+  return { user: null, debug };
+}
+
+function configuredSuperadminIds() {
+  return String(
+    Deno.env.get("PUBLIC_SUPERADMIN_USER_IDS")
+    || Deno.env.get("SUPERADMIN_USER_IDS")
+    || "",
+  )
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
 }
 
 async function isAdmin(userId: string) {
+  if (configuredSuperadminIds().includes(String(userId || "").trim())) return true;
   const res = await sbServiceFetch(
     `/rest/v1/user_roles?select=role&user_id=eq.${encodeURIComponent(userId)}&role=eq.admin&limit=1`,
     { method: "GET" },
@@ -94,9 +146,10 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const actor = await getAuthUser(req, supabaseUrl, serviceKey);
+    const authResult = await getAuthUser(req, supabaseUrl, serviceKey);
+    const actor = authResult?.user;
     if (!actor?.id) {
-      return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), {
+      return new Response(JSON.stringify({ ok: false, error: "unauthorized", debug: authResult?.debug || null }), {
         status: 401,
         headers: { ...headers, "Content-Type": "application/json" },
       });
@@ -154,13 +207,16 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+    const bearerHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+    const customToken = String(req.headers.get("x-vdan-access-token") || "").trim();
+    const authHeader = customToken ? `Bearer ${customToken}` : bearerHeader;
     const setupRes = await fetch(`${supabaseUrl}/functions/v1/club-admin-setup`, {
       method: "POST",
       headers: {
         apikey: serviceKey,
-        Authorization: authHeader,
         "Content-Type": "application/json",
+        Authorization: `Bearer ${serviceKey}`,
+        ...(customToken ? { "x-vdan-access-token": customToken } : {}),
       },
       body: JSON.stringify({
         request_id: requestId,
@@ -243,7 +299,3 @@ Deno.serve(async (req: Request) => {
     });
   }
 });
-
-
-
-

@@ -27,6 +27,8 @@ const autoAppVersion = [
   deploySha ? deploySha.slice(0, 7) : buildStamp || "dev-local",
 ].filter(Boolean).join("+");
 const assetVersion = encodeURIComponent(appVersionEnv && appVersionEnv !== "dev-local" ? appVersionEnv : autoAppVersion);
+const clubRequestHref = "/verein-anfragen/";
+const clubJoinHref = "/vereinssignin/";
 ---
 
 <Site title={APP.name} description="Neuigkeiten aus dem Verein" containerClass={isFcp ? "container--fcp-brand" : "container"}>
@@ -59,8 +61,9 @@ const assetVersion = encodeURIComponent(appVersionEnv && appVersionEnv !== "dev-
               und direkt im Alltag nutzbar.
             </p>
             <div class="fcp-brand-hero__actions">
-              <a class="feed-btn fcp-brand-btn--primary" href="/registrieren/">Jetzt Loslegen</a>
-              <span class="fcp-brand-soon-note">COMING SOON</span>
+              <a class="feed-btn fcp-brand-btn--primary" href={clubRequestHref}>Verein anfragen</a>
+              <a class="feed-btn feed-btn--ghost fcp-brand-btn--ghost" href={clubJoinHref}>Bestehendem Verein beitreten</a>
+              <span class="fcp-brand-soon-note">Smoke-Test Einstieg aktiv</span>
             </div>
             <div class="fcp-brand-hero__metrics">
               <div class="fcp-brand-metric">

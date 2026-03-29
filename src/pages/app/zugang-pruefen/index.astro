@@ -78,6 +78,11 @@ import { APP } from "../../../config/app";
         <span>Ich habe meine Daten geprüft und die E-Mail-Verifizierung abgeschlossen.</span>
       </label>
 
+      <label class="small" style="display:flex;gap:8px;align-items:flex-start;margin-top:12px;">
+        <input id="identitySepaCheck" type="checkbox" />
+        <span>Ich bestätige im First-Activation-Step die SEPA-Freigabe für meinen Vereinskontext.</span>
+      </label>
+
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;">
         <button id="identityCompleteBtn" type="button" class="feed-btn">Prüfung abschließen</button>
         <span id="identityEmailStatus" class="small"></span>

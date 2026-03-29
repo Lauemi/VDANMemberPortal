@@ -16,17 +16,6 @@
     else el.setAttribute("hidden", "");
   }
 
-  function extractInviteToken(raw) {
-    const text = String(raw || "").trim();
-    if (!text) return "";
-    try {
-      const url = new URL(text);
-      return String(url.searchParams.get("invite") || "").trim();
-    } catch {
-      return text.replace(/^invite[:=]/i, "").trim();
-    }
-  }
-
   function setLoginMessage(text = "", danger = false) {
     const msg = document.getElementById("headerQuickLoginMsg");
     if (!msg) return;
@@ -43,19 +32,14 @@
 
   function updateToggle() {
     const toggle = document.getElementById("headerLoginEntryToggle");
-    const registerBtn = document.getElementById("headerRegisterClubBtn");
-    if (!toggle || !registerBtn) return;
+    if (!toggle) return;
     if (session()?.user?.id) {
       toggle.textContent = "Portal";
       toggle.setAttribute("aria-label", "Portal öffnen");
-      registerBtn.textContent = "Zum Portal";
-      registerBtn.setAttribute("href", "/app/");
       return;
     }
     toggle.textContent = "Login";
     toggle.setAttribute("aria-label", "Login öffnen");
-    registerBtn.textContent = "Verein registrieren";
-    registerBtn.setAttribute("href", `/registrieren/?next=${encodeURIComponent("/app/")}`);
   }
 
   async function submitQuickLogin(event) {
@@ -86,23 +70,12 @@
     }
   }
 
-  function openInviteFlow() {
-    const raw = String(document.getElementById("headerInviteEntryInput")?.value || "").trim();
-    const token = extractInviteToken(raw);
-    if (!token) {
-      setLoginMessage("Bitte Invite-Link oder Token einfügen.", true);
-      return;
-    }
-    window.location.assign(`/registrieren/?invite=${encodeURIComponent(token)}&next=${encodeURIComponent("/app/")}`);
-  }
-
   function init() {
     const wrap = document.getElementById("headerLoginEntryWrap");
     const toggle = document.getElementById("headerLoginEntryToggle");
     const popover = document.getElementById("headerLoginEntryPopover");
     const form = document.getElementById("headerQuickLoginForm");
-    const inviteBtn = document.getElementById("headerInviteEntryBtn");
-    if (!wrap || !toggle || !popover || !form || !inviteBtn) return;
+    if (!wrap || !toggle || !popover || !form) return;
 
     updateToggle();
 
@@ -120,7 +93,6 @@
     });
 
     form.addEventListener("submit", submitQuickLogin);
-    inviteBtn.addEventListener("click", openInviteFlow);
 
     document.addEventListener("click", (event) => {
       if (!wrap.contains(event.target)) closePopover();

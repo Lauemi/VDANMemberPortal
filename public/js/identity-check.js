@@ -133,10 +133,10 @@
     return null;
   }
 
-  async function completeVerification() {
+  async function completeVerification({ sepaApproved = false } = {}) {
     const rows = await sb("/rest/v1/rpc/self_identity_verification_complete", {
       method: "POST",
-      body: JSON.stringify({ p_confirmed: true }),
+      body: JSON.stringify({ p_confirmed: true, p_sepa_approved: Boolean(sepaApproved) }),
     }, true);
     return Array.isArray(rows) ? rows[0] : null;
   }
@@ -243,8 +243,13 @@
       completeBtn.dataset.bound = "1";
       completeBtn.addEventListener("click", async () => {
         const checked = Boolean(document.getElementById("identityConfirmCheck")?.checked);
+        const sepaChecked = Boolean(document.getElementById("identitySepaCheck")?.checked);
         if (!checked) {
           setMsg("Bitte bestätige zuerst die Prüfung per Checkbox.", true);
+          return;
+        }
+        if (!sepaChecked) {
+          setMsg("Bitte bestätige die SEPA-Freigabe für die Erstaktivierung.", true);
           return;
         }
         if (legacyLoginMode) {
@@ -270,7 +275,7 @@
           }
           await syncProfileEmailFromAuth(user?.email).catch(() => null);
           setMsg("Schließe Prüfung ab ...");
-          await completeVerification();
+          await completeVerification({ sepaApproved: true });
           setMsg("Prüfung abgeschlossen. Weiterleitung ...");
           window.setTimeout(() => {
             window.location.replace(nextTarget("/app/"));

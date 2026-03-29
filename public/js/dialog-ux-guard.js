@@ -179,6 +179,18 @@
           background:rgba(31,35,27,.42); backdrop-filter:blur(3px);
           padding:16px;
         }
+        #${SHEET_ID}[data-dialog-side="right"]{
+          place-items:end start;
+        }
+        #${SHEET_ID}[data-dialog-side="left"]{
+          place-items:end end;
+        }
+        @media (max-width: 720px){
+          #${SHEET_ID}[data-dialog-side="right"],
+          #${SHEET_ID}[data-dialog-side="left"]{
+            place-items:end center;
+          }
+        }
         #${SHEET_ID} .sheet{
           width:min(100%, 460px);
           border:1px solid rgba(221,212,194,.88);
@@ -283,6 +295,7 @@
 
   function askCloseAction() {
     const root = ensureSheet();
+    root.dataset.dialogSide = activeDialogSide();
     root.hidden = false;
     applyScrollLock();
     const preferred = root.querySelector('[data-action="keep"]');
@@ -298,6 +311,16 @@
     const hasOpen = hasOpenDialog || hasSheet;
     document.documentElement.classList.toggle(BODY_CLASS, hasOpen);
     document.body.classList.toggle(BODY_CLASS, hasOpen);
+  }
+
+  function activeDialogSide() {
+    const openDialogs = [...document.querySelectorAll(DIALOG_SELECTOR)].filter((el) => isOpen(el));
+    for (const dialog of openDialogs) {
+      if (!(dialog instanceof HTMLElement)) continue;
+      const side = window.getComputedStyle(dialog).left === "0px" ? "left" : "right";
+      return side;
+    }
+    return "center";
   }
 
   function restoreDraftIfPresent(dialog) {

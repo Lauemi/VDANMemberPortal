@@ -8,6 +8,7 @@
     plannerRegistrations: [],
     myRegistrations: [],
     plannerAvailable: true,
+    activeClubId: "",
   };
 
   function cfg() {
@@ -17,11 +18,27 @@
     };
   }
 
-  async function sb(path) {
+  async function waitForAuthReady(timeoutMs = 3000) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (window.VDAN_AUTH?.loadSession) return true;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    return Boolean(window.VDAN_AUTH?.loadSession);
+  }
+
+  async function sb(path, withAuth = false) {
+    await waitForAuthReady();
     const { url, key } = cfg();
     const headers = new Headers();
     headers.set("apikey", key);
     headers.set("Content-Type", "application/json");
+    let token = session()?.access_token || "";
+    if (withAuth && !token && navigator.onLine && window.VDAN_AUTH?.refreshSession) {
+      const refreshed = await window.VDAN_AUTH.refreshSession().catch(() => null);
+      token = String(refreshed?.access_token || session()?.access_token || "").trim();
+    }
+    if (withAuth && token) headers.set("Authorization", `Bearer ${token}`);
     const res = await fetch(`${url}${path}`, { method: "GET", headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -38,12 +55,25 @@
     return session()?.user?.id || null;
   }
 
+  async function loadActiveClubId() {
+    const uid = currentUserId();
+    if (!uid) return "";
+    const rows = await sb(`/rest/v1/profiles?select=club_id&id=eq.${encodeURIComponent(uid)}&limit=1`, true).catch(() => []);
+    return String(rows?.[0]?.club_id || "").trim();
+  }
+
   async function sbAuth(path, init = {}) {
+    await waitForAuthReady();
     const { url, key } = cfg();
     const headers = new Headers(init.headers || {});
     headers.set("apikey", key);
     headers.set("Content-Type", "application/json");
-    if (session()?.access_token) headers.set("Authorization", `Bearer ${session().access_token}`);
+    let token = session()?.access_token || "";
+    if (!token && navigator.onLine && window.VDAN_AUTH?.refreshSession) {
+      const refreshed = await window.VDAN_AUTH.refreshSession().catch(() => null);
+      token = String(refreshed?.access_token || session()?.access_token || "").trim();
+    }
+    if (token) headers.set("Authorization", `Bearer ${token}`);
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -121,9 +151,10 @@
 
   async function listAllEvents() {
     const dayStartIso = todayStartIso();
+    const clubFilter = state.activeClubId ? `&club_id=eq.${encodeURIComponent(state.activeClubId)}` : "";
     const [terms, works] = await Promise.all([
-      sb(`/rest/v1/club_events?select=id,title,location,starts_at,ends_at,status&status=eq.published&starts_at=gte.${encodeURIComponent(dayStartIso)}&order=starts_at.asc`),
-      sb(`/rest/v1/work_events?select=id,title,location,starts_at,ends_at,status&status=eq.published&starts_at=gte.${encodeURIComponent(dayStartIso)}&order=starts_at.asc`),
+      sb(`/rest/v1/club_events?select=id,club_id,title,location,starts_at,ends_at,status&status=eq.published&starts_at=gte.${encodeURIComponent(dayStartIso)}${clubFilter}&order=starts_at.asc`, true),
+      sb(`/rest/v1/work_events?select=id,club_id,title,location,starts_at,ends_at,status&status=eq.published&starts_at=gte.${encodeURIComponent(dayStartIso)}${clubFilter}&order=starts_at.asc`, true),
     ]);
 
     const termRows = (Array.isArray(terms) ? terms : []).map((row) => ({
@@ -258,6 +289,7 @@
   }
 
   async function init() {
+    await waitForAuthReady();
     const { url, key } = cfg();
     if (!url || !key) {
       setMsg("Supabase-Konfiguration fehlt.");
@@ -272,6 +304,13 @@
 
     try {
       setMsg("");
+      state.activeClubId = await loadActiveClubId().catch(() => "");
+      if (session()?.access_token && !state.activeClubId) {
+        state.all = [];
+        renderAll();
+        setMsg("Kein aktiver Vereinskontext für Termine / Events gefunden.");
+        return;
+      }
       const [events] = await Promise.all([
         listAllEvents(),
         loadPlannerState(),
@@ -331,4 +370,5 @@
   }
 
   document.addEventListener("DOMContentLoaded", init);
+  document.addEventListener("vdan:session", init);
 })();

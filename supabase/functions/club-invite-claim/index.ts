@@ -23,7 +23,7 @@ function cors(req: Request) {
   const origin = req.headers.get("origin") || "*";
   return {
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-vdan-access-token",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     Vary: "Origin",
   };
@@ -128,6 +128,8 @@ async function ensureProfile(user: Record<string, unknown>, clubId: string, memb
         email: email || null,
         club_id: clubId,
         member_no: memberNo,
+        must_verify_identity: true,
+        identity_verified_at: null,
       }]),
     });
     return;
@@ -141,17 +143,10 @@ async function ensureProfile(user: Record<string, unknown>, clubId: string, memb
       // Keep existing single-profile fields stable; multi-club membership is represented in role/membership tables.
       club_id: txt(existing.club_id) || clubId,
       member_no: txt(existing.member_no) || memberNo,
+      must_verify_identity: true,
+      identity_verified_at: null,
     }),
   });
-}
-
-async function clubHasMemberDirectory(clubId: string) {
-  const res = await sbServiceFetch(
-    `/rest/v1/club_members?select=member_no&club_id=eq.${encodeURIComponent(clubId)}&limit=1`,
-    { method: "GET" },
-  );
-  const rows = await res.json().catch(() => []);
-  return Array.isArray(rows) && rows.length > 0;
 }
 
 async function memberNoExistsInClub(clubId: string, memberNo: string) {
@@ -163,92 +158,31 @@ async function memberNoExistsInClub(clubId: string, memberNo: string) {
   return Array.isArray(rows) && rows.length > 0;
 }
 
-async function memberNoExistsGlobal(memberNo: string) {
-  const res = await sbServiceFetch(
-    `/rest/v1/club_members?select=member_no&member_no=eq.${encodeURIComponent(memberNo)}&limit=1`,
-    { method: "GET" },
-  );
-  const rows = await res.json().catch(() => []);
-  return Array.isArray(rows) && rows.length > 0;
-}
-
-async function nextClubMemberNo(clubId: string, clubCode: string) {
-  const code = txt(clubCode).toUpperCase() || "CLUB";
-  const prefix = `${code}-`;
-  const res = await sbServiceFetch(
-    `/rest/v1/club_members?select=member_no&club_id=eq.${encodeURIComponent(clubId)}&limit=10000`,
-    { method: "GET" },
-  );
-  const rows = await res.json().catch(() => []);
-
-  let maxNo = 0;
-  for (const row of Array.isArray(rows) ? rows : []) {
-    const current = txt((row as { member_no?: string })?.member_no).toUpperCase();
-    if (!current.startsWith(prefix)) continue;
-    const suffix = current.slice(prefix.length);
-    const n = Number(suffix);
-    if (Number.isFinite(n)) maxNo = Math.max(maxNo, Math.trunc(n));
-  }
-
-  for (let i = maxNo + 1; i <= maxNo + 5000; i += 1) {
-    const candidate = `${prefix}${String(i).padStart(4, "0")}`;
-    const exists = await memberNoExistsGlobal(candidate);
-    if (!exists) return candidate;
-  }
-  throw new Error("member_no_generation_failed");
-}
-
 async function ensureClubMemberRecord(
   clubId: string,
-  clubCode: string,
+  _clubCode: string,
   inputMemberNo: string,
-  firstName: string,
-  lastName: string,
+  _firstName: string,
+  _lastName: string,
 ) {
-  const hasDirectory = await clubHasMemberDirectory(clubId);
   const desiredInput = txt(inputMemberNo).toUpperCase();
+  if (!desiredInput) throw new Error("member_no_required");
+  const existsInClub = await memberNoExistsInClub(clubId, desiredInput);
+  if (!existsInClub) throw new Error("member_no_not_found_in_club");
+  return desiredInput;
+}
 
-  if (hasDirectory) {
-    if (!desiredInput) throw new Error("member_no_required");
-    const existsInClub = await memberNoExistsInClub(clubId, desiredInput);
-    if (!existsInClub) throw new Error("member_no_not_found_in_club");
-    return desiredInput;
-  }
+async function ensureMemberEmailMatch(clubId: string, memberNo: string, actorEmailRaw: string) {
+  const actorEmail = txt(actorEmailRaw).toLowerCase();
+  if (!actorEmail) throw new Error("auth_email_required");
 
-  // Empty club directory: create first-class member row on invite claim.
-  let assignedMemberNo = desiredInput;
-  if (!assignedMemberNo) {
-    assignedMemberNo = await nextClubMemberNo(clubId, clubCode);
-  } else {
-    const existsGlobal = await memberNoExistsGlobal(assignedMemberNo);
-    if (existsGlobal) {
-      // Existing global member number (usually from another club): auto-provision club-local number.
-      assignedMemberNo = await nextClubMemberNo(clubId, clubCode);
-    }
-  }
-
-  const safeFirst = txt(firstName) || "Vorname";
-  const safeLast = txt(lastName) || "Nachname";
-  const safeCode = txt(clubCode).toUpperCase() || "CLUB";
-
-  await sbServiceFetch("/rest/v1/club_members", {
-    method: "POST",
-    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-    body: JSON.stringify([{
-      club_id: clubId,
-      club_code: safeCode,
-      member_no: assignedMemberNo,
-      first_name: safeFirst,
-      last_name: safeLast,
-      status: "active",
-      membership_kind: "Mitglied",
-      fishing_card_type: "-",
-      role: "member",
-      wiso_roles: null,
-    }]),
-  });
-
-  return assignedMemberNo;
+  const rows = await loadJson(
+    `/rest/v1/members?select=email,club_member_no,membership_number&club_id=eq.${encodeURIComponent(clubId)}&membership_number=eq.${encodeURIComponent(memberNo)}&limit=1`,
+  );
+  const row = Array.isArray(rows) && rows.length ? rows[0] : null;
+  const memberEmail = txt(row?.email).toLowerCase();
+  if (!memberEmail) throw new Error("member_email_missing");
+  if (memberEmail !== actorEmail) throw new Error("member_email_mismatch");
 }
 
 async function ensureClubMemberIdentity(userId: string, clubId: string, memberNo: string) {
@@ -314,6 +248,11 @@ async function ensureMemberRole(userId: string, clubId: string) {
   });
 }
 
+async function loadJson(path: string) {
+  const res = await sbServiceFetch(path, { method: "GET" });
+  return await res.json().catch(() => []);
+}
+
 Deno.serve(async (req: Request) => {
   const headers = cors(req);
   if (req.method === "OPTIONS") return new Response("ok", { headers });
@@ -346,6 +285,7 @@ Deno.serve(async (req: Request) => {
       firstName,
       lastName,
     );
+    await ensureMemberEmailMatch(record.club_id, assignedMemberNo, txt((actor as { email?: string })?.email));
     const usedUsers = Array.isArray(record.used_user_ids) ? record.used_user_ids.map(txt).filter(Boolean) : [];
     const alreadyUsedByActor = usedUsers.includes(userId);
 

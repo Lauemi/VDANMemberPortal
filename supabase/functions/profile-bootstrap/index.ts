@@ -30,6 +30,15 @@ function autoMemberNo(userId: string) {
   return `AUTO-${userPart}`;
 }
 
+function memberCardIdFromUserId(userId: string) {
+  return userId.replace(/-/g, "").slice(0, 16).toUpperCase() || crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
+}
+
+function generateMemberCardKey() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+}
+
 async function sbServiceFetch(path: string, init: RequestInit = {}) {
   const base = Deno.env.get("SUPABASE_URL") || "";
   const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -182,7 +191,7 @@ Deno.serve(async (req: Request) => {
     const email = txt((actor as { email?: string })?.email).toLowerCase() || null;
 
     const profileRes = await sbServiceFetch(
-      `/rest/v1/profiles?select=id,member_no,club_id,email,display_name,first_name,last_name&limit=1&id=eq.${encodeURIComponent(userId)}`,
+      `/rest/v1/profiles?select=id,member_no,club_id,email,display_name,first_name,last_name,member_card_id,member_card_key,member_card_valid,member_card_valid_from,member_card_valid_until,fishing_card_type&limit=1&id=eq.${encodeURIComponent(userId)}`,
       { method: "GET" },
     );
     const profileRows = await profileRes.json().catch(() => []);
@@ -192,6 +201,8 @@ Deno.serve(async (req: Request) => {
     if (!existing?.id) {
       const memberNo = await pickMemberNo(userId, preferredMemberNo);
       const displayName = [firstName, lastName].filter(Boolean).join(" ") || email || memberNo || userId;
+      const today = new Date().toISOString().slice(0, 10);
+      const validUntil = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
       await sbServiceFetch("/rest/v1/profiles", {
         method: "POST",
@@ -204,6 +215,12 @@ Deno.serve(async (req: Request) => {
           last_name: lastName || null,
           member_no: memberNo,
           club_id: resolvedClubId || null,
+          member_card_id: memberCardIdFromUserId(userId),
+          member_card_key: generateMemberCardKey(),
+          member_card_valid: true,
+          member_card_valid_from: today,
+          member_card_valid_until: validUntil,
+          fishing_card_type: "-",
         }]),
       });
 
@@ -221,6 +238,15 @@ Deno.serve(async (req: Request) => {
     if (!txt(existing.member_no)) {
       patch.member_no = await pickMemberNo(userId, preferredMemberNo);
     }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const validUntil = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    if (!txt(existing.member_card_id)) patch.member_card_id = memberCardIdFromUserId(userId);
+    if (!txt(existing.member_card_key)) patch.member_card_key = generateMemberCardKey();
+    if (typeof existing.member_card_valid !== "boolean") patch.member_card_valid = true;
+    if (!txt(existing.member_card_valid_from)) patch.member_card_valid_from = today;
+    if (!txt(existing.member_card_valid_until)) patch.member_card_valid_until = validUntil;
+    if (!txt(existing.fishing_card_type)) patch.fishing_card_type = "-";
 
     if (!txt(existing.club_id) && resolvedClubId) {
       patch.club_id = resolvedClubId;

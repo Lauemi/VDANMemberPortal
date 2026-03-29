@@ -21,11 +21,13 @@ type InviteRecord = {
 
 function cors(req: Request) {
   const origin = req.headers.get("origin") || "*";
+  const reqHeaders = req.headers.get("access-control-request-headers") || "authorization, x-client-info, apikey, content-type";
   return {
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Headers": reqHeaders,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    Vary: "Origin",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin, Access-Control-Request-Headers",
   };
 }
 
@@ -84,18 +86,31 @@ function generateInviteToken() {
 }
 
 async function getAuthUser(req: Request, supabaseUrl: string, serviceKey: string) {
-  const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+  const bearerHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+  const customToken = txt(req.headers.get("x-vdan-access-token"));
+  const authHeader = customToken ? `Bearer ${customToken}` : bearerHeader;
   if (!authHeader) return null;
-  const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    method: "GET",
-    headers: {
-      apikey: serviceKey,
-      Authorization: authHeader,
-    },
-  });
-  if (!res.ok) return null;
-  const user = await res.json().catch(() => null);
-  return user?.id ? user : null;
+  const requestApiKey = txt(req.headers.get("apikey") || req.headers.get("Apikey") || "");
+  const apiKeys = [
+    requestApiKey,
+    serviceKey,
+    Deno.env.get("SUPABASE_ANON_KEY") || "",
+    Deno.env.get("PUBLIC_SUPABASE_ANON_KEY") || "",
+  ].map((value) => txt(value)).filter(Boolean);
+
+  for (const apiKey of apiKeys) {
+    const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      method: "GET",
+      headers: {
+        apikey: apiKey,
+        Authorization: authHeader,
+      },
+    }).catch(() => null);
+    if (!res?.ok) continue;
+    const user = await res.json().catch(() => null);
+    if (user?.id) return user;
+  }
+  return null;
 }
 
 async function resolveClubId(clubCodeRaw: string, clubIdRaw: string) {
@@ -215,9 +230,15 @@ Deno.serve(async (req: Request) => {
     await upsertSetting(`club_invite_active:${clubId}`, inviteTokenHash);
 
     const reqOrigin = txt(req.headers.get("origin"));
+    const registerQuery = new URLSearchParams({
+      invite: inviteToken,
+      club_id: clubId,
+      club_code: safeClubCode,
+      club_name: clubName,
+    });
     const registerUrl = reqOrigin
-      ? `${reqOrigin.replace(/\/+$/, "")}/registrieren/?invite=${encodeURIComponent(inviteToken)}`
-      : `/registrieren/?invite=${encodeURIComponent(inviteToken)}`;
+      ? `${reqOrigin.replace(/\/+$/, "")}/registrieren/?${registerQuery.toString()}`
+      : `/registrieren/?${registerQuery.toString()}`;
     const inviteQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(registerUrl)}`;
 
     return new Response(

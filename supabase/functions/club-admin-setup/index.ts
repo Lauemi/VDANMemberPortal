@@ -84,6 +84,12 @@ function firstListValue(input: unknown) {
   return list.length ? list[0] : "";
 }
 
+function objectOrEmpty(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
 async function sbServiceFetch(path: string, init: RequestInit = {}) {
   const base = Deno.env.get("SUPABASE_URL") || "";
   const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -110,22 +116,104 @@ async function callRpc<T>(fn: string, payload: Record<string, unknown>) {
   return await res.json().catch(() => null) as T;
 }
 
-async function getAuthUser(req: Request, supabaseUrl: string, serviceKey: string) {
-  const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
-  if (!authHeader) return null;
-  const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    method: "GET",
-    headers: {
-      apikey: serviceKey,
-      Authorization: authHeader,
-    },
+async function upsertOnboardingStateDirect(
+  clubId: string,
+  actorUserId: string,
+  payload: {
+    club_data_complete: boolean;
+    waters_complete: boolean;
+    cards_complete: boolean;
+    members_mode: "pending" | "imported" | "confirmed_empty";
+    notes?: Record<string, unknown>;
+  },
+) {
+  await sbServiceFetch("/rest/v1/club_onboarding_state?on_conflict=club_id", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify([{
+      club_id: clubId,
+      created_by: actorUserId || null,
+      updated_by: actorUserId || null,
+      club_data_complete: Boolean(payload.club_data_complete),
+      waters_complete: Boolean(payload.waters_complete),
+      cards_complete: Boolean(payload.cards_complete),
+      members_mode: payload.members_mode,
+      notes: payload.notes || {},
+      setup_state: "pending_setup",
+    }]),
   });
-  if (!res.ok) return null;
-  const user = await res.json().catch(() => null);
-  return user?.id ? user : null;
+
+  await sbServiceFetch("/rest/v1/club_onboarding_audit", {
+    method: "POST",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify([{
+      club_id: clubId,
+      event_key: "onboarding.progress_updated",
+      actor_user_id: actorUserId || null,
+      payload: {
+        club_data_complete: Boolean(payload.club_data_complete),
+        waters_complete: Boolean(payload.waters_complete),
+        cards_complete: Boolean(payload.cards_complete),
+        members_mode: payload.members_mode,
+        notes: payload.notes || {},
+        source: "club-admin-setup.service",
+      },
+    }]),
+  });
+
+  const stateRes = await sbServiceFetch(
+    `/rest/v1/club_onboarding_state?select=*&club_id=eq.${encodeURIComponent(clubId)}&limit=1`,
+    { method: "GET" },
+  );
+  const stateRows = await stateRes.json().catch(() => []);
+  return Array.isArray(stateRows) ? stateRows[0] || null : null;
+}
+
+async function getAuthUser(req: Request, supabaseUrl: string, serviceKey: string) {
+  const bearerHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+  const customToken = String(req.headers.get("x-vdan-access-token") || "").trim();
+  const authHeader = customToken ? `Bearer ${customToken}` : bearerHeader;
+  if (!authHeader) return null;
+  const requestApiKey = String(
+    req.headers.get("apikey")
+    || req.headers.get("Apikey")
+    || "",
+  ).trim();
+  const apiKeys = [
+    requestApiKey,
+    serviceKey,
+    Deno.env.get("SUPABASE_ANON_KEY") || "",
+    Deno.env.get("PUBLIC_SUPABASE_ANON_KEY") || "",
+  ].map((value) => String(value || "").trim()).filter(Boolean);
+
+  for (const apiKey of apiKeys) {
+    const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      method: "GET",
+      headers: {
+        apikey: apiKey,
+        Authorization: authHeader,
+      },
+    }).catch(() => null);
+    if (!res?.ok) continue;
+    const user = await res.json().catch(() => null);
+    if (user?.id) return user;
+  }
+  return null;
+}
+
+function configuredSuperadminIds() {
+  return String(
+    Deno.env.get("PUBLIC_SUPERADMIN_USER_IDS")
+    || Deno.env.get("SUPERADMIN_USER_IDS")
+    || "",
+  )
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
 }
 
 async function isAdmin(userId: string) {
+  if (configuredSuperadminIds().includes(String(userId || "").trim())) return true;
   const res = await sbServiceFetch(
     `/rest/v1/user_roles?select=role&user_id=eq.${encodeURIComponent(userId)}&role=eq.admin&limit=1`,
     { method: "GET" },
@@ -268,6 +356,17 @@ async function insertMissingWaters(clubId: string, waters: string[]) {
     headers: { Prefer: "return=minimal" },
     body: JSON.stringify(payload),
   });
+}
+
+function deriveNames(displayName: string, email: string) {
+  const raw = txt(displayName) || txt(email).split("@")[0];
+  const parts = raw.split(/\s+/).filter(Boolean);
+  if (!parts.length) return { firstName: "Admin", lastName: "Mitglied" };
+  if (parts.length === 1) return { firstName: parts[0], lastName: "Mitglied" };
+  return {
+    firstName: parts.slice(0, -1).join(" "),
+    lastName: parts.slice(-1).join(" "),
+  };
 }
 
 async function ensureCoreClubRoles(clubId: string) {
@@ -420,10 +519,85 @@ async function ensureCreatorRoles(userId: string, clubId: string) {
   });
 }
 
+async function ensureCreatorMemberBinding(
+  identity: { email?: string; display_name?: string },
+  userId: string,
+  clubId: string,
+  clubCode: string,
+  defaultFishingCard: string,
+) {
+  const existingIdentityRes = await sbServiceFetch(
+    `/rest/v1/club_member_identities?select=member_no&club_id=eq.${encodeURIComponent(clubId)}&user_id=eq.${encodeURIComponent(userId)}&limit=1`,
+    { method: "GET" },
+  );
+  const existingIdentityRows = await existingIdentityRes.json().catch(() => []);
+  const existingIdentity = Array.isArray(existingIdentityRows) && existingIdentityRows.length ? existingIdentityRows[0] : null;
+  const existingMemberNo = txt(existingIdentity?.member_no);
+  if (existingMemberNo) return existingMemberNo;
+
+  const profileRes = await sbServiceFetch(
+    `/rest/v1/profiles?select=member_no&limit=1&id=eq.${encodeURIComponent(userId)}`,
+    { method: "GET" },
+  );
+  const profileRows = await profileRes.json().catch(() => []);
+  const profileRow = Array.isArray(profileRows) && profileRows.length ? profileRows[0] : null;
+  const profileMemberNo = txt(profileRow?.member_no);
+
+  let usableMemberNo = "";
+  if (profileMemberNo) {
+    const memberRes = await sbServiceFetch(
+      `/rest/v1/club_members?select=member_no&club_id=eq.${encodeURIComponent(clubId)}&member_no=eq.${encodeURIComponent(profileMemberNo)}&limit=1`,
+      { method: "GET" },
+    );
+    const memberRows = await memberRes.json().catch(() => []);
+    usableMemberNo = Array.isArray(memberRows) && memberRows.length ? txt(memberRows[0]?.member_no) : "";
+  }
+
+  if (!usableMemberNo) {
+    const names = deriveNames(txt(identity?.display_name), txt(identity?.email));
+    const createdRows = await callRpc<Array<Record<string, unknown>>>("admin_member_registry_create", {
+      p_club_id: clubId,
+      p_club_code: clubCode,
+      p_member_no: null,
+      p_first_name: names.firstName,
+      p_last_name: names.lastName,
+      p_status: "active",
+      p_fishing_card_type: defaultFishingCard,
+      p_email: txt(identity?.email).toLowerCase() || null,
+    });
+    const createdRow = Array.isArray(createdRows) && createdRows.length ? createdRows[0] : null;
+    usableMemberNo = txt(createdRow?.member_no);
+  }
+
+  if (!usableMemberNo) throw new Error("creator_member_binding_failed");
+
+  await sbServiceFetch("/rest/v1/club_member_identities", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify([{
+      club_id: clubId,
+      user_id: userId,
+      member_no: usableMemberNo,
+    }]),
+  });
+
+  return usableMemberNo;
+}
+
 function autoMemberNo(clubId: string, userId: string) {
   const clubPart = clubId.replace(/-/g, "").slice(0, 4).toUpperCase() || "CLUB";
   const userPart = userId.replace(/-/g, "").slice(0, 8).toUpperCase() || "USER";
   return `MID-${clubPart}-${userPart}`;
+}
+
+function memberCardIdFromUserId(userId: string) {
+  const userPart = userId.replace(/-/g, "").slice(0, 10).toUpperCase() || "USER";
+  return `MC-${userPart}`;
+}
+
+function generateMemberCardKey() {
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
 }
 
 function generateInviteToken() {
@@ -437,18 +611,32 @@ async function sha256Hex(value: string) {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function ensureCreatorProfileBinding(identity: { email?: string; display_name?: string }, userId: string, clubId: string) {
+async function ensureCreatorProfileBinding(
+  identity: { email?: string; display_name?: string },
+  userId: string,
+  clubId: string,
+  defaultFishingCard: string,
+  preferredMemberNo = "",
+) {
   const profileRes = await sbServiceFetch(
-    `/rest/v1/profiles?select=id,club_id,member_no,display_name,email&limit=1&id=eq.${encodeURIComponent(userId)}`,
+    `/rest/v1/profiles?select=id,club_id,member_no,display_name,email,member_card_id,member_card_key,member_card_valid,member_card_valid_from,member_card_valid_until,fishing_card_type&limit=1&id=eq.${encodeURIComponent(userId)}`,
     { method: "GET" },
   );
   const profileRows = await profileRes.json().catch(() => []);
   const row = Array.isArray(profileRows) && profileRows.length ? profileRows[0] : null;
 
   const nextClubId = clubId;
-  const nextMemberNo = txt(row?.member_no) || autoMemberNo(clubId, userId);
+  const nextMemberNo = txt(preferredMemberNo) || txt(row?.member_no) || autoMemberNo(clubId, userId);
   const nextDisplayName = txt(row?.display_name) || txt(identity?.display_name) || txt(identity?.email) || userId;
   const nextEmail = txt(row?.email) || txt(identity?.email) || null;
+  const nextMemberCardId = txt(row?.member_card_id) || memberCardIdFromUserId(userId);
+  const nextMemberCardKey = txt(row?.member_card_key) || generateMemberCardKey();
+  const nextFishingCardType = txt(row?.fishing_card_type) || txt(defaultFishingCard) || "-";
+  const today = new Date().toISOString().slice(0, 10);
+  const nextValidFrom = String(row?.member_card_valid_from || "").trim() || today;
+  const nextValidUntil = String(row?.member_card_valid_until || "").trim()
+    || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const nextMemberCardValid = typeof row?.member_card_valid === "boolean" ? Boolean(row.member_card_valid) : true;
 
   if (!row?.id) {
     await sbServiceFetch("/rest/v1/profiles", {
@@ -460,6 +648,12 @@ async function ensureCreatorProfileBinding(identity: { email?: string; display_n
         email: nextEmail,
         club_id: nextClubId,
         member_no: nextMemberNo,
+        member_card_id: nextMemberCardId,
+        member_card_key: nextMemberCardKey,
+        member_card_valid: nextMemberCardValid,
+        member_card_valid_from: nextValidFrom,
+        member_card_valid_until: nextValidUntil,
+        fishing_card_type: nextFishingCardType,
       }]),
     });
     return;
@@ -469,7 +663,24 @@ async function ensureCreatorProfileBinding(identity: { email?: string; display_n
   const needsMemberPatch = txt(row?.member_no) !== nextMemberNo;
   const needsDisplayNamePatch = txt(row?.display_name) !== nextDisplayName && Boolean(nextDisplayName);
   const needsEmailPatch = txt(row?.email) !== txt(nextEmail) && Boolean(nextEmail);
-  if (!needsClubPatch && !needsMemberPatch && !needsDisplayNamePatch && !needsEmailPatch) return;
+  const needsCardIdPatch = txt(row?.member_card_id) !== nextMemberCardId;
+  const needsCardKeyPatch = txt(row?.member_card_key) !== nextMemberCardKey;
+  const needsCardValidPatch = typeof row?.member_card_valid !== "boolean";
+  const needsCardValidFromPatch = String(row?.member_card_valid_from || "").trim() !== nextValidFrom;
+  const needsCardValidUntilPatch = String(row?.member_card_valid_until || "").trim() !== nextValidUntil;
+  const needsFishingCardPatch = txt(row?.fishing_card_type) !== nextFishingCardType;
+  if (
+    !needsClubPatch
+    && !needsMemberPatch
+    && !needsDisplayNamePatch
+    && !needsEmailPatch
+    && !needsCardIdPatch
+    && !needsCardKeyPatch
+    && !needsCardValidPatch
+    && !needsCardValidFromPatch
+    && !needsCardValidUntilPatch
+    && !needsFishingCardPatch
+  ) return;
 
   await sbServiceFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`, {
     method: "PATCH",
@@ -479,6 +690,12 @@ async function ensureCreatorProfileBinding(identity: { email?: string; display_n
       member_no: nextMemberNo,
       ...(needsDisplayNamePatch ? { display_name: nextDisplayName } : {}),
       ...(needsEmailPatch ? { email: nextEmail } : {}),
+      ...(needsCardIdPatch ? { member_card_id: nextMemberCardId } : {}),
+      ...(needsCardKeyPatch ? { member_card_key: nextMemberCardKey } : {}),
+      ...(needsCardValidPatch ? { member_card_valid: nextMemberCardValid } : {}),
+      ...(needsCardValidFromPatch ? { member_card_valid_from: nextValidFrom } : {}),
+      ...(needsCardValidUntilPatch ? { member_card_valid_until: nextValidUntil } : {}),
+      ...(needsFishingCardPatch ? { fishing_card_type: nextFishingCardType } : {}),
     }),
   });
 }
@@ -524,9 +741,10 @@ Deno.serve(async (req: Request) => {
     const waters = toList(body?.waters);
     const makePublicActive = Boolean(body?.make_public_active);
     const assignCreatorRoles = body?.assign_creator_roles !== false;
+    const approvedRequestPayload = objectOrEmpty(approvedOwnRequest?.request_payload);
     const street = txt(body?.street) || txt(approvedOwnRequest?.club_address);
-    const zip = txt(body?.zip);
-    const city = txt(body?.city);
+    const zip = txt(body?.zip) || txt(approvedRequestPayload?.zip);
+    const city = txt(body?.city) || txt(approvedRequestPayload?.city) || txt(approvedRequestPayload?.club_location);
     const contactName = txt(body?.contact_name) || txt(approvedOwnRequest?.responsible_name);
     const contactEmail = (txt(body?.contact_email) || txt(approvedOwnRequest?.responsible_email)).toLowerCase();
     const contactPhone = txt(body?.contact_phone);
@@ -606,18 +824,29 @@ Deno.serve(async (req: Request) => {
     await ensureDefaultUsecaseAcl(clubId);
 
     if (assignCreatorRoles) {
-      await ensureCreatorRoles(creatorUserId, clubId);
+    await ensureCreatorRoles(creatorUserId, clubId);
     }
-    await ensureCreatorProfileBinding({ email: creatorEmail, display_name: creatorDisplayName }, creatorUserId, clubId);
+    const creatorMemberNo = await ensureCreatorMemberBinding(
+      { email: creatorEmail, display_name: creatorDisplayName },
+      creatorUserId,
+      clubId,
+      clubCode,
+      defaultCard,
+    );
+    await ensureCreatorProfileBinding(
+      { email: creatorEmail, display_name: creatorDisplayName },
+      creatorUserId,
+      clubId,
+      defaultCard,
+      creatorMemberNo,
+    );
 
-    await callRpc("ensure_club_onboarding_state", { p_club_id: clubId });
-    const onboardingState = await callRpc<Record<string, unknown>>("upsert_club_onboarding_progress", {
-      p_club_id: clubId,
-      p_club_data_complete: true,
-      p_waters_complete: waters.length > 0,
-      p_cards_complete: cards.length > 0,
-      p_members_mode: "pending",
-      p_notes: {
+    const onboardingState = await upsertOnboardingStateDirect(clubId, creatorUserId, {
+      club_data_complete: true,
+      waters_complete: waters.length > 0,
+      cards_complete: cards.length > 0,
+      members_mode: "pending",
+      notes: {
         source: "club-admin-setup",
         created_at: createdAt,
         initial_waters_count: waters.length,
@@ -627,9 +856,15 @@ Deno.serve(async (req: Request) => {
     const onboardingSnapshot = await callRpc<Array<Record<string, unknown>>>("club_onboarding_snapshot", { p_club_id: clubId });
 
     const reqOrigin = txt(req.headers.get("origin"));
+    const registerQuery = new URLSearchParams({
+      invite: inviteToken,
+      club_id: clubId,
+      club_code: clubCode,
+      club_name: clubName,
+    });
     const registerUrl = reqOrigin
-      ? `${reqOrigin.replace(/\/+$/, "")}/registrieren/?invite=${encodeURIComponent(inviteToken)}`
-      : `/registrieren/?invite=${encodeURIComponent(inviteToken)}`;
+      ? `${reqOrigin.replace(/\/+$/, "")}/registrieren/?${registerQuery.toString()}`
+      : `/registrieren/?${registerQuery.toString()}`;
     const inviteQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(registerUrl)}`;
 
     let responsibleNotification: { ok: boolean; reason?: string } | null = null;
@@ -686,9 +921,3 @@ Deno.serve(async (req: Request) => {
     });
   }
 });
-
-
-
-
-
-

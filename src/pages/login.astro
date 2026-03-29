@@ -6,25 +6,71 @@ import { resolveSiteMode } from "../config/site-mode";
 const nextRaw = Astro.url.searchParams.get("next") ?? "/";
 const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/";
 const showDemoHint = Boolean(import.meta.env.DEV);
-const enablePasswordReset = String(import.meta.env.PUBLIC_ENABLE_PASSWORD_RESET || "").toLowerCase() === "true";
 const isFcpMode = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
+const clubRequestHref = `/verein-anfragen/?next=${encodeURIComponent(nextTarget)}`;
+const clubSignInHref = `/vereinssignin/?next=${encodeURIComponent(nextTarget)}`;
 ---
 
 <Site title={`Login • ${APP.name}`} description="Login zum Memberbereich." robots="noindex" density="compact">
-  <section class="card ui-card login-shell form-shell">
-    <div class="card__body ui-card__body">
+  <section class={`card ui-card login-shell form-shell${isFcpMode ? " register-flow-card" : ""}`}>
+    <div class={`card__body ui-card__body${isFcpMode ? " register-flow" : ""}`}>
       <div class="login-shell__intro">
-        <h1>Login</h1>
-      {!isFcpMode && (
-        <>
-          <p class="small login-shell__legacy-note">
-            WICHTIG: Zugänge wie Mitgliedsnummer  <code>001</code> + Passwort funktionieren nur noch kurzzeitig. In den kommenden Wochen werden alle Accounts auf die neue Auth-E-Mail umgestellt. Danach erfolgt der Login nur noch über Auth-E-Mail.
-          </p>
-        </>
-      )}
+        {isFcpMode ? (
+          <>
+            <span class="register-flow__eyebrow">Onboarding</span>
+            <div class="register-current-path">Aktiver Pfad: Anmeldung</div>
+            <h1>Login</h1>
+            <p class="small">
+              Entscheide zuerst, ob du dich mit einem bestehenden Vereinszugang anmeldest oder einen neuen Verein anfragen willst.
+            </p>
+            <p class="register-flow__context small">
+              Dieser Einstieg ist für bestehende Zugänge gedacht. Neue Vereine wechseln in den separaten Anfrageprozess.
+            </p>
+          </>
+        ) : (
+          <>
+            <h1>Login</h1>
+            <p class="small login-shell__legacy-note">
+              WICHTIG: Zugänge wie Mitgliedsnummer  <code>001</code> + Passwort funktionieren nur noch kurzzeitig. In den kommenden Wochen werden alle Accounts auf die neue Auth-E-Mail umgestellt. Danach erfolgt der Login nur noch über Auth-E-Mail.
+            </p>
+          </>
+        )}
       </div>
 
-      <form id="loginForm" class="form-shell__section" data-next-target={nextTarget}>
+      {isFcpMode && (
+        <section class="register-step register-step--mode is-active login-shell__mode">
+          <div class="register-step__head">
+            <span class="register-step__index">0</span>
+            <div>
+              <h2>Pfad: Login für bestehende Zugänge</h2>
+              <p>Nutze diesen Einstieg, wenn dein Zugang bereits existiert. Für neue Vereine gibt es eine eigene Anfrage-Maske.</p>
+            </div>
+          </div>
+          <div class="register-mode-grid">
+            <div class="register-mode-card is-active" aria-current="page">
+              <span class="register-mode-card__badge">Bestehender Zugang</span>
+              <span class="register-mode-card__title">VereinsSignIn</span>
+              <span class="register-mode-card__copy">Für bestehende Vereinszugänge, Einladungen und Mitglieder, die bereits einem Verein zugeordnet sind.</span>
+            </div>
+            <a class="register-mode-card" href={clubRequestHref}>
+              <span class="register-mode-card__badge">Neuer Verein</span>
+              <span class="register-mode-card__title">Verein anfragen</span>
+              <span class="register-mode-card__copy">Für neue Vereine mit eigenem Anfrageprozess und eigenen Pflichtangaben, getrennt vom Invite-Flow.</span>
+            </a>
+          </div>
+        </section>
+      )}
+
+      <form id="loginForm" class={`form-shell__section${isFcpMode ? " register-step login-shell__form-step is-active" : ""}`} data-next-target={nextTarget}>
+        {isFcpMode && (
+          <div class="register-step__head">
+            <span class="register-step__index">1</span>
+            <div>
+              <h2>Mit bestehendem Zugang anmelden</h2>
+              <p>Gib die bei deinem Verein hinterlegte E-Mail-Adresse und dein Passwort ein, um direkt in den Portalzugang zu wechseln.</p>
+            </div>
+          </div>
+        )}
         <label class="ui-field">
           <span>{isFcpMode ? "E-Mail" : "Mitgliedsnummer oder E-Mail"}</span>
           <input
@@ -43,7 +89,7 @@ const isFcpMode = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
         </label>
 
         <div class="ui-actions">
-          <button class="primary" type="submit">Einloggen</button>
+          <button class={`primary${isFcpMode ? " fcp-brand-btn--primary" : ""}`} type="submit">Einloggen</button>
           <span id="loginMsg" class="small" aria-live="polite"></span>
         </div>
       </form>
@@ -51,9 +97,7 @@ const isFcpMode = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
       {!isFcpMode && (
         <div class="login-shell__links">
           <p class="small">
-            {enablePasswordReset
-              ? <a href="/passwort-vergessen/">Passwort vergessen?</a>
-              : "Passwort vergessen ist vorbereitet, aber aktuell noch deaktiviert."}
+            <a href="/passwort-vergessen/">Passwort vergessen?</a>
           </p>
 
           <p class="small">
@@ -62,6 +106,20 @@ const isFcpMode = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
           </p>
           <p class="small">
             Du willst dem Verein beitreten? <a href="/mitglied-werden.html/">Mitglied werden</a>.
+          </p>
+        </div>
+      )}
+
+      {isFcpMode && (
+        <div class="login-shell__links">
+          <p class="small">
+            <a href="/passwort-vergessen/">Passwort vergessen?</a>
+          </p>
+          <p class="small">
+            Du hast bereits einen Invite-Link? <a href={clubSignInHref}>Zum VereinsSignIn</a>.
+          </p>
+          <p class="small">
+            Du willst einen neuen Verein starten? <a href={clubRequestHref}>Direkt Verein anfragen</a>.
           </p>
         </div>
       )}

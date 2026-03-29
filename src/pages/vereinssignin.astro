@@ -1,0 +1,140 @@
+---
+import Site from "../layouts/Site.astro";
+import { APP } from "../config/app";
+
+const nextRaw = Astro.url.searchParams.get("next") ?? "/app/";
+const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
+const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
+const inviteClubId = String(Astro.url.searchParams.get("club_id") ?? "").trim();
+const inviteClubCode = String(Astro.url.searchParams.get("club_code") ?? "").trim().toUpperCase();
+const inviteClubName = String(Astro.url.searchParams.get("club_name") ?? "").trim();
+const clubRequestHref = `/verein-anfragen/?next=${encodeURIComponent(nextTarget)}`;
+---
+
+<Site title={`VereinsSignIn • ${APP.name}`} description="Getrennter Einstieg für bestehende Vereine." robots="noindex" density="compact">
+  <section class="card ui-card register-flow-card form-shell" style="max-width:840px;margin:0 auto;">
+    <div class="card__body ui-card__body register-flow">
+      <div class="register-flow__intro">
+        <span class="register-flow__eyebrow">Onboarding</span>
+        <div id="registerCurrentPathLabel" class="register-current-path">Aktiver Pfad: VereinsSignIn</div>
+        <h1 id="registerIntroTitle">VereinsSignIn</h1>
+        <p id="registerModeHint" class="small register-flow__lede">
+          Getrennter SignIn- und Beitrittsprozess für bestehende Vereine mit Invite-Token und Mitgliedsnummer.
+        </p>
+        <p id="registerModeContext" class="register-flow__context small">
+          Du befindest dich im Beitrittsprozess für bestehende Vereine. Es werden nur Invite- und Mitgliedsdaten abgefragt.
+        </p>
+      </div>
+
+      <form
+        id="registerForm"
+        class="register-flow__form form-shell__section"
+        data-next-target={nextTarget}
+        data-register-mode="join_club"
+        data-invite-club-id={inviteClubId}
+        data-invite-club-code={inviteClubCode}
+        data-invite-club-name={inviteClubName}
+      >
+        <input id="registerModeValue" type="hidden" name="registration_mode" value="join_club" />
+
+        <section class="register-step register-step--mode is-active">
+          <div class="register-step__head">
+            <span class="register-step__index">0</span>
+            <div>
+              <h2>Pfad: Bestehendem Verein beitreten</h2>
+              <p>Dieser Einstieg ist nur für bestehende Vereine gedacht. Für neue Vereine gibt es eine eigene Maske.</p>
+            </div>
+          </div>
+          <div class="register-mode-grid">
+            <div id="registerModeJoinCardWrap" class="register-mode-card is-active">
+              <span class="register-mode-card__badge">Bestehender Verein</span>
+              <span class="register-mode-card__title">VereinsSignIn</span>
+              <span class="register-mode-card__copy">Invite-Link, Invite-Token und Vereins-Mitgliedsnummer führen dich in den Join-Flow.</span>
+            </div>
+            <a id="registerModeCreateCard" class="register-mode-card" href={clubRequestHref}>
+              <span class="register-mode-card__badge">Neuer Verein</span>
+              <span class="register-mode-card__title">Verein anfragen</span>
+              <span class="register-mode-card__copy">Wechselt in den separaten Anfrageprozess für neue Vereine.</span>
+            </a>
+          </div>
+        </section>
+
+        <section id="registerAuthSection" class="register-step register-step--auth is-active">
+          <div class="register-step__head">
+            <span class="register-step__index">1</span>
+            <div>
+              <h2 id="registerAuthTitle">Zugang für den VereinsSignIn</h2>
+              <p id="registerAuthCopy">Zuerst legen wir den Zugang für den Vereinsbeitritt an. Danach prüfen wir Invite-Token und Vereins-Mitgliedsnummer.</p>
+            </div>
+          </div>
+          <div class="register-grid">
+            <label id="registerEmailField">
+              <span>E-Mail</span>
+              <input id="registerEmail" name="email" type="email" autocomplete="email" required />
+            </label>
+            <label id="registerPasswordField">
+              <span>Passwort</span>
+              <input id="registerPass" name="password" type="password" autocomplete="new-password" minlength="8" required />
+            </label>
+            <label id="registerPasswordRepeatField">
+              <span>Passwort wiederholen</span>
+              <input id="registerPass2" name="password_repeat" type="password" autocomplete="new-password" minlength="8" required />
+            </label>
+          </div>
+          <p id="registerPasswordHint" class="small" aria-live="polite"></p>
+        </section>
+
+        <section id="registerJoinSection" class="register-step register-step--join is-active">
+          <div class="register-step__head">
+            <span class="register-step__index">2</span>
+            <div>
+              <h2>VereinsSignIn</h2>
+              <p>Nutze Invite-Link oder Invite-Token zusammen mit deiner Vereins-Mitgliedsnummer.</p>
+            </div>
+          </div>
+          <div id="registerInviteContext" class="register-note small hidden" hidden>
+            <strong id="registerInviteContextTitle">Einladung erkannt</strong>
+            <span id="registerInviteContextCopy">Vereinskontext wird geladen ...</span>
+          </div>
+          <div class="register-note small">
+            Bitte verwende die E-Mail-Adresse, die deinem Verein bereits bekannt ist.
+          </div>
+          <div class="register-grid">
+            <label id="registerInviteTokenField">
+              <span>Einladungs-Token</span>
+              <input id="registerInviteToken" name="invite_token" type="text" value={inviteToken} autocomplete="off" />
+            </label>
+            <label>
+              <span>Vereins-Mitgliedsnummer</span>
+              <input id="registerMemberNo" name="member_no" type="text" inputmode="text" autocomplete="username" />
+            </label>
+          </div>
+          <div class="register-step__foot small">
+            Nach dem Auth-Abschluss und der Mailverifikation wirst du auf die Bestätigung deiner beim Verein hinterlegten Daten weitergeleitet, bevor du ins Portal gelangst.
+          </div>
+        </section>
+
+        <section id="registerLegalSection" class="register-step register-step--legal is-active">
+          <div class="register-step__head">
+            <span class="register-step__index">3</span>
+            <div>
+              <h2 id="registerLegalTitle">Rechtstexte für den VereinsSignIn</h2>
+              <p id="registerLegalCopy">Ohne bestätigte Rechtstexte wird der Vereinsbeitritt nicht abgeschlossen.</p>
+            </div>
+          </div>
+          <label class="small register-check">
+            <input id="registerAccept" type="checkbox" required />
+            <span>Ich akzeptiere die <a href="/nutzungsbedingungen.html/" target="_blank" rel="noopener noreferrer">Nutzungsbedingungen</a> und die <a href="/datenschutz.html/" target="_blank" rel="noopener noreferrer">Datenschutzerklärung</a>.</span>
+          </label>
+        </section>
+
+        <div class="register-flow__actions">
+          <button id="registerSubmitBtn" class="feed-btn fcp-brand-btn--primary" type="submit">VereinsSignIn starten</button>
+          <a class="feed-btn feed-btn--ghost" href={clubRequestHref}>Stattdessen Verein anfragen</a>
+          <a class="register-flow__secondary-link" href={`/login/?next=${encodeURIComponent(nextTarget)}`}>Zur Anmeldung</a>
+          <span id="registerMsg" class="small" aria-live="polite"></span>
+        </div>
+      </form>
+    </div>
+  </section>
+</Site>

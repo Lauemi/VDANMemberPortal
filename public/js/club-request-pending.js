@@ -65,8 +65,10 @@
     }
 
     title.textContent = "Dein Verein wurde erfolgreich angefragt.";
-    lead.textContent = "";
-    box.textContent = "Dein Verein wurde erfolgreich angefragt.";
+    lead.textContent = "Solange die Anfrage den Status pending hat, bleibt der Portalzugang gesperrt. Du siehst bis zur Entscheidung nur diese Statusseite.";
+    box.textContent = responsibleEmail
+      ? `${clubName} wird gerade geprüft. Updates gehen an ${responsibleEmail}.`
+      : `${clubName} wird gerade geprüft. Bis zur Freigabe bleibt nur die Statusseite verfügbar.`;
   }
 
   async function refresh() {
@@ -83,7 +85,6 @@
     refresh().catch((err) => setMsg(err?.message || "Status konnte nicht geladen werden.", true));
   });
 })();
-
 
 
 

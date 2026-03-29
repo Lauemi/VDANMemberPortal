@@ -5,22 +5,37 @@ import { APP } from "../config/app";
 const enablePasswordReset = String(import.meta.env.PUBLIC_ENABLE_PASSWORD_RESET || "").toLowerCase() === "true";
 ---
 
-<Site title={`Passwort vergessen • ${APP.name}`} description="Passwort-Reset vorbereiten." robots="noindex">
-  <section class="card" style="max-width:560px;margin:0 auto;">
-    <div class="card__body">
-      <h1>Passwort vergessen</h1>
-      <p class="small">Reset-Link per E-Mail anfordern.</p>
-      <p id="forgotPasswordMsg" class="small" aria-live="polite"></p>
+<Site title={`Passwort vergessen • ${APP.name}`} description="Passwort-Reset vorbereiten." robots="noindex" density="compact">
+  <section class="card ui-card register-flow-card form-shell" style="max-width:720px;margin:0 auto;">
+    <div class="card__body ui-card__body register-flow">
+      <div class="register-flow__intro">
+        <span class="register-flow__eyebrow">Zugang</span>
+        <div class="register-current-path">Aktiver Pfad: Passwort vergessen</div>
+        <h1>Passwort zurücksetzen</h1>
+        <p class="small register-flow__lede">Fordere einen Reset-Link für die bei deinem Verein hinterlegte Auth-E-Mail an.</p>
+        <p class="register-flow__context small">Nach dem Klick auf den Mail-Link gelangst du direkt in die geschützte Maske zum Setzen eines neuen Passworts.</p>
+      </div>
 
-      <form id="forgotPasswordForm" data-enabled={enablePasswordReset ? "1" : "0"}>
-        <label>
-          <span>Mitgliedsnummer oder E-Mail</span>
-          <input id="forgotPasswordIdentifier" type="text" autocomplete="username email" required />
-        </label>
+      <form id="forgotPasswordForm" class="register-flow__form form-shell__section register-step is-active" data-enabled={enablePasswordReset ? "1" : "0"}>
+        <div class="register-step__head">
+          <span class="register-step__index">1</span>
+          <div>
+            <h2>Reset-Link anfordern</h2>
+            <p>Nutze ausschließlich die Auth-E-Mail, die deinem Vereinskonto bereits zugeordnet ist.</p>
+          </div>
+        </div>
 
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button class="primary" type="submit">Reset-Link senden</button>
+        <div class="register-grid">
+          <label>
+            <span>Auth-E-Mail</span>
+            <input id="forgotPasswordIdentifier" type="email" autocomplete="email" placeholder="name@beispiel.de" required />
+          </label>
+        </div>
+
+        <div class="register-flow__actions">
+          <button class="feed-btn fcp-brand-btn--primary" type="submit">Reset-Link senden</button>
           <a class="feed-btn feed-btn--ghost" href="/login/">Zurück zum Login</a>
+          <span id="forgotPasswordMsg" class="small" aria-live="polite"></span>
         </div>
       </form>
     </div>

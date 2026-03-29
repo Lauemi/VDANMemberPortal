@@ -53,6 +53,8 @@
     { route: "/offline", kind: "WEB", label: "Offline" },
     { route: "/passwort-vergessen", kind: "WEB", label: "Passwort vergessen" },
     { route: "/registrieren", kind: "WEB", label: "Registrieren" },
+    { route: "/verein-anfragen", kind: "WEB", label: "Verein anfragen" },
+    { route: "/vereinssignin", kind: "WEB", label: "VereinsSignIn" },
     { route: "/termine", kind: "WEB", label: "Termine" },
     { route: "/vdan-jugend", kind: "WEB", label: "VDAN Jugend" },
     { route: "/veranstaltungen", kind: "WEB", label: "Veranstaltungen" },
@@ -415,6 +417,22 @@
     return window.VDAN_AUTH?.loadSession?.() || null;
   }
 
+  async function ensureAccessToken({ forceRefresh = false } = {}) {
+    const auth = window.VDAN_AUTH || {};
+    if (forceRefresh && auth?.refreshSession) {
+      const refreshed = await auth.refreshSession().catch(() => null);
+      const refreshToken = String(refreshed?.access_token || "").trim();
+      if (refreshToken) return refreshToken;
+    }
+    const currentToken = String(session()?.access_token || "").trim();
+    if (currentToken) return currentToken;
+    if (auth?.refreshSession) {
+      const refreshed = await auth.refreshSession().catch(() => null);
+      return String(refreshed?.access_token || session()?.access_token || "").trim();
+    }
+    return "";
+  }
+
   async function waitForAuthReady(timeoutMs = 3000) {
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
@@ -659,20 +677,28 @@
 
   async function sb(path, init = {}, withAuth = false) {
     const { url, key } = cfg();
-    const headers = new Headers(init.headers || {});
-    headers.set("apikey", key);
-    headers.set("Content-Type", "application/json");
-    const token = session()?.access_token;
-    if (withAuth && token) headers.set("Authorization", `Bearer ${token}`);
-    const res = await fetch(`${url}${path}`, { ...init, headers });
-    if (!res.ok) {
+    const run = async (forceRefresh = false) => {
+      const headers = new Headers(init.headers || {});
+      headers.set("apikey", key);
+      headers.set("Content-Type", "application/json");
+      const token = withAuth ? await ensureAccessToken({ forceRefresh }) : "";
+      if (withAuth && token) headers.set("Authorization", `Bearer ${token}`);
+      const res = await fetch(`${url}${path}`, { ...init, headers });
       const data = await res.json().catch(() => ({}));
-      const err = new Error(data?.message || data?.hint || `request_failed_${res.status}`);
+      return { res, data };
+    };
+
+    let { res, data } = await run(false);
+    if (withAuth && res.status === 401) {
+      ({ res, data } = await run(true));
+    }
+    if (!res.ok) {
+      const err = new Error(data?.message || data?.hint || data?.error || `request_failed_${res.status}`);
       err.status = res.status;
       err.path = path;
       throw err;
     }
-    return res.json().catch(() => []);
+    return data;
   }
 
   async function callAdminWebConfig(action, payload = {}, withAuth = false) {
@@ -682,18 +708,26 @@
       throw err;
     }
     const { url, key } = cfg();
-    const headers = new Headers({
-      apikey: key,
-      "Content-Type": "application/json",
-    });
-    const token = session()?.access_token;
-    if (withAuth && token) headers.set("Authorization", `Bearer ${token}`);
-    const res = await fetch(`${url}/functions/v1/admin-web-config`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ action, scope: siteMode(), ...payload }),
-    });
-    const data = await res.json().catch(() => ({}));
+    const run = async (forceRefresh = false) => {
+      const headers = new Headers({
+        apikey: key,
+        "Content-Type": "application/json",
+      });
+      const token = withAuth ? await ensureAccessToken({ forceRefresh }) : "";
+      if (withAuth && token) headers.set("Authorization", `Bearer ${token}`);
+      const res = await fetch(`${url}/functions/v1/admin-web-config`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ action, scope: siteMode(), ...payload }),
+      });
+      const data = await res.json().catch(() => ({}));
+      return { res, data };
+    };
+
+    let { res, data } = await run(false);
+    if (withAuth && res.status === 401) {
+      ({ res, data } = await run(true));
+    }
     if (!res.ok || data?.ok === false) {
       const err = new Error(String(data?.error || `admin_web_config_failed_${res.status}`));
       err.status = res.status;
@@ -1317,18 +1351,56 @@
 
   async function callEdge(functionName, payload = {}) {
     const { url, key } = cfg();
-    const token = session()?.access_token;
-    if (!token) throw new Error("auth_required");
-    const res = await fetch(`${url}/functions/v1/${functionName}`, {
-      method: "POST",
-      headers: {
+    const run = async (forceRefresh = false) => {
+      const token = await ensureAccessToken({ forceRefresh });
+      if (!token) throw new Error("auth_required");
+      const activeSession = session();
+      const useCustomTokenHeader = functionName === "club-request-decision" || functionName === "club-admin-setup";
+      const headers = {
         apikey: key,
-        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload || {}),
-    });
-    const data = await res.json().catch(() => ({}));
+      };
+      if (useCustomTokenHeader) {
+        headers.Authorization = `Bearer ${key}`;
+        headers["x-vdan-access-token"] = token;
+      } else {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      const res = await fetch(`${url}/functions/v1/${functionName}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload || {}),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const responseJson = (() => {
+          try {
+            return JSON.stringify(data);
+          } catch {
+            return "";
+          }
+        })();
+        console.error(`[admin-board:${functionName}] request failed`, {
+          status: res.status,
+          forceRefresh,
+          url: `${url}/functions/v1/${functionName}`,
+          sessionUserId: String(activeSession?.user?.id || ""),
+          tokenPresent: Boolean(token),
+          tokenPreview: token ? `${String(token).slice(0, 16)}...` : "",
+          apikeyPreview: key ? `${String(key).slice(0, 16)}...` : "",
+          payload,
+          response: data,
+          responseJson,
+        });
+        console.error(`[admin-board:${functionName}] responseJson`, responseJson || "<empty>");
+      }
+      return { res, data };
+    };
+
+    let { res, data } = await run(false);
+    if (res.status === 401) {
+      ({ res, data } = await run(true));
+    }
     if (!res.ok || data?.ok === false) throw new Error(String(data?.error || `function_${functionName}_failed_${res.status}`));
     return data;
   }
@@ -2188,4 +2260,3 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => init().catch((err) => setMsg(`Fehler: ${err?.message || err}`, true)), { once: true });
   else init().catch((err) => setMsg(`Fehler: ${err?.message || err}`, true));
 })();
-

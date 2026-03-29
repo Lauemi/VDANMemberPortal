@@ -1,0 +1,197 @@
+
+FCP
+Fishing Club Portal
+
+Businessplan
+Digitale Verwaltungsplattform für Angelvereine
+
+Vertrauliches Dokument · 2025
+ 
+1. Executive Summary
+FCP – Fishing Club Portal ist die digitale Verwaltungsplattform für Angelvereine, die administrative Prozesse radikal vereinfacht und Vorstände spürbar entlastet.
+
+Heute organisieren sich viele Vereine über Excel-Tabellen, Papierlisten und WhatsApp. Das führt zu Fehlern, Zeitverlust und unnötiger Belastung für ehrenamtliche Verantwortliche.
+
+FCP ersetzt diese fragmentierten Prozesse durch ein zentrales, mobil optimiertes System. Fangmeldungen, Arbeitseinsätze, Mitgliederverwaltung und Eventplanung werden an einem Ort gebündelt – einfach, nachvollziehbar und jederzeit verfügbar.
+
+Für weniger als 20 Cent pro Mitglied im Monat wird der gesamte Verein digital organisiert.
+
+Das Produkt wird aus der Praxis heraus entwickelt und bereits im realen Vereinsbetrieb getestet. Ziel ist ein skalierbares SaaS-Modell mit mindestens 100.000 € Jahresumsatz.
+
+Kennzahl	Wert
+Preis	2 € pro Mitglied / Jahr
+Monatlicher Gegenwert	< 0,17 € pro Mitglied
+Zielumsatz (langfristig)	mind. 100.000 € / Jahr
+Zielkunden	ca. 250 Vereine
+Ø Vereinsgröße	ca. 200 Mitglieder
+ 
+2. Problem & Markt
+Angelvereine arbeiten heute mit Systemen, die nicht zusammenpassen:
+
+–	Excel für Mitgliederdaten
+–	Papier für Fangmeldungen
+–	WhatsApp für Organisation und Koordination
+–	Mündliche Absprachen für Arbeitseinsätze
+
+Das Ergebnis: Fehler in den Daten, fehlende Transparenz, hoher Abstimmungsaufwand, unnötiger Zeitverlust.
+
+Besonders kritisch:
+Der Vorstand trägt die gesamte organisatorische Last – und das ehrenamtlich. Jede Stunde, die für Verwaltung draufgeht, fehlt dem Verein.
+
+Marktpotenzial
+Allein in Deutschland existieren tausende eingetragene Angelvereine. Der Markt ist geografisch breit verteilt, strukturell homogen und bisher kaum mit digitalen Speziallösungen adressiert. Perspektivisch ist das Modell auf weitere Vereinsarten und kleinere Organisationen übertragbar – was das Marktpotenzial erheblich erweitert.
+ 
+3. Lösung – Produktbeschreibung
+FCP ersetzt das Chaos aus Excel, Papier und WhatsApp durch ein zentrales System:
+
+Funktion	Was es löst
+Fangmeldungen	Digitale Erfassung statt Papierzettel – jederzeit abrufbar
+Arbeitseinsätze	Planung und Dokumentation statt WhatsApp-Koordination
+Mitgliederverwaltung	Zentrale Datenpflege statt fehleranfälliger Excel-Listen
+Eventplanung	Strukturierte Organisation statt mündlicher Absprachen
+
+Alles in einer Anwendung. Alles mobil nutzbar. Ohne Einarbeitung verständlich.
+
+Konkreter Mehrwert
+–	Doppelte Datenpflege entfällt vollständig
+–	Abstimmungsaufwand reduziert sich deutlich
+–	Informationen sind sofort und überall verfügbar
+–	Der Vorstand gewinnt messbar Zeit zurück
+
+Ziel ist nicht Digitalisierung um der Digitalisierung willen – sondern echte Entlastung im Alltag.
+
+Positionierung
+FCP ist kein komplexes ERP-System. FCP ist das leicht zugängliche, praxisnahe Betriebssystem für den modernen Verein – entwickelt von Menschen, die selbst im Vereinsalltag stecken.
+
+Geplante Erweiterungen
+Der initiale MVP konzentriert sich auf die vier Kernfunktionen. Zahlungsfunktionen und weitergehende Integrationen sind für spätere Ausbaustufen vorgesehen – bewusst nicht Teil des ersten Releases.
+ 
+4. Geschäftsmodell & Pricing
+FCP verfolgt ein radikal einfaches Preismodell:
+
+2 € pro Mitglied / Jahr
+
+Weniger als 20 Cent pro Mitglied im Monat.
+
+Warum dieses Modell funktioniert
+–	Sofort verständlich – keine Erklärung nötig
+–	Keine Diskussion im Verein – der Preis ist selbsterklärend
+–	Für jede Vereinsgröße tragbar – von 50 bis 500 Mitglieder
+–	Skaliert linear mit dem Wachstum des Kundenstamms
+
+Preisbeispiele
+
+Vereinsgröße	Jahresbeitrag
+50 Mitglieder	100 € / Jahr
+100 Mitglieder	200 € / Jahr
+200 Mitglieder	400 € / Jahr
+300 Mitglieder	600 € / Jahr
+500 Mitglieder	1.000 € / Jahr
+
+Das liegt deutlich unter dem, was ein Verein jährlich an reinem Verwaltungsaufwand "verliert" – an Zeit, Fehlern und Koordinationsaufwand.
+ 
+5. Zielgruppe
+Primäre Zielgruppe: Angelvereine im deutschsprachigen Raum.
+
+Die Entscheider
+–	1. Vorsitzender
+–	Kassenwart
+–	Schriftführer
+
+Menschen, die heute zu viel Zeit mit Organisation verbringen – und das ehrenamtlich.
+
+Realität der Zielgruppe
+Merkmal	Konsequenz für FCP
+Wenig Zeit	Onboarding muss in Minuten funktionieren
+Geringe Software-Affinität	Bedienung ohne Schulung verständlich
+Hoher Leidensdruck	Mehrwert muss sofort sichtbar sein
+Preissensibles Umfeld	Preis darf kein Argument sein
+Demokratische Entscheidung	Einfache Kommunikation des Nutzens
+
+Genau darauf ist FCP ausgelegt.
+
+Sekundäre Zielgruppe
+Perspektivisch ist das Produkt auf weitere Vereinsarten und kleinere Organisationen übertragbar. Diese Erweiterung ist nicht Teil der initialen Marktbearbeitung, bildet jedoch ein relevantes Wachstumspotenzial für spätere Phasen.
+ 
+6. Marktstrategie
+FCP wächst nicht über Werbung – sondern über Vertrauen.
+
+Vertriebsansatz
+–	Direkte Ansprache von Vorständen – persönlich und gezielt
+–	Referenzvereine als Vertrauensanker im Gespräch
+–	Weiterempfehlung innerhalb der Vereinsszene
+
+Warum das funktioniert
+Vereine vertrauen anderen Vereinen – nicht Marketingkampagnen. Eine persönliche Empfehlung vom Vorsitzenden eines Nachbarvereins hat mehr Gewicht als jede Anzeige.
+
+Wettbewerbsdifferenzierung
+–	Spezialisierung auf Angelvereine – kein generisches Produkt
+–	Entwicklung aus echter Praxiserfahrung heraus
+–	Einfaches, faires und leicht erklärbares Preismodell
+–	Niedrige Einstiegshürde durch mobil optimiertes Design
+ 
+7. Wachstumsstrategie
+Die Wachstumsstrategie folgt einem klaren Dreiphasenmodell – vom validierten Einzelprodukt zur skalierbaren Plattform.
+
+Phase	Ziel & Maßnahmen
+Phase 1 – Realität schaffen	Pilotverein einbinden · echtes Feedback sammeln · Produkt stabilisieren
+Phase 2 – Vertrauen aufbauen	Erste Kunden gewinnen · Referenzen schaffen · Empfehlungsnetzwerk aktivieren
+Phase 3 – Skalieren	Onboarding-Prozesse strukturieren · klare Akquise · Wachstumssystem etablieren
+
+Ziel: 100.000 € Jahresumsatz mit klar kalkulierbarem, linearem Modell.
+
+Strategischer Vorteil
+Der entscheidende Vorteil: FCP wird nicht am Markt vorbei entwickelt. Ein realer Pilotverein ist bereits eingebunden. Das minimiert das Produktrisiko und stellt sicher, dass das Produkt die tatsächlichen Anforderungen trifft – von Tag 1.
+ 
+8. Finanzielle Projektion
+Das Modell skaliert linear: mehr Vereine bedeuten mehr Umsatz – bei kaum steigenden Kosten.
+
+Umsatzziel
+
+Zielumsatz	mind. 100.000 € / Jahr
+
+Zielkunden	ca. 250 Vereine
+
+Ø Vereinsgröße (Annahme)	ca. 200 Mitglieder
+
+Ø Umsatz je Verein	ca. 400 € / Jahr
+
+Umsatzszenarien
+
+Vereine	Ø 150 Mitgl.	Ø 200 Mitgl.	Ø 300 Mitgl.
+100 Vereine	30.000 €	40.000 €	60.000 €
+200 Vereine	60.000 €	80.000 €	120.000 €
+250 Vereine	75.000 €	100.000 €	150.000 €
+400 Vereine	120.000 €	160.000 €	240.000 €
+
+Das ist kein aggressives Wachstumsszenario – sondern ein realistisch erreichbarer Zustand.
+
+Da das Produkt digital ausgeliefert wird und keine physische Infrastruktur erfordert, bleiben die variablen Kosten pro Neukunde gering. Mit wachsender Kundenzahl verbessert sich die Marge strukturell.
+ 
+9. Risiken & Herausforderungen
+Die Risiken sind bekannt – und werden gezielt adressiert.
+
+Risiko	Gegenmaßnahme
+Langsame Entscheidungsfindung in Vereinen	Extrem einfache Nutzung · sofort sichtbarer Nutzen · kein Hürdenaufbau
+Skepsis gegenüber digitalen Lösungen	"Einfach ausprobieren" statt "lange überlegen" – kein technisches Vorwissen nötig
+Geringe Zahlungsbereitschaft	Preis unter 20 Ct./Mitgl./Monat – kein Budget-Argument möglich
+Langsamer Vertriebszyklus	Empfehlungsstrategie und Referenzvereine beschleunigen Entscheidungen
+Produktrisiko in früher Phase	Pilotverein als Echtzeit-Testinstanz minimiert Fehlentwicklung
+
+Bewertung
+Das größte operative Risiko liegt in der Trägheit von Vereinsstrukturen. FCP begegnet dem durch eine Produktgestaltung, die den Mehrwert sofort erfahrbar macht – ohne Schulung, ohne Einarbeitungszeit, ohne Risiko für den Verein.
+ 
+10. Fazit
+FCP löst kein theoretisches Problem – sondern ein tägliches.
+
+–	Es reduziert Aufwand, der heute jeden Vorstand belastet
+–	Es schafft Struktur, wo heute Chaos herrscht
+–	Es entlastet Menschen, die ihre Zeit ehrenamtlich einsetzen
+
+Und das zu einem Preis, der keine Hürde darstellt:
+
+Unter 20 Cent pro Mitglied im Monat.
+
+FCP ist kein komplexes System. Es ist ein Werkzeug, das sofort funktioniert – weil es aus der Praxis kommt und für die Praxis gebaut ist.
+
+FCP – Das digitale Betriebssystem für den modernen Angelverein.

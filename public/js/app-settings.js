@@ -21,6 +21,15 @@
     return session()?.user?.id || null;
   }
 
+  async function waitForAuthReady(timeoutMs = 3000) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (window.VDAN_AUTH?.loadSession) return true;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    return Boolean(window.VDAN_AUTH?.loadSession);
+  }
+
   function isAuthEmailChangeEnabled() {
     return Boolean(window.__APP_AUTH_EMAIL_CHANGE_ENABLED === true);
   }
@@ -54,14 +63,27 @@
   }
 
   async function sb(path, init = {}, withAuth = false) {
+    await waitForAuthReady();
     const { url, key } = cfg();
     const headers = new Headers(init.headers || {});
     headers.set("apikey", key);
     headers.set("Content-Type", "application/json");
-    if (withAuth && session()?.access_token) headers.set("Authorization", `Bearer ${session().access_token}`);
+    let token = session()?.access_token || "";
+    if (withAuth && !token && navigator.onLine && window.VDAN_AUTH?.refreshSession) {
+      const refreshed = await window.VDAN_AUTH.refreshSession().catch(() => null);
+      token = refreshed?.access_token || session()?.access_token || "";
+    }
+    if (withAuth && token) headers.set("Authorization", `Bearer ${token}`);
     const res = await fetch(`${url}${path}`, { ...init, headers });
     if (!res.ok) {
       const detail = await readErrorPayload(res);
+      console.error("[app-settings] request failed", {
+        path,
+        status: res.status,
+        withAuth,
+        hasToken: Boolean(token),
+        detail,
+      });
       throw new Error(detail || `Request failed (${res.status})`);
     }
     return res.json().catch(() => []);
@@ -315,20 +337,40 @@
   async function loadAccountFallback() {
     const userId = uid();
     if (!userId) return null;
-    const rows = await sb(`/rest/v1/profiles?select=member_no,first_name,last_name,email&limit=1&id=eq.${encodeURIComponent(userId)}`, { method: "GET" }, true);
-    const row = Array.isArray(rows) && rows[0] ? rows[0] : null;
-    if (!row) return null;
+    const [profileRows, identityRows] = await Promise.all([
+      sb(`/rest/v1/profiles?select=id,member_no,first_name,last_name,email,club_id&limit=1&id=eq.${encodeURIComponent(userId)}`, { method: "GET" }, true).catch(() => []),
+      sb(`/rest/v1/club_member_identities?select=club_id,member_no&user_id=eq.${encodeURIComponent(userId)}`, { method: "GET" }, true).catch(() => []),
+    ]);
+    const profile = Array.isArray(profileRows) && profileRows[0] ? profileRows[0] : null;
+    const identities = Array.isArray(identityRows) ? identityRows : [];
+    const preferredClubId = val(profile?.club_id) || val(identities[0]?.club_id);
+    const preferredIdentity = identities.find((row) => val(row?.club_id) === preferredClubId) || identities[0] || null;
+    const internalMemberNo = val(preferredIdentity?.member_no) || val(profile?.member_no);
+
+    let clubRow = null;
+    let memberRow = null;
+    if (preferredClubId && internalMemberNo) {
+      const [clubRows, memberRows] = await Promise.all([
+        sb(`/rest/v1/club_members?select=club_id,club_code,member_no,club_member_no,first_name,last_name&club_id=eq.${encodeURIComponent(preferredClubId)}&member_no=eq.${encodeURIComponent(internalMemberNo)}&limit=1`, { method: "GET" }, true).catch(() => []),
+        sb(`/rest/v1/members?select=club_id,membership_number,club_member_no,first_name,last_name,email,street,zip,city,phone,mobile&club_id=eq.${encodeURIComponent(preferredClubId)}&membership_number=eq.${encodeURIComponent(internalMemberNo)}&limit=1`, { method: "GET" }, true).catch(() => []),
+      ]);
+      clubRow = Array.isArray(clubRows) && clubRows[0] ? clubRows[0] : null;
+      memberRow = Array.isArray(memberRows) && memberRows[0] ? memberRows[0] : null;
+    }
+
+    if (!profile && !clubRow && !memberRow) return null;
+
     return {
-      member_no: row.member_no,
-      club_code: "",
-      first_name: row.first_name,
-      last_name: row.last_name,
-      email: row.email,
-      street: "",
-      zip: "",
-      city: "",
-      phone: "",
-      mobile: "",
+      member_no: val(memberRow?.club_member_no) || val(clubRow?.club_member_no) || internalMemberNo,
+      club_code: val(clubRow?.club_code),
+      first_name: val(memberRow?.first_name) || val(clubRow?.first_name) || val(profile?.first_name),
+      last_name: val(memberRow?.last_name) || val(clubRow?.last_name) || val(profile?.last_name),
+      email: val(memberRow?.email) || val(profile?.email),
+      street: val(memberRow?.street),
+      zip: val(memberRow?.zip),
+      city: val(memberRow?.city),
+      phone: val(memberRow?.phone),
+      mobile: val(memberRow?.mobile),
     };
   }
 
@@ -370,7 +412,7 @@
     accountState = await loadAccountFallback();
     applyAccountView(accountState || {});
     applyAccountForm(accountState || {});
-    setMsg("Account-RPC noch nicht ausgerollt. Name/E-Mail fallback aktiv.");
+    setMsg("Account-RPC noch nicht ausgerollt. Vereinskontext wird ueber den Fallback geladen.");
   }
 
   async function saveAccount() {

@@ -334,3 +334,33 @@ export async function sendClubRequestDecisionMail(params: {
   return { ok: true };
 }
 
+export async function sendClubRequestPendingMail(params: {
+  to: string;
+  clubName: string;
+}) {
+  const resendKey = Deno.env.get("RESEND_API_KEY") || "";
+  const from = Deno.env.get("CONTACT_FROM_EMAIL") || "";
+  if (!resendKey || !from) return { ok: false, reason: "mail_provider_not_configured" };
+
+  const clubName = escHtml(params.clubName);
+  const subject = `Vereinsanfrage eingegangen: ${params.clubName}`;
+  const html = `<h2>Deine Vereinsanfrage ist eingegangen</h2><p>Die Anfrage fuer den Verein <strong>${clubName}</strong> wurde gespeichert und wird nun geprueft.</p><p>Bis zur Freigabe bleibt der Portalzugang auf die Statusseite fuer die Vereinsanfrage beschraenkt.</p>`;
+  const text = [
+    "Deine Vereinsanfrage ist eingegangen.",
+    `Verein: ${params.clubName}`,
+    "",
+    "Die Anfrage wurde gespeichert und wird nun geprueft.",
+    "Bis zur Freigabe bleibt der Portalzugang auf die Statusseite fuer die Vereinsanfrage beschraenkt.",
+  ].join("\n");
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from, to: [params.to], subject, html, text }),
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    return { ok: false, reason: `mail_send_failed:${res.status}:${t}` };
+  }
+  return { ok: true };
+}

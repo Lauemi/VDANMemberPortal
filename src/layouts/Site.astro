@@ -131,7 +131,7 @@ const isScannerPath = path.startsWith("/app/ausweis/verifizieren/");
 const isTermsPath = path === "/nutzungsbedingungen.html/" || path === "/nutzungsbedingungen.html";
 const showPortalTermsLink = isAppPath || isTermsPath;
 const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
-const showHeaderAuthCta = false;
+const showHeaderAuthCta = !isFcpMode;
 const robotsMeta = staticPageBlocked
   ? "noindex,nofollow"
   : String(robots || "index").includes(",")
@@ -185,6 +185,7 @@ const publicMenuLinks = isFcpMode
     <link rel="stylesheet" href="/css/ui-standards.css" />
     <link rel="stylesheet" href="/css/main.css" />
     <link rel="stylesheet" href="/css/consent-manager.css" />
+    <slot name="head" />
   </head>
   <body
     data-supabase-url={supabaseUrl}

@@ -7,6 +7,7 @@
   const ACL_EDITABLE_KEYS = ["write", "update", "delete"];
   const ACL_PERMISSION_KEYS = ["read", "write", "update", "delete"];
   const MANAGER_ROLES = new Set(["admin", "vorstand"]);
+  const ROLE_PRIORITY = ["admin", "vorstand", "member"];
   const ACL_MODULES = [
     { id: "club_data", label: "Vereinsdaten", hint: "Stammdaten und Kerninfos des Vereins" },
     { id: "members", label: "Mitglieder", hint: "Mitgliederstammdaten und Pflege" },
@@ -25,12 +26,13 @@
     { key: "member_no", label: "FCP-ID", default: false, width: 170 },
     { key: "last_name", label: "Name", default: true, width: 160 },
     { key: "first_name", label: "Vorname", default: true, width: 150 },
+    { key: "role", label: "Rolle", default: true, width: 150 },
     { key: "status", label: "Status", default: true, width: 120 },
     { key: "fishing_card_type", label: "Angelkarte", default: true, width: 140 },
     { key: "login_dot", label: "Login", default: true, width: 90 },
     { key: "last_sign_in_at", label: "Zuletzt angemeldet", default: false, width: 190 },
     { key: "street", label: "Adresse", default: false, width: 220 },
-    { key: "email", label: "E-Mail", default: false, width: 220 },
+    { key: "email", label: "E-Mail", default: true, width: 220 },
     { key: "zip", label: "PLZ", default: false, width: 110 },
     { key: "city", label: "Ort", default: false, width: 150 },
     { key: "phone", label: "Tel", default: false, width: 140 },
@@ -67,6 +69,8 @@
     clubWorkspaceById: new Map(),
     dialogMode: "edit",
   };
+  let watersTable = null;
+  let membersTable = null;
 
   function rowKey(r) {
     const memberNo = String(r?.member_no || "").trim();
@@ -113,6 +117,22 @@
     return window.VDAN_AUTH?.loadSession?.() || null;
   }
 
+  async function ensureAccessToken({ forceRefresh = false } = {}) {
+    const auth = window.VDAN_AUTH || {};
+    if (forceRefresh && auth?.refreshSession) {
+      const refreshed = await auth.refreshSession().catch(() => null);
+      const refreshToken = String(refreshed?.access_token || "").trim();
+      if (refreshToken) return refreshToken;
+    }
+    const currentToken = String(session()?.access_token || "").trim();
+    if (currentToken) return currentToken;
+    if (auth?.refreshSession) {
+      const refreshed = await auth.refreshSession().catch(() => null);
+      return String(refreshed?.access_token || session()?.access_token || "").trim();
+    }
+    return "";
+  }
+
   function isLocalDev() {
     const host = String(window.location.hostname || "").trim().toLowerCase();
     return host === "127.0.0.1" || host === "localhost";
@@ -150,25 +170,51 @@
 
   async function callFn(functionName, payload) {
     const { url, key } = cfg();
-    const token = session()?.access_token || "";
+    await waitForAuthReady();
     if (!url || !key) throw new Error("supabase_config_missing");
-    if (!token) throw new Error("login_required");
+    const attempts = [];
+    const runRequest = async ({ forceRefresh = false, useCustomTokenHeader = false } = {}) => {
+      const accessToken = await ensureAccessToken({ forceRefresh });
+      if (!accessToken) throw new Error("login_required");
+      const authMode = useCustomTokenHeader ? "anon-plus-x-vdan-access-token" : "bearer-access-token";
+      const res = await fetch(`${url}/functions/v1/${functionName}`, {
+        method: "POST",
+        headers: {
+          apikey: key,
+          Authorization: useCustomTokenHeader ? `Bearer ${key}` : `Bearer ${accessToken}`,
+          ...(useCustomTokenHeader ? { "x-vdan-access-token": accessToken } : {}),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload || {}),
+      });
+      const data = await res.json().catch(() => ({}));
+      attempts.push({
+        status: res.status,
+        authMode,
+        response: data,
+      });
+      return { res, data, accessToken, authMode };
+    };
 
-    const res = await fetch(`${url}/functions/v1/${functionName}`, {
-      method: "POST",
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        "x-vdan-access-token": token,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload || {}),
+    let { res, data, accessToken, authMode } = await runRequest({
+      forceRefresh: false,
+      useCustomTokenHeader: false,
     });
-    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      ({ res, data, accessToken, authMode } = await runRequest({
+        forceRefresh: true,
+        useCustomTokenHeader: false,
+      }));
+    }
+
     if (!res.ok || data?.ok === false) {
       console.error(`[member-registry:${functionName}] request failed`, {
         status: res.status,
         url: `${url}/functions/v1/${functionName}`,
+        authMode,
+        tokenPresent: Boolean(accessToken),
+        tokenPreview: accessToken ? `${String(accessToken).slice(0, 16)}...` : "",
+        attempts,
         payload,
         response: data,
       });
@@ -227,6 +273,13 @@
 
   function setClubDataMsg(text = "", danger = false) {
     const el = document.getElementById("clubDataFormMsg");
+    if (!el) return;
+    el.textContent = text;
+    el.style.color = danger ? "var(--danger)" : "";
+  }
+
+  function setWatersMsg(text = "", danger = false) {
+    const el = document.getElementById("memberRegistryWatersMsg");
     if (!el) return;
     el.textContent = text;
     el.style.color = danger ? "var(--danger)" : "";
@@ -567,6 +620,8 @@
     try {
       const cols = JSON.parse(localStorage.getItem(STORAGE_COLS) || "[]");
       if (Array.isArray(cols) && cols.length) state.visibleCols = new Set(cols.filter((k) => COLUMNS.some((c) => c.key === k)));
+      state.visibleCols.add("role");
+      state.visibleCols.add("email");
       state.visibleCols.delete("club_id");
       const sort = JSON.parse(localStorage.getItem(STORAGE_SORT) || "{}");
       if (sort?.key) state.sortKey = String(sort.key);
@@ -686,7 +741,65 @@
     return result;
   }
 
-  async function loadRoleOnlyRows(baseRows, clubIdentityById) {
+  function normalizeRoleValue(roleId) {
+    return String(roleId || "").trim().toLowerCase();
+  }
+
+  function clubUserRoleMapKey(clubId, userId) {
+    const cid = String(clubId || "").trim();
+    const uid = String(userId || "").trim();
+    return cid && uid ? `${cid}:${uid}` : "";
+  }
+
+  function pickPrimaryRole(roleIds, fallback = "member") {
+    const normalized = [...new Set((Array.isArray(roleIds) ? roleIds : []).map(normalizeRoleValue).filter(Boolean))];
+    if (!normalized.length) return normalizeRoleValue(fallback) || "member";
+    for (const roleId of ROLE_PRIORITY) {
+      if (normalized.includes(roleId)) return roleId;
+    }
+    return normalized.sort((a, b) => a.localeCompare(b, "de"))[0] || normalizeRoleValue(fallback) || "member";
+  }
+
+  async function loadClubUserRoleAssignments() {
+    try {
+      const rows = await sb("/rest/v1/club_user_roles?select=club_id,user_id,role_key", { method: "GET" }, true);
+      return Array.isArray(rows) ? rows : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function buildEffectiveRoleMap(roleRows) {
+    const byClubUser = new Map();
+    (Array.isArray(roleRows) ? roleRows : []).forEach((row) => {
+      const key = clubUserRoleMapKey(row?.club_id, row?.user_id);
+      const roleId = normalizeRoleValue(row?.role_key);
+      if (!key || !roleId) return;
+      if (!byClubUser.has(key)) byClubUser.set(key, new Set());
+      byClubUser.get(key).add(roleId);
+    });
+    const result = new Map();
+    byClubUser.forEach((roles, key) => {
+      result.set(key, pickPrimaryRole([...roles]));
+    });
+    return result;
+  }
+
+  function applyEffectiveRoles(rows, effectiveRoleByClubUser) {
+    return (Array.isArray(rows) ? rows : []).map((row) => {
+      const effective = effectiveRoleByClubUser.get(clubUserRoleMapKey(row?.club_id, row?.profile_user_id));
+      if (!effective) return {
+        ...row,
+        role: normalizeRoleValue(row?.role) || "member",
+      };
+      return {
+        ...row,
+        role: effective,
+      };
+    });
+  }
+
+  async function loadRoleOnlyRows(baseRows, clubIdentityById, roleRowsInput = null) {
     const rowKeys = new Set(
       (Array.isArray(baseRows) ? baseRows : []).map((r) => {
         const clubId = String(r?.club_id || "").trim();
@@ -698,10 +811,13 @@
     let roleRows = [];
     let profileRows = [];
     let signinRows = [];
-    try {
-      roleRows = await sb("/rest/v1/club_user_roles?select=club_id,user_id,role_key", { method: "GET" }, true);
-    } catch {
-      roleRows = [];
+    roleRows = Array.isArray(roleRowsInput) ? roleRowsInput : [];
+    if (!roleRows.length) {
+      try {
+        roleRows = await sb("/rest/v1/club_user_roles?select=club_id,user_id,role_key", { method: "GET" }, true);
+      } catch {
+        roleRows = [];
+      }
     }
     try {
       profileRows = await sb("/rest/v1/profiles?select=id,first_name,last_name,member_no", { method: "GET" }, true);
@@ -737,7 +853,7 @@
       const clubId = String(row?.club_id || "").trim();
       const userId = String(row?.user_id || "").trim();
       if (!clubId || !userId) return;
-      const roleKey = String(row?.role_key || "").trim().toLowerCase();
+      const roleKey = normalizeRoleValue(row?.role_key);
       if (!CORE_ROLE_IDS.has(roleKey)) return;
 
       const k = `${clubId}:${userId}`;
@@ -756,6 +872,7 @@
         member_no: memberNo || "",
         first_name: String(profile?.first_name || "").trim(),
         last_name: String(profile?.last_name || "").trim(),
+        role: roleKey || "member",
         status: toRoleOnlyStatusText(),
         fishing_card_type: "-",
         has_login: Boolean(lastSignInAt),
@@ -797,7 +914,7 @@
     }
     if (q) {
       rows = rows.filter((r) => [
-        r.club_code, r.club_member_no, r.member_no, r.first_name, r.last_name, r.email, r.status, r.city, r.zip, r.fishing_card_type,
+        r.club_code, r.club_member_no, r.member_no, r.first_name, r.last_name, r.email, r.status, r.city, r.zip, r.fishing_card_type, r.role,
       ].some((v) => String(v || "").toLowerCase().includes(q)));
     }
     const key = state.sortKey;
@@ -827,18 +944,354 @@
     return state.filtered.slice(start, start + state.pageSize);
   }
 
-  function renderHead() {
-    const head = document.getElementById("memberRegistryHead");
-    const colgroup = document.getElementById("memberRegistryColgroup");
-    if (!head) return;
+  function currentFocusClubCode() {
+    const clubId = currentFocusClubId();
+    if (!clubId) return String(state.clubContext?.club_code || "").trim();
+    return String(state.clubOptions.find((entry) => entry.club_id === clubId)?.club_code || state.clubContext?.club_code || "").trim();
+  }
+
+  function renderMemberCell(column, row) {
+    if (column.key === "login_dot") return loginDotCell(row);
+    if (column.key === "last_sign_in_at") return esc(fmtTs(row.last_sign_in_at));
+    if (column.key === "status" && String(row?.status || "").toLowerCase() === toRoleOnlyStatusText()) return "Ohne Mitgliedsnummer";
+    if (column.key === "sepa_approved") return row.sepa_approved === null || row.sepa_approved === undefined ? "-" : (row.sepa_approved ? "Ja" : "Nein");
+    if (column.key === "role") return esc(String(row?.role || "member").trim() || "member");
+    return esc(row?.[column.key] ?? "-");
+  }
+
+  function memberInlineColumns() {
     const visible = COLUMNS.filter((c) => state.visibleCols.has(c.key));
-    if (colgroup) {
-      colgroup.innerHTML = visible.map((c) => `<col style="width:${Math.max(80, Number(c.width || 120))}px" />`).join("");
-    }
-    head.innerHTML = visible.map((c) => {
-      const arrow = state.sortKey === c.key ? (state.sortDir === "asc" ? " ↑" : " ↓") : "";
-      return `<th scope="col"><button type="button" class="members-filter-toggle" data-sort="${esc(c.key)}">${esc(c.label)}${arrow}</button></th>`;
-    }).join("");
+    const roleOptions = state.acl.roles.map((roleId) => ({ value: roleId, label: roleId }));
+    const base = visible.map((column) => {
+      if (column.key === "login_dot") {
+        return {
+          key: column.key,
+          label: column.label,
+          type: "meta",
+          width: `${Math.max(80, Number(column.width || 120))}px`,
+          editable: false,
+          sortable: true,
+          renderHtml: (row) => loginDotCell(row),
+          sortValue: (row) => (row?.has_login ? "1" : "0"),
+        };
+      }
+      if (column.key === "member_no") {
+        return {
+          key: column.key,
+          label: column.label,
+          type: "meta",
+          width: `${Math.max(80, Number(column.width || 120))}px`,
+          editable: false,
+          editorType: "readonly",
+          value: (row) => String(row?.club_member_no || row?.member_no || "").trim(),
+          sortValue: (row) => String(row?.club_member_no || row?.member_no || "").trim(),
+          renderHtml: (row) => esc(String(row?.club_member_no || row?.member_no || "-").trim() || "-"),
+        };
+      }
+      if (column.key === "status") {
+        return {
+          key: column.key,
+          label: column.label,
+          type: "select",
+          width: `${Math.max(80, Number(column.width || 120))}px`,
+          editorType: "select",
+          options: [
+            { value: "Aktiv", label: "Aktiv" },
+            { value: "Passiv", label: "Passiv" },
+          ],
+          renderHtml: (row) => renderMemberCell(column, row),
+        };
+      }
+      if (column.key === "role") {
+        return {
+          key: column.key,
+          label: column.label,
+          type: "select",
+          width: `${Math.max(110, Number(column.width || 150))}px`,
+          editorType: "select",
+          options: roleOptions.length ? roleOptions : [{ value: "member", label: "member" }],
+          renderHtml: (row) => renderMemberCell(column, row),
+        };
+      }
+      if (column.key === "sepa_approved") {
+        return {
+          key: column.key,
+          label: column.label,
+          type: "boolean",
+          width: `${Math.max(80, Number(column.width || 120))}px`,
+          editorType: "select",
+          options: [
+            { value: "true", label: "Ja" },
+            { value: "false", label: "Nein" },
+          ],
+          renderHtml: (row) => renderMemberCell(column, row),
+        };
+      }
+      return {
+        key: column.key,
+        label: column.label,
+        type: column.key === "first_name" || column.key === "last_name" ? "primary" : "text",
+        width: `${Math.max(80, Number(column.width || 120))}px`,
+        editable: !["club_code", "member_no", "club_id", "last_sign_in_at", "login_dot"].includes(column.key),
+        editorType: ["birthdate"].includes(column.key) ? "date" : "text",
+        renderHtml: (row) => renderMemberCell(column, row),
+      };
+    });
+
+    base.push({
+      key: "actions",
+      label: "Aktionen",
+      type: "actions",
+      width: "104px",
+      editable: false,
+      sortable: false,
+      filterable: false,
+    });
+    return base;
+  }
+
+  async function createMemberInline(draft) {
+    const clubId = currentFocusClubId();
+    const clubCode = currentFocusClubCode();
+    if (!clubId || !clubCode) throw new Error("club_context_missing");
+    const created = await sb("/rest/v1/rpc/admin_member_registry_create", {
+      method: "POST",
+      body: JSON.stringify({
+        p_club_id: clubId,
+        p_club_code: clubCode,
+        p_club_member_no: String(draft?.club_member_no || "").trim().toUpperCase() || null,
+        p_first_name: String(draft?.first_name || "").trim() || null,
+        p_last_name: String(draft?.last_name || "").trim() || null,
+        p_role: String(draft?.role || "member").trim().toLowerCase() || "member",
+        p_status: String(draft?.status || "Aktiv").trim() || null,
+        p_fishing_card_type: String(draft?.fishing_card_type || "").trim() || null,
+        p_street: String(draft?.street || "").trim() || null,
+        p_email: String(draft?.email || "").trim().toLowerCase() || null,
+        p_zip: String(draft?.zip || "").trim() || null,
+        p_city: String(draft?.city || "").trim() || null,
+        p_phone: String(draft?.phone || "").trim() || null,
+        p_mobile: String(draft?.mobile || "").trim() || null,
+        p_birthdate: String(draft?.birthdate || "").trim() || null,
+        p_guardian_member_no: String(draft?.guardian_member_no || "").trim() || null,
+        p_sepa_approved: String(draft?.sepa_approved || "true") === "true" || Boolean(draft?.sepa_approved),
+      }),
+    }, true);
+    return Array.isArray(created) && created.length ? created[0] : null;
+  }
+
+  async function updateMemberInline(row, draft) {
+    await sb("/rest/v1/rpc/admin_member_registry_update", {
+      method: "POST",
+      body: JSON.stringify({
+        p_member_no: String(row?.member_no || "").trim(),
+        p_club_member_no: String(draft?.club_member_no || "").trim().toUpperCase() || null,
+        p_first_name: String(draft?.first_name || "").trim() || null,
+        p_last_name: String(draft?.last_name || "").trim() || null,
+        p_role: String(draft?.role || "member").trim().toLowerCase() || "member",
+        p_status: String(draft?.status || "").trim() || null,
+        p_fishing_card_type: String(draft?.fishing_card_type || "").trim() || null,
+        p_street: String(draft?.street || "").trim() || null,
+        p_email: String(draft?.email || "").trim().toLowerCase() || null,
+        p_zip: String(draft?.zip || "").trim() || null,
+        p_city: String(draft?.city || "").trim() || null,
+        p_phone: String(draft?.phone || "").trim() || null,
+        p_mobile: String(draft?.mobile || "").trim() || null,
+        p_birthdate: String(draft?.birthdate || "").trim() || null,
+        p_guardian_member_no: String(draft?.guardian_member_no || "").trim() || null,
+        p_sepa_approved: String(draft?.sepa_approved || "true") === "true" || Boolean(draft?.sepa_approved),
+      }),
+    }, true);
+  }
+
+  async function deleteMemberInline(row) {
+    await sb("/rest/v1/rpc/admin_member_registry_delete", {
+      method: "POST",
+      body: JSON.stringify({
+        p_club_id: String(row?.club_id || "").trim(),
+        p_member_no: String(row?.member_no || "").trim(),
+      }),
+    }, true);
+  }
+
+  function renderMembersInlineTable() {
+    const mount = document.getElementById("memberRegistryInlineTableMount");
+    if (!mount) return;
+    mount.innerHTML = `<div id="memberRegistryInlineTableRoot"></div>`;
+    membersTable = null;
+    const root = document.getElementById("memberRegistryInlineTableRoot");
+    if (!root || !window.FCPInlineDataTable?.createStandardV2) return;
+
+    const clubOptions = [...new Set(state.rows.map((row) => String(row?.club_code || "").trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, "de"));
+    const rows = state.clubIdFilter
+      ? state.rows.filter((row) => String(row?.club_id || "").trim() === state.clubIdFilter)
+      : state.rows.slice();
+    membersTable = window.FCPInlineDataTable.createStandardV2({
+      root,
+      tableId: "member-registry-inline",
+      viewMode: "table",
+      title: "Mitglieder",
+      description: "Registry-Ansicht mit Suche, Filtern und Stammdatenpflege.",
+      showToolbar: true,
+      showCreateButton: true,
+      showResetButton: true,
+      showViewSwitch: true,
+      utilityActions: [
+        { key: "reload", label: "Neu laden", variant: "ghost" },
+      ],
+      onUtilityAction: async (actionKey) => {
+        if (actionKey !== "reload") return;
+        try {
+          setMsg("Mitglieder werden geladen ...");
+          await refresh();
+          setMsg("Mitglieder geladen.");
+        } catch (err) {
+          setMsg(err?.message || "Laden fehlgeschlagen.", true);
+        }
+      },
+      showMetaBar: false,
+      createLabel: "＋ Neuer Eintrag",
+      sortKey: state.sortKey,
+      sortDir: state.sortDir,
+      rowClickOpensEditor: false,
+      searchPlaceholder: "Mitglieds-Nr., Name, Status, Ort...",
+      filterFields: [
+        {
+          key: "status",
+          label: "Status",
+          type: "select",
+          defaultValue: "all",
+          options: [
+            { value: "all", label: "Alle" },
+            { value: "aktiv", label: "Aktiv" },
+            { value: "passiv", label: "Passiv" },
+          ],
+          value: (row) => {
+            const raw = String(row?.status || "").trim().toLowerCase();
+            if (raw === "active" || raw === "aktiv") return "aktiv";
+            if (raw === "inactive" || raw === "passive" || raw === "passiv" || raw === "inaktiv") return "passiv";
+            return raw;
+          },
+        },
+        {
+          key: "club_code",
+          label: "Club",
+          type: "select",
+          defaultValue: "all",
+          options: [
+            { value: "all", label: "Alle" },
+            ...clubOptions.map((code) => ({ value: code.toLowerCase(), label: code })),
+          ],
+          value: (row) => String(row?.club_code || "").trim().toLowerCase(),
+        },
+        {
+          key: "role",
+          label: "Rolle",
+          type: "select",
+          defaultValue: "all",
+          options: [
+            { value: "all", label: "Alle" },
+            ...state.acl.roles.map((roleId) => ({ value: roleId, label: roleId })),
+          ],
+          value: (row) => String(row?.role || "member").trim().toLowerCase(),
+        },
+        {
+          key: "login_dot",
+          label: "Login",
+          type: "select",
+          defaultValue: "all",
+          options: [
+            { value: "all", label: "Alle" },
+            { value: "yes", label: "Mit Login" },
+            { value: "no", label: "Ohne Login" },
+          ],
+          value: (row) => row?.has_login ? "yes" : "no",
+        },
+      ],
+      emptyStateDescription: 'Lege den ersten Eintrag direkt inline ueber "＋ Neuer Eintrag" an.',
+      rows,
+      rowKey: (row) => rowKey(row),
+      getCreateDefaults: () => ({
+        club_member_no: "",
+        first_name: "",
+        last_name: "",
+        role: "member",
+        status: "Aktiv",
+        fishing_card_type: "",
+        street: "",
+        email: "",
+        zip: "",
+        city: "",
+        phone: "",
+        mobile: "",
+        birthdate: "",
+        guardian_member_no: "",
+        sepa_approved: true,
+      }),
+      columns: memberInlineColumns(),
+      onCreateSubmit: async (draft) => {
+        try {
+          setMsg("Mitglied wird angelegt ...");
+          await createMemberInline(draft);
+          await refresh();
+          setMsg("Mitglied angelegt.");
+          return true;
+        } catch (err) {
+          setMsg(err?.message || "Anlegen fehlgeschlagen.", true);
+          return false;
+        }
+      },
+      onEditSubmit: async (row, draft) => {
+        try {
+          if (String(row?.row_kind || "") === "role_only") throw new Error("role_only_row_not_editable");
+          setMsg("Mitglied wird gespeichert ...");
+          await updateMemberInline(row, draft);
+          await refresh();
+          setMsg("Mitglied gespeichert.");
+          return true;
+        } catch (err) {
+          setMsg(err?.message || "Speichern fehlgeschlagen.", true);
+          return false;
+        }
+      },
+      onDelete: async (row) => {
+        try {
+          if (String(row?.row_kind || "") === "role_only") throw new Error("role_only_row_not_deletable");
+          if (!window.confirm(`Mitglied ${String(row?.member_no || "").trim()} wirklich löschen?`)) return;
+          setMsg("Mitglied wird gelöscht ...");
+          await deleteMemberInline(row);
+          await refresh();
+          setMsg("Mitglied gelöscht.");
+        } catch (err) {
+          setMsg(err?.message || "Löschen fehlgeschlagen.", true);
+        }
+      },
+      onDuplicate: async (row) => {
+        try {
+          if (String(row?.row_kind || "") === "role_only") throw new Error("role_only_row_not_duplicable");
+          setMsg("Mitglied wird dupliziert ...");
+          await createMemberInline({
+            ...row,
+            member_no: "",
+            club_member_no: "",
+          });
+          await refresh();
+          setMsg("Mitglied dupliziert.");
+        } catch (err) {
+          setMsg(err?.message || "Duplizieren fehlgeschlagen.", true);
+        }
+      },
+      onSortChange: ({ sortKey, sortDir }) => {
+        state.sortKey = sortKey;
+        state.sortDir = sortDir;
+        savePrefs();
+        renderRows();
+      },
+    });
+  }
+
+  function renderHead() {
+    renderMembersInlineTable();
   }
 
   function cellValue(r, key) {
@@ -848,22 +1301,12 @@
       return "Ohne Mitgliedsnummer";
     }
     if (key === "sepa_approved") return r.sepa_approved === null || r.sepa_approved === undefined ? "-" : (r.sepa_approved ? "Ja" : "Nein");
+    if (key === "role") return esc(String(r?.role || "member").trim() || "member");
     return esc(r?.[key] ?? "-");
   }
 
   function renderRows() {
-    const root = document.getElementById("memberRegistryRows");
-    if (!root) return;
-    const visible = COLUMNS.filter((c) => state.visibleCols.has(c.key));
-    if (!state.filtered.length) {
-      root.innerHTML = `<tr><td colspan="${Math.max(1, visible.length)}" class="small">Keine Mitglieder gefunden.</td></tr>`;
-      return;
-    }
-    root.innerHTML = pagedRows().map((r) => `
-      <tr ${r.row_kind === "role_only" ? "" : `data-open-member="${esc(rowKey(r))}"`} style="cursor:${r.row_kind === "role_only" ? "default" : "pointer"};">
-        ${visible.map((c) => `<td>${cellValue(r, c.key)}</td>`).join("")}
-      </tr>
-    `).join("");
+    renderMembersInlineTable();
   }
 
   function renderClubFilter() {
@@ -998,6 +1441,296 @@
     return clubId ? state.clubWorkspaceById.get(clubId) || null : null;
   }
 
+  function waterTypeOptions() {
+    return [
+      { value: "", label: "Optional" },
+      { value: "see", label: "See" },
+      { value: "fluss", label: "Fluss" },
+      { value: "weiher", label: "Weiher" },
+    ];
+  }
+
+  function waterStatusOptions() {
+    return [
+      { value: "active", label: "aktiv" },
+      { value: "draft", label: "Entwurf" },
+      { value: "inactive", label: "inaktiv" },
+    ];
+  }
+
+  function waterCardOptions(workspace) {
+    const cards = Array.isArray(workspace?.cards) ? workspace.cards : [];
+    return cards
+      .map((card) => ({
+        value: String(card?.id || "").trim(),
+        label: String(card?.name || "").trim(),
+      }))
+      .filter((card) => card.value && card.label);
+  }
+
+  function hydrateWaterRows(workspace) {
+    const cardOptions = waterCardOptions(workspace);
+    const cardMap = new Map(cardOptions.map((card) => [card.value, card.label]));
+    return (Array.isArray(workspace?.waters) ? workspace.waters : []).map((row) => {
+      const cardIds = Array.isArray(row?.water_cards) ? row.water_cards.map((entry) => String(entry || "").trim()).filter(Boolean) : [];
+      return {
+        ...row,
+        water_status: String(row?.water_status || (row?.is_active ? "active" : "inactive") || "active").trim(),
+        water_type: String(row?.water_type || "").trim(),
+        is_youth_allowed: Boolean(row?.is_youth_allowed),
+        requires_board_approval: Boolean(row?.requires_board_approval),
+        water_cards: cardIds,
+        water_cards_display: cardIds.map((id) => ({ id, label: cardMap.get(id) || id })),
+      };
+    });
+  }
+
+  async function syncWatersWorkspace(action, payload = {}) {
+    const clubId = currentFocusClubId();
+    if (!clubId) throw new Error("club_id_required");
+    const data = await callWorkspace(action, clubId, payload);
+    if (data?.workspace) state.clubWorkspaceById.set(clubId, data.workspace);
+    renderWatersPanel();
+    return data;
+  }
+
+  function renderWatersPanel() {
+    const mount = document.getElementById("memberRegistryWatersMount");
+    if (!mount) return;
+    const workspace = currentClubWorkspace();
+    const clubId = currentFocusClubId();
+
+    if (!clubId) {
+      mount.innerHTML = `<p class="small">Kein Vereinskontext aktiv.</p>`;
+      return;
+    }
+
+    mount.innerHTML = `
+      <p id="memberRegistryWatersMsg" class="small" aria-live="polite"></p>
+      <div id="memberRegistryWatersTable"></div>
+    `;
+    watersTable = null;
+
+    if (!window.FCPInlineDataTable?.createStandardV2) {
+      setWatersMsg("Inline Data Table v2 ist nicht verfügbar.", true);
+      return;
+    }
+
+    const tableRoot = document.getElementById("memberRegistryWatersTable");
+    const rows = hydrateWaterRows(workspace);
+    const cardOptions = waterCardOptions(workspace);
+    const hasCardOptions = cardOptions.length > 0;
+    const metaHint = cardOptions.length
+      ? `${cardOptions.length} Angelkarten verfügbar`
+      : (workspace ? "Noch keine Angelkarten im Verein hinterlegt" : "Workspace noch nicht geladen");
+
+    if (!workspace) {
+      setWatersMsg("Für Live-Daten bitte einmal 'Neu laden' ausführen.");
+    }
+
+    if (!watersTable) {
+      watersTable = window.FCPInlineDataTable.createStandardV2({
+        root: tableRoot,
+        tableId: "registry-waters",
+        viewMode: "table",
+        title: "Gewässer",
+        description: "Inline-Anlage und Pflege der vereinsbezogenen Gewässer inkl. Kartenzuordnung.",
+        utilityActions: [
+          { key: "reload", label: "Neu laden", variant: "ghost" },
+        ],
+        onUtilityAction: async (actionKey) => {
+          if (actionKey !== "reload") return;
+          try {
+            setWatersMsg("Gewässer werden geladen ...");
+            await loadClubWorkspace(clubId);
+            setWatersMsg("Gewässer geladen.");
+          } catch (err) {
+            setWatersMsg(err?.message || "Laden fehlgeschlagen.", true);
+          }
+        },
+        metaLabel: "Gewässer",
+        metaHint,
+        searchPlaceholder: "Gewässer suchen ...",
+        showCreateButton: Boolean(workspace),
+        createLabel: "Neuer Eintrag",
+        emptyStateDescription: workspace
+          ? 'Lege den ersten Eintrag direkt inline ueber "Neuer Eintrag" an.'
+          : "Lade zuerst den Vereins-Workspace, damit vorhandene Gewässer und Angelkarten verfuegbar sind.",
+        rows,
+        rowKey: (row) => String(row?.id || "").trim(),
+        filterFields: [
+          { key: "name", label: "Gewässer", type: "text", placeholder: "z. B. Angelweiher" },
+          { key: "water_status", label: "Status", type: "text", placeholder: "z. B. aktiv" },
+          { key: "water_type", label: "Typ", type: "text", placeholder: "z. B. See" },
+          { key: "is_youth_allowed", label: "Jugend", type: "text", placeholder: "Ja / Nein" },
+          { key: "requires_board_approval", label: "Vorstand", type: "text", placeholder: "Ja / Nein" },
+        ],
+        getCreateDefaults: () => ({
+          name: "",
+          area_kind: "vereins_gemeinschaftsgewaesser",
+          water_type: "",
+          water_status: "active",
+          is_youth_allowed: false,
+          requires_board_approval: false,
+          water_cards: [],
+        }),
+        columns: [
+          {
+            key: "name",
+            label: "Gewässer",
+            type: "primary",
+            width: "minmax(180px, 1.45fr)",
+            placeholder: "z. B. Angelweiher",
+          },
+          {
+            key: "water_type",
+            label: "Typ",
+            type: "select",
+            width: "minmax(120px, .8fr)",
+            editorType: "select",
+            options: waterTypeOptions(),
+            renderHtml: (row) => {
+              const found = waterTypeOptions().find((entry) => entry.value === String(row?.water_type || ""));
+              return esc(found?.label || "-");
+            },
+          },
+          {
+            key: "water_status",
+            label: "Status",
+            type: "select",
+            width: "minmax(110px, .78fr)",
+            editorType: "select",
+            options: waterStatusOptions(),
+            renderHtml: (row) => {
+              const found = waterStatusOptions().find((entry) => entry.value === String(row?.water_status || ""));
+              return esc(found?.label || row?.water_status || "-");
+            },
+          },
+          {
+            key: "is_youth_allowed",
+            label: "Jugend",
+            type: "boolean",
+            width: "minmax(90px, .6fr)",
+            editorType: "select",
+            options: [
+              { value: "true", label: "Ja" },
+              { value: "false", label: "Nein" },
+            ],
+            renderHtml: (row) => esc(row?.is_youth_allowed ? "Ja" : "Nein"),
+          },
+          {
+            key: "requires_board_approval",
+            label: "Vorstand",
+            type: "boolean",
+            width: "minmax(90px, .6fr)",
+            editorType: "select",
+            options: [
+              { value: "true", label: "Ja" },
+              { value: "false", label: "Nein" },
+            ],
+            renderHtml: (row) => esc(row?.requires_board_approval ? "Ja" : "Nein"),
+          },
+          {
+            key: "water_cards",
+            label: "Angelkarten",
+            type: "meta",
+            width: hasCardOptions ? "minmax(180px, .95fr)" : "minmax(90px, .45fr)",
+            editorType: hasCardOptions ? "select-multi" : "readonly",
+            options: cardOptions,
+            value: (row) => Array.isArray(row?.water_cards) ? row.water_cards : [],
+            renderHtml: (row) => {
+              const items = Array.isArray(row?.water_cards_display) ? row.water_cards_display : [];
+              if (!hasCardOptions) return "—";
+              if (!items.length) return "-";
+              return items.map((item) => `<span class="inline-token">${esc(item?.label || item?.name || item)}</span>`).join("");
+            },
+          },
+          {
+            key: "actions",
+            label: "Aktionen",
+            type: "actions",
+            width: "120px",
+            editable: false,
+            sortable: false,
+            filterable: false,
+          },
+        ],
+        onCreateSubmit: async (draft) => {
+          try {
+            setWatersMsg("Gewässer wird angelegt ...");
+            await syncWatersWorkspace("create_water", {
+              name: String(draft?.name || "").trim(),
+              area_kind: String(draft?.area_kind || "vereins_gemeinschaftsgewaesser").trim(),
+              water_type: String(draft?.water_type || "").trim(),
+              water_status: String(draft?.water_status || "active").trim(),
+              is_youth_allowed: String(draft?.is_youth_allowed || "false") === "true" || Boolean(draft?.is_youth_allowed),
+              requires_board_approval: String(draft?.requires_board_approval || "false") === "true" || Boolean(draft?.requires_board_approval),
+              water_cards: Array.isArray(draft?.water_cards) ? draft.water_cards : [],
+            });
+            setWatersMsg("Gewässer angelegt.");
+            return true;
+          } catch (err) {
+            setWatersMsg(err?.message || "Anlegen fehlgeschlagen.", true);
+            return false;
+          }
+        },
+        onEditSubmit: async (row, draft) => {
+          try {
+            setWatersMsg("Gewässer wird gespeichert ...");
+            await syncWatersWorkspace("update_water", {
+              water_id: String(row?.id || "").trim(),
+              name: String(draft?.name || "").trim(),
+              area_kind: String(draft?.area_kind || "vereins_gemeinschaftsgewaesser").trim(),
+              water_type: String(draft?.water_type || "").trim(),
+              water_status: String(draft?.water_status || "active").trim(),
+              is_youth_allowed: String(draft?.is_youth_allowed || "false") === "true" || Boolean(draft?.is_youth_allowed),
+              requires_board_approval: String(draft?.requires_board_approval || "false") === "true" || Boolean(draft?.requires_board_approval),
+              water_cards: Array.isArray(draft?.water_cards) ? draft.water_cards : [],
+            });
+            setWatersMsg("Gewässer gespeichert.");
+            return true;
+          } catch (err) {
+            setWatersMsg(err?.message || "Speichern fehlgeschlagen.", true);
+            return false;
+          }
+        },
+        onDelete: async (row) => {
+          const ok = window.confirm(`Gewässer "${String(row?.name || "").trim()}" wirklich löschen?`);
+          if (!ok) return;
+          try {
+            setWatersMsg("Gewässer wird gelöscht ...");
+            await syncWatersWorkspace("delete_water", {
+              water_id: String(row?.id || "").trim(),
+            });
+            setWatersMsg("Gewässer gelöscht.");
+          } catch (err) {
+            setWatersMsg(err?.message || "Löschen fehlgeschlagen.", true);
+          }
+        },
+        onDuplicate: async (row) => {
+          try {
+            setWatersMsg("Gewässer wird dupliziert ...");
+            await syncWatersWorkspace("create_water", {
+              name: `${String(row?.name || "").trim()} (Kopie)`,
+              area_kind: String(row?.area_kind || "vereins_gemeinschaftsgewaesser").trim(),
+              water_type: String(row?.water_type || "").trim(),
+              water_status: String(row?.water_status || "active").trim(),
+              is_youth_allowed: Boolean(row?.is_youth_allowed),
+              requires_board_approval: Boolean(row?.requires_board_approval),
+              water_cards: Array.isArray(row?.water_cards) ? row.water_cards : [],
+            });
+            setWatersMsg("Gewässer dupliziert.");
+          } catch (err) {
+            setWatersMsg(err?.message || "Duplizieren fehlgeschlagen.", true);
+          }
+        },
+      });
+    } else {
+      watersTable.setRows(rows);
+      watersTable.setMeta({ metaLabel: "Gewässer", metaHint });
+    }
+  }
+
   function fillValue(id, value) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -1052,6 +1785,7 @@
       if (data?.workspace) {
         state.clubWorkspaceById.set(cid, data.workspace);
         renderClubDataForm();
+        renderWatersPanel();
       }
       return data?.workspace || null;
     } catch (err) {
@@ -1059,6 +1793,7 @@
       if (draft) {
         state.clubWorkspaceById.set(cid, draft);
         renderClubDataForm();
+        renderWatersPanel();
         return draft;
       }
       throw err;
@@ -1332,12 +2067,13 @@
 
   async function refresh() {
     setMsg("Lade Mitglieder...");
-    const [profileClubId, managedClubIds, rows, clubIdentityById, clubAclCountsById] = await Promise.all([
+    const [profileClubId, managedClubIds, rows, clubIdentityById, clubAclCountsById, clubUserRoleAssignments] = await Promise.all([
       loadCurrentProfileClubId().catch(() => ""),
       loadManagedClubIds().catch(() => new Set()),
       loadRows(),
       loadClubIdentityMap(),
       loadClubAclCounts(),
+      loadClubUserRoleAssignments(),
     ]);
     if (!state.clubIdFilter) {
       state.clubIdFilter = profileClubId || "";
@@ -1348,11 +2084,15 @@
         : [...managedClubIds][0] || "";
     }
 
-    const scopedRows = filterRowsByClubIds(rows, managedClubIds);
+    const effectiveRoleByClubUser = buildEffectiveRoleMap(clubUserRoleAssignments);
+    const scopedRows = applyEffectiveRoles(
+      filterRowsByClubIds(rows, managedClubIds),
+      effectiveRoleByClubUser,
+    );
     const scopedClubIdentityById = filterMapByClubIds(clubIdentityById, managedClubIds);
     const scopedClubAclCountsById = filterMapByClubIds(clubAclCountsById, managedClubIds);
     const roleOnlyRows = filterRowsByClubIds(
-      await loadRoleOnlyRows(scopedRows, scopedClubIdentityById),
+      await loadRoleOnlyRows(scopedRows, scopedClubIdentityById, clubUserRoleAssignments),
       managedClubIds,
     );
 
@@ -1360,7 +2100,9 @@
     state.clubIdentityById = scopedClubIdentityById;
     state.clubAclCountsById = scopedClubAclCountsById;
     renderClubOverview();
-    await loadClubWorkspace(currentFocusClubId()).catch(() => null);
+    await loadClubWorkspace(currentFocusClubId()).catch(() => {
+      renderWatersPanel();
+    });
     renderClubFilter();
     applyFilterSort();
     renderHead();
@@ -1400,9 +2142,6 @@
     const pageSizeEl = document.getElementById("memberRegistryPageSize");
     if (pageSizeEl) pageSizeEl.value = String(state.pageSize);
 
-    document.getElementById("memberRegistryReload")?.addEventListener("click", () => {
-      refresh().catch((e) => setMsg(e.message || "Laden fehlgeschlagen", true));
-    });
     document.getElementById("clubDataReloadBtn")?.addEventListener("click", async () => {
       try {
         setClubDataMsg("Vereinsdaten werden geladen ...");
@@ -1422,9 +2161,6 @@
       } catch (e) {
         setClubDataMsg(e.message || "Speichern fehlgeschlagen", true);
       }
-    });
-    document.getElementById("memberRegistryCreateBtn")?.addEventListener("click", () => {
-      openCreateDialog();
     });
     document.getElementById("memberRegistrySearch")?.addEventListener("input", (e) => {
       state.search = String(e.target.value || "");
@@ -1471,24 +2207,6 @@
       savePrefs();
       renderHead();
       renderRows();
-    });
-    document.getElementById("memberRegistryHead")?.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-sort]");
-      if (!btn) return;
-      const key = String(btn.getAttribute("data-sort") || "");
-      if (!key) return;
-      if (state.sortKey === key) state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
-      else { state.sortKey = key; state.sortDir = "asc"; }
-      savePrefs();
-      applyFilterSort();
-      renderHead();
-      renderRows();
-      renderStatsAndPager();
-    });
-    document.getElementById("memberRegistryRows")?.addEventListener("click", (e) => {
-      const row = e.target.closest("[data-open-member]");
-      if (!row) return;
-      openDialog(row.getAttribute("data-open-member"));
     });
     document.getElementById("memberRegistrySaveBtn")?.addEventListener("click", async () => {
       try {

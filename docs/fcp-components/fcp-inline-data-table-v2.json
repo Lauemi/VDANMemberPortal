@@ -1,0 +1,539 @@
+{
+  "generated_at": "2026-03-30T00:00:00+02:00",
+  "component": {
+    "id": "fcp-inline-data-table-v2",
+    "name": "FCP Inline Data Table v2",
+    "family": "table",
+    "version": "v2",
+    "status": "proposed-standard",
+    "summary": "Generische FCP-Inline-Datentabelle fuer schnelle Stammdatenpflege, Inline-Erfassung, Inline-Bearbeitung, Row-Actions, Card-Fallback und persistierbares User-Layout.",
+    "intent": [
+      "Tippen statt Formulare ausfuellen",
+      "Einheitliche Tabellenoptik ueber alle Masken mit Tabellenpflege",
+      "Einheitliches Inline-Create- und Inline-Edit-Verhalten",
+      "Wiederverwendbar fuer Termine, Gewaesser, Angelkarten, Regeln, Fanglisten und weitere Stammdaten"
+    ],
+    "replacesPattern": [
+      "Spezielle Einzelmasken mit Platzhalter-Card",
+      "Zukuenftige Maskenabschnitte, die heute nur Text/Coming-Soon anzeigen"
+    ],
+    "targetReplacementExample": {
+      "selector": "section[data-registry-panel=\"waters\"], section[data-club-admin-panel=\"waters\"], section[data-member-panel=\"waters\"]",
+      "replacesDom": "<section class=\"admin-section is-active\" data-registry-panel=\"waters\"><article class=\"admin-card is-missing\"><span class=\"admin-missing-badge\" aria-label=\"Noch nicht gebaut\">✖</span><h2>Gewässer</h2><p class=\"small\">Verwaltung der vereinsbezogenen Gewässerdaten folgt in der nächsten Ausbaustufe.</p></article></section>"
+    }
+  },
+  "design_contract": {
+    "theme": "fcp_tactical",
+    "visual_goal": [
+      "echtes Tabellengefuehl statt Formular-Panel",
+      "kompakte, klare Zeilen",
+      "saubere Actions-Spalte",
+      "Toolbar wie bestehender FCP Data Table",
+      "Inline-Zeile direkt unter Datensatz",
+      "gleiche Grundoptik fuer alle Fachmasken"
+    ],
+    "token_direction": {
+      "background": "fcp tactical beige/olive",
+      "table_header": "flat segmented header",
+      "row_hover": "subtle tactical hover",
+      "row_selected": "accent-left selection marker",
+      "editor_row": "leicht abgesetzte Inline-Zeile, kein Unterformular-Kasten",
+      "actions": "Icon-only actions, keine grossen Textbuttons"
+    },
+    "density": {
+      "default": "compact-inline",
+      "row_height": "56px",
+      "editor_row_height": "52px",
+      "toolbar_control_height": "40px",
+      "mobile_control_height": "48px"
+    }
+  },
+  "files": {
+    "runtime": [
+      "public/js/fcp-inline-data-table-v2.js"
+    ],
+    "styles": [
+      "public/css/main.css"
+    ],
+    "integrationTargets": [
+      "src/pages/app/mitgliederverwaltung/index.astro",
+      "src/pages/app/vereine/index.astro",
+      "public/js/member-registry-admin.js",
+      "public/js/club-admin-setup.js"
+    ]
+  },
+  "mount_contract": {
+    "goal": "Dieselbe Komponente soll in unterschiedlichen Maskenkontexten ueber einen benannten DOM-Pfad eingebaut werden koennen.",
+    "mountTargetRule": "Die Zielmaske benennt genau ein Panel- oder Section-Element als Mount-Punkt. Die Komponente ersetzt dort den Platzhalterinhalt, nicht die fachliche Zugriffslogik.",
+    "allowedTargetPatterns": [
+      "section[data-registry-panel=\"<domain>\"]",
+      "section[data-club-admin-panel=\"<domain>\"]",
+      "section[data-member-panel=\"<domain>\"]",
+      "section[data-vorstand-panel=\"<domain>\"]"
+    ],
+    "notes": [
+      "Die Komponente ist nicht auf Admin-Masken beschraenkt.",
+      "Rechte und Datenquellen kommen aus der Zielmaske bzw. dem dahinterliegenden Write-/Read-Pfad.",
+      "Der DOM-Mount benennt nur den Einbauort, nicht die Autorisierung."
+    ]
+  },
+  "dom": {
+    "rootAttributes": [
+      "data-fcp-component=\"FCP Inline Data Table v2\"",
+      "data-table-id",
+      "data-row-click=\"inline\"",
+      "data-inline-create",
+      "data-inline-edit"
+    ],
+    "rootStructure": [
+      ".data-table-shell",
+      ".data-table-shell__toolbar",
+      ".data-table-shell__filter-panel",
+      ".data-table-shell__meta",
+      ".data-table-wrap",
+      ".data-table",
+      ".data-table__head",
+      ".data-table__row",
+      ".data-table__row--create",
+      ".data-table__row--editor",
+      ".cards-view"
+    ],
+    "requiredChildren": {
+      "toolbar": [
+        "search field",
+        "new-row button",
+        "optional quick toggles",
+        "filter toggle",
+        "filter reset"
+      ],
+      "table": [
+        "header row",
+        "zero or one create row",
+        "n data rows",
+        "zero or one editor row per data row"
+      ]
+    },
+    "rowTypes": [
+      {
+        "type": "data",
+        "selector": ".data-table__row",
+        "description": "Normale Datenzeile"
+      },
+      {
+        "type": "create",
+        "selector": ".data-table__row--create",
+        "description": "Inline-Anlagezeile fuer neuen Datensatz"
+      },
+      {
+        "type": "editor",
+        "selector": ".data-table__row--editor",
+        "description": "Inline-Bearbeitungszeile direkt unter Datenzeile"
+      }
+    ],
+    "cellTypes": [
+      ".data-table__cell",
+      ".data-table__cell--primary",
+      ".data-table__cell--numeric",
+      ".data-table__editor-cell",
+      ".data-table__cell--actions"
+    ],
+    "headerCellStructure": {
+      "selector": ".data-table__headcell",
+      "children": [
+        ".headcell-left",
+        ".drag-handle",
+        ".data-table__sort",
+        ".column-resizer"
+      ]
+    }
+  },
+  "css_contract": {
+    "baseSelectors": [
+      ".data-table-shell",
+      ".data-table-shell__toolbar",
+      ".filter-panel",
+      ".table-meta-bar",
+      ".data-table-wrap",
+      ".data-table",
+      ".data-table__head",
+      ".data-table__headcell",
+      ".data-table__row",
+      ".data-table__row--create",
+      ".data-table__row--editor",
+      ".data-table__cell",
+      ".data-table__editor-cell",
+      ".row-actions",
+      ".editor-actions",
+      ".row-action-btn",
+      ".action-icon",
+      ".drag-handle",
+      ".column-resizer",
+      ".cards-view",
+      ".inline-card"
+    ],
+    "doNotBreakRules": [
+      "Grundoptik muss mit FCP Data Table v1 verwandt bleiben",
+      "Toolbar bleibt search-left tools-right",
+      "Actions bleiben icon-only",
+      "Editor-Zeile bleibt im Raster, kein Modal-Ersatz",
+      "Keine Card-in-Card-Formulare im Desktop-Table"
+    ],
+    "allowedVariantOverrides": [
+      "gridTemplateColumns pro Fachmaske",
+      "sichtbare Zusatzspalten",
+      "cell renderers",
+      "optionale quick filters",
+      "mobile cards text/content"
+    ],
+    "importantStyleRules": {
+      "table_layout": "Grid-basierte Spalten mit CSS-Variablen pro Spalte",
+      "header_sticky": true,
+      "row_hover": true,
+      "selected_row_marker": true,
+      "editor_row_visual": "leicht abgesetzt, aber klar Teil des Tabellenrasters",
+      "actions_visual": "runde oder kompakte Icon-Buttons",
+      "no_large_text_buttons_in_row_end": true
+    }
+  },
+  "layout_contract": {
+    "columnSizing": {
+      "mode": "css-variable-based",
+      "variablesPattern": "--col-<key>",
+      "defaultBehavior": "Header, Datenzeile, Create-Zeile und Editor-Zeile nutzen identisches Raster",
+      "resizable": true,
+      "reorderable": true
+    },
+    "defaultColumnOrderBehavior": "Spaltenreihenfolge ist per User-Layout ueberschreibbar",
+    "columnResizeBehavior": {
+      "trigger": ".column-resizer",
+      "interaction": "mousedown -> mousemove -> mouseup",
+      "minWidthPx": 72,
+      "persistAfterResize": true
+    },
+    "columnDragBehavior": {
+      "trigger": ".data-table__headcell[draggable=\"true\"] oder .drag-handle",
+      "interaction": "dragstart -> dragover -> drop",
+      "effect": "Header- und Row-Zellen werden in identischer Reihenfolge neu angeordnet",
+      "persistAfterDrop": true
+    }
+  },
+  "state_model": {
+    "sortKey": "string|null",
+    "sortDir": "\"asc\"|\"desc\"",
+    "filters": "Record<string,string>",
+    "activeFilterCount": "number",
+    "selectedRowId": "string|null",
+    "createRowOpen": "boolean",
+    "openEditorRowId": "string|null",
+    "viewMode": "\"table\"|\"cards\"",
+    "columnOrder": "string[]",
+    "columnWidths": "Record<string,string>",
+    "layoutDirty": "boolean"
+  },
+  "interaction_contract": {
+    "rowInteractionMode": {
+      "value": "inline",
+      "behavior": "Row oder Edit-Icon oeffnet Inline-Editor direkt unter der geklickten Row"
+    },
+    "singleOpenEditor": true,
+    "singleOpenCreateRow": true,
+    "rowClickRules": [
+      "Klick auf Datenzeile toggelt Editor der geklickten Row",
+      "Klick auf andere Datenzeile schliesst offene Editor-Row und oeffnet die neue",
+      "Klick auf Buttons/Input/Select/Label in der Row darf den Row-Toggle nicht ungewollt ausloesen"
+    ],
+    "createRules": [
+      "Toolbar-Button 'Neuer Datensatz' toggelt Create-Row",
+      "Wenn Create-Row geoeffnet wird, werden offene Editor-Rows geschlossen",
+      "Abbruch in Create-Row schliesst nur Create-Row"
+    ],
+    "cardsModeRules": [
+      "Cards ist alternative Darstellung fuer dieselben Datensaetze",
+      "Card-Edit oeffnet Card-Editor inline in der Card",
+      "Cards nutzen dieselbe Feldlogik wie Table, aber nicht dieselbe Desktop-Grid-Darstellung"
+    ],
+    "actionsPolicy": {
+      "mode": "icon-only",
+      "requiredActions": [
+        "edit",
+        "duplicate",
+        "delete"
+      ],
+      "editorActions": [
+        "save/update",
+        "reset",
+        "cancel"
+      ]
+    }
+  },
+  "events_contract": {
+    "callbacks": [
+      "onRowClick",
+      "onRowAction",
+      "onCreateOpen",
+      "onCreateCancel",
+      "onCreateSubmit",
+      "onEditOpen",
+      "onEditCancel",
+      "onEditSubmit",
+      "onSortChange",
+      "onFilterChange",
+      "onReset",
+      "onViewModeChange",
+      "onColumnOrderChange",
+      "onColumnResize",
+      "onLayoutChange"
+    ],
+    "notes": [
+      "onLayoutChange liefert persistierbare User-Layout-Daten",
+      "Row-Action Events liefern rowId und actionKey",
+      "Create/Edit Submit liefern normalisierte Feldpayloads"
+    ]
+  },
+  "persistence_contract": {
+    "goal": "User-individuelle Tabellenkonfiguration geraeteuebergreifend speichern",
+    "persistedKeys": [
+      "columnOrder",
+      "columnWidths",
+      "viewMode",
+      "optional quick filters"
+    ],
+    "clientPrototype": {
+      "storage": "localStorage",
+      "storageKey": "fcp-inline-table-layout-v2::<table-id>"
+    },
+    "productionRecommendation": {
+      "storage": "DB",
+      "options": [
+        "profiles.ui_preferences_json",
+        "user_ui_preferences table"
+      ],
+      "scope": [
+        "user_id",
+        "table_id",
+        "club_id optional"
+      ]
+    }
+  },
+  "column_contract": {
+    "summary": "Vertrag fuer ColumnConfig in FCP Inline Data Table v2.",
+    "requiredFields": [
+      "key",
+      "label",
+      "type"
+    ],
+    "optionalFields": [
+      "sortable",
+      "filterable",
+      "align",
+      "width",
+      "editable",
+      "editorType",
+      "options",
+      "placeholder",
+      "emptyValue",
+      "defaultValue",
+      "value",
+      "sortValue",
+      "filterValue",
+      "renderHtml",
+      "renderEditor",
+      "cellClass",
+      "headerClass",
+      "persistWidth",
+      "draggable"
+    ],
+    "fieldSchema": {
+      "key": "string",
+      "label": "string",
+      "type": "\"primary\"|\"meta\"|\"numeric\"|\"date\"|\"text\"|\"boolean\"|\"select\"|\"actions\"",
+      "sortable": "boolean",
+      "filterable": "boolean",
+      "align": "\"left\"|\"right\"|\"center\"",
+      "width": "string|null",
+      "editable": "boolean",
+      "editorType": "\"text\"|\"number\"|\"date\"|\"select\"|\"select-multi\"|\"checkbox\"|\"readonly\"",
+      "options": "Array<{value:string,label:string}>|null",
+      "placeholder": "string|null",
+      "emptyValue": "string|null",
+      "defaultValue": "any",
+      "value": "function(row) => string|number|boolean|null",
+      "sortValue": "function(row) => string|number|null",
+      "filterValue": "function(row) => string|number|null",
+      "renderHtml": "function(row, rendered) => html-string",
+      "renderEditor": "function(row, mode) => html-string",
+      "cellClass": "string|null",
+      "headerClass": "string|null",
+      "persistWidth": "boolean",
+      "draggable": "boolean"
+    },
+    "defaults": {
+      "sortable": true,
+      "filterable": true,
+      "editable": true,
+      "draggable": true,
+      "persistWidth": true,
+      "emptyValue": "-",
+      "align": {
+        "text": "left",
+        "numeric": "right",
+        "actions": "right"
+      }
+    }
+  },
+  "generic_behavior": {
+    "tableFactory": "FCPInlineDataTable.createStandardV2(config)",
+    "sharedModes": [
+      "table",
+      "cards"
+    ],
+    "createStrategy": "inline-first",
+    "editStrategy": "row-below-inline",
+    "deleteStrategy": "action-icon with confirm hook",
+    "duplicateStrategy": "action-icon with clone hook",
+    "selectionStrategy": "single row focus",
+    "headerFeatures": [
+      "sorting",
+      "drag reorder",
+      "column resize"
+    ]
+  },
+  "usage_contract": {
+    "whenToUse": [
+      "Wenn schnelle Pflege in Tabellenform noetig ist",
+      "Wenn der Nutzer direkt im Raster tippen soll",
+      "Wenn mehrere Fachobjekte dieselbe Tabellenlogik teilen sollen"
+    ],
+    "whenNotToUse": [
+      "Wenn ein Objekt sehr viele Felder oder komplexe Wizard-Logik braucht",
+      "Wenn Bearbeitung zwingend mehrstufig oder modal sein muss",
+      "Wenn keine tabellarische Grundstruktur vorliegt"
+    ]
+  },
+  "example_instance": {
+    "mask": {
+      "name": "Gewaesserverwaltung",
+      "mountTargetSelector": "section[data-registry-panel=\"waters\"], section[data-club-admin-panel=\"waters\"], section[data-member-panel=\"waters\"], section[data-vorstand-panel=\"waters\"]",
+      "tableId": "waters-inline-table",
+      "viewMode": "table",
+      "rowInteractionMode": "inline",
+      "selectionMode": "single"
+    },
+    "domain_goal": "Gewaesser erfassen und einem Gewaesser eine oder mehrere Angelkarten zuweisen",
+    "read_write_key_rules": {
+      "tenantAnchor": "club_id",
+      "visibleClubCode": "club_code nur Lookup/Anzeige",
+      "rowId": "water_body_id oder gleichwertige technische ID",
+      "cardAssignmentKey": "water_body_id + fishing_card_id",
+      "forbidden": [
+        "club_code als Tenant-Anker fuer Reads/Writes",
+        "sichtbare Kurzwerte als primaerer Join-Anker",
+        "ungueltige Direkt-Inserts ausserhalb definierter Write-Pfade"
+      ]
+    },
+    "suggestedWritePaths": [
+      "admin_waters_create",
+      "admin_waters_update",
+      "admin_waters_assign_cards",
+      "admin_waters_remove_card_assignment"
+    ],
+    "columns": [
+      {
+        "key": "water_name",
+        "label": "Gewässer",
+        "type": "primary",
+        "width": "220px",
+        "editable": true,
+        "editorType": "text",
+        "placeholder": "z. B. Angelweiher"
+      },
+      {
+        "key": "water_type",
+        "label": "Typ",
+        "type": "select",
+        "width": "120px",
+        "editable": true,
+        "editorType": "select",
+        "options": [
+          { "value": "lake", "label": "See" },
+          { "value": "river", "label": "Fluss" },
+          { "value": "pond", "label": "Weiher" },
+          { "value": "canal", "label": "Kanal" }
+        ]
+      },
+      {
+        "key": "water_status",
+        "label": "Status",
+        "type": "select",
+        "width": "120px",
+        "editable": true,
+        "editorType": "select",
+        "options": [
+          { "value": "active", "label": "aktiv" },
+          { "value": "draft", "label": "Entwurf" },
+          { "value": "inactive", "label": "inaktiv" }
+        ]
+      },
+      {
+        "key": "is_youth_allowed",
+        "label": "Jugend",
+        "type": "boolean",
+        "width": "90px",
+        "editable": true,
+        "editorType": "select",
+        "defaultValue": false,
+        "options": [
+          { "value": "true", "label": "Ja" },
+          { "value": "false", "label": "Nein" }
+        ]
+      },
+      {
+        "key": "requires_board_approval",
+        "label": "Vorstand",
+        "type": "boolean",
+        "width": "100px",
+        "editable": true,
+        "editorType": "select",
+        "defaultValue": false,
+        "options": [
+          { "value": "true", "label": "Ja" },
+          { "value": "false", "label": "Nein" }
+        ]
+      },
+      {
+        "key": "water_cards",
+        "label": "Angelkarten",
+        "type": "meta",
+        "width": "260px",
+        "editable": true,
+        "editorType": "select-multi",
+        "placeholder": "Eine oder mehrere Karten zuweisen",
+        "description": "Mehrfachzuweisung von fishing_card_id-Werten"
+      },
+      {
+        "key": "actions",
+        "label": "Aktionen",
+        "type": "actions",
+        "width": "120px",
+        "editable": false,
+        "sortable": false,
+        "filterable": false
+      }
+    ],
+    "createRowDefaults": {
+      "water_status": "active",
+      "is_youth_allowed": false,
+      "requires_board_approval": false,
+      "water_cards": []
+    },
+    "editorNotes": [
+      "Mehrfachzuweisung Angelkarten muss im Editor moeglich sein",
+      "Kartenzuweisung ist fachlich Teil des Gewaessers und nicht nur Dialog-Nachschritt",
+      "Falls Multi-Select in einer Zelle zu eng wird: kompakte Token-/Chip-Darstellung im Cell-Renderer"
+    ]
+  },
+  "developer_handoff_text": {
+    "title": "Einbau FCP Inline Data Table v2 in Gewaesserverwaltung",
+    "instruction": "Wir sind noch im Onboarding. Das ist der aktuelle Inline Data Table v2. Hier brauchen wir alle relevanten Felder, um die Gewaesser zu erfassen und dem Gewaesser eine oder mehrere Angelkarten zuweisen zu koennen. Beachte unser Schluesselsystem beim Schreiben und Lesen der Daten. Der Data Table soll kuenftig den benannten DOM-Mount fuer die Gewaesser-Maske ersetzen, z. B. `section[data-registry-panel='waters']` oder `section[data-club-admin-panel='waters']`. Die neue Maske soll optisch und funktional auf dem FCP Inline Data Table v2 basieren und kuenftig in anderen Admin-, Vorstands- oder Mitgliedsbereichen identisch wiederverwendbar sein. Es soll also reichen, kuenftig nur noch den Ziel-DOM-Pfad bzw. die Ziel-Maske zu benennen, damit dieselbe Komponente dort eingebaut wird."
+  }
+}

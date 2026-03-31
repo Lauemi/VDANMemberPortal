@@ -26,6 +26,7 @@ export const APP_MASK_BRAND_PAGES: AppMaskBrandEntry[] = [
   { route: "/app/fangliste/cockpit", label: "Fangliste Cockpit", note: "Cockpit fuer Auswertung und Pflege.", default_brand: "fcp_tactical" },
   { route: "/app/gewaesserkarte/", label: "Gewaesserkarte", note: "Kartendarstellung fuer das Portal.", default_brand: "fcp_tactical" },
   { route: "/app/kontrollboard/", label: "Kontrollboard", note: "Kontroll- und Rollout-Board.", default_brand: "fcp_tactical" },
+  { route: "/app/masterboard/", label: "Masterboard", note: "Systemboard fuer Architektur, Risiko und operativen Stand.", default_brand: "fcp_tactical" },
   { route: "/app/lizenzen/", label: "Wetter & Karten API", note: "Lizenz- und API-Ansicht.", default_brand: "fcp_tactical" },
   { route: "/app/mitglieder/", label: "Mitglieder", note: "Mitgliederansicht und Rollen.", default_brand: "fcp_tactical" },
   { route: "/app/mitgliederverwaltung/", label: "Mitgliederverwaltung", note: "Vereinsbezogene Mitgliederverwaltung.", default_brand: "fcp_tactical" },

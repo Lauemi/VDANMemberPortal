@@ -149,13 +149,49 @@ async function ensureProfile(user: Record<string, unknown>, clubId: string, memb
   });
 }
 
-async function memberNoExistsInClub(clubId: string, memberNo: string) {
-  const res = await sbServiceFetch(
-    `/rest/v1/club_members?select=member_no&club_id=eq.${encodeURIComponent(clubId)}&member_no=eq.${encodeURIComponent(memberNo)}&limit=1`,
-    { method: "GET" },
+type ClubMemberRecord = {
+  member_no: string;
+  club_member_no?: string | null;
+};
+
+async function resolveClubMemberRecord(clubId: string, inputMemberNo: string): Promise<ClubMemberRecord | null> {
+  const desiredInput = txt(inputMemberNo).toUpperCase();
+  if (!desiredInput) return null;
+
+  const directRows = await loadJson(
+    `/rest/v1/club_members?select=member_no,club_member_no&club_id=eq.${encodeURIComponent(clubId)}&member_no=eq.${encodeURIComponent(desiredInput)}&limit=1`,
   );
-  const rows = await res.json().catch(() => []);
-  return Array.isArray(rows) && rows.length > 0;
+  const directRow = Array.isArray(directRows) && directRows.length ? directRows[0] : null;
+  if (txt(directRow?.member_no)) {
+    return {
+      member_no: txt(directRow?.member_no).toUpperCase(),
+      club_member_no: txt(directRow?.club_member_no).toUpperCase() || null,
+    };
+  }
+
+  const externalRows = await loadJson(
+    `/rest/v1/club_members?select=member_no,club_member_no&club_id=eq.${encodeURIComponent(clubId)}&club_member_no=eq.${encodeURIComponent(desiredInput)}&limit=1`,
+  );
+  const externalRow = Array.isArray(externalRows) && externalRows.length ? externalRows[0] : null;
+  if (txt(externalRow?.member_no)) {
+    return {
+      member_no: txt(externalRow?.member_no).toUpperCase(),
+      club_member_no: txt(externalRow?.club_member_no).toUpperCase() || null,
+    };
+  }
+
+  const memberRows = await loadJson(
+    `/rest/v1/members?select=membership_number,club_member_no&club_id=eq.${encodeURIComponent(clubId)}&or=(membership_number.eq.${encodeURIComponent(desiredInput)},club_member_no.eq.${encodeURIComponent(desiredInput)})&limit=1`,
+  );
+  const memberRow = Array.isArray(memberRows) && memberRows.length ? memberRows[0] : null;
+  if (txt(memberRow?.membership_number)) {
+    return {
+      member_no: txt(memberRow?.membership_number).toUpperCase(),
+      club_member_no: txt(memberRow?.club_member_no).toUpperCase() || null,
+    };
+  }
+
+  return null;
 }
 
 async function ensureClubMemberRecord(
@@ -167,9 +203,9 @@ async function ensureClubMemberRecord(
 ) {
   const desiredInput = txt(inputMemberNo).toUpperCase();
   if (!desiredInput) throw new Error("member_no_required");
-  const existsInClub = await memberNoExistsInClub(clubId, desiredInput);
-  if (!existsInClub) throw new Error("member_no_not_found_in_club");
-  return desiredInput;
+  const memberRecord = await resolveClubMemberRecord(clubId, desiredInput);
+  if (!memberRecord?.member_no) throw new Error("member_no_not_found_in_club");
+  return memberRecord.member_no;
 }
 
 async function ensureMemberEmailMatch(clubId: string, memberNo: string, actorEmailRaw: string) {
@@ -177,7 +213,7 @@ async function ensureMemberEmailMatch(clubId: string, memberNo: string, actorEma
   if (!actorEmail) throw new Error("auth_email_required");
 
   const rows = await loadJson(
-    `/rest/v1/members?select=email,club_member_no,membership_number&club_id=eq.${encodeURIComponent(clubId)}&membership_number=eq.${encodeURIComponent(memberNo)}&limit=1`,
+    `/rest/v1/members?select=email,club_member_no,membership_number&club_id=eq.${encodeURIComponent(clubId)}&or=(membership_number.eq.${encodeURIComponent(memberNo)},club_member_no.eq.${encodeURIComponent(memberNo)})&limit=1`,
   );
   const row = Array.isArray(rows) && rows.length ? rows[0] : null;
   const memberEmail = txt(row?.email).toLowerCase();

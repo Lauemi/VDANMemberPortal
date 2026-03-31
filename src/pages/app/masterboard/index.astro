@@ -1,0 +1,140 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+
+const repoRoot = process.cwd();
+const masterBootstrapPath = path.join(repoRoot, "docs", "FCP_company", "fcp_masterboard_state.json");
+const processBootstrapPath = path.join(repoRoot, "docs", "FCP_company", "fcp_process_control_state.json");
+
+const masterBootstrap = JSON.parse(fs.readFileSync(masterBootstrapPath, "utf8"));
+const processBootstrap = JSON.parse(fs.readFileSync(processBootstrapPath, "utf8"));
+const bootstrapScript = [
+  `window.__FCP_MASTERBOARD_BOOTSTRAP__ = ${JSON.stringify(masterBootstrap).replace(/</g, "\\u003c")};`,
+  `window.__FCP_PROCESS_CONTROL_BOOTSTRAP__ = ${JSON.stringify(processBootstrap).replace(/</g, "\\u003c")};`,
+].join("\n");
+---
+
+<Site
+  title={`Masterboard • ${APP.name}`}
+  description="Superadmin-Systemboard für Architektur, Launch-Risiken und operativen Kontrollstand."
+  robots="noindex"
+  containerClass="container container--admin-wide"
+>
+  <link slot="head" rel="stylesheet" href="/css/masterboard.css" />
+
+  <section class="card masterboard-page">
+    <div class="card__body">
+      <h1>FCP Masterboard</h1>
+      <p class="small">
+        Systemboard für Architektur, operative Kontrolle und Launch-Risiko.
+        Diese Maske ist ausschließlich für Superadmin gedacht und schreibt ihren Zustand direkt in die Datenbank.
+      </p>
+      <p id="masterboardPageMsg" class="small" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="card masterboard-page masterboard-page--workspace">
+    <div class="card__body">
+      <div id="fcpMasterboardApp" class="masterboard-app">
+        <div class="masterboard-app__topbar">
+          <section class="titlebox">
+            <div class="eyebrow">Systemsteuerung</div>
+            <h2>FCP Systemboard</h2>
+            <p class="subtitle">Zentrale Sicht auf Architektur, Prozessreife, Risiken und offene Systemlücken.</p>
+            <div class="golden">Golden Path: Website → Registrierung → Login → Onboarding → CSV → Dashboard → Nutzung</div>
+          </section>
+
+          <section class="filterbox">
+            <div class="eyebrow">Filter</div>
+            <div class="filter-grid">
+              <label class="control">
+                <span>Suche</span>
+                <input id="masterboardSearch" type="search" placeholder="Modul, Gap, Ref ..." />
+              </label>
+              <label class="control">
+                <span>Ebene</span>
+                <select id="masterboardLaneFilter">
+                  <option value="all">Alle Ebenen</option>
+                </select>
+              </label>
+              <label class="control">
+                <span>Status</span>
+                <select id="masterboardStatusFilter">
+                  <option value="all">Alle Status</option>
+                  <option value="erfuellt">Erfüllt</option>
+                  <option value="teilweise">Teilweise</option>
+                  <option value="offen">Offen</option>
+                </select>
+              </label>
+              <label class="control">
+                <span>Signal</span>
+                <select id="masterboardSignalFilter">
+                  <option value="all">Alle Signale</option>
+                  <option value="risk">Nur Risiken</option>
+                  <option value="gap">Nur Lücken</option>
+                  <option value="focus">Nur Golden Path</option>
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section class="actionbox">
+            <div class="eyebrow">Zustand</div>
+            <div class="stats">
+              <div class="stat"><div class="k">Knoten</div><div class="v" id="masterboardStatNodes">0</div></div>
+              <div class="stat"><div class="k">Lücken</div><div class="v" id="masterboardStatGaps">0</div></div>
+              <div class="stat"><div class="k">Risiken</div><div class="v" id="masterboardStatRisks">0</div></div>
+              <div class="stat"><div class="k">Prozesse</div><div class="v" id="masterboardStatProcesses">0</div></div>
+            </div>
+            <div class="btnrow">
+              <button type="button" class="primary" id="masterboardRefreshBtn">Neu laden</button>
+              <button type="button" class="ghost" id="masterboardSeedBtn">Bootstrap übernehmen</button>
+              <button type="button" class="ghost" id="masterboardExportMasterBtn">Master export</button>
+              <button type="button" class="ghost" id="masterboardExportOpsBtn">Ops export</button>
+            </div>
+          </section>
+        </div>
+
+        <div class="tabs">
+          <button type="button" class="tab active" data-masterboard-tab="master">Masterboard</button>
+          <button type="button" class="tab" data-masterboard-tab="ops">Operatives Kontrollboard</button>
+        </div>
+
+        <div id="masterboardMasterView">
+          <div id="masterboardLaneBoard" class="board"></div>
+        </div>
+
+        <div id="masterboardOpsView" class="hidden">
+          <div class="process-table process-head">
+            <div>Prozess</div>
+            <div>Status</div>
+            <div>Screens</div>
+            <div>UI</div>
+            <div>Smoke</div>
+            <div>Bugs</div>
+            <div>Review</div>
+          </div>
+          <div id="masterboardProcessList"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="masterboardOverlay" class="masterboard-overlay"></div>
+  <aside id="masterboardDrawer" class="masterboard-drawer" aria-hidden="true">
+    <div class="masterboard-drawer__head">
+      <div>
+        <div id="masterboardDrawerLane" class="eyebrow">Details</div>
+        <h2 id="masterboardDrawerTitle">Eintrag</h2>
+        <p id="masterboardDrawerSub" class="subtitle">-</p>
+      </div>
+      <button type="button" class="ghost" id="masterboardDrawerClose">Schließen</button>
+    </div>
+    <div id="masterboardDrawerBody" class="masterboard-drawer__body"></div>
+  </aside>
+
+  <script is:inline set:html={bootstrapScript}></script>
+  <script src="/js/masterboard-app.js" defer></script>
+</Site>

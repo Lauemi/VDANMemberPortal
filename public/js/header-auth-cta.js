@@ -16,7 +16,7 @@
 
     const current = `${window.location.pathname || "/"}${window.location.search || ""}`;
     const next = isVdanSiteMode() ? "/app/" : (current.startsWith("/login/") ? "/app/" : current);
-    cta.textContent = "Sign in";
+    cta.textContent = "Login";
     cta.setAttribute("href", `/login/?next=${encodeURIComponent(next)}`);
     cta.setAttribute("aria-label", "Anmelden");
   }

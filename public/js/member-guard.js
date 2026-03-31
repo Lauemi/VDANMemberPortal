@@ -1,6 +1,6 @@
 ﻿;(() => {
   const ADMIN_PATHS = ["/app/mitglieder/", "/app/mitgliederverwaltung/", "/app/fangliste/cockpit/", "/app/lizenzen/", "/app/feedback/cockpit/"];
-  const SUPERADMIN_PATHS = ["/app/admin-panel/", "/app/vereine/", "/app/kontrollboard/", "/app/ui-neumorph-demo/", "/app/component-library/", "/app/template-studio/"];
+  const SUPERADMIN_PATHS = ["/app/admin-panel/", "/app/vereine/", "/app/kontrollboard/", "/app/masterboard/", "/app/ui-neumorph-demo/", "/app/component-library/", "/app/template-studio/"];
   const MANAGER_PATHS = [
     "/app/dokumente/",
     "/app/bewerbungen/",
@@ -96,9 +96,10 @@
       if (needsMemberOnly(path)) return;
       if (needsSuperadmin(path)) {
         const superadmins = configuredSuperadmins();
-        if (!superadmins.length) { forbid(); return; }
         const currentUid = String(session?.user?.id || "");
-        if (!superadmins.includes(currentUid)) { forbid(); return; }
+        if (superadmins.includes(currentUid)) return;
+        const roles = await loadRoles().catch(() => []);
+        if (!roles.includes("superadmin")) { forbid(); return; }
         return;
       }
       if (!needsAdmin(path) && !needsManager(path)) return;

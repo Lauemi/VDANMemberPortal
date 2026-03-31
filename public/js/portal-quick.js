@@ -62,6 +62,7 @@
     { id: "mitgliederverwaltung", href: "/app/mitgliederverwaltung/", label: "Mitglieder-Registry", short: "MR", access: "admin", group: "admin" },
     { id: "vereine_setup", href: "/app/vereine/", label: "Vereins-Setup", short: "VS", access: "superadmin", group: "superadmin" },
     { id: "kontrollboard", href: "/app/kontrollboard/", label: "Kontrollboard", short: "KB", access: "superadmin", group: "superadmin" },
+    { id: "masterboard", href: "/app/masterboard/", label: "Masterboard", short: "MB", access: "superadmin", group: "superadmin" },
     { id: "ui_neumorph_demo", href: "/app/ui-neumorph-demo/", label: "UI Neumorph Demo", short: "UI", access: "superadmin", group: "superadmin" },
     { id: "component_library", href: "/app/component-library/", label: "Component Library", short: "CL", access: "superadmin", group: "superadmin" },
     { id: "template_studio", href: "/app/template-studio/", label: "Template Studio", short: "TS", access: "superadmin", group: "superadmin" },
@@ -107,7 +108,7 @@
         .split(",")
         .map((v) => v.trim())
         .filter(Boolean);
-      return superadmins.includes(String(state.uid || ""));
+      return superadmins.includes(String(state.uid || "")) || roles.includes("superadmin");
     }
     if (access === "admin") return roles.includes("admin");
     if (access === "manager") return isManager(roles);

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FCP Masterboard Interaktiv V3</title>
+  <style>
+    :root{
+      --bg:#090909;--panel:#141414;--panel-2:#1c1c1c;--text:#f3f3f3;--muted:#b7b7b7;--line:#2f2f2f;
+      --gold:#f7c948;--red:#ef5350;--yellow:#fbbf24;--green:#22c55e;--blue:#60a5fa;--violet:#8b5cf6;--teal:#14b8a6;
+      --shadow:0 10px 30px rgba(0,0,0,.28);--chip-radius:999px;--maxw:1700px;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    *{box-sizing:border-box} html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+    body{min-height:100vh} .app{max-width:var(--maxw);margin:0 auto;padding:18px 18px 120px}
+    .topbar{position:sticky;top:0;z-index:20;background:linear-gradient(180deg, rgba(9,9,9,.98), rgba(9,9,9,.86));backdrop-filter: blur(10px);padding:12px 0 14px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .topbar-inner{max-width:var(--maxw);margin:0 auto;padding:0 18px;display:grid;grid-template-columns:1.2fr 1.4fr .9fr;gap:12px;align-items:start}
+    .titlebox,.filterbox,.actionbox{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+    .titlebox{padding:16px 18px}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#d5d5d5;opacity:.8;margin-bottom:8px;font-weight:700}
+    h1{font-size:28px;line-height:1.05;margin:0 0 8px}.subtitle{color:var(--muted);font-size:14px;line-height:1.45;margin:0}
+    .golden{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:8px 12px;border-radius:var(--chip-radius);background:rgba(247,201,72,.12);border:1px solid rgba(247,201,72,.28);color:#f8dd86;font-size:12px;font-weight:700}
+    .filterbox{padding:12px 14px}.filter-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:10px}
+    .control{display:flex;flex-direction:column;gap:6px}.control label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#cfcfcf;font-weight:700}
+    .control input,.control select,.control textarea{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:11px 12px;font:inherit}
+    .actionbox{padding:12px 14px;display:flex;flex-direction:column;gap:10px}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .stat{padding:10px 12px;border-radius:14px;background:var(--panel-2);border:1px solid var(--line)}.stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#bfbfbf;margin-bottom:4px;font-weight:700}.stat .v{font-size:22px;font-weight:800;line-height:1}
+    .btnrow{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    button{appearance:none;border:0;background:var(--panel-2);color:var(--text);border:1px solid var(--line);padding:11px 12px;border-radius:12px;font:inherit;font-weight:700;cursor:pointer;transition:.18s transform,.18s border-color}.tab.active,button.primary{background:linear-gradient(180deg, rgba(247,201,72,.18), rgba(247,201,72,.1));border-color:rgba(247,201,72,.35);color:#f8dd86}.ghost{background:transparent}.tab,button:hover{border-color:#555}
+    .legend,.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 12px}.chip,.tab{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--chip-radius);background:var(--panel);border:1px solid var(--line);font-size:12px;color:#d8d8d8}
+    .tab{cursor:pointer;font-weight:800}.dot{width:11px;height:11px;border-radius:999px;display:inline-block}.hidden{display:none!important}
+    .board{display:flex;flex-direction:column;gap:12px}.lane{background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.015));border:1px solid var(--line);border-radius:20px;padding:12px 12px 14px;box-shadow:var(--shadow)}
+    .lane-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:6px 6px 10px}.lane-title{font-size:20px;font-weight:900;letter-spacing:.01em}.lane-sub{font-size:12px;color:var(--muted);margin-top:4px}.lane-meta{font-size:12px;color:#d0d0d0;background:var(--panel-2);border:1px solid var(--line);padding:8px 10px;border-radius:12px;white-space:nowrap}
+    .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.card{position:relative;border-radius:18px;padding:14px;background:var(--card-bg);border:1px solid var(--card-line);color:var(--card-text);min-height:178px;display:flex;flex-direction:column;cursor:pointer;overflow:hidden}
+    .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}.badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.04em;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18)}
+    .card-status{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.82)}.card-title{font-size:17px;font-weight:900;line-height:1.15;margin:0 0 6px}.card-sub{font-size:13px;color:rgba(255,255,255,.82);line-height:1.35}.card-tags{margin-top:auto;display:flex;flex-wrap:wrap;gap:6px;padding-top:12px}.mini{font-size:11px;padding:5px 9px;border-radius:999px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.88)}
+    .signals{position:absolute;top:10px;right:10px;display:flex;gap:6px}.signal{width:24px;height:24px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;box-shadow:0 0 0 1px rgba(255,255,255,.12) inset}.signal-risk{background:rgba(239,83,80,.95);color:#fff}.signal-gap{background:rgba(251,191,36,.95);color:#552f00}.signal-money{background:rgba(247,201,72,.95);color:#4b3600}.signal-focus{background:rgba(96,165,250,.95);color:#082648}
+    .flow-connector{display:flex;align-items:center;gap:10px;padding:4px 8px 0}.flow-connector .line{height:1px;background:#444;flex:1}.flow-connector .label{font-size:12px;color:#d6d6d6;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+    .drawer{position:fixed;top:0;right:0;height:100vh;width:min(760px,96vw);background:#0f0f0f;border-left:1px solid var(--line);box-shadow:-20px 0 50px rgba(0,0,0,.4);transform:translateX(100%);transition:.24s transform;z-index:40;display:flex;flex-direction:column}.drawer.open{transform:translateX(0)}
+    .drawer-head{padding:18px 18px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:start}.drawer-body{padding:18px;overflow:auto;display:flex;flex-direction:column;gap:14px}.drawer h2{margin:0;font-size:28px;line-height:1.05}.drawer-sub{color:var(--muted);font-size:14px;line-height:1.4;margin-top:8px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}.panel h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#d7d7d7;margin:0 0 10px}.list{display:flex;flex-direction:column;gap:8px}.item{padding:10px 12px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px}.refs{display:flex;flex-direction:column;gap:8px}.ref{padding:10px 12px;border:1px solid var(--line);background:var(--panel-2);border-radius:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5;color:#e4e4e4;word-break:break-word}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.decision{border-left:4px solid var(--gold)}.textarea{min-height:92px;resize:vertical}.small{font-size:12px;color:var(--muted);line-height:1.5}.footer-note{margin-top:10px;color:#9f9f9f;font-size:12px;line-height:1.5}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.36);opacity:0;pointer-events:none;transition:.24s opacity;z-index:30}.overlay.show{opacity:1;pointer-events:auto}
+    .c-marketing{--card-bg:linear-gradient(180deg,#61112d,#4d0f26);--card-line:#ba3d73;--card-text:#ffd9e7}.c-entry{--card-bg:linear-gradient(180deg,#1d5a00,#134500);--card-line:#5bbc2d;--card-text:#e9ffd8}.c-onboarding{--card-bg:linear-gradient(180deg,#083c73,#062f59);--card-line:#4797f0;--card-text:#d9ecff}.c-config{--card-bg:linear-gradient(180deg,#352a7f,#2b226a);--card-line:#8c7df2;--card-text:#ece8ff}.c-operativ{--card-bg:linear-gradient(180deg,#00564c,#004941);--card-line:#19b4a2;--card-text:#dbfffa}.c-system{--card-bg:linear-gradient(180deg,#343434,#2a2a2a);--card-line:#8b8b8b;--card-text:#efefef}.c-legal{--card-bg:linear-gradient(180deg,#734200,#5a3300);--card-line:#d48d14;--card-text:#fff0d1}
+    .process-table{display:grid;grid-template-columns:1.3fr .8fr .8fr .8fr .8fr .8fr .8fr;gap:10px;align-items:center}.process-row,.process-head{padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel-2)}.process-head{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#cfcfcf;font-weight:700;background:transparent}.process-row{cursor:pointer}.pill{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08)}.ok{color:#9cf7b4}.mid{color:#ffe18a}.bad{color:#ff9b9b}
+    @media (max-width:1300px){.topbar-inner{grid-template-columns:1fr}.cards{grid-template-columns:repeat(3,minmax(0,1fr))}.filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width:980px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}.process-table{grid-template-columns:1fr}.process-head{display:none}}
+    @media (max-width:620px){.app{padding:12px 12px 100px}.topbar-inner{padding:0 12px}.cards{grid-template-columns:1fr}.filter-grid{grid-template-columns:1fr}h1{font-size:24px}}
+  </style>
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <section class="titlebox">
+    <div class="eyebrow">Unternehmensführung · Masterboard</div>
+    <h1>FCP Systemboard</h1>
+    <p class="subtitle">Reparierte Fassung mit durchgehender Linie: das ursprüngliche ruhige Architekturboard bleibt erhalten. Ergänzt wurde nur eine zweite, operative Kontrollsicht – ohne Bruch in Sprache, Farben und Steuerlogik.</p>
+    <div class="golden">✦ Golden Path: Website → Registrierung → Login → Onboarding → CSV → Dashboard → Nutzung</div>
+  </section>
+  <section class="filterbox">
+    <div class="eyebrow">Steuerung</div>
+    <div class="filter-grid">
+      <div class="control"><label for="search">Suche</label><input id="search" type="search" placeholder="Modul, Pfad, Gap, Entscheidung …" /></div>
+      <div class="control"><label for="laneFilter">Ebene</label><select id="laneFilter"><option value="all">Alle Ebenen</option></select></div>
+      <div class="control"><label for="statusFilter">Status</label><select id="statusFilter"><option value="all">Alle Status</option><option value="erfuellt">Erfüllt</option><option value="teilweise">Teilweise</option><option value="offen">Offen</option></select></div>
+      <div class="control"><label for="flagFilter">Signal</label><select id="flagFilter"><option value="all">Alle Signale</option><option value="risk">Nur Risiken</option><option value="gap">Nur Lücken</option><option value="money">Nur Geld-relevant</option><option value="focus">Nur Golden-Path-relevant</option></select></div>
+    </div>
+  </section>
+  <section class="actionbox">
+    <div class="eyebrow">Board-Zustand</div>
+    <div class="stats">
+      <div class="stat"><div class="k">Architekturknoten</div><div class="v" id="statVisible">0</div></div>
+      <div class="stat"><div class="k">Lücken</div><div class="v" id="statGaps">0</div></div>
+      <div class="stat"><div class="k">Risiken</div><div class="v" id="statRisks">0</div></div>
+      <div class="stat"><div class="k">Entscheidungen</div><div class="v" id="statDecisions">0</div></div>
+    </div>
+    <div class="btnrow"><button id="exportMaster">Master JSON exportieren</button><button class="primary" id="exportOps">Kontrollboard JSON exportieren</button></div>
+  </section>
+</div></div>
+
+<main class="app">
+  <div class="tabs">
+    <button class="tab active" data-tab="master">Masterboard</button>
+    <button class="tab" data-tab="ops">Operatives Kontrollboard</button>
+  </div>
+
+  <section id="masterView">
+    <div class="legend">
+      <span class="chip"><span class="dot" style="background:var(--green)"></span> erfüllt</span>
+      <span class="chip"><span class="dot" style="background:var(--yellow)"></span> teilweise / bewusst offen</span>
+      <span class="chip"><span class="dot" style="background:var(--red)"></span> offen / Risiko</span>
+      <span class="chip"><span class="dot" style="background:var(--gold)"></span> geldrelevant</span>
+      <span class="chip"><span class="dot" style="background:var(--blue)"></span> Golden Path / Fokus</span>
+    </div>
+    <div class="board" id="board"></div>
+    <p class="footer-note">Hinweis: Das Masterboard bleibt Führungsinstrument. Es zeigt keine komplette DB-Tiefe, sondern Entscheidungslinien, Risiken, Ketten und Referenzen.</p>
+  </section>
+
+  <section id="opsView" class="hidden">
+    <div class="legend">
+      <span class="chip"><span class="dot" style="background:var(--green)"></span> erledigt / abgehakt</span>
+      <span class="chip"><span class="dot" style="background:var(--yellow)"></span> teilweise geprüft</span>
+      <span class="chip"><span class="dot" style="background:var(--red)"></span> kritisch / offen</span>
+      <span class="chip">Checkbox-orientiert · token-sparend · Bug-/Smoke-/UI-Stand</span>
+    </div>
+    <div class="lane">
+      <div class="lane-head"><div><div class="lane-title">Operatives Kontrollboard</div><div class="lane-sub">Prozesse, zugehörige Screens, Smoke Checks, UI-Abnahmen, Bugs und Review-Stand.</div></div><div class="lane-meta" id="opsSummary">0 Prozesse</div></div>
+      <div class="process-head process-table"><div>Prozess</div><div>Status</div><div>Screens</div><div>UI ok</div><div>Smoke ok</div><div>Bugs offen</div><div>Build/Review</div></div>
+      <div id="processList" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+    <p class="footer-note">Done-Regel: Änderung ist erst abgeschlossen, wenn Code + betroffene JSON-Knoten + Kontrollstatus aktualisiert sind.</p>
+  </section>
+</main>
+
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-hidden="true"><div class="drawer-head"><div><div class="eyebrow" id="drawerLane">Ebene</div><h2 id="drawerTitle">Titel</h2><div class="drawer-sub" id="drawerSub">Untertitel</div></div><button class="ghost" id="closeDrawer">Schließen</button></div><div class="drawer-body" id="drawerBody"></div></aside>
+
+<script>
+const MASTER_STORAGE='fcp-masterboard-local-v3';
+const OPS_STORAGE='fcp-opsboard-local-v3';
+const MASTER_FALLBACK={version:1,board_id:'fcp-masterboard',updated_at:'2026-03-31',source_of_truth:'fallback-empty',nodes:[]};
+const OPS_FALLBACK={version:1,board_id:'fcp-process-control',updated_at:'2026-03-31',source_of_truth:'fallback-empty',rules:{done_rule:'Board-State fehlt',scope:'Kein operatives Kontrollboard geladen.'},processes:[]};
+let MASTER=MASTER_FALLBACK;
+let OPS=OPS_FALLBACK;
+const lanes=[
+  { key:'marketing', title:'Ebene 0 — Öffentliche Oberfläche & Akquise', subtitle:'Wie der Verein euch zum ersten Mal wahrnimmt.', className:'c-marketing' },
+  { key:'flow', title:'Ebene 1 — Einstieg & Nutzerreise', subtitle:'Was der Verein sichtbar erlebt, bevor wirklicher Wert entsteht.', className:'c-entry' },
+  { key:'onboarding', title:'Ebene 2 — Onboarding & Aktivierung', subtitle:'Hier entscheidet sich Vertrauen, Aktivierung und Abbruch.', className:'c-onboarding' },
+  { key:'config', title:'Ebene 3 — Konfigurationskern', subtitle:'Regeln, Stammdaten und Grundeinstellungen, die spätere Module tragen.', className:'c-config' },
+  { key:'operations', title:'Ebene 4 — Operative Module', subtitle:'Die laufenden Vereinsprozesse, die echten täglichen Nutzen erzeugen.', className:'c-operativ' },
+  { key:'system', title:'Ebene 5 — Querschnitt & Infrastruktur', subtitle:'Unsichtbare Träger: Sicherheit, Audit, Integrationen, Multi-Tenancy.', className:'c-system' },
+  { key:'legal', title:'Ebene 6 — Legal / Governance / Datenschutz', subtitle:'Rahmenbedingungen, die Vertrauen und Sicherheit absichern.', className:'c-legal' }
+];
+const laneLabels={marketing:'Marketing',flow:'Einstieg',onboarding:'Onboarding',config:'Konfig',operations:'Operativ',system:'Infra',legal:'Legal'};
+function loadLocal(k){try{return JSON.parse(localStorage.getItem(k)||'{}')}catch(e){return {}}}
+function saveLocal(k,v){localStorage.setItem(k,JSON.stringify(v))}
+const localMaster=loadLocal(MASTER_STORAGE), localOps=loadLocal(OPS_STORAGE);
+lanes.forEach(l=>{const opt=document.createElement('option'); opt.value=l.key; opt.textContent=l.title.replace(/^Ebene \d+ — /,''); document.getElementById('laneFilter').appendChild(opt);});
+function esc(v=''){return String(v).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
+function statusDot(s){return s==='erfuellt'?'🟢':s==='teilweise'?'🟡':'🔴'}
+function mergedNodes(){return MASTER.nodes.map(n=>Object.assign({},n,localMaster[n.id]||{}))}
+function laneByKey(k){return lanes.find(l=>l.key===k)}
+async function loadJson(url,fallback){
+  try{
+    const res=await fetch(url,{cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return await res.json();
+  }catch(err){
+    console.warn('Board JSON konnte nicht geladen werden:',url,err);
+    return fallback;
+  }
+}
+function matches(node){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  const laneOk=document.getElementById('laneFilter').value==='all'||node.lane===document.getElementById('laneFilter').value;
+  const statusOk=document.getElementById('statusFilter').value==='all'||node.status===document.getElementById('statusFilter').value;
+  const ff=document.getElementById('flagFilter').value;
+  const money=/preis|beitrag|billing|geld/i.test(node.title+' '+(node.progress_visible||[]).join(' '));
+  const focus=['registration','auth','welcome','csv'].includes(node.id);
+  const flagOk=ff==='all'||(ff==='risk'&&node.risk_level==='hoch')||(ff==='gap'&&(node.gaps||[]).length)||(ff==='money'&&money)||(ff==='focus'&&focus);
+  if(!q) return laneOk&&statusOk&&flagOk;
+  const hay=[node.id,node.title,node.lane,node.status,node.launch_class,node.risk_level].concat(node.progress_visible||[],node.progress_invisible||[],node.gaps||[],node.decisions_open||[],node.refs||[]).join(' ').toLowerCase();
+  return laneOk&&statusOk&&flagOk&&hay.includes(q);
+}
+function renderMaster(){
+  const board=document.getElementById('board'); const nodes=mergedNodes(); board.innerHTML='';
+  let vis=0,gaps=0,risks=0,dec=0;
+  lanes.forEach((lane,idx)=>{
+    const laneItems=nodes.filter(n=>n.lane===lane.key&&matches(n));
+    if(!laneItems.length) return;
+    const sec=document.createElement('section');
+    sec.className='lane';
+    sec.innerHTML='<div class="lane-head"><div><div class="lane-title">'+lane.title+'</div><div class="lane-sub">'+lane.subtitle+'</div></div><div class="lane-meta">'+laneItems.length+' Boxen sichtbar</div></div><div class="cards"></div>';
+    const cards=sec.querySelector('.cards');
+    laneItems.forEach(n=>{
+      vis++; if((n.gaps||[]).length) gaps++; if(n.risk_level==='hoch') risks++; if((n.decisions_open||[]).length) dec++;
+      const card=document.createElement('article'); card.className='card '+lane.className;
+      const money=/preis|beitrag|billing|geld/i.test(n.title+' '+(n.progress_visible||[]).join(' '));
+      const focus=['registration','auth','welcome','csv'].includes(n.id);
+      let signals=''; if(n.risk_level==='hoch') signals+='<span class="signal signal-risk" title="Hohes Risiko">!</span>'; if((n.gaps||[]).length) signals+='<span class="signal signal-gap" title="Lücken offen">~</span>'; if(money) signals+='<span class="signal signal-money" title="geldrelevant">€</span>'; if(focus) signals+='<span class="signal signal-focus" title="Golden Path relevant">✦</span>';
+      card.innerHTML='<div class="signals">'+signals+'</div><div class="card-head"><span class="badge">'+laneLabels[n.lane]+'</span><span class="card-status">'+statusDot(n.status)+' '+esc(n.status)+'</span></div><h3 class="card-title">'+esc(n.title)+'</h3><div class="card-sub">Launch: '+esc(n.launch_class)+' · Risiko: '+esc(n.risk_level)+'</div><div class="card-tags"><span class="mini">'+esc((n.progress_visible||[])[0]||'Keine Kurznotiz')+'</span></div>';
+      card.onclick=()=>openMasterDrawer(n.id); cards.appendChild(card);
+    });
+    board.appendChild(sec);
+    if(idx<lanes.length-1){const conn=document.createElement('div'); conn.className='flow-connector'; conn.innerHTML='<div class="line"></div><div class="label">Weiter zur nächsten Ebene</div><div class="line"></div>'; board.appendChild(conn);}
+  });
+  document.getElementById('statVisible').textContent=vis; document.getElementById('statGaps').textContent=gaps; document.getElementById('statRisks').textContent=risks; document.getElementById('statDecisions').textContent=dec;
+}
+function processMerged(){return OPS.processes.map(p=>Object.assign({},p,localOps[p.id]||{}))}
+function renderOps(){
+  const wrap=document.getElementById('processList'); const procs=processMerged(); wrap.innerHTML=''; document.getElementById('opsSummary').textContent=procs.length+' Prozesse';
+  procs.forEach(p=>{
+    const total=(p.screens||[]).length, ui=(p.screens||[]).filter(s=>s.checked_ui).length, smoke=(p.screens||[]).filter(s=>s.checked_smoke).length, bugs=(p.bugs||[]).filter(b=>b.status!=='closed').length;
+    const row=document.createElement('div'); row.className='process-row process-table';
+    row.innerHTML='<div><div style="font-weight:900">'+esc(p.title)+'</div><div class="small">'+esc((p.related_nodes||[]).join(', '))+'</div></div><div><span class="pill '+(p.status==='erfuellt'?'ok':p.status==='teilweise'?'mid':'bad')+'">'+statusDot(p.status)+' '+esc(p.status)+'</span></div><div>'+total+'</div><div>'+ui+' / '+total+'</div><div>'+smoke+' / '+total+'</div><div>'+bugs+'</div><div>'+esc(p.last_reviewed_at||OPS.updated_at||'')+'</div>';
+    row.onclick=()=>openOpsDrawer(p.id); wrap.appendChild(row);
+  });
+}
+const drawer=document.getElementById('drawer'), overlay=document.getElementById('overlay'), drawerBody=document.getElementById('drawerBody');
+function renderList(arr){if(!arr||!arr.length)return '<div class="small">Noch nichts hinterlegt.</div>'; return arr.map(v=>'<div class="item">'+esc(v)+'</div>').join('')}
+function openDrawer(){drawer.classList.add('open'); overlay.classList.add('show'); drawer.setAttribute('aria-hidden','false')}
+function closeDrawer(){drawer.classList.remove('open'); overlay.classList.remove('show'); drawer.setAttribute('aria-hidden','true')}
+document.getElementById('closeDrawer').onclick=closeDrawer; overlay.onclick=closeDrawer;
+function openMasterDrawer(id){
+  const node=mergedNodes().find(n=>n.id===id); if(!node) return;
+  document.getElementById('drawerLane').textContent=laneByKey(node.lane).title;
+  document.getElementById('drawerTitle').textContent=node.title;
+  document.getElementById('drawerSub').textContent=node.title+' · Launch '+node.launch_class+' · Risiko '+node.risk_level;
+  drawerBody.innerHTML='<section class="panel"><h3>Fortschritt sichtbar</h3><div class="list">'+renderList(node.progress_visible)+'</div></section><section class="panel"><h3>Fortschritt unsichtbar</h3><div class="list">'+renderList(node.progress_invisible)+'</div></section><section class="two"><div class="panel"><h3>Lücken</h3><div class="list">'+renderList(node.gaps)+'</div></div><div class="panel decision"><h3>Entscheidungen offen</h3><div class="list">'+renderList(node.decisions_open)+'</div></div></section><section class="panel"><h3>Referenzen</h3><div class="refs">'+((node.refs||[]).map(r=>'<div class="ref">'+esc(r)+'</div>').join('')||'<div class="small">Keine Referenzen.</div>')+'</div></section><section class="panel"><h3>Lokale Führungsnotiz</h3><textarea class="textarea" id="masterNote">'+esc(node.ownNote||'')+'</textarea><div class="btnrow" style="margin-top:10px"><button class="primary" id="saveMasterNote">Notiz speichern</button><button id="resetMasterNode">Lokales Reset</button></div></section>';
+  document.getElementById('saveMasterNote').onclick=()=>{localMaster[id]=Object.assign({},localMaster[id]||{}, {ownNote:document.getElementById('masterNote').value.trim()}); saveLocal(MASTER_STORAGE,localMaster);}
+  document.getElementById('resetMasterNode').onclick=()=>{delete localMaster[id]; saveLocal(MASTER_STORAGE,localMaster); closeDrawer(); renderMaster();}
+  openDrawer();
+}
+function openOpsDrawer(id){
+  const p=processMerged().find(x=>x.id===id); if(!p) return;
+  document.getElementById('drawerLane').textContent='Operatives Kontrollboard';
+  document.getElementById('drawerTitle').textContent=p.title;
+  document.getElementById('drawerSub').textContent='Status, Screens, Smoke, Bugs und Review';
+  const screens=(p.screens||[]).map(s=>'<div class="item"><div style="font-weight:800">'+esc(s.title)+' <small style="display:inline;color:#9ca3af">('+esc(s.path||'kein Pfad')+')</small></div><small>UI: '+(s.checked_ui?'✔':'✖')+' · Funktion: '+(s.checked_function?'✔':'✖')+' · Smoke: '+(s.checked_smoke?'✔':'✖')+' · Access: '+(s.checked_access?'✔':'✖')+' · Build: '+esc(s.build_ref||'-')+'</small></div>').join('')||'<div class="small">Keine Screens hinterlegt.</div>';
+  const checks=(p.smoke_checks||[]).map(c=>'<div class="item">'+(c.done?'☑':'☐')+' '+esc(c.title)+'<small>'+esc(c.note||'')+'</small></div>').join('')||'<div class="small">Keine Smoke Checks hinterlegt.</div>';
+  const bugs=(p.bugs||[]).map(b=>'<div class="item">'+esc(b.title)+'<small>Severity: '+esc(b.severity||'-')+' · Status: '+esc(b.status||'-')+'</small></div>').join('')||'<div class="small">Keine Bugs hinterlegt.</div>';
+  drawerBody.innerHTML='<section class="panel"><h3>Prozessstatus</h3><div class="small">Status: <strong>'+esc(p.status)+'</strong> · Zugehörige Master-Knoten: '+esc((p.related_nodes||[]).join(', '))+'</div></section><section class="panel"><h3>Screens / Masken</h3><div class="list">'+screens+'</div></section><section class="two"><div class="panel"><h3>Smoke Checks</h3><div class="list">'+checks+'</div></div><div class="panel"><h3>Offene Bugs</h3><div class="list">'+bugs+'</div></div></section><section class="panel"><h3>Review-Notiz</h3><textarea class="textarea" id="opsNote">'+esc(p.review_note||'')+'</textarea><div class="btnrow" style="margin-top:10px"><button class="primary" id="saveOpsNote">Notiz speichern</button><button id="markOpsReviewed">Review-Datum setzen</button></div></section>';
+  document.getElementById('saveOpsNote').onclick=()=>{localOps[id]=Object.assign({},localOps[id]||{}, {review_note:document.getElementById('opsNote').value.trim()}); saveLocal(OPS_STORAGE,localOps);}
+  document.getElementById('markOpsReviewed').onclick=()=>{localOps[id]=Object.assign({},localOps[id]||{}, {last_reviewed_at:new Date().toISOString().slice(0,10)}); saveLocal(OPS_STORAGE,localOps); renderOps();}
+  openDrawer();
+}
+document.querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  const master = btn.dataset.tab==='master'; document.getElementById('masterView').classList.toggle('hidden',!master); document.getElementById('opsView').classList.toggle('hidden',master);
+});
+['search','laneFilter','statusFilter','flagFilter'].forEach(id=>document.getElementById(id).addEventListener('input',renderMaster));
+document.getElementById('exportMaster').onclick=()=>downloadJson('fcp_masterboard_state_local_export.json', mergedNodes());
+document.getElementById('exportOps').onclick=()=>downloadJson('fcp_process_control_state_local_export.json', processMerged());
+function downloadJson(name,data){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url);}
+async function initBoard(){
+  [MASTER, OPS] = await Promise.all([
+    loadJson('./fcp_masterboard_state.json', MASTER_FALLBACK),
+    loadJson('./fcp_process_control_state.json', OPS_FALLBACK)
+  ]);
+  renderMaster();
+  renderOps();
+}
+initBoard();
+</script>
+</body></html>

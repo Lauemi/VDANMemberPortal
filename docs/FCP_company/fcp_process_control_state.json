@@ -1,0 +1,569 @@
+{
+  "version": 1,
+  "board_id": "fcp-process-control",
+  "updated_at": "2026-03-31",
+  "source_of_truth": "manual-operational-control",
+  "rules": {
+    "done_rule": "Aenderung ist erst abgeschlossen, wenn Code + betroffene JSON-Knoten + Kontrollstatus aktualisiert sind.",
+    "scope": "Operatives Kontrollboard fuer Prozesse, Screens, Smoke Checks, UI-Abnahmen und offene Bugs."
+  },
+  "processes": [
+    {
+      "id": "p-onboarding",
+      "title": "Onboarding",
+      "status": "teilweise",
+      "priority": "kritisch",
+      "related_nodes": [
+        "registration",
+        "invite",
+        "auth",
+        "csv",
+        "waters-onboard",
+        "cards-onboard",
+        "work-onboard",
+        "welcome"
+      ],
+      "summary": "Golden Path von Registrierung bis erster arbeitsfaehiger Verein.",
+      "owner": "michael",
+      "screens": [
+        {
+          "id": "s-registrieren",
+          "title": "Registrieren",
+          "path": "/registrieren",
+          "checked_ui": false,
+          "checked_function": true,
+          "checked_smoke": false,
+          "checked_access": false,
+          "build_ref": "main@2026-03-31",
+          "status": "teilweise",
+          "bugs_open": 2,
+          "notes": "Flow vorhanden, aber Gesamtfluss Join/Claim/CSV noch nicht eingefroren."
+        },
+        {
+          "id": "s-verein-anfragen",
+          "title": "Verein anfragen",
+          "path": "/verein-anfragen",
+          "checked_ui": false,
+          "checked_function": true,
+          "checked_smoke": false,
+          "checked_access": false,
+          "build_ref": "main@2026-03-31",
+          "status": "teilweise",
+          "bugs_open": 1,
+          "notes": "Bedarf klar, noch kein harmonisierter Gesamtpfad."
+        },
+        {
+          "id": "s-vereinssignin",
+          "title": "Vereinssignin / Login",
+          "path": "/vereinssignin",
+          "checked_ui": true,
+          "checked_function": true,
+          "checked_smoke": true,
+          "checked_access": false,
+          "build_ref": "main@2026-03-31",
+          "status": "erfuellt",
+          "bugs_open": 0,
+          "notes": "Login/Reset vorhanden."
+        },
+        {
+          "id": "s-onboarding-workspace",
+          "title": "Onboarding Workspace",
+          "path": "/app/vereine",
+          "checked_ui": false,
+          "checked_function": true,
+          "checked_smoke": false,
+          "checked_access": false,
+          "build_ref": "main@2026-03-31",
+          "status": "teilweise",
+          "bugs_open": 2,
+          "notes": "Setup/Fortschritt vorhanden, CSV fehlt."
+        },
+        {
+          "id": "s-csv-import",
+          "title": "CSV-Import",
+          "path": "(neu) csv-onboarding",
+          "checked_ui": false,
+          "checked_function": false,
+          "checked_smoke": false,
+          "checked_access": false,
+          "build_ref": "n/a",
+          "status": "offen",
+          "bugs_open": 0,
+          "notes": "L3-Blocker, noch nicht gebaut."
+        }
+      ],
+      "smoke_checks": [
+        {
+          "id": "sc-on-1",
+          "title": "Registrierung legt Verein/Anfrage sauber an",
+          "done": true
+        },
+        {
+          "id": "sc-on-2",
+          "title": "Login fuehrt in korrekten Vereinskontext",
+          "done": true
+        },
+        {
+          "id": "sc-on-3",
+          "title": "Onboarding-Fortschritt ist sichtbar",
+          "done": true
+        },
+        {
+          "id": "sc-on-4",
+          "title": "CSV Golden Path existiert",
+          "done": false
+        }
+      ],
+      "bugs": [
+        {
+          "id": "b-on-1",
+          "title": "Join/Claim/CSV-Gesamtfluss nicht eingefroren",
+          "severity": "hoch",
+          "status": "offen"
+        },
+        {
+          "id": "b-on-2",
+          "title": "Leere-State nach erstem Import nicht geloest",
+          "severity": "mittel",
+          "status": "offen"
+        }
+      ],
+      "last_reviewed_at": "2026-03-31"
+    },
+    {
+      "id": "p-members",
+      "title": "Mitgliederverwaltung",
+      "status": "teilweise",
+      "priority": "hoch",
+      "related_nodes": [
+        "members-ops",
+        "roles",
+        "auth-profiles",
+        "club-master"
+      ],
+      "summary": "Mitgliederliste, Detailpflege, Rollenbild, Vereinsnummern und Stammsatzfragen.",
+      "owner": "michael",
+      "screens": [
+        {
+          "id": "s-members-index",
+          "title": "Mitgliederverwaltung",
+          "path": "/app/mitgliederverwaltung",
+          "checked_ui": true,
+          "checked_function": true,
+          "checked_smoke": true,
+          "checked_access": false,
+          "build_ref": "main@2026-03-31",
+          "status": "teilweise",
+          "bugs_open": 2,
+          "notes": "Inline Data Table v2 steht, Historie/Entkopplung offen."
+        },
+        {
+          "id": "s-members-roles",
+          "title": "Rollen / Rechte Bereich",
+          "path": "/app/mitgliederverwaltung#rollen",
+          "checked_ui": false,
+          "checked_function": true,
+          "checked_smoke": false,
+          "checked_access": false,
+          "build_ref": "main@2026-03-31",
+          "status": "teilweise",
+          "bugs_open": 2,
+          "notes": "club_user_roles vs sichtbare Mitgliederrolle noch nicht sauber."
+        },
+        {
+          "id": "s-members-waters-inline",
+          "title": "Waters Inline v2",
+          "path": "/app/mitgliederverwaltung#waters",
+          "checked_ui": true,
+          "checked_function": true,
+          "checked_smoke": false,
+          "checked_access": false,
+          "build_ref": "main@2026-03-31",
+          "status": "teilweise",
+          "bugs_open": 1,
+          "notes": "Gewaesserverwaltung vorhanden, uniqueness-Fix offen."
+        }
+      ],
+      "smoke_checks": [
+        {
+          "id": "sc-mem-1",
+          "title": "Mitgliederliste laedt",
+          "done": true
+        },
+        {
+          "id": "sc-mem-2",
+          "title": "Create/Update/Delete laeuft",
+          "done": true
+        },
+        {
+          "id": "sc-mem-3",
+          "title": "Rollenanzeige ist konsistent",
+          "done": false
+        },
+        {
+          "id": "sc-mem-4",
+          "title": "Stammsatz und Snapshot sind fachlich geklaert",
+          "done": false
+        }
+      ],
+      "bugs": [
+        {
+          "id": "b-mem-1",
+          "title": "club_members und members fachlich noch nicht sauber entkoppelt",
+          "severity": "hoch",
+          "status": "offen"
+        },
+        {
+          "id": "b-mem-2",
+          "title": "Importierte Mitglieder ohne user_id nicht sauber im Rollenpfad",
+          "severity": "hoch",
+          "status": "offen"
+        }
+      ],
+      "last_reviewed_at": "2026-03-31"
+    },
+    {
+      "id": "p-cards-pricing",
+      "title": "Karten / Beitraege",
+      "status": "offen",
+      "priority": "kritisch",
+      "related_nodes": [
+        "cards-onboard",
+        "cards-ops",
+        "pricing-model",
+        "fees-ops",
+        "waters-ops"
+      ],
+      "summary": "Kartentypen, Preise, Gueltigkeit, spaetere Abrechnung und Sonderregeln.",
+      "owner": "michael",
+      "screens": [
+        {
+          "id": "s-cards-setup",
+          "title": "Kartentyp-Setup",
+          "path": "(neu) club_card_types UI",
+          "checked_ui": false,
+          "checked_function": false,
+          "checked_smoke": false,
+          "checked_access": false,
+          "build_ref": "n/a",
+          "status": "offen",
+          "bugs_open": 0,
+          "notes": "Harte Kartentyp-Tabelle fehlt."
+        },
+        {
+          "id": "s-pricing-rules",
+          "title": "Preisregeln Inline Table",
+          "path": "(neu) pricing-rules",
+          "checked_ui": false,
+          "checked_function": false,
+          "checked_smoke": false,
+          "checked_access": false,
+          "build_ref": "n/a",
+          "status": "offen",
+          "bugs_open": 0,
+          "notes": "Noch nicht modelliert."
+        }
+      ],
+      "smoke_checks": [
+        {
+          "id": "sc-card-1",
+          "title": "club_card_types existiert",
+          "done": false
+        },
+        {
+          "id": "sc-card-2",
+          "title": "Kartentyp kann Mitglied sauber zugeordnet werden",
+          "done": false
+        },
+        {
+          "id": "sc-card-3",
+          "title": "Preis-/Gueltigkeitslogik fachlich festgezogen",
+          "done": false
+        }
+      ],
+      "bugs": [
+        {
+          "id": "b-card-1",
+          "title": "Kartentypen liegen noch zu stark in Settings",
+          "severity": "hoch",
+          "status": "offen"
+        },
+        {
+          "id": "b-card-2",
+          "title": "Kein Pricing-Anker fuer spaetere Bank-/Beitragslogik",
+          "severity": "hoch",
+          "status": "offen"
+        }
+      ],
+      "last_reviewed_at": "2026-03-31"
+    },
+    {
+      "id": "p-waters",
+      "title": "Gewaesser",
+      "status": "teilweise",
+      "priority": "hoch",
+      "related_nodes": [
+        "waters-onboard",
+        "waters-ops",
+        "trips",
+        "fishing-law"
+      ],
+      "summary": "Erstanlage, Verwaltung, Fangbezug und spaetere Statistik.",
+      "owner": "michael",
+      "screens": [
+        {
+          "id": "s-waters-admin",
+          "title": "Gewaesserverwaltung",
+          "path": "/app/mitgliederverwaltung#waters",
+          "checked_ui": true,
+          "checked_function": true,
+          "checked_smoke": false,
+          "checked_access": false,
+          "build_ref": "main@2026-03-31",
+          "status": "teilweise",
+          "bugs_open": 1,
+          "notes": "UI vorhanden, Multi-Club/CSV-Fix offen."
+        }
+      ],
+      "smoke_checks": [
+        {
+          "id": "sc-water-1",
+          "title": "Gewaesser koennen angelegt/aktualisiert werden",
+          "done": true
+        },
+        {
+          "id": "sc-water-2",
+          "title": "club-scoped uniqueness ist sauber",
+          "done": false
+        },
+        {
+          "id": "sc-water-3",
+          "title": "Gewaesser -> Fangliste -> Statistik ist nachvollziehbar",
+          "done": false
+        }
+      ],
+      "bugs": [
+        {
+          "id": "b-water-1",
+          "title": "water_bodies uniqueness fuer CSV-/Multi-Club-MVP noch nicht final",
+          "severity": "hoch",
+          "status": "offen"
+        }
+      ],
+      "last_reviewed_at": "2026-03-31"
+    },
+    {
+      "id": "p-work",
+      "title": "Arbeitsstunden",
+      "status": "teilweise",
+      "priority": "mittel",
+      "related_nodes": [
+        "work-onboard",
+        "work-ops",
+        "events-ops"
+      ],
+      "summary": "Operative Erfassung vorhanden, Regelmodell und Soll/Ist noch offen.",
+      "owner": "michael",
+      "screens": [
+        {
+          "id": "s-work-index",
+          "title": "Arbeitseinsaetze",
+          "path": "/app/arbeitseinsaetze",
+          "checked_ui": true,
+          "checked_function": true,
+          "checked_smoke": true,
+          "checked_access": false,
+          "build_ref": "main@2026-03-31",
+          "status": "teilweise",
+          "bugs_open": 1,
+          "notes": "Operative Erfassung da, Regelmodell fehlt."
+        }
+      ],
+      "smoke_checks": [
+        {
+          "id": "sc-work-1",
+          "title": "Eventliste laedt",
+          "done": true
+        },
+        {
+          "id": "sc-work-2",
+          "title": "Teilnahme / Checkin funktioniert",
+          "done": true
+        },
+        {
+          "id": "sc-work-3",
+          "title": "Soll/Ist/Freigabe ist sauber modelliert",
+          "done": false
+        }
+      ],
+      "bugs": [
+        {
+          "id": "b-work-1",
+          "title": "club_work_settings noch nicht implementiert",
+          "severity": "mittel",
+          "status": "offen"
+        }
+      ],
+      "last_reviewed_at": "2026-03-31"
+    },
+    {
+      "id": "p-events",
+      "title": "Veranstaltungen / Termine",
+      "status": "erfuellt",
+      "priority": "normal",
+      "related_nodes": [
+        "events-ops",
+        "notifications",
+        "feed"
+      ],
+      "summary": "Termine, Eventplaner und Teilnahmebasis.",
+      "owner": "michael",
+      "screens": [
+        {
+          "id": "s-events-cockpit",
+          "title": "Termine Cockpit",
+          "path": "/app/termine/cockpit",
+          "checked_ui": true,
+          "checked_function": true,
+          "checked_smoke": true,
+          "checked_access": false,
+          "build_ref": "main@2026-03-31",
+          "status": "erfuellt",
+          "bugs_open": 0,
+          "notes": "Kernpfad steht."
+        },
+        {
+          "id": "s-eventplanner",
+          "title": "Eventplaner",
+          "path": "/app/eventplaner",
+          "checked_ui": true,
+          "checked_function": true,
+          "checked_smoke": true,
+          "checked_access": false,
+          "build_ref": "main@2026-03-31",
+          "status": "erfuellt",
+          "bugs_open": 0,
+          "notes": "Funktional vorhanden."
+        }
+      ],
+      "smoke_checks": [
+        {
+          "id": "sc-ev-1",
+          "title": "Club Events anlegen/bearbeiten",
+          "done": true
+        },
+        {
+          "id": "sc-ev-2",
+          "title": "Eventplaner Registrierung laeuft",
+          "done": true
+        }
+      ],
+      "bugs": [],
+      "last_reviewed_at": "2026-03-31"
+    },
+    {
+      "id": "p-fangliste",
+      "title": "Fangliste / Trips",
+      "status": "erfuellt",
+      "priority": "normal",
+      "related_nodes": [
+        "trips",
+        "waters-ops",
+        "fishing-law"
+      ],
+      "summary": "Fang- und Trip-Erfassung als sichtbarer Vereinswert.",
+      "owner": "michael",
+      "screens": [
+        {
+          "id": "s-catchlist",
+          "title": "Fangliste",
+          "path": "/app/fangliste",
+          "checked_ui": true,
+          "checked_function": true,
+          "checked_smoke": true,
+          "checked_access": false,
+          "build_ref": "main@2026-03-31",
+          "status": "erfuellt",
+          "bugs_open": 0,
+          "notes": "Basis vorhanden."
+        }
+      ],
+      "smoke_checks": [
+        {
+          "id": "sc-catch-1",
+          "title": "Trip / Catch laden",
+          "done": true
+        },
+        {
+          "id": "sc-catch-2",
+          "title": "Eintrag anlegen / aktualisieren",
+          "done": true
+        }
+      ],
+      "bugs": [],
+      "last_reviewed_at": "2026-03-31"
+    },
+    {
+      "id": "p-docs-meetings",
+      "title": "Dokumente / Sitzungen",
+      "status": "teilweise",
+      "priority": "normal",
+      "related_nodes": [
+        "docs-ops",
+        "meetings",
+        "protocols"
+      ],
+      "summary": "Dokumente, Sitzungen, Protokolle und Aufgaben als Vorstandspfad.",
+      "owner": "michael",
+      "screens": [
+        {
+          "id": "s-docs",
+          "title": "Dokumente",
+          "path": "/app/dokumente",
+          "checked_ui": true,
+          "checked_function": true,
+          "checked_smoke": false,
+          "checked_access": false,
+          "build_ref": "main@2026-03-31",
+          "status": "teilweise",
+          "bugs_open": 0,
+          "notes": "Dokumente vorhanden."
+        },
+        {
+          "id": "s-meetings",
+          "title": "Sitzungen",
+          "path": "/app/sitzungen",
+          "checked_ui": false,
+          "checked_function": true,
+          "checked_smoke": false,
+          "checked_access": false,
+          "build_ref": "main@2026-03-31",
+          "status": "teilweise",
+          "bugs_open": 1,
+          "notes": "Weniger sichtbar im Produkt."
+        }
+      ],
+      "smoke_checks": [
+        {
+          "id": "sc-doc-1",
+          "title": "Dokumentliste laedt",
+          "done": true
+        },
+        {
+          "id": "sc-doc-2",
+          "title": "Sitzung -> Agenda -> Aufgabe durchgaengig klar",
+          "done": false
+        }
+      ],
+      "bugs": [
+        {
+          "id": "b-doc-1",
+          "title": "Gesamtstrecke Sitzung -> Beschluss -> Dokument noch nicht sichtbar genug",
+          "severity": "mittel",
+          "status": "offen"
+        }
+      ],
+      "last_reviewed_at": "2026-03-31"
+    }
+  ]
+}

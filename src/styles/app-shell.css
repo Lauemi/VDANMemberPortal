@@ -768,8 +768,22 @@
   min-width: 0;
 }
 
+.member-registry-board {
+  width: 100%;
+  max-width: none;
+}
+
+.member-registry-board .admin-board__content,
+.member-registry-board .admin-card,
+.member-registry-board .admin-section {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .admin-section {
   display: none;
+  scroll-margin-top: 108px;
 }
 
 .admin-section.is-active {

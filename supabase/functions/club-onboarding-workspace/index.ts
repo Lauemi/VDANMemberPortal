@@ -10,6 +10,8 @@ type Action =
   | "save_club_data"
   | "save_cards"
   | "create_water"
+  | "update_water"
+  | "delete_water"
   | "toggle_water"
   | "create_member";
 
@@ -41,6 +43,37 @@ function toList(input: unknown) {
     if (value) seen.add(value);
   }
   return [...seen];
+}
+
+function slugify(value: unknown) {
+  return txt(value)
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function toCardRecords(input: unknown) {
+  const names = toList(input);
+  const used = new Set<string>();
+  return names.map((name, index) => {
+    const base = slugify(name) || `card-${index + 1}`;
+    let id = base;
+    let suffix = 2;
+    while (used.has(id)) {
+      id = `${base}-${suffix}`;
+      suffix += 1;
+    }
+    used.add(id);
+    return { id, name, is_default: index === 0 };
+  });
+}
+
+function asBool(value: unknown) {
+  if (typeof value === "boolean") return value;
+  const raw = txt(value).toLowerCase();
+  return raw === "true" || raw === "1" || raw === "yes" || raw === "ja";
 }
 
 async function sbServiceFetch(path: string, init: RequestInit = {}) {
@@ -145,11 +178,13 @@ function parseJsonObject(raw: string) {
 }
 
 async function loadWorkspace(clubId: string) {
-  const [clubName, clubCode, clubMetaRaw, cardsRaw, waters, members] = await Promise.all([
+  const [clubName, clubCode, clubMetaRaw, cardsRaw, waterMetaRaw, waterCardAssignmentsRaw, waters, members] = await Promise.all([
     readSetting(`club_name:${clubId}`),
     findClubCode(clubId),
     readSetting(`club_meta:${clubId}`),
     readSetting(`club_cards:${clubId}`),
+    readSetting(`club_water_meta:${clubId}`),
+    readSetting(`club_water_card_assignments:${clubId}`),
     loadJson(`/rest/v1/water_bodies?select=id,name,area_kind,is_active&club_id=eq.${encodeURIComponent(clubId)}&order=name.asc`),
     loadJson(`/rest/v1/club_members?select=member_no,first_name,last_name,status,fishing_card_type&club_id=eq.${encodeURIComponent(clubId)}&order=member_no.asc`),
   ]);
@@ -161,6 +196,10 @@ async function loadWorkspace(clubId: string) {
   } catch {
     cardNames = [];
   }
+  const cards = toCardRecords(cardNames);
+  const cardIdByLegacyName = new Map(cards.map((card) => [card.name, card.id]));
+  const waterMeta = parseJsonObject(waterMetaRaw);
+  const waterCardAssignments = parseJsonObject(waterCardAssignmentsRaw);
 
   return {
     club_data: {
@@ -173,8 +212,23 @@ async function loadWorkspace(clubId: string) {
       contact_email: txt(meta.contact_email),
       contact_phone: txt(meta.contact_phone),
     },
-    waters: Array.isArray(waters) ? waters : [],
-    cards: cardNames.map((name, index) => ({ name, is_default: index === 0 })),
+    waters: (Array.isArray(waters) ? waters : []).map((row) => {
+      const waterId = txt(row?.id);
+      const metaRow = waterId ? parseJsonObject(JSON.stringify(waterMeta[waterId] || {})) : {};
+      const rawAssignments = Array.isArray(waterCardAssignments[waterId]) ? waterCardAssignments[waterId] : [];
+      const waterCards = toList(rawAssignments)
+        .map((entry) => cardIdByLegacyName.get(entry) || entry)
+        .filter((entry) => cards.some((card) => card.id === entry));
+      return {
+        ...row,
+        water_status: txt(metaRow.water_status || (row?.is_active ? "active" : "inactive")) || "active",
+        water_type: txt(metaRow.water_type),
+        is_youth_allowed: asBool(metaRow.is_youth_allowed),
+        requires_board_approval: asBool(metaRow.requires_board_approval),
+        water_cards: waterCards,
+      };
+    }),
+    cards,
     members: Array.isArray(members) ? members : [],
   };
 }
@@ -227,16 +281,72 @@ Deno.serve(async (req: Request) => {
     } else if (action === "create_water") {
       const name = txt(body.name);
       if (!name) throw new Error("water_name_required");
-      await sbServiceFetch("/rest/v1/water_bodies", {
+      const waterRes = await sbServiceFetch("/rest/v1/water_bodies", {
         method: "POST",
-        headers: { Prefer: "return=minimal" },
+        headers: { Prefer: "return=representation" },
         body: JSON.stringify([{
           club_id: clubId,
           name,
-          area_kind: "vereins_gemeinschaftsgewaesser",
-          is_active: true,
+          area_kind: txt(body.area_kind) || "vereins_gemeinschaftsgewaesser",
+          is_active: txt(body.water_status).toLowerCase() !== "inactive",
         }]),
       });
+      const createdRows = await waterRes.json().catch(() => []);
+      const createdWaterId = txt(Array.isArray(createdRows) && createdRows.length ? createdRows[0]?.id : "");
+      if (createdWaterId) {
+        const waterMeta = parseJsonObject(await readSetting(`club_water_meta:${clubId}`));
+        waterMeta[createdWaterId] = {
+          water_status: txt(body.water_status) || "active",
+          water_type: txt(body.water_type),
+          is_youth_allowed: asBool(body.is_youth_allowed),
+          requires_board_approval: asBool(body.requires_board_approval),
+        };
+        await upsertSetting(`club_water_meta:${clubId}`, JSON.stringify(waterMeta));
+
+        const waterAssignments = parseJsonObject(await readSetting(`club_water_card_assignments:${clubId}`));
+        waterAssignments[createdWaterId] = toList(body.water_cards);
+        await upsertSetting(`club_water_card_assignments:${clubId}`, JSON.stringify(waterAssignments));
+      }
+    } else if (action === "update_water") {
+      const waterId = txt(body.water_id);
+      if (!waterId) throw new Error("water_id_required");
+      const name = txt(body.name);
+      if (!name) throw new Error("water_name_required");
+      await sbServiceFetch(`/rest/v1/water_bodies?id=eq.${encodeURIComponent(waterId)}&club_id=eq.${encodeURIComponent(clubId)}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({
+          name,
+          area_kind: txt(body.area_kind) || "vereins_gemeinschaftsgewaesser",
+          is_active: txt(body.water_status).toLowerCase() !== "inactive",
+        }),
+      });
+      const waterMeta = parseJsonObject(await readSetting(`club_water_meta:${clubId}`));
+      waterMeta[waterId] = {
+        water_status: txt(body.water_status) || "active",
+        water_type: txt(body.water_type),
+        is_youth_allowed: asBool(body.is_youth_allowed),
+        requires_board_approval: asBool(body.requires_board_approval),
+      };
+      await upsertSetting(`club_water_meta:${clubId}`, JSON.stringify(waterMeta));
+
+      const waterAssignments = parseJsonObject(await readSetting(`club_water_card_assignments:${clubId}`));
+      waterAssignments[waterId] = toList(body.water_cards);
+      await upsertSetting(`club_water_card_assignments:${clubId}`, JSON.stringify(waterAssignments));
+    } else if (action === "delete_water") {
+      const waterId = txt(body.water_id);
+      if (!waterId) throw new Error("water_id_required");
+      await sbServiceFetch(`/rest/v1/water_bodies?id=eq.${encodeURIComponent(waterId)}&club_id=eq.${encodeURIComponent(clubId)}`, {
+        method: "DELETE",
+        headers: { Prefer: "return=minimal" },
+      });
+      const waterMeta = parseJsonObject(await readSetting(`club_water_meta:${clubId}`));
+      delete waterMeta[waterId];
+      await upsertSetting(`club_water_meta:${clubId}`, JSON.stringify(waterMeta));
+
+      const waterAssignments = parseJsonObject(await readSetting(`club_water_card_assignments:${clubId}`));
+      delete waterAssignments[waterId];
+      await upsertSetting(`club_water_card_assignments:${clubId}`, JSON.stringify(waterAssignments));
     } else if (action === "toggle_water") {
       const waterId = txt(body.water_id);
       if (!waterId) throw new Error("water_id_required");

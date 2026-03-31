@@ -26,6 +26,7 @@
     { route: "/app/fangliste/cockpit", kind: "PORTAL", label: "Fangliste Cockpit" },
     { route: "/app/gewaesserkarte/", kind: "PORTAL", label: "GewÃ¤sserkarte" },
     { route: "/app/kontrollboard/", kind: "PORTAL", label: "Kontrollboard" },
+    { route: "/app/masterboard/", kind: "PORTAL", label: "Masterboard" },
     { route: "/app/lizenzen/", kind: "PORTAL", label: "Wetter & Karten API" },
     { route: "/app/mitglieder/", kind: "PORTAL", label: "Mitglieder" },
     { route: "/app/mitgliederverwaltung/", kind: "PORTAL", label: "Mitgliederverwaltung" },
@@ -592,7 +593,7 @@
     const r = String(route || "");
     if (kind === "WEB") return { guest: true, member: true, manager: true, admin: true, superadmin: true };
     if (r === "/app/") return { guest: false, member: true, manager: true, admin: true, superadmin: true };
-    if (/\/app\/(component-library|template-studio|admin-panel|vereine)\//.test(r)) return { guest: false, member: false, manager: false, admin: false, superadmin: true };
+    if (/\/app\/(component-library|template-studio|admin-panel|masterboard|vereine)\//.test(r)) return { guest: false, member: false, manager: false, admin: false, superadmin: true };
     if (/\/app\/(mitglieder|dokumente|fangliste\/cockpit)/.test(r)) return { guest: false, member: false, manager: true, admin: true, superadmin: true };
     if (/\/cockpit/.test(r)) return { guest: false, member: false, manager: true, admin: true, superadmin: true };
     return { guest: false, member: true, manager: true, admin: true, superadmin: true };

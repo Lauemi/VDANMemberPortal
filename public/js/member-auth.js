@@ -257,11 +257,36 @@
 
   function readInviteContextHints() {
     const registerForm = document.getElementById("registerForm");
+    const query = new URLSearchParams(window.location.search || "");
     return {
-      club_id: String(registerForm?.dataset?.inviteClubId || "").trim(),
-      club_code: String(registerForm?.dataset?.inviteClubCode || "").trim().toUpperCase(),
-      club_name: String(registerForm?.dataset?.inviteClubName || "").trim(),
+      club_id: String(registerForm?.dataset?.inviteClubId || query.get("club_id") || "").trim(),
+      club_code: String(registerForm?.dataset?.inviteClubCode || query.get("club_code") || "").trim().toUpperCase(),
+      club_name: String(registerForm?.dataset?.inviteClubName || query.get("club_name") || "").trim(),
     };
+  }
+
+  function hydrateJoinPageFromUrl() {
+    const registerForm = document.getElementById("registerForm");
+    const tokenInput = document.getElementById("registerInviteToken");
+    const memberNoInput = document.getElementById("registerMemberNo");
+    const query = new URLSearchParams(window.location.search || "");
+    const invite = String(query.get("invite") || "").trim();
+    const clubId = String(query.get("club_id") || "").trim();
+    const clubCode = String(query.get("club_code") || "").trim().toUpperCase();
+    const clubName = String(query.get("club_name") || "").trim();
+    const memberNo = String(query.get("member_no") || "").trim().toUpperCase();
+
+    if (registerForm) {
+      if (clubId) registerForm.dataset.inviteClubId = clubId;
+      if (clubCode) registerForm.dataset.inviteClubCode = clubCode;
+      if (clubName) registerForm.dataset.inviteClubName = clubName;
+    }
+    if (tokenInput && invite && !String(tokenInput.value || "").trim()) {
+      tokenInput.value = invite;
+    }
+    if (memberNoInput && memberNo && !String(memberNoInput.value || "").trim()) {
+      memberNoInput.value = memberNo;
+    }
   }
 
   function applyInviteContextUi(payload = {}) {
@@ -1176,6 +1201,7 @@
     }
 
     if (registerForm) {
+      hydrateJoinPageFromUrl();
       const regMsg = document.getElementById("registerMsg");
       const passInput = document.getElementById("registerPass");
       const pass2Input = document.getElementById("registerPass2");

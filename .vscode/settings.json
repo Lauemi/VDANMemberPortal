@@ -1,0 +1,42 @@
+{
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/.git/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/coverage/**": true,
+    "**/.next/**": true,
+    "**/.nuxt/**": true,
+    "**/.output/**": true,
+    "**/platforms/**": true,
+    "**/plugins/**": true,
+    "**/leaflet/**": true,
+    "**/.vercel/**": true,
+    "**/.astro/**": true,
+    "**/www/dist/**": true
+  },
+  "search.exclude": {
+    "**/build": true,
+    "**/dist": true,
+    "**/lib": true,
+    "**/platforms": true,
+    "**/plugins": true,
+    "**/leaflet": true,
+    "**/node_modules": true,
+    "**/coverage": true,
+    "**/.next": true,
+    "**/.nuxt": true,
+    "**/.output": true,
+    "**/.astro": true
+  },
+  "files.exclude": {
+    "**/build": true,
+    "**/platforms": true,
+    "**/plugins": true,
+    "**/leaflet": true
+  },
+  "git.autofetch": false,
+"js/ts.referencesCodeLens.enabled": false,
+"js/ts.tsserver.automaticTypeAcquisition.enabled": false}

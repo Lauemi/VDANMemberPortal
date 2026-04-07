@@ -2,7 +2,7 @@
   {
     "ai_schema_reference": {
       "context": {
-        "generatedAt": "2026-04-04T06:12:16.761176+00:00",
+        "generatedAt": "2026-04-07T12:55:26.447209+00:00",
         "targetTerms": [],
         "targetSchemas": [
           "public"
@@ -155,14 +155,14 @@
           "identityArguments": "p_member_no text"
         },
         {
-          "name": "admin_member_registry",
+          "name": "admin_member_cards_overview",
           "scope": "club_override",
           "schema": "public",
           "rpcHint": true,
           "language": "plpgsql",
           "ownership": "club_admin",
           "riskFlags": null,
-          "resultType": "TABLE(club_id uuid, club_code text, member_no text, club_member_no text, first_name text, last_name text, status text, fishing_card_type text, has_login boolean, last_sign_in_at timestamp with time zone, profile_user_id uuid, street text, email text, zip text, city text, phone text, mobile text, birthdate date, sepa_approved boolean, iban_last4 text, guardian_member_no text)",
+          "resultType": "TABLE(membership_id uuid, tenant_id uuid, club_id uuid, member_no text, club_member_no text, member_name text, first_name text, last_name text, member_status text, fishing_card_type text, member_role text, membership_kind text, is_youth boolean, profile_user_id uuid, display_name text, email text, member_card_valid boolean, member_card_valid_from date, member_card_valid_until date, member_card_id text, member_card_key text, status text, validity_label text, requires_approval boolean, updated_at timestamp with time zone)",
           "processHint": "admin_process_candidate",
           "securityHints": null,
           "securityContext": {
@@ -191,6 +191,196 @@
             "serverValidatedRecommended": true
           },
           "identityArguments": ""
+        },
+        {
+          "name": "admin_member_cards_overview",
+          "scope": "club_override",
+          "schema": "public",
+          "rpcHint": true,
+          "language": "plpgsql",
+          "ownership": "club_admin",
+          "riskFlags": null,
+          "resultType": "TABLE(membership_id uuid, tenant_id uuid, club_id uuid, member_no text, club_member_no text, member_name text, first_name text, last_name text, member_status text, fishing_card_type text, member_role text, membership_kind text, is_youth boolean, profile_user_id uuid, display_name text, email text, member_card_valid boolean, member_card_valid_from date, member_card_valid_until date, member_card_id text, member_card_key text, status text, validity_label text, requires_approval boolean, updated_at timestamp with time zone)",
+          "processHint": "admin_process_candidate",
+          "securityHints": null,
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "securityDefiner": true,
+          "inferredSecurity": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "identityArguments": "p_club_id uuid"
+        },
+        {
+          "name": "admin_member_cards_overview_v2",
+          "scope": "club_override",
+          "schema": "public",
+          "rpcHint": true,
+          "language": "plpgsql",
+          "ownership": "club_admin",
+          "riskFlags": null,
+          "resultType": "TABLE(membership_id uuid, tenant_id uuid, club_id uuid, member_no text, club_member_no text, member_name text, first_name text, last_name text, member_status text, fishing_card_type text, member_role text, membership_kind text, is_youth boolean, profile_user_id uuid, display_name text, email text, member_card_valid boolean, member_card_valid_from date, member_card_valid_until date, member_card_id text, member_card_key text, status text, validity_label text, requires_approval boolean, updated_at timestamp with time zone)",
+          "processHint": "admin_process_candidate",
+          "securityHints": null,
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "securityDefiner": true,
+          "inferredSecurity": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "identityArguments": ""
+        },
+        {
+          "name": "admin_member_cards_overview_v2",
+          "scope": "club_override",
+          "schema": "public",
+          "rpcHint": true,
+          "language": "plpgsql",
+          "ownership": "club_admin",
+          "riskFlags": null,
+          "resultType": "TABLE(membership_id uuid, tenant_id uuid, club_id uuid, member_no text, club_member_no text, member_name text, first_name text, last_name text, member_status text, fishing_card_type text, member_role text, membership_kind text, is_youth boolean, profile_user_id uuid, display_name text, email text, member_card_valid boolean, member_card_valid_from date, member_card_valid_until date, member_card_id text, member_card_key text, status text, validity_label text, requires_approval boolean, updated_at timestamp with time zone)",
+          "processHint": "admin_process_candidate",
+          "securityHints": null,
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "securityDefiner": true,
+          "inferredSecurity": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "identityArguments": "p_club_id uuid"
+        },
+        {
+          "name": "admin_member_registry",
+          "scope": "club_override",
+          "schema": "public",
+          "rpcHint": true,
+          "language": "plpgsql",
+          "ownership": "club_admin",
+          "riskFlags": null,
+          "resultType": "TABLE(club_id uuid, club_code text, member_no text, club_member_no text, first_name text, last_name text, role text, status text, fishing_card_type text, has_login boolean, last_sign_in_at timestamp with time zone, profile_user_id uuid, street text, email text, zip text, city text, phone text, mobile text, birthdate date, sepa_approved boolean, iban_last4 text, guardian_member_no text)",
+          "processHint": "admin_process_candidate",
+          "securityHints": null,
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "securityDefiner": true,
+          "inferredSecurity": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "identityArguments": "p_club_id uuid"
+        },
+        {
+          "name": "admin_member_registry_create",
+          "scope": "club_override",
+          "schema": "public",
+          "rpcHint": true,
+          "language": "plpgsql",
+          "ownership": "club_admin",
+          "riskFlags": null,
+          "resultType": "TABLE(member_no text)",
+          "processHint": "admin_process_candidate",
+          "securityHints": null,
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "securityDefiner": true,
+          "inferredSecurity": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "identityArguments": "p_club_id uuid, p_club_code text, p_member_no text, p_first_name text, p_last_name text, p_role text, p_status text, p_fishing_card_type text, p_street text, p_zip text, p_city text, p_phone text, p_mobile text, p_guardian_member_no text, p_sepa_approved boolean, p_iban text, p_birthdate date, p_email text, p_club_member_no text"
         },
         {
           "name": "admin_member_registry_create",
@@ -229,44 +419,6 @@
             "serverValidatedRecommended": true
           },
           "identityArguments": "p_club_id uuid, p_club_code text, p_member_no text, p_first_name text, p_last_name text, p_status text, p_fishing_card_type text, p_street text, p_zip text, p_city text, p_phone text, p_mobile text, p_guardian_member_no text, p_sepa_approved boolean, p_iban text, p_birthdate date, p_email text"
-        },
-        {
-          "name": "admin_member_registry_create",
-          "scope": "club_override",
-          "schema": "public",
-          "rpcHint": true,
-          "language": "plpgsql",
-          "ownership": "club_admin",
-          "riskFlags": null,
-          "resultType": "TABLE(member_no text)",
-          "processHint": "admin_process_candidate",
-          "securityHints": null,
-          "securityContext": {
-            "rlsKey": "tenant_id",
-            "allowedRoles": [
-              "admin",
-              "vorstand",
-              "superadmin"
-            ],
-            "membershipKey": null,
-            "requiresRoleCheck": true,
-            "requiresTenantAccess": true,
-            "serverValidatedRecommended": true
-          },
-          "securityDefiner": true,
-          "inferredSecurity": {
-            "rlsKey": "tenant_id",
-            "allowedRoles": [
-              "admin",
-              "vorstand",
-              "superadmin"
-            ],
-            "membershipKey": null,
-            "requiresRoleCheck": true,
-            "requiresTenantAccess": true,
-            "serverValidatedRecommended": true
-          },
-          "identityArguments": "p_club_id uuid, p_club_code text, p_member_no text, p_first_name text, p_last_name text, p_status text, p_fishing_card_type text, p_street text, p_zip text, p_city text, p_phone text, p_mobile text, p_guardian_member_no text, p_sepa_approved boolean, p_iban text, p_birthdate date, p_email text, p_club_member_no text"
         },
         {
           "name": "admin_member_registry_delete",
@@ -342,7 +494,7 @@
             "requiresTenantAccess": true,
             "serverValidatedRecommended": true
           },
-          "identityArguments": "p_member_no text, p_first_name text, p_last_name text, p_status text, p_fishing_card_type text, p_street text, p_email text, p_zip text, p_city text, p_phone text, p_mobile text, p_guardian_member_no text, p_sepa_approved boolean, p_iban text, p_birthdate date"
+          "identityArguments": "p_member_no text, p_first_name text, p_last_name text, p_role text, p_status text, p_fishing_card_type text, p_street text, p_email text, p_zip text, p_city text, p_phone text, p_mobile text, p_guardian_member_no text, p_sepa_approved boolean, p_iban text, p_birthdate date, p_club_member_no text"
         },
         {
           "name": "admin_member_registry_update",
@@ -380,7 +532,7 @@
             "requiresTenantAccess": true,
             "serverValidatedRecommended": true
           },
-          "identityArguments": "p_member_no text, p_first_name text, p_last_name text, p_status text, p_fishing_card_type text, p_street text, p_email text, p_zip text, p_city text, p_phone text, p_mobile text, p_guardian_member_no text, p_sepa_approved boolean, p_iban text, p_birthdate date, p_club_member_no text"
+          "identityArguments": "p_member_no text, p_first_name text, p_last_name text, p_status text, p_fishing_card_type text, p_street text, p_email text, p_zip text, p_city text, p_phone text, p_mobile text, p_guardian_member_no text, p_sepa_approved boolean, p_iban text, p_birthdate date"
         },
         {
           "name": "admin_process_bug_report",
@@ -1935,6 +2087,36 @@
             "serverValidatedRecommended": true
           },
           "identityArguments": "p_club_id uuid, p_invite_token text, p_include_debug boolean"
+        },
+        {
+          "name": "get_user_club_permissions",
+          "scope": "global_or_system",
+          "schema": "public",
+          "rpcHint": true,
+          "language": "sql",
+          "ownership": "system",
+          "riskFlags": null,
+          "resultType": "TABLE(module_key text, role_key text, can_view boolean, can_read boolean, can_write boolean, can_update boolean, can_delete boolean)",
+          "processHint": "general_function",
+          "securityHints": null,
+          "securityContext": {
+            "rlsKey": "none",
+            "allowedRoles": [],
+            "membershipKey": null,
+            "requiresRoleCheck": false,
+            "requiresTenantAccess": false,
+            "serverValidatedRecommended": true
+          },
+          "securityDefiner": true,
+          "inferredSecurity": {
+            "rlsKey": "none",
+            "allowedRoles": [],
+            "membershipKey": null,
+            "requiresRoleCheck": false,
+            "requiresTenantAccess": false,
+            "serverValidatedRecommended": true
+          },
+          "identityArguments": "p_club_id uuid"
         },
         {
           "name": "governance_health_ci_gate",
@@ -4999,6 +5181,867 @@
         }
       ],
       "relations": [
+        {
+          "kind": "view",
+          "name": "admin_card_claims_overview",
+          "joins": null,
+          "scope": "club_scoped",
+          "schema": "public",
+          "columns": [
+            {
+              "name": "claim_id",
+              "comment": null,
+              "default": null,
+              "udtName": "uuid",
+              "dataType": "uuid",
+              "nullable": "YES",
+              "position": 1,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "tenant_id",
+              "comment": null,
+              "default": null,
+              "udtName": "uuid",
+              "dataType": "uuid",
+              "nullable": "YES",
+              "position": 2,
+              "isSystemSignal": true,
+              "inferredFieldScope": "club_scoped"
+            },
+            {
+              "name": "club_id",
+              "comment": null,
+              "default": null,
+              "udtName": "uuid",
+              "dataType": "uuid",
+              "nullable": "YES",
+              "position": 3,
+              "isSystemSignal": true,
+              "inferredFieldScope": "club_scoped"
+            },
+            {
+              "name": "membership_id",
+              "comment": null,
+              "default": null,
+              "udtName": "uuid",
+              "dataType": "uuid",
+              "nullable": "YES",
+              "position": 4,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "pricing_rule_id",
+              "comment": null,
+              "default": null,
+              "udtName": "uuid",
+              "dataType": "uuid",
+              "nullable": "YES",
+              "position": 5,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "product_id",
+              "comment": null,
+              "default": null,
+              "udtName": "uuid",
+              "dataType": "uuid",
+              "nullable": "YES",
+              "position": 6,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "member_no",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 7,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "club_member_no",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 8,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "member_name",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 9,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "first_name",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 10,
+              "isSystemSignal": false,
+              "inferredFieldScope": "global_user"
+            },
+            {
+              "name": "last_name",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 11,
+              "isSystemSignal": false,
+              "inferredFieldScope": "global_user"
+            },
+            {
+              "name": "member_status",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 12,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "fishing_card_type",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 13,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "member_role",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 14,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "membership_kind",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 15,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "is_youth",
+              "comment": null,
+              "default": null,
+              "udtName": "bool",
+              "dataType": "boolean",
+              "nullable": "YES",
+              "position": 16,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "claim_key",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 17,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "claim_type",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 18,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "claim_status",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 19,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "claim_title",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 20,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "claim_reason",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 21,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "due_at",
+              "comment": null,
+              "default": null,
+              "udtName": "timestamptz",
+              "dataType": "timestamp with time zone",
+              "nullable": "YES",
+              "position": 22,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "currency",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 23,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "amount_gross",
+              "comment": null,
+              "default": null,
+              "udtName": "numeric",
+              "dataType": "numeric",
+              "nullable": "YES",
+              "position": 24,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "amount_net",
+              "comment": null,
+              "default": null,
+              "udtName": "numeric",
+              "dataType": "numeric",
+              "nullable": "YES",
+              "position": 25,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "tax_rate",
+              "comment": null,
+              "default": null,
+              "udtName": "numeric",
+              "dataType": "numeric",
+              "nullable": "YES",
+              "position": 26,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "rule_key",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 27,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "member_group_key",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 28,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "price_type",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 29,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "pricing_rule_status",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 30,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "rule_valid_from",
+              "comment": null,
+              "default": null,
+              "udtName": "timestamptz",
+              "dataType": "timestamp with time zone",
+              "nullable": "YES",
+              "position": 31,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "rule_valid_until",
+              "comment": null,
+              "default": null,
+              "udtName": "timestamptz",
+              "dataType": "timestamp with time zone",
+              "nullable": "YES",
+              "position": 32,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "product_key",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 33,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "product_type",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 34,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "product_title",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 35,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "product_brand",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 36,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "product_model",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 37,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "product_is_active",
+              "comment": null,
+              "default": null,
+              "udtName": "bool",
+              "dataType": "boolean",
+              "nullable": "YES",
+              "position": 38,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "card_label",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 39,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "price_label",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 40,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "validity_label",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 41,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "requires_approval",
+              "comment": null,
+              "default": null,
+              "udtName": "bool",
+              "dataType": "boolean",
+              "nullable": "YES",
+              "position": 42,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "created_at",
+              "comment": null,
+              "default": null,
+              "udtName": "timestamptz",
+              "dataType": "timestamp with time zone",
+              "nullable": "YES",
+              "position": 43,
+              "isSystemSignal": true,
+              "inferredFieldScope": "system_meta"
+            },
+            {
+              "name": "updated_at",
+              "comment": null,
+              "default": null,
+              "udtName": "timestamptz",
+              "dataType": "timestamp with time zone",
+              "nullable": "YES",
+              "position": 44,
+              "isSystemSignal": true,
+              "inferredFieldScope": "system_meta"
+            }
+          ],
+          "ownership": "club_admin",
+          "riskFlags": [],
+          "primaryKey": [],
+          "auditSignals": {
+            "source": false,
+            "status": false,
+            "created_at": true,
+            "created_by": false,
+            "deleted_at": false,
+            "updated_at": true,
+            "updated_by": false,
+            "external_ref": false
+          },
+          "securityHints": [],
+          "truthRoleHint": "derived_view",
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "securityMode": "derived_view",
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "inferredSecurity": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "uniqueConstraints": [],
+          "sourceOfTruthScore": -6
+        },
+        {
+          "kind": "view",
+          "name": "admin_member_cards_overview_v",
+          "joins": null,
+          "scope": "club_scoped",
+          "schema": "public",
+          "columns": [
+            {
+              "name": "membership_id",
+              "comment": null,
+              "default": null,
+              "udtName": "uuid",
+              "dataType": "uuid",
+              "nullable": "YES",
+              "position": 1,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "tenant_id",
+              "comment": null,
+              "default": null,
+              "udtName": "uuid",
+              "dataType": "uuid",
+              "nullable": "YES",
+              "position": 2,
+              "isSystemSignal": true,
+              "inferredFieldScope": "club_scoped"
+            },
+            {
+              "name": "club_id",
+              "comment": null,
+              "default": null,
+              "udtName": "uuid",
+              "dataType": "uuid",
+              "nullable": "YES",
+              "position": 3,
+              "isSystemSignal": true,
+              "inferredFieldScope": "club_scoped"
+            },
+            {
+              "name": "member_no",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 4,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "club_member_no",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 5,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "member_name",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 6,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "first_name",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 7,
+              "isSystemSignal": false,
+              "inferredFieldScope": "global_user"
+            },
+            {
+              "name": "last_name",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 8,
+              "isSystemSignal": false,
+              "inferredFieldScope": "global_user"
+            },
+            {
+              "name": "member_status",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 9,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "fishing_card_type",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 10,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "member_role",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 11,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "membership_kind",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 12,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "is_youth",
+              "comment": null,
+              "default": null,
+              "udtName": "bool",
+              "dataType": "boolean",
+              "nullable": "YES",
+              "position": 13,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "profile_user_id",
+              "comment": null,
+              "default": null,
+              "udtName": "uuid",
+              "dataType": "uuid",
+              "nullable": "YES",
+              "position": 14,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "display_name",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 15,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "email",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 16,
+              "isSystemSignal": false,
+              "inferredFieldScope": "global_user"
+            },
+            {
+              "name": "member_card_valid",
+              "comment": null,
+              "default": null,
+              "udtName": "bool",
+              "dataType": "boolean",
+              "nullable": "YES",
+              "position": 17,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "member_card_valid_from",
+              "comment": null,
+              "default": null,
+              "udtName": "date",
+              "dataType": "date",
+              "nullable": "YES",
+              "position": 18,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "member_card_valid_until",
+              "comment": null,
+              "default": null,
+              "udtName": "date",
+              "dataType": "date",
+              "nullable": "YES",
+              "position": 19,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "member_card_id",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 20,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "member_card_key",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 21,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "status",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 22,
+              "isSystemSignal": true,
+              "inferredFieldScope": "system_meta"
+            },
+            {
+              "name": "validity_label",
+              "comment": null,
+              "default": null,
+              "udtName": "text",
+              "dataType": "text",
+              "nullable": "YES",
+              "position": 23,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "requires_approval",
+              "comment": null,
+              "default": null,
+              "udtName": "bool",
+              "dataType": "boolean",
+              "nullable": "YES",
+              "position": 24,
+              "isSystemSignal": false,
+              "inferredFieldScope": "domain_field"
+            },
+            {
+              "name": "updated_at",
+              "comment": null,
+              "default": null,
+              "udtName": "timestamptz",
+              "dataType": "timestamp with time zone",
+              "nullable": "YES",
+              "position": 25,
+              "isSystemSignal": true,
+              "inferredFieldScope": "system_meta"
+            }
+          ],
+          "ownership": "club_admin",
+          "riskFlags": [],
+          "primaryKey": [],
+          "auditSignals": {
+            "source": false,
+            "status": true,
+            "created_at": false,
+            "created_by": false,
+            "deleted_at": false,
+            "updated_at": true,
+            "updated_by": false,
+            "external_ref": false
+          },
+          "securityHints": [],
+          "truthRoleHint": "derived_view",
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "securityMode": "derived_view",
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "inferredSecurity": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "uniqueConstraints": [],
+          "sourceOfTruthScore": -5
+        },
         {
           "kind": "table",
           "name": "app_notes",
@@ -28811,6 +29854,8 @@
       ],
       "processHints": {
         "clubCandidates": [
+          "public.admin_card_claims_overview",
+          "public.admin_member_cards_overview_v",
           "public.app_notes",
           "public.audit_event_log",
           "public.canonical_memberships",
@@ -28890,6 +29935,70 @@
           "public.profiles_platform"
         ],
         "securityAuthoringHints": [
+          {
+            "scope": "club_scoped",
+            "relation": "public.admin_card_claims_overview",
+            "ownership": "club_admin",
+            "riskFlags": null,
+            "securityHints": null,
+            "securityContext": {
+              "rlsKey": "tenant_id",
+              "allowedRoles": [
+                "admin",
+                "vorstand",
+                "superadmin"
+              ],
+              "securityMode": "derived_view",
+              "membershipKey": null,
+              "requiresRoleCheck": true,
+              "requiresTenantAccess": true,
+              "serverValidatedRecommended": true
+            },
+            "inferredSecurity": {
+              "rlsKey": "tenant_id",
+              "allowedRoles": [
+                "admin",
+                "vorstand",
+                "superadmin"
+              ],
+              "membershipKey": null,
+              "requiresRoleCheck": true,
+              "requiresTenantAccess": true,
+              "serverValidatedRecommended": true
+            }
+          },
+          {
+            "scope": "club_scoped",
+            "relation": "public.admin_member_cards_overview_v",
+            "ownership": "club_admin",
+            "riskFlags": null,
+            "securityHints": null,
+            "securityContext": {
+              "rlsKey": "tenant_id",
+              "allowedRoles": [
+                "admin",
+                "vorstand",
+                "superadmin"
+              ],
+              "securityMode": "derived_view",
+              "membershipKey": null,
+              "requiresRoleCheck": true,
+              "requiresTenantAccess": true,
+              "serverValidatedRecommended": true
+            },
+            "inferredSecurity": {
+              "rlsKey": "tenant_id",
+              "allowedRoles": [
+                "admin",
+                "vorstand",
+                "superadmin"
+              ],
+              "membershipKey": null,
+              "requiresRoleCheck": true,
+              "requiresTenantAccess": true,
+              "serverValidatedRecommended": true
+            }
+          },
           {
             "scope": "club_scoped",
             "relation": "public.app_notes",
@@ -33796,6 +34905,28 @@
           "sourceOfTruthScore": 2
         },
         {
+          "relation": "public.admin_member_cards_overview_v",
+          "ownership": "club_admin",
+          "riskFlags": null,
+          "relationKind": "view",
+          "inferredScope": "club_scoped",
+          "securityHints": null,
+          "truthRoleHint": "derived_view",
+          "inferredSecurity": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "sourceOfTruthScore": -5
+        },
+        {
           "relation": "public.memberships",
           "ownership": "membership",
           "riskFlags": null,
@@ -33830,6 +34961,28 @@
             "serverValidatedRecommended": true
           },
           "sourceOfTruthScore": -5
+        },
+        {
+          "relation": "public.admin_card_claims_overview",
+          "ownership": "club_admin",
+          "riskFlags": null,
+          "relationKind": "view",
+          "inferredScope": "club_scoped",
+          "securityHints": null,
+          "truthRoleHint": "derived_view",
+          "inferredSecurity": {
+            "rlsKey": "tenant_id",
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "membershipKey": null,
+            "requiresRoleCheck": true,
+            "requiresTenantAccess": true,
+            "serverValidatedRecommended": true
+          },
+          "sourceOfTruthScore": -6
         },
         {
           "relation": "public.export_members",

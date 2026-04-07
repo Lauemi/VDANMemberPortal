@@ -1,5 +1,7 @@
 begin;
 
+create extension if not exists pgcrypto with schema extensions;
+
 -- =========================================================
 -- HARDEN: public.get_onboarding_process_state
 -- =========================================================
@@ -192,14 +194,14 @@ role_context as (
 ),
 -- [HARDENED 1/4] invite_record
 -- Lädt den Invite-Datensatz aus app_secure_settings anhand des SHA-256-Hashes des Tokens.
--- Schlüssel-Format: club_invite_token:{encode(digest(token, 'sha256'), 'hex')}
+-- Schlüssel-Format: club_invite_token:{encode(extensions.digest(token, 'sha256'), 'hex')}
 -- Entspricht exakt der Semantik der club-invite-verify Edge Function.
 invite_record as (
   select
     s.setting_value::jsonb as rec
   from public.app_secure_settings s
   where nullif(trim(p_invite_token), '') is not null
-    and s.setting_key = 'club_invite_token:' || encode(digest(nullif(trim(p_invite_token), ''), 'sha256'), 'hex')
+    and s.setting_key = 'club_invite_token:' || encode(extensions.digest(nullif(trim(p_invite_token), ''), 'sha256'), 'hex')
   limit 1
 ),
 -- [HARDENED 1/4] invite_state

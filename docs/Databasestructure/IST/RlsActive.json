@@ -1,0 +1,337 @@
+[
+  {
+    "schemaname": "public",
+    "tablename": "app_notes",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_route_catalog",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_runtime_audit_log",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_runtime_configs",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_runtime_releases",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_secure_settings",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_template_bindings",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_template_library",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_theme_tokens",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "auth_email_backup_20260309",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "bug_reports",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_subscriptions",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_webhook_events",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_events",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_member_identities",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_members",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_module_usecases",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_onboarding_audit",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_onboarding_state",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_registration_requests",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_role_permissions",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_roles",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_user_roles",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "contact_requests",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "documents",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "dsgvo_compliance_events",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "event_planner_configs",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "event_planner_registrations",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "event_planner_slots",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "feature_flags",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "feed_post_media",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "feed_posts",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fish_species",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fish_species_rules",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "legal_acceptance_events",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "legal_documents",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "meeting_agenda_items",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "meeting_session_attendees",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "meeting_sessions",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "meeting_tasks",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "member_bank_data",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "member_notifications",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "member_water_mappings",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "member_waters",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "members",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "membership_application_audit",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "membership_application_bank_data",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "membership_applications",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "module_catalog",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "module_usecases",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "push_subscriptions",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "system_board_nodes",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "system_process_controls",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "system_superadmins",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "task_assignees",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_policy_acceptances",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_roles",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_settings",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "water_areas",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "water_bodies",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "work_checkins",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "work_event_leads",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "work_events",
+    "rowsecurity": true
+  },
+  {
+    "schemaname": "public",
+    "tablename": "work_participations",
+    "rowsecurity": true
+  }
+]

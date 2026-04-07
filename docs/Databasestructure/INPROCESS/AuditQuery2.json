@@ -1,0 +1,226 @@
+[
+  {
+    "table_name": "catch_entries",
+    "column_name": "canonical_membership_id",
+    "foreign_table_name": "canonical_memberships",
+    "foreign_column_name": "id",
+    "constraint_name": "catch_entries_canonical_membership_id_fkey"
+  },
+  {
+    "table_name": "catch_entries",
+    "column_name": "identity_id",
+    "foreign_table_name": "identity_core",
+    "foreign_column_name": "identity_id",
+    "constraint_name": "catch_entries_identity_id_fkey"
+  },
+  {
+    "table_name": "catch_entries",
+    "column_name": "tenant_id",
+    "foreign_table_name": "tenant_nodes",
+    "foreign_column_name": "tenant_id",
+    "constraint_name": "catch_entries_tenant_id_fkey"
+  },
+  {
+    "table_name": "catch_entries",
+    "column_name": "trip_catch_context_id",
+    "foreign_table_name": "trip_catch_context",
+    "foreign_column_name": "id",
+    "constraint_name": "catch_entries_trip_catch_context_id_fkey"
+  },
+  {
+    "table_name": "club_billing_subscriptions",
+    "column_name": "club_core_id",
+    "foreign_table_name": "club_core",
+    "foreign_column_name": "id",
+    "constraint_name": "club_billing_subscriptions_club_core_id_fkey"
+  },
+  {
+    "table_name": "club_billing_subscriptions",
+    "column_name": "tenant_id",
+    "foreign_table_name": "tenant_nodes",
+    "foreign_column_name": "tenant_id",
+    "constraint_name": "club_billing_subscriptions_tenant_id_fkey"
+  },
+  {
+    "table_name": "club_billing_webhook_events",
+    "column_name": "canonical_membership_id",
+    "foreign_table_name": "canonical_memberships",
+    "foreign_column_name": "id",
+    "constraint_name": "club_billing_webhook_events_canonical_membership_id_fkey"
+  },
+  {
+    "table_name": "club_billing_webhook_events",
+    "column_name": "club_core_id",
+    "foreign_table_name": "club_core",
+    "foreign_column_name": "id",
+    "constraint_name": "club_billing_webhook_events_club_core_id_fkey"
+  },
+  {
+    "table_name": "club_billing_webhook_events",
+    "column_name": "tenant_id",
+    "foreign_table_name": "tenant_nodes",
+    "foreign_column_name": "tenant_id",
+    "constraint_name": "club_billing_webhook_events_tenant_id_fkey"
+  },
+  {
+    "table_name": "club_events",
+    "column_name": "event_core_id",
+    "foreign_table_name": "event_core",
+    "foreign_column_name": "id",
+    "constraint_name": "club_events_event_core_id_fkey"
+  },
+  {
+    "table_name": "club_events",
+    "column_name": "tenant_id",
+    "foreign_table_name": "tenant_nodes",
+    "foreign_column_name": "tenant_id",
+    "constraint_name": "club_events_tenant_id_fkey"
+  },
+  {
+    "table_name": "club_member_identities",
+    "column_name": "canonical_membership_id",
+    "foreign_table_name": "canonical_memberships",
+    "foreign_column_name": "id",
+    "constraint_name": "club_member_identities_canonical_membership_id_fkey"
+  },
+  {
+    "table_name": "club_member_identities",
+    "column_name": "identity_id",
+    "foreign_table_name": "identity_core",
+    "foreign_column_name": "identity_id",
+    "constraint_name": "club_member_identities_identity_id_fkey"
+  },
+  {
+    "table_name": "club_member_identities",
+    "column_name": "tenant_id",
+    "foreign_table_name": "tenant_nodes",
+    "foreign_column_name": "tenant_id",
+    "constraint_name": "club_member_identities_tenant_id_fkey"
+  },
+  {
+    "table_name": "club_members",
+    "column_name": "canonical_membership_id",
+    "foreign_table_name": "canonical_memberships",
+    "foreign_column_name": "id",
+    "constraint_name": "club_members_canonical_membership_id_fkey"
+  },
+  {
+    "table_name": "club_members",
+    "column_name": "identity_id",
+    "foreign_table_name": "identity_core",
+    "foreign_column_name": "identity_id",
+    "constraint_name": "club_members_identity_id_fkey"
+  },
+  {
+    "table_name": "club_members",
+    "column_name": "tenant_id",
+    "foreign_table_name": "tenant_nodes",
+    "foreign_column_name": "tenant_id",
+    "constraint_name": "club_members_tenant_id_fkey"
+  },
+  {
+    "table_name": "club_user_roles",
+    "column_name": "canonical_membership_id",
+    "foreign_table_name": "canonical_memberships",
+    "foreign_column_name": "id",
+    "constraint_name": "club_user_roles_canonical_membership_id_fkey"
+  },
+  {
+    "table_name": "club_user_roles",
+    "column_name": "identity_id",
+    "foreign_table_name": "identity_core",
+    "foreign_column_name": "identity_id",
+    "constraint_name": "club_user_roles_identity_id_fkey"
+  },
+  {
+    "table_name": "club_user_roles",
+    "column_name": "tenant_id",
+    "foreign_table_name": "tenant_nodes",
+    "foreign_column_name": "tenant_id",
+    "constraint_name": "club_user_roles_tenant_id_fkey"
+  },
+  {
+    "table_name": "documents",
+    "column_name": "document_link_id",
+    "foreign_table_name": "document_links",
+    "foreign_column_name": "id",
+    "constraint_name": "documents_document_link_id_fkey"
+  },
+  {
+    "table_name": "documents",
+    "column_name": "tenant_id",
+    "foreign_table_name": "tenant_nodes",
+    "foreign_column_name": "tenant_id",
+    "constraint_name": "documents_tenant_id_fkey"
+  },
+  {
+    "table_name": "fishing_trips",
+    "column_name": "canonical_membership_id",
+    "foreign_table_name": "canonical_memberships",
+    "foreign_column_name": "id",
+    "constraint_name": "fishing_trips_canonical_membership_id_fkey"
+  },
+  {
+    "table_name": "fishing_trips",
+    "column_name": "identity_id",
+    "foreign_table_name": "identity_core",
+    "foreign_column_name": "identity_id",
+    "constraint_name": "fishing_trips_identity_id_fkey"
+  },
+  {
+    "table_name": "fishing_trips",
+    "column_name": "tenant_id",
+    "foreign_table_name": "tenant_nodes",
+    "foreign_column_name": "tenant_id",
+    "constraint_name": "fishing_trips_tenant_id_fkey"
+  },
+  {
+    "table_name": "fishing_trips",
+    "column_name": "trip_catch_context_id",
+    "foreign_table_name": "trip_catch_context",
+    "foreign_column_name": "id",
+    "constraint_name": "fishing_trips_trip_catch_context_id_fkey"
+  },
+  {
+    "table_name": "profiles",
+    "column_name": "canonical_membership_id",
+    "foreign_table_name": "canonical_memberships",
+    "foreign_column_name": "id",
+    "constraint_name": "profiles_canonical_membership_id_fkey"
+  },
+  {
+    "table_name": "profiles",
+    "column_name": "identity_id",
+    "foreign_table_name": "identity_core",
+    "foreign_column_name": "identity_id",
+    "constraint_name": "profiles_identity_id_fkey"
+  },
+  {
+    "table_name": "profiles",
+    "column_name": "tenant_id",
+    "foreign_table_name": "tenant_nodes",
+    "foreign_column_name": "tenant_id",
+    "constraint_name": "profiles_tenant_id_fkey"
+  },
+  {
+    "table_name": "user_roles",
+    "column_name": "canonical_membership_id",
+    "foreign_table_name": "canonical_memberships",
+    "foreign_column_name": "id",
+    "constraint_name": "user_roles_canonical_membership_id_fkey"
+  },
+  {
+    "table_name": "user_roles",
+    "column_name": "identity_id",
+    "foreign_table_name": "identity_core",
+    "foreign_column_name": "identity_id",
+    "constraint_name": "user_roles_identity_id_fkey"
+  },
+  {
+    "table_name": "user_roles",
+    "column_name": "tenant_id",
+    "foreign_table_name": "tenant_nodes",
+    "foreign_column_name": "tenant_id",
+    "constraint_name": "user_roles_tenant_id_fkey"
+  }
+]

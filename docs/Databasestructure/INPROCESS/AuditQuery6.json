@@ -1,0 +1,38 @@
+[
+  {
+    "table_name": "club_members",
+    "total_rows": 350,
+    "rows_without_club_id": 0,
+    "rows_without_tenant_id": 350
+  },
+  {
+    "table_name": "club_member_identities",
+    "total_rows": 349,
+    "rows_without_club_id": 0,
+    "rows_without_tenant_id": 349
+  },
+  {
+    "table_name": "club_user_roles",
+    "total_rows": 350,
+    "rows_without_club_id": 0,
+    "rows_without_tenant_id": 350
+  },
+  {
+    "table_name": "catch_entries",
+    "total_rows": 3,
+    "rows_without_club_id": 0,
+    "rows_without_tenant_id": 3
+  },
+  {
+    "table_name": "club_events",
+    "total_rows": 7,
+    "rows_without_club_id": 0,
+    "rows_without_tenant_id": 7
+  },
+  {
+    "table_name": "documents",
+    "total_rows": 8,
+    "rows_without_club_id": 0,
+    "rows_without_tenant_id": 8
+  }
+]

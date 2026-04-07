@@ -1,200 +1,188 @@
 ---
+import path from "node:path";
 import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
+import { readMaskJsonFile } from "../../../../scripts/fcp-mask-reader.mjs";
+
+const maskFilePath = path.resolve(process.cwd(), "docs/masks/templates/QFM_einstellungen.json");
+const resolvedMask = await readMaskJsonFile(maskFilePath);
+
+function toQuickFlowField(field) {
+  const typeMap = {
+    input: field.type === "email" ? "email" : field.type === "date" ? "date" : "text",
+    textarea: "textarea",
+    select: "select",
+    toggle: "toggle",
+    date: "date",
+    email: "email",
+    phone: "text",
+    number: "number",
+    readonly: "text",
+    custom: "text",
+  };
+
+  return {
+    name: field.name,
+    label: field.label,
+    type: typeMap[field.componentType] || field.type || "text",
+    value: field.defaultValue ?? "",
+    placeholder: field.placeholder || "",
+    help: field.helpText || "",
+    disabled: field.readonly === true,
+    valuePath: field.valuePath || "",
+    payloadKey: field.payloadKey || field.name,
+    readonly: field.readonly === true,
+    defaultValue: field.defaultValue ?? "",
+    autocomplete:
+      field.componentType === "email"
+        ? "email"
+        : field.componentType === "phone"
+          ? "tel"
+          : undefined,
+    options: Array.isArray(field.options) ? field.options : [],
+    span: field.displaySpan || undefined,
+  };
+}
+
+function mapAction(action) {
+  return {
+    id: action.id,
+    label: action.label,
+    variant: action.kind === "rpc" || action.kind === "auth_action" ? "primary" : "ghost",
+    binding: action.binding || null,
+  };
+}
+
+function toQuickFlowPanel(panel, index) {
+  const content = panel.content || {};
+  const transformed = {
+    id: panel.id,
+    title: panel.title,
+    renderMode: panel.renderMode,
+    componentType: panel.componentType || null,
+    flowType: panel.flowType,
+    permissions: panel.permissions,
+    open: index === 0,
+    meta: {
+      label: panel.meta?.displayLabel || "",
+      securityContext: panel.securityContext,
+      processAdapter: panel.meta?.processAdapter || "",
+      resolver: {
+        fieldDefs: content.fields || [],
+        blockDefs: content.blocks || [],
+      },
+    },
+    loadBinding: panel.loadBinding,
+    saveBinding: panel.saveBinding,
+    content: {
+      fields: [],
+      rows: [],
+      actions: [],
+      blocks: [],
+    },
+    actions: [],
+    rows: [],
+    columns: [],
+    tableConfig: panel.tableConfig || null,
+  };
+
+  if (panel.renderMode === "form") {
+    transformed.content.fields = (content.fields || []).map(toQuickFlowField);
+  } else if (panel.renderMode === "readonly") {
+    transformed.content.rows = [];
+  } else if (panel.renderMode === "actions") {
+    transformed.actions = (content.actions || []).map(mapAction);
+  } else if (panel.renderMode === "mixed") {
+    transformed.content.blocks = [];
+  } else if (panel.renderMode === "table") {
+    transformed.columns = panel.columns || [];
+    transformed.rows = panel.rows || [];
+  }
+
+  return transformed;
+}
+
+function toQuickFlowSection(section) {
+  return {
+    id: section.id,
+    label: section.label,
+    title: section.title,
+    description: section.description,
+    permissions: section.permissions,
+    panels: (section.panels || []).map((panel, index) => toQuickFlowPanel(panel, index)),
+  };
+}
+
+const qfmPilotConfig = {
+  root: "#settingsQfmRoot",
+  maskId: resolvedMask.maskId,
+  maskFamily: resolvedMask.maskFamily || "QFM",
+  maskType: resolvedMask.maskType,
+  activeSectionId: resolvedMask.sections[0]?.id || null,
+  autoLoadOnInit: false,
+  autoLoadSectionOnActivate: false,
+  autoLoadPanelOnOpen: false,
+  currentRoles: ["member"],
+  currentScopes: {
+    globalUser: true,
+    authSystem: true,
+    clubReadonly: true,
+    clubOverride: false,
+    billingSnapshot: true,
+    consentAppendOnly: true,
+  },
+  header: resolvedMask.header,
+  sections: resolvedMask.sections.map(toQuickFlowSection),
+};
+
+const qfmPilotConfigJson = JSON.stringify(qfmPilotConfig);
+
 ---
 
-<Site title={`Einstellungen • ${APP.name}`} description="App-Einstellungen und Kontoinfo." robots="noindex">
-  <section class="card">
-    <div class="card__body">
-      <h2>Account</h2>
-      <p class="small">Persönliche Kontodaten und Stammdaten im Vereinskontext.</p>
-      <div class="resp-form-grid" id="settingsAccountView">
-        <label class="resp-half">
-          <span>Mitgliedsnummer</span>
-          <input id="accountViewMemberNo" value="-" disabled />
-        </label>
-        <label class="resp-half">
-          <span>Verein</span>
-          <input id="accountViewClubCode" value="-" disabled />
-        </label>
-        <label class="resp-half">
-          <span>Vorname</span>
-          <input id="accountViewFirstName" value="-" disabled />
-        </label>
-        <label class="resp-half">
-          <span>Nachname</span>
-          <input id="accountViewLastName" value="-" disabled />
-        </label>
-        <label class="resp-full">
-          <span>E-Mail</span>
-          <input id="accountViewEmail" value="-" disabled />
-        </label>
-        <label class="resp-full">
-          <span>Strasse</span>
-          <input id="accountViewStreet" value="-" disabled />
-        </label>
-        <label class="resp-half">
-          <span>PLZ</span>
-          <input id="accountViewZip" value="-" disabled />
-        </label>
-        <label class="resp-half">
-          <span>Ort</span>
-          <input id="accountViewCity" value="-" disabled />
-        </label>
-        <label class="resp-half">
-          <span>Telefon</span>
-          <input id="accountViewPhone" value="-" disabled />
-        </label>
-        <label class="resp-half">
-          <span>Mobil</span>
-          <input id="accountViewMobile" value="-" disabled />
-        </label>
-        <div class="resp-full settings-actions-row">
-          <button type="button" id="settingsEditAccountBtn" class="feed-btn">Account bearbeiten</button>
-        </div>
-      </div>
+<Site title={`Einstellungen • ${APP.name}`} description="QFM-basierter Pilot fuer die neue Settings-Maske." robots="noindex">
+  <Fragment slot="head">
+    <link rel="stylesheet" href="/css/ofmMask.css" />
+  </Fragment>
 
-      <form id="settingsAccountForm" class="resp-form-grid hidden" hidden>
-        <label class="resp-half">
-          <span>Mitgliedsnummer</span>
-          <input id="accountMemberNo" disabled />
-        </label>
-        <label class="resp-half">
-          <span>Verein</span>
-          <input id="accountClubCode" disabled />
-        </label>
-        <label class="resp-half">
-          <span>Vorname</span>
-          <input id="accountFirstName" autocomplete="given-name" />
-        </label>
-        <label class="resp-half">
-          <span>Nachname</span>
-          <input id="accountLastName" autocomplete="family-name" />
-        </label>
-        <label class="resp-full">
-          <span>E-Mail</span>
-          <input id="accountEmail" type="email" autocomplete="email" />
-        </label>
-        <label class="resp-full">
-          <span>Strasse</span>
-          <input id="accountStreet" autocomplete="street-address" />
-        </label>
-        <label class="resp-half">
-          <span>PLZ</span>
-          <input id="accountZip" autocomplete="postal-code" />
-        </label>
-        <label class="resp-half">
-          <span>Ort</span>
-          <input id="accountCity" autocomplete="address-level2" />
-        </label>
-        <label class="resp-half">
-          <span>Telefon</span>
-          <input id="accountPhone" autocomplete="tel" />
-        </label>
-        <label class="resp-half">
-          <span>Mobil</span>
-          <input id="accountMobile" autocomplete="tel" />
-        </label>
-        <div class="resp-full settings-actions-row">
-          <button type="button" id="settingsCancelAccountBtn" class="feed-btn feed-btn--ghost">Abbrechen</button>
-          <button type="submit" class="feed-btn">Account speichern</button>
-        </div>
-      </form>
-    </div>
+  <section class="ofm-mask-stage">
+    <div id="settingsQfmRoot"></div>
+    <p id="settingsQfmPilotMsg" class="small ofm-mask-stage__status" aria-live="polite"></p>
   </section>
 
-  <section class="card">
-    <div class="card__body">
-      <h1>Einstellungen</h1>
-      <p class="small">Zentraler Bereich für App-Update, Benachrichtigungen und Kontooptionen.</p>
-      <p id="settingsMsg" class="small" aria-live="polite"></p>
-    </div>
-  </section>
+  <script is:inline src="/js/fcp-mask-process-state.js"></script>
+  <script is:inline src="/js/fcp-adm-qfm-contract-hub.js"></script>
+  <script is:inline src="/js/fcp-mask-data-resolver.js"></script>
+  <script is:inline src="/js/fcp-data-table.js"></script>
+  <script is:inline src="/js/fcp-inline-data-table-v2.js"></script>
+  <script is:inline src="/js/quick-flow-pattern.js"></script>
+  <script is:inline src="/js/fcp-mask-page-loader.js"></script>
+  <script id="settingsQfmConfig" type="application/json" set:html={qfmPilotConfigJson}></script>
+  <script is:inline>
+    const pilotMsgEl = document.getElementById("settingsQfmPilotMsg");
 
-  <section class="card">
-    <div class="card__body">
-      <h2>Benachrichtigungen und Portal</h2>
-      <form id="settingsNotifyForm" class="resp-form-grid">
-        <label class="resp-full settings-check-row">
-          <span>
-            <input id="setNotifyPosts" type="checkbox" checked />
-            Neue Posts
-          </span>
-        </label>
-        <label class="resp-full settings-check-row">
-          <span>
-            <input id="setNotifyEvents" type="checkbox" checked />
-            Neue Termine
-          </span>
-        </label>
-        <label class="resp-full settings-check-row">
-          <span>
-            <input id="setNotifyWorkEvents" type="checkbox" checked />
-            Neue Arbeitseinsätze
-          </span>
-        </label>
-        <label class="resp-full settings-check-row">
-          <span>
-            <input id="setNotifyAppUpdate" type="checkbox" checked />
-            App-Update verfügbar
-          </span>
-        </label>
-        <label class="resp-full">
-          <span>Portal-Seite</span>
-          <select id="setHandedness">
-            <option value="right">Rechts (Standard)</option>
-            <option value="auto">Auto</option>
-            <option value="left">Links</option>
-          </select>
-        </label>
-        <div id="settingsPrimaryActions" class="resp-full settings-actions-row" style="display:flex;justify-content:flex-end;">
-          <button type="submit" class="feed-btn">Speichern</button>
-        </div>
-      </form>
-    </div>
-  </section>
+    function setPilotMessage(text) {
+      if (pilotMsgEl) pilotMsgEl.textContent = text;
+    }
 
-  <section class="card">
-    <div class="card__body">
-      <h2>App-Update</h2>
-      <p class="small">Version: <strong id="settingsAppVersion">-</strong></p>
-      <div id="settingsUpdateActions" class="settings-actions-row" style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button type="button" id="settingsEnableNotifyBtn" class="feed-btn feed-btn--ghost">Benachrichtigung erlauben</button>
-        <button type="button" id="settingsCheckUpdateBtn" class="feed-btn feed-btn--ghost">Auf Update prüfen</button>
-        <button type="button" id="settingsReloadBtn" class="feed-btn feed-btn--ghost">Neu laden</button>
-      </div>
-    </div>
-  </section>
+    window.FcpMaskPageLoader.boot({
+      configScriptId: "settingsQfmConfig",
+      patternGlobal: "__QFM_SETTINGS_PILOT__",
+      onMessage: setPilotMessage,
+    }).catch((error) => {
+      setPilotMessage(error instanceof Error ? error.message : String(error));
+    });
+  </script>
 
-  <section class="card">
-    <div class="card__body">
-      <h2>Zugangsprüfung</h2>
-      <p class="small">Preview der späteren Pflichtmaske zur Verifizierung von Kontodaten und Auth-E-Mail.</p>
-      <a class="feed-btn feed-btn--ghost" href="/app/zugang-pruefen/?preview=1">Prüfmaske im Preview öffnen</a>
-    </div>
-  </section>
-
-  <script src="/js/app-settings.js" defer></script>
   <style>
-    #settingsNotifyForm.settings-handed-right .settings-check-row > span {
-      display: flex;
-      align-items: center;
+    .ofm-mask-stage {
+      display: grid;
       gap: 10px;
-      justify-content: flex-start;
     }
-    #settingsNotifyForm.settings-handed-left .settings-check-row > span {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      justify-content: space-between;
-      flex-direction: row-reverse;
-      text-align: right;
+    #settingsQfmRoot {
+      min-height: 240px;
     }
-    .settings-actions-row.settings-handed-right {
-      justify-content: flex-end !important;
-    }
-    .settings-actions-row.settings-handed-left {
-      justify-content: flex-start !important;
+    .ofm-mask-stage__status {
+      margin: 0;
     }
   </style>
 </Site>

@@ -1,0 +1,9 @@
+[
+  {
+    "total_rows": 352,
+    "with_identity_id": 352,
+    "with_tenant_id": 350,
+    "with_canonical_membership_id": 350,
+    "missing_membership_link_despite_identity_and_tenant": 0
+  }
+]

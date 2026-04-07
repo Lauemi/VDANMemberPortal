@@ -1,0 +1,702 @@
+[
+  {
+    "schema_name": "public",
+    "function_name": "accept_current_legal",
+    "args": "p_terms boolean, p_privacy boolean, p_avv boolean, p_user_agent text, p_authority_confirmed boolean, p_signer_name text, p_signer_function text, p_signer_email text",
+    "return_type": "TABLE(ok boolean, accepted_at timestamp with time zone, avv_recorded boolean)",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "admin_catch_member_stats",
+    "args": "",
+    "return_type": "TABLE(user_id uuid, member_no text, display_name text, angeltage_count bigint, no_catch_count bigint, catches_total_qty bigint)",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "admin_dsgvo_log_event",
+    "args": "p_event_type text, p_subject_member_no text, p_legal_basis text, p_purpose text, p_club_id uuid, p_details jsonb",
+    "return_type": "bigint",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "admin_dsgvo_subject_snapshot",
+    "args": "p_member_no text",
+    "return_type": "jsonb",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "admin_member_registry",
+    "args": "",
+    "return_type": "TABLE(club_id uuid, club_code text, member_no text, club_member_no text, first_name text, last_name text, status text, fishing_card_type text, has_login boolean, last_sign_in_at timestamp with time zone, profile_user_id uuid, street text, email text, zip text, city text, phone text, mobile text, birthdate date, sepa_approved boolean, iban_last4 text, guardian_member_no text)",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "admin_member_registry_create",
+    "args": "p_club_id uuid, p_club_code text, p_member_no text, p_first_name text, p_last_name text, p_status text, p_fishing_card_type text, p_street text, p_zip text, p_city text, p_phone text, p_mobile text, p_guardian_member_no text, p_sepa_approved boolean, p_iban text, p_birthdate date, p_email text, p_club_member_no text",
+    "return_type": "TABLE(member_no text)",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "admin_member_registry_create",
+    "args": "p_club_id uuid, p_club_code text, p_member_no text, p_first_name text, p_last_name text, p_status text, p_fishing_card_type text, p_street text, p_zip text, p_city text, p_phone text, p_mobile text, p_guardian_member_no text, p_sepa_approved boolean, p_iban text, p_birthdate date, p_email text",
+    "return_type": "TABLE(member_no text)",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "admin_member_registry_delete",
+    "args": "p_club_id uuid, p_member_no text",
+    "return_type": "void",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "admin_member_registry_update",
+    "args": "p_member_no text, p_first_name text, p_last_name text, p_status text, p_fishing_card_type text, p_street text, p_email text, p_zip text, p_city text, p_phone text, p_mobile text, p_guardian_member_no text, p_sepa_approved boolean, p_iban text, p_birthdate date",
+    "return_type": "void",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "admin_member_registry_update",
+    "args": "p_member_no text, p_first_name text, p_last_name text, p_status text, p_fishing_card_type text, p_street text, p_email text, p_zip text, p_city text, p_phone text, p_mobile text, p_guardian_member_no text, p_sepa_approved boolean, p_iban text, p_birthdate date, p_club_member_no text",
+    "return_type": "void",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "admin_process_bug_report",
+    "args": "p_report_id uuid, p_status text, p_admin_note text, p_resolution_note text, p_priority text",
+    "return_type": "bug_reports",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "admin_publish_runtime_config",
+    "args": "p_scope_key text, p_config_key text, p_config_value jsonb, p_actor_id uuid",
+    "return_type": "TABLE(scope_key text, config_key text, version integer, config_value jsonb, published_at timestamp with time zone)",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "admin_user_last_signins",
+    "args": "",
+    "return_type": "TABLE(user_id uuid, email text, auth_created_at timestamp with time zone, last_sign_in_at timestamp with time zone)",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "approve_membership",
+    "args": "p_application_id uuid, p_membership_number text",
+    "return_type": "uuid",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "can_access_club_content",
+    "args": "p_club_id uuid",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "catch_trip_quick_no_catch",
+    "args": "p_trip_date date, p_water_body_id uuid, p_note text",
+    "return_type": "fishing_trips",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "catch_trip_quick_no_catch_member",
+    "args": "p_trip_date date, p_member_water_name text, p_location_text text, p_note text",
+    "return_type": "fishing_trips",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "club_onboarding_requirements",
+    "args": "p_club_id uuid",
+    "return_type": "TABLE(club_id uuid, club_name text, club_code text, has_club_name boolean, has_club_code boolean, has_core_roles boolean, has_module_usecases boolean, has_water_bodies boolean, has_default_card boolean, member_directory_count bigint, member_identity_count bigint, manager_count bigint)",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "club_onboarding_snapshot",
+    "args": "p_club_id uuid",
+    "return_type": "TABLE(club_id uuid, setup_state text, billing_state text, portal_state text, club_data_complete boolean, waters_complete boolean, cards_complete boolean, members_mode text, has_club_name boolean, has_club_code boolean, has_core_roles boolean, has_module_usecases boolean, has_water_bodies boolean, has_default_card boolean, member_directory_count bigint, member_identity_count bigint, manager_count bigint, setup_ready boolean)",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "club_request_gate_state",
+    "args": "",
+    "return_type": "TABLE(request_id uuid, status text, club_name text, responsible_name text, responsible_email text, approved_club_id uuid, rejection_reason text, created_at timestamp with time zone, updated_at timestamp with time zone)",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "create_club_request_from_signup",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "create_member_notification",
+    "args": "p_club_id uuid, p_user_id uuid, p_type text, p_title text, p_message text, p_severity text, p_source_kind text, p_source_id uuid, p_action_url text",
+    "return_type": "member_notifications",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "current_user_club_id",
+    "args": "",
+    "return_type": "uuid",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "current_user_has_role_in_club",
+    "args": "p_club_id uuid, p_roles text[]",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "email_in_csv_list",
+    "args": "p_email text, p_csv text",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "enforce_auth_signup_guard",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "enforce_feed_media_limit",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "enforce_meeting_attendee_is_manager",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "enforce_meeting_task_agenda_scope",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "enforce_passive_member_card_for_member_no",
+    "args": "p_member_no text",
+    "return_type": "void",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "enforce_water_context_defaults",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "enforce_whitefish_daily_limit",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "enforce_work_participation_update",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "ensure_club_onboarding_state",
+    "args": "p_club_id uuid",
+    "return_type": "club_onboarding_state",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "ensure_member_water_user_scope_defaults",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "ensure_row_club_id",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_base_event_notification_guard",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_block_invalid_base_window_changes",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_config_guard",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_config_is_published",
+    "args": "p_base_kind event_planner_base_kind, p_base_club_event_id uuid, p_base_work_event_id uuid",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_notify_registration_users",
+    "args": "p_planner_config_id uuid, p_slot_id uuid, p_type text, p_title text, p_message text, p_severity text, p_source_kind text, p_source_id uuid, p_action_url text",
+    "return_type": "integer",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_register",
+    "args": "p_planner_config_id uuid, p_slot_id uuid, p_note_member text",
+    "return_type": "event_planner_registrations",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_registration_approve",
+    "args": "p_registration_id uuid, p_note_admin text",
+    "return_type": "event_planner_registrations",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_registration_guard",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_registration_notification_guard",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_registration_reject",
+    "args": "p_registration_id uuid, p_note_admin text",
+    "return_type": "event_planner_registrations",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_slot_delete",
+    "args": "p_slot_id uuid",
+    "return_type": "void",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_slot_guard",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_slot_notification_guard",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_slot_upsert",
+    "args": "p_planner_config_id uuid, p_slot_id uuid, p_title text, p_description text, p_starts_at timestamp with time zone, p_ends_at timestamp with time zone, p_required_people integer, p_sort_order integer, p_leaders_count_towards_capacity boolean",
+    "return_type": "event_planner_slots",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_unregister",
+    "args": "p_registration_id uuid",
+    "return_type": "void",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "event_planner_upsert_for_base",
+    "args": "p_base_kind event_planner_base_kind, p_base_id uuid, p_approval_mode event_planner_approval_mode, p_planning_mode event_planner_mode, p_required_people integer, p_repeat_rule text, p_max_participants_enabled boolean, p_leaders_count_towards_capacity boolean",
+    "return_type": "event_planner_configs",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "fcp_is_superadmin",
+    "args": "",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "fcp_masterboard_node_upsert",
+    "args": "p_node_id text, p_title text, p_lane text, p_status text, p_launch_class text, p_risk_level text, p_progress_visible jsonb, p_progress_invisible jsonb, p_gaps jsonb, p_decisions_open jsonb, p_refs jsonb, p_last_verified_at date",
+    "return_type": "system_board_nodes",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "fcp_masterboard_nodes_get",
+    "args": "",
+    "return_type": "SETOF system_board_nodes",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "fcp_masterboard_seed",
+    "args": "p_nodes jsonb, p_processes jsonb",
+    "return_type": "jsonb",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "fcp_process_control_upsert",
+    "args": "p_process_id text, p_title text, p_status text, p_priority text, p_related_nodes jsonb, p_summary text, p_owner text, p_screens jsonb, p_smoke_checks jsonb, p_bugs jsonb, p_review_note text, p_last_reviewed_at date",
+    "return_type": "system_process_controls",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "fcp_process_controls_get",
+    "args": "",
+    "return_type": "SETOF system_process_controls",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "generate_internal_member_no",
+    "args": "",
+    "return_type": "text",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "get_club_identity_map",
+    "args": "",
+    "return_type": "TABLE(club_id uuid, club_code text, club_name text)",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "governance_health_ci_gate",
+    "args": "p_fail_on_yellow boolean",
+    "return_type": "TABLE(passed boolean, red_clubs integer, yellow_clubs integer, green_clubs integer, total_clubs integer, total_issues integer, fail_reason text, evaluated_at timestamp with time zone)",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "governance_health_issues",
+    "args": "p_club_id uuid",
+    "return_type": "TABLE(rule_key text, club_id uuid, club_code text, club_name text, ref_1 text, ref_2 text, detail text)",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "governance_health_snapshot",
+    "args": "",
+    "return_type": "TABLE(club_id uuid, club_code text, club_name text, identity_gaps integer, roles_without_membership integer, duplicate_identities integer, members_without_identity_link integer, club_name_or_code_missing integer, total_issues integer, health_status text)",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "has_usecase_access",
+    "args": "p_club_id uuid, p_usecase_key text, p_action text",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "identity_dialog_gate_state",
+    "args": "",
+    "return_type": "TABLE(dialog_enabled boolean, force_enabled boolean, preview_enabled boolean, must_verify_identity boolean, member_no text, club_code text, first_name text, last_name text, profile_email text, access_name text)",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "is_admin",
+    "args": "",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "is_admin_in_any_club",
+    "args": "",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "is_admin_in_club",
+    "args": "p_club_id uuid",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "is_admin_or_vorstand",
+    "args": "",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "is_admin_or_vorstand_in_club",
+    "args": "p_club_id uuid",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "is_board_or_admin",
+    "args": "",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "is_passive_status",
+    "args": "p_status text",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "is_same_club",
+    "args": "p_club_id uuid",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "is_service_role_request",
+    "args": "",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "legacy_single_club_fallback_enabled",
+    "args": "",
+    "return_type": "boolean",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "legal_acceptance_state",
+    "args": "",
+    "return_type": "TABLE(club_id uuid, terms_version text, privacy_version text, avv_version text, terms_accepted boolean, privacy_accepted boolean, avv_accepted boolean, avv_required boolean, needs_acceptance boolean)",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "meeting_agenda_items_auto_number",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "member_card_rotate_key",
+    "args": "p_card_id text, p_key text",
+    "return_type": "jsonb",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "member_card_verify",
+    "args": "p_card_id text, p_key text",
+    "return_type": "jsonb",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "member_notification_mark_all_read",
+    "args": "",
+    "return_type": "integer",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "member_notification_mark_read",
+    "args": "p_notification_id uuid",
+    "return_type": "member_notifications",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "member_water_match_candidates",
+    "args": "p_member_water_id uuid, p_limit integer",
+    "return_type": "TABLE(water_body_id uuid, water_name text, score numeric, reason text)",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "member_water_upsert",
+    "args": "p_name text, p_location_text text, p_description text, p_latitude numeric, p_longitude numeric, p_used_on date",
+    "return_type": "member_waters",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "membership_get_encryption_key",
+    "args": "",
+    "return_type": "text",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "membership_iban_last4",
+    "args": "p_iban text",
+    "return_type": "text",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "membership_normalize_iban",
+    "args": "p_iban text",
+    "return_type": "text",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "membership_set_internal_questionnaire",
+    "args": "p_application_id uuid, p_internal_questionnaire jsonb",
+    "return_type": "void",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "next_club_member_no",
+    "args": "p_club_id uuid",
+    "return_type": "text",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "normalize_water_name",
+    "args": "p_text text",
+    "return_type": "text",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "portal_bootstrap",
+    "args": "",
+    "return_type": "jsonb",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "profile_club_id",
+    "args": "p_user_id uuid",
+    "return_type": "uuid",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "public_active_club_id",
+    "args": "",
+    "return_type": "uuid",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "reject_membership",
+    "args": "p_application_id uuid, p_rejection_reason text",
+    "return_type": "void",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "rls_auto_enable",
+    "args": "",
+    "return_type": "event_trigger",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "rpc_touch_user",
+    "args": "",
+    "return_type": "profiles",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "self_identity_verification_complete",
+    "args": "p_confirmed boolean, p_sepa_approved boolean",
+    "return_type": "TABLE(ok boolean, verified_at timestamp with time zone)",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "self_member_profile_get",
+    "args": "",
+    "return_type": "TABLE(member_no text, internal_member_no text, club_code text, first_name text, last_name text, email text, street text, zip text, city text, phone text, mobile text)",
+    "language_name": "sql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "self_member_profile_update",
+    "args": "p_first_name text, p_last_name text, p_street text, p_zip text, p_city text, p_phone text, p_mobile text",
+    "return_type": "TABLE(member_no text, internal_member_no text, club_code text, first_name text, last_name text, email text, street text, zip text, city text, phone text, mobile text)",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "set_club_billing_state",
+    "args": "p_club_id uuid, p_billing_state text, p_checkout_state text, p_provider text, p_stripe_customer_id text, p_stripe_subscription_id text, p_stripe_checkout_session_id text, p_event_id text, p_event_type text, p_payload jsonb, p_current_period_end timestamp with time zone, p_canceled_at timestamp with time zone",
+    "return_type": "club_billing_subscriptions",
+    "language_name": "plpgsql"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "set_updated_at",
+    "args": "",
+    "return_type": "trigger",
+    "language_name": "plpgsql"
+  }
+]

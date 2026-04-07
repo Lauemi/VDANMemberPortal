@@ -1,0 +1,196 @@
+{
+  "document_key": "FCP_DB_SYSTEM_CONTRACT_V16",
+  "version": "1.0",
+  "date": "2026-04-01",
+
+  "intent": {
+    "goal": "Verbindlicher Systemvertrag fuer Datenbankstruktur, Migration und Wahrheitspfad",
+    "mode": "structure_only",
+    "no_sql": true,
+    "no_features": true
+  },
+
+  "principles": [
+    "membership_is_relationship_not_identity",
+    "user_data_survives_club",
+    "single_source_of_truth",
+    "additive_migration_only",
+    "no_break_existing_app",
+    "no_duplicate_write_truth"
+  ],
+
+  "truth_model": {
+    "A_canonical": [
+      "identity_core",
+      "profiles_platform",
+      "memberships",
+      "membership_roles",
+      "membership_status_history",
+      "club_core",
+      "tenant_nodes"
+    ],
+    "B_adapter": [
+      "profiles",
+      "club_members",
+      "club_member_identities",
+      "members",
+      "club_user_roles",
+      "user_roles"
+    ],
+    "C_deprecated": [
+      "direct_user_club_links",
+      "raw_user_role_paths",
+      "any_non_membership_based_relation"
+    ]
+  },
+
+  "read_paths": {
+    "canonical": {
+      "identity": "identity_core",
+      "profile": "profiles_platform",
+      "membership": "memberships",
+      "roles": "membership_roles",
+      "club": ["club_core", "tenant_nodes"]
+    },
+    "transition": {
+      "allowed": true,
+      "sources": [
+        "profiles",
+        "club_members",
+        "club_member_identities",
+        "members",
+        "club_user_roles",
+        "user_roles"
+      ],
+      "rule": "read_only_adapter"
+    },
+    "rule": [
+      "new_modules_read_canonical_only",
+      "old_modules_may_read_adapter",
+      "adapter_reads_have_no_truth_authority"
+    ]
+  },
+
+  "write_paths": {
+    "canonical_only": {
+      "membership_events": ["memberships", "membership_status_history"],
+      "roles": ["membership_roles"],
+      "identity": ["identity_core"],
+      "profile": ["profiles_platform"],
+      "club": ["club_core"]
+    },
+    "adapter_write": {
+      "allowed": true,
+      "mode": "derived_only",
+      "rule": [
+        "write_canonical_first",
+        "adapter_sync_is_deterministic",
+        "never_write_adapter_first"
+      ]
+    }
+  },
+
+  "adapter_rules": [
+    "adapter_has_no_own_truth",
+    "adapter_maps_1_to_1_from_canonical",
+    "adapter_never_decides_logic",
+    "canonical_overrides_on_conflict",
+    "no_new_dependencies_on_adapter",
+    "adapter_removed_per_domain_when_unused"
+  ],
+
+  "stability_rules": [
+    "one_truth_per_domain",
+    "membership_is_only_relationship_source",
+    "roles_bound_to_membership_not_user",
+    "no_parallel_status_management",
+    "club_and_tenant_must_be_mappable",
+    "new_features_use_canonical_only"
+  ],
+
+  "critical_relations": [
+    "identity_core.identity_id -> memberships.identity_id",
+    "memberships.tenant_id -> tenant_nodes.tenant_id",
+    "membership_roles.membership_id -> memberships.id",
+    "membership_roles.role_id -> roles.id",
+    "club_core.tenant_id -> tenant_nodes.tenant_id"
+  ],
+
+  "migration_rules": {
+    "strategy": "wave_based",
+    "waves": [
+      {
+        "wave": 1,
+        "focus": [
+          "identity_core",
+          "profiles_platform",
+          "memberships",
+          "membership_roles",
+          "membership_status_history"
+        ],
+        "goal": "relationship_truth"
+      },
+      {
+        "wave": 2,
+        "focus": [
+          "legal_event_log",
+          "pricing_rules",
+          "member_claims",
+          "financial_documents",
+          "payment_allocations"
+        ],
+        "goal": "legal_finance_truth"
+      },
+      {
+        "wave": 3,
+        "focus": [
+          "trip_catch_context",
+          "permits_cards",
+          "event_core",
+          "participation_core",
+          "inventory"
+        ],
+        "goal": "module_alignment"
+      }
+    ],
+    "rules": [
+      "never_break_existing_paths",
+      "introduce_canonical_then_bridge",
+      "deprecate_after_full_read_write_shift",
+      "no_parallel_truth_creation"
+    ]
+  },
+
+  "tenant_rule": {
+    "status": "prepared",
+    "constraint": "club_id_must_map_to_single_tenant_id",
+    "rule": [
+      "no_dual_context_truth",
+      "tenant_not_optional_when_active"
+    ]
+  },
+
+  "external_review_block": {
+    "known": [
+      "membership_currently_split_across_multiple_tables",
+      "roles_partially_user_bound",
+      "club_scoped_logic_active"
+    ],
+    "target": [
+      "single_membership_truth",
+      "roles_on_membership",
+      "identity_platform_wide",
+      "adapter_transition_only"
+    ],
+    "open_risks": [
+      "duplicate_membership_truth",
+      "role_conflicts",
+      "club_vs_tenant_drift"
+    ],
+    "questions": [
+      "where_are_hidden_write_paths",
+      "which_reads_bypass_membership",
+      "what_breaks_if_membership_is_enforced"
+    ]
+  }
+}

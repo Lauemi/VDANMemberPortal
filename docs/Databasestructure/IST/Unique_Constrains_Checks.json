@@ -1,0 +1,902 @@
+[
+  {
+    "table_schema": "public",
+    "table_name": "app_notes",
+    "constraint_name": "2200_17494_1_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_notes",
+    "constraint_name": "2200_17494_2_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_notes",
+    "constraint_name": "2200_17494_3_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_notes",
+    "constraint_name": "2200_17494_4_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_notes",
+    "constraint_name": "2200_17494_5_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_notes",
+    "constraint_name": "app_notes_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_notes",
+    "constraint_name": "app_notes_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table_name": "app_notes",
+    "foreign_column_name": "id"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_1_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_2_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_3_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_4_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_5_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_6_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_7_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_8_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "app_route_catalog_route_type_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_route_catalog",
+    "foreign_column_name": "route_type"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "app_route_catalog_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "route_key",
+    "foreign_table_name": "app_route_catalog",
+    "foreign_column_name": "route_key"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "app_route_catalog_route_path_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "route_path",
+    "foreign_table_name": "app_route_catalog",
+    "foreign_column_name": "route_path"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "2200_50024_10_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "2200_50024_1_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "2200_50024_3_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "2200_50024_4_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "2200_50024_5_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "2200_50024_6_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "2200_50024_7_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "app_runtime_audit_log_scope_type_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_runtime_audit_log",
+    "foreign_column_name": "scope_type"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "app_runtime_audit_log_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table_name": "app_runtime_audit_log",
+    "foreign_column_name": "id"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_12_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_13_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_15_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_1_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_2_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_3_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_4_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_5_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_6_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_8_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "app_runtime_configs_config_key_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_runtime_configs",
+    "foreign_column_name": "config_key"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "app_runtime_configs_scope_type_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_runtime_configs",
+    "foreign_column_name": "scope_type"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "app_runtime_configs_status_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_runtime_configs",
+    "foreign_column_name": "status"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "app_runtime_configs_supersedes_version_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_runtime_configs",
+    "foreign_column_name": "supersedes_version"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "app_runtime_configs_version_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_runtime_configs",
+    "foreign_column_name": "version"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "app_runtime_configs_draft_of_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "draft_of",
+    "foreign_table_name": "app_runtime_configs",
+    "foreign_column_name": "id"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "app_runtime_configs_rollback_of_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "rollback_of",
+    "foreign_table_name": "app_runtime_configs",
+    "foreign_column_name": "id"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "app_runtime_configs_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table_name": "app_runtime_configs",
+    "foreign_column_name": "id"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "2200_50010_10_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "2200_50010_1_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "2200_50010_2_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "2200_50010_3_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "2200_50010_4_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "2200_50010_5_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "2200_50010_8_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "app_runtime_releases_scope_type_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_runtime_releases",
+    "foreign_column_name": "scope_type"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "app_runtime_releases_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table_name": "app_runtime_releases",
+    "foreign_column_name": "id"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "app_runtime_releases_release_key_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "release_key",
+    "foreign_table_name": "app_runtime_releases",
+    "foreign_column_name": "release_key"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_secure_settings",
+    "constraint_name": "2200_24235_1_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_secure_settings",
+    "constraint_name": "2200_24235_2_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_secure_settings",
+    "constraint_name": "2200_24235_3_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_secure_settings",
+    "constraint_name": "app_secure_settings_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "setting_key",
+    "foreign_table_name": "app_secure_settings",
+    "foreign_column_name": "setting_key"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_11_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_12_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_1_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_2_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_3_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_4_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_5_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_6_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_8_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "app_template_bindings_scope_type_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_template_bindings",
+    "foreign_column_name": "scope_type"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "app_template_bindings_route_key_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "route_key",
+    "foreign_table_name": "app_route_catalog",
+    "foreign_column_name": "route_key"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "app_template_bindings_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table_name": "app_template_bindings",
+    "foreign_column_name": "id"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_10_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_11_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_13_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_14_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_1_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_2_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_3_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_4_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_5_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_6_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "app_template_library_brand_scope_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_template_library",
+    "foreign_column_name": "brand_scope"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "app_template_library_schema_version_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_template_library",
+    "foreign_column_name": "schema_version"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "app_template_library_status_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_template_library",
+    "foreign_column_name": "status"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "app_template_library_supersedes_version_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_template_library",
+    "foreign_column_name": "supersedes_version"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "app_template_library_template_type_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_template_library",
+    "foreign_column_name": "template_type"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "app_template_library_version_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_template_library",
+    "foreign_column_name": "version"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "app_template_library_rollback_of_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "rollback_of",
+    "foreign_table_name": "app_template_library",
+    "foreign_column_name": "id"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "app_template_library_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table_name": "app_template_library",
+    "foreign_column_name": "id"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_10_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_11_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_12_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_1_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_2_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_3_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_4_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_5_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_6_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_7_not_null",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": null,
+    "foreign_column_name": null
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "app_theme_tokens_scope_type_check",
+    "constraint_type": "CHECK",
+    "column_name": null,
+    "foreign_table_name": "app_theme_tokens",
+    "foreign_column_name": "scope_type"
+  }
+]

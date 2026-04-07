@@ -1,0 +1,210 @@
+{
+  "_template": {
+    "name": "QFM Onboarding Process Template",
+    "version": "1.0",
+    "purpose": "Authoring template for a real onboarding process mask under the FCP Onboarding Process Contract.",
+    "targetPath": "docs/masks/qfm/QFM_<process_name>.json"
+  },
+  "maskId": "vdan_member_onboarding",
+  "maskFamily": "QFM",
+  "maskType": "process",
+  "securityContext": {
+    "rlsKey": "identity_id",
+    "membershipKey": "canonical_membership_id",
+    "requiresTenantAccess": false,
+    "requiresRoleCheck": false,
+    "allowedRoles": [],
+    "serverValidated": true
+  },
+  "header": {
+    "kicker": "Onboarding",
+    "title": "Mitgliedschaft aktivieren",
+    "description": "Mehrstufiger VDAN-Onboarding-Prozess mit serverseitig freigeschalteten Schritten."
+  },
+  "metaPolicy": {
+    "autoDetect": true,
+    "auditFields": [
+      "created_at",
+      "created_by",
+      "updated_at",
+      "updated_by"
+    ],
+    "appendOnlyHandling": "explicit"
+  },
+  "dataContract": {
+    "sourceOfTruth": "sql",
+    "contracts": [
+      "docs/contracts/FCP_MASK_SYSTEM_CONTRACT.md",
+      "docs/contracts/FCP_RLS_SECURITY_STANDARD.md",
+      "docs/contracts/FCP_ONBOARDING_PROCESS_CONTRACT.md",
+      "docs/contracts/FCP_ONBOARDING_PROCESS_STATE_CONTRACT.md"
+    ]
+  },
+  "process": {
+    "processId": "vdan_member_onboarding",
+    "resumeKey": "onboarding_state",
+    "stateBinding": {
+      "kind": "rpc",
+      "target": "public.get_onboarding_process_state",
+      "path": "rpc:public.get_onboarding_process_state"
+    },
+    "advanceBinding": {
+      "kind": "rpc",
+      "target": "public.advance_onboarding_step",
+      "path": "rpc:public.advance_onboarding_step"
+    },
+    "steps": [
+      {
+        "id": "auth_presence",
+        "label": "Zugang",
+        "title": "Zugang erkannt",
+        "stepType": "auth",
+        "statusSource": "process.steps.auth_presence",
+        "requiresServerUnlock": true,
+        "unlockRule": "server_only",
+        "completionRule": "server_only",
+        "visibleWhen": "server_only",
+        "editableWhen": "server_only",
+        "terminalStates": ["completed", "blocked", "failed"]
+      },
+      {
+        "id": "claim_match",
+        "label": "Zuordnung",
+        "title": "Mitgliedschaft zuordnen",
+        "stepType": "claim",
+        "statusSource": "process.steps.claim_match",
+        "requiresServerUnlock": true,
+        "unlockRule": "server_only",
+        "completionRule": "server_only",
+        "visibleWhen": "server_only",
+        "editableWhen": "server_only",
+        "terminalStates": ["completed", "blocked", "failed"]
+      },
+      {
+        "id": "profile_completion",
+        "label": "Profil",
+        "title": "Profildaten vervollständigen",
+        "stepType": "profile",
+        "statusSource": "process.steps.profile_completion",
+        "requiresServerUnlock": true,
+        "unlockRule": "server_only",
+        "completionRule": "server_only",
+        "visibleWhen": "server_only",
+        "editableWhen": "server_only",
+        "terminalStates": ["completed", "blocked", "failed"]
+      },
+      {
+        "id": "consent",
+        "label": "Einwilligungen",
+        "title": "Rechtliches bestätigen",
+        "stepType": "consent",
+        "statusSource": "process.steps.consent",
+        "requiresServerUnlock": true,
+        "unlockRule": "server_only",
+        "completionRule": "server_only",
+        "visibleWhen": "server_only",
+        "editableWhen": "server_only",
+        "terminalStates": ["completed", "blocked", "failed"]
+      }
+    ]
+  },
+  "loadBinding": {
+    "kind": "rpc",
+    "target": "public.get_onboarding_process_state",
+    "path": "rpc:public.get_onboarding_process_state"
+  },
+  "sections": [
+    {
+      "id": "onboarding_flow",
+      "label": "Onboarding",
+      "title": "Onboarding",
+      "description": "Der sichtbare Step-Flow wird serverseitig freigeschaltet.",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "identity_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": false,
+        "requiresRoleCheck": false,
+        "allowedRoles": [],
+        "serverValidated": true
+      },
+      "ownership": "global_user",
+      "scope": "global_user",
+      "panels": [
+        {
+          "id": "onboarding_intro",
+          "title": "Prozessstatus",
+          "renderMode": "readonly",
+          "componentType": "ReadonlyPanel",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "identity_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": false,
+            "requiresRoleCheck": false,
+            "allowedRoles": [],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.get_onboarding_process_state",
+            "sourceKind": "process",
+            "sourceOfTruth": "sql",
+            "scope": "global_user",
+            "ownership": "global_user",
+            "metaDisplay": "hidden"
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.get_onboarding_process_state",
+            "path": "rpc:public.get_onboarding_process_state"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [
+              {
+                "name": "current_step_id",
+                "label": "Aktueller Schritt",
+                "type": "text",
+                "componentType": "readonly",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.process.current_step_id",
+                "payloadKey": "",
+                "group": "default",
+                "displaySpan": "full",
+                "order": 10,
+                "placeholder": "",
+                "helpText": "Kommt ausschliesslich aus dem serverseitigen Prozessstatus.",
+                "readonly": true,
+                "required": false,
+                "defaultValue": null,
+                "validationRules": []
+              }
+            ],
+            "rows": [],
+            "actions": [],
+            "blocks": []
+          }
+        }
+      ]
+    }
+  ],
+  "specialCases": []
+}

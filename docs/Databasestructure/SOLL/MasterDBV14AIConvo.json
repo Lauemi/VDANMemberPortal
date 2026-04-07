@@ -1,0 +1,950 @@
+{
+  "document_key": "FCP_DB_TARGETMODEL_IST_SOLL_JSON_V1",
+  "version": "1.0",
+  "date": "2026-04-01",
+  "intent": {
+    "goal": "Maschinenverstaendliche Gesamtzusammenfassung von Ist-Stand und Soll-Stand der FCP-Datenbankarchitektur.",
+    "for_models": ["Codex", "Claude", "Gemini"],
+    "mode": "no_sql_yet",
+    "migration_rule": "bestehende applikationslogik nicht zerreissen; additive zielstruktur bevorzugen"
+  },
+  "principles": [
+    "FCP bleibt fachlicher Fokus.",
+    "Mitgliedschaft ist Beziehung, nicht Identitaet.",
+    "Userbezogene Assets duerfen nicht am Verein sterben.",
+    "Bridge-/Meta-Schicht wird vorbereitet, nicht ausgebaut.",
+    "DB ist strukturelle Wahrheit; UI/Services werden spaeter daran angebunden.",
+    "Neue Tabellen duerfen die bestehende club-scoped Sicherheitsarchitektur nicht aufweichen.",
+    "Audit, DSGVO, Finanzen, Legal Acceptance und Nachweisraeume muessen frueh mitgedacht werden."
+  ],
+  "ist": {
+    "detected_modules": {
+      "platform_runtime_governance": [
+        "app_route_catalog",
+        "app_runtime_audit_log",
+        "app_runtime_configs",
+        "app_runtime_releases",
+        "app_secure_settings",
+        "app_template_bindings",
+        "app_template_library",
+        "app_theme_tokens",
+        "feature_flags",
+        "module_catalog",
+        "module_usecases",
+        "system_board_nodes",
+        "system_process_controls"
+      ],
+      "identity_profile_access": [
+        "profiles",
+        "push_subscriptions",
+        "user_policy_acceptances",
+        "user_settings",
+        "system_superadmins"
+      ],
+      "club_core_membership_roles": [
+        "club_members",
+        "club_member_identities",
+        "members",
+        "club_roles",
+        "club_role_permissions",
+        "club_user_roles",
+        "user_roles",
+        "member_bank_data"
+      ],
+      "onboarding_requests": [
+        "club_registration_requests",
+        "club_onboarding_state",
+        "club_onboarding_audit",
+        "membership_applications",
+        "membership_application_audit",
+        "membership_application_bank_data"
+      ],
+      "waters_cards_catches_trips": [
+        "water_bodies",
+        "water_areas",
+        "member_waters",
+        "member_water_mappings",
+        "fish_species",
+        "fish_species_rules",
+        "fishing_trips",
+        "catch_entries"
+      ],
+      "events_work_meetings": [
+        "club_events",
+        "event_planner_configs",
+        "event_planner_slots",
+        "event_planner_registrations",
+        "work_events",
+        "work_event_leads",
+        "work_checkins",
+        "work_participations",
+        "meeting_sessions",
+        "meeting_agenda_items",
+        "meeting_session_attendees",
+        "meeting_tasks",
+        "task_assignees"
+      ],
+      "documents_feed_notifications": [
+        "documents",
+        "feed_posts",
+        "feed_post_media",
+        "member_notifications",
+        "app_notes",
+        "bug_reports",
+        "contact_requests"
+      ],
+      "legal_dsgvo_acceptance": [
+        "legal_documents",
+        "legal_acceptance_events",
+        "dsgvo_compliance_events"
+      ],
+      "billing_payments": [
+        "club_billing_subscriptions",
+        "club_billing_webhook_events"
+      ]
+    },
+    "strengths": [
+      "Viele fachliche FCP-Bausteine existieren bereits real.",
+      "club_id ist in vielen fachlichen Tabellen vorhanden.",
+      "created_at/updated_at sind in vielen Tabellen vorhanden.",
+      "Es gibt bereits Rollen-, Events-, Catch-, Trip-, Work-, Meeting- und Notification-Tabellen.",
+      "Es gibt bereits erste Legal-/DSGVO-/Billing-/Governance-Bausteine."
+    ],
+    "global_problems": [
+      {
+        "key": "identity_mixed",
+        "problem": "Identity, account/login, profile und actor context sind nicht sauber getrennt.",
+        "impact": "spaeter probleme bei sso, merges, delegated admin, proxy profiles, legal handling"
+      },
+      {
+        "key": "membership_not_central",
+        "problem": "Membership existiert verteilt ueber mehrere tabellen statt als zentrale zeitfaehige bridge.",
+        "impact": "club leave/join history, rights, fees, cards und exports werden inkonsistent"
+      },
+      {
+        "key": "audit_inconsistent",
+        "problem": "timestamps vorhanden, aber kein globales actor/source/version/status-history modell",
+        "impact": "schwache traceability, schwierige compliance, schwaches debugging"
+      },
+      {
+        "key": "finance_not_accounting_ready",
+        "problem": "stripe-bezug existiert, aber claims, invoices, allocations, journal/ledger events fehlen",
+        "impact": "risiko fuer rechtliche/steuerliche korrektheit und historische preislogik"
+      },
+      {
+        "key": "legal_not_append_only_enough",
+        "problem": "acceptance/legal vorhanden, aber kein einheitlicher unveraenderlicher rechtsnachweisraum",
+        "impact": "schwacher beweis, was wann unter welcher version akzeptiert wurde"
+      },
+      {
+        "key": "inventory_missing",
+        "problem": "kein modularer inventory/equipment/product layer vorhanden",
+        "impact": "spaeter shop, recommendations, item usage, portability schwieriger"
+      },
+      {
+        "key": "workflow_generic_missing",
+        "problem": "statusflows existieren je feature, aber kein generischer workflow/process layer",
+        "impact": "jedes modul baut submission/review/approval/rejection neu"
+      },
+      {
+        "key": "media_ownership_missing",
+        "problem": "documents/media ohne klares ownership/license/retention/leave-club modell",
+        "impact": "dsgvo- und content-rights-risiken"
+      },
+      {
+        "key": "offline_sync_not_prepared",
+        "problem": "offline/sync/conflict-gedanke noch nicht strukturell vorbereitet",
+        "impact": "produktluecke bei fangmeldungen und karten am wasser"
+      },
+      {
+        "key": "tenant_model_flat",
+        "problem": "tenanting ist stark club-zentriert und noch nicht als vorbereitete hierarchie gedacht",
+        "impact": "spaetere plattform-/verbands-/multi-domain erweiterung wird teuer"
+      }
+    ]
+  },
+  "soll": {
+    "target_shape": [
+      "Identity and account layer stays platform-wide and club-independent.",
+      "Membership becomes central relation layer with time, role, status and club-specific data hooks.",
+      "Club remains tenant/fachlicher Kontext, but future tenant hierarchy is prepared.",
+      "Finance becomes its own structured space: claim, price, invoice, payment, allocation, snapshot, export.",
+      "Legal/consent/acceptance becomes immutable event space linked to versioned documents.",
+      "Workflow/state changes become traceable and reusable across modules.",
+      "Inventory/equipment/product definitions become user-owned modular layer with optional club and catch integrations.",
+      "Audit/source/version/status history become cross-cutting standards instead of ad-hoc fields."
+    ],
+    "must_not_break": [
+      "bestehende aktive tabellen und laufende app-logik",
+      "club-scoped security-/rls-architektur",
+      "bereits vorhandene fachpfade fuer catches, trips, work events, meetings, onboarding, billing"
+    ],
+    "canonical_new_or_extended_families": [
+      {
+        "module": "identity_profile_access",
+        "present": ["profiles", "user_settings", "push_subscriptions", "user_policy_acceptances", "system_superadmins"],
+        "problematik": [
+          "profiles mischt vermutlich plattformdaten und clubkontext",
+          "identity/account/profile/actor nicht sauber getrennt",
+          "keine proxy-profile fuer jugend/familie"
+        ],
+        "families": [
+          {
+            "name": "identity_core",
+            "status": "new_or_extract",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "platform-wide immutable identity key",
+              "separate actor/principal context",
+              "clear distinction between person and acting context"
+            ],
+            "warum_wichtig": [
+              "mehrere vereine, spaetere multi-app-faehigkeit, delegated admin, sauberes audit"
+            ],
+            "verbindungen": [
+              "identity_core.identity_id -> profiles.identity_id",
+              "identity_core.identity_id -> memberships.identity_id",
+              "identity_core.actor_id -> audit_events.actor_id"
+            ]
+          },
+          {
+            "name": "profiles_platform",
+            "status": "extend_existing",
+            "vorhanden": true,
+            "fehlende_inhalte": [
+              "ppuid oder globaler stabiler referenzschluessel",
+              "saubere plattform-only felder",
+              "clubfreie user-basis"
+            ],
+            "warum_wichtig": [
+              "user-owned daten muessen club leave ueberleben"
+            ],
+            "verbindungen": [
+              "profiles_platform.identity_id -> identity_core.identity_id"
+            ]
+          },
+          {
+            "name": "proxy_profiles",
+            "status": "new",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "guardian relation",
+              "spaetere uebernahme in vollstaendige identity"
+            ],
+            "warum_wichtig": [
+              "realistische jugend-/familienlogik fuer vereine"
+            ],
+            "verbindungen": [
+              "proxy_profiles.managed_by_identity_id -> identity_core.identity_id",
+              "proxy_profiles.membership_id -> memberships.id"
+            ]
+          }
+        ]
+      },
+      {
+        "module": "tenant_club_core",
+        "present": ["club_registration_requests", "club_onboarding_state", "club_onboarding_audit", "club_module_usecases"],
+        "problematik": [
+          "club als haupttenant stark, aber kuenftige hierarchie nicht vorbereitet",
+          "club code/domain/module kontext noch kein globaler standard"
+        ],
+        "families": [
+          {
+            "name": "tenant_nodes",
+            "status": "new_prepared",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "tenant node",
+              "tenant type",
+              "parent relation"
+            ],
+            "warum_wichtig": [
+              "spaetere erweiterung auf plattform/verband/weitere domains ohne sandfundament"
+            ],
+            "verbindungen": [
+              "tenant_nodes.tenant_id -> club_core.tenant_id",
+              "tenant_nodes.parent_tenant_id -> tenant_nodes.tenant_id"
+            ]
+          },
+          {
+            "name": "club_core",
+            "status": "extend_existing_or_new_canonical",
+            "vorhanden": "teilweise",
+            "fehlende_inhalte": [
+              "club_code als first-class business key",
+              "saubere rechtliche stammdaten",
+              "status lifecycle"
+            ],
+            "warum_wichtig": [
+              "security, onboarding, exports, contracts, integrations"
+            ],
+            "verbindungen": [
+              "club_core.tenant_id -> tenant_nodes.tenant_id"
+            ]
+          }
+        ]
+      },
+      {
+        "module": "membership_roles_permissions",
+        "present": ["club_members", "club_member_identities", "members", "club_roles", "club_role_permissions", "club_user_roles", "user_roles"],
+        "problematik": [
+          "membership daten auf mehrere tabellen verteilt",
+          "rollen vorhanden, aber nicht auf zentraler membership-bridge aufgebaut",
+          "zeitliche gueltigkeit und history nicht zentral"
+        ],
+        "families": [
+          {
+            "name": "memberships",
+            "status": "new_canonical",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "identity <-> tenant bridge",
+              "joined/left lifecycle",
+              "status semantics",
+              "reason/source",
+              "zeitdimension"
+            ],
+            "warum_wichtig": [
+              "kern von user vs club relation; noetig fuer austritt, rollen, fees, cards, exports"
+            ],
+            "verbindungen": [
+              "memberships.identity_id -> identity_core.identity_id",
+              "memberships.tenant_id -> tenant_nodes.tenant_id"
+            ]
+          },
+          {
+            "name": "membership_roles",
+            "status": "new_or_rework",
+            "vorhanden": "teilweise",
+            "fehlende_inhalte": [
+              "time-aware role assignment",
+              "reason/source",
+              "system-vs-club role separation"
+            ],
+            "warum_wichtig": [
+              "ein user kann mehrere rollen ueber zeit pro tenant haben"
+            ],
+            "verbindungen": [
+              "membership_roles.membership_id -> memberships.id",
+              "membership_roles.role_id -> roles.id"
+            ]
+          },
+          {
+            "name": "roles_permissions",
+            "status": "extend_existing",
+            "vorhanden": true,
+            "fehlende_inhalte": [
+              "capability-style permissions",
+              "systemrollen getrennt von clubrollen",
+              "optional effective permissions"
+            ],
+            "warum_wichtig": [
+              "verhindert hardcoding jeder neuen funktion"
+            ],
+            "verbindungen": [
+              "roles_permissions.role_id -> roles.id",
+              "roles_permissions.permission_id -> permissions.id"
+            ]
+          },
+          {
+            "name": "membership_status_history",
+            "status": "new",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "from_status",
+              "to_status",
+              "changed_by",
+              "changed_at",
+              "reason"
+            ],
+            "warum_wichtig": [
+              "aktueller status allein reicht nicht fuer audit/support/legal defensibility"
+            ],
+            "verbindungen": [
+              "membership_status_history.membership_id -> memberships.id"
+            ]
+          }
+        ]
+      },
+      {
+        "module": "onboarding_applications_workflows",
+        "present": ["club_registration_requests", "membership_applications", "membership_application_audit", "membership_application_bank_data", "club_onboarding_state", "club_onboarding_audit"],
+        "problematik": [
+          "pro feature workflows vorhanden, aber kein generischer workflow layer",
+          "statusflows werden sonst pro modul dupliziert"
+        ],
+        "families": [
+          {
+            "name": "workflow_instances",
+            "status": "new_generic",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "workflow type",
+              "current state",
+              "owner entity",
+              "review/question/approve/reject pattern"
+            ],
+            "warum_wichtig": [
+              "reduziert wiederholte logik bei onboarding, applications, approvals, claims"
+            ],
+            "verbindungen": [
+              "workflow_instances.owner_entity_type -> domain type",
+              "workflow_instances.owner_entity_id -> domain entity"
+            ]
+          },
+          {
+            "name": "workflow_history",
+            "status": "new_generic",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "full transition history"
+            ],
+            "warum_wichtig": [
+              "transparenz, support, audit"
+            ],
+            "verbindungen": [
+              "workflow_history.workflow_instance_id -> workflow_instances.id"
+            ]
+          }
+        ]
+      },
+      {
+        "module": "waters_cards_catches_trips",
+        "present": ["water_bodies", "water_areas", "member_waters", "member_water_mappings", "fish_species", "fish_species_rules", "fishing_trips", "catch_entries"],
+        "problematik": [
+          "water logic existiert, aber card/permit/validity/pricing family fehlt als vollstaendige struktur",
+          "trip/catch mischt user und club context",
+          "geo/privacy/evidence nicht explizit"
+        ],
+        "families": [
+          {
+            "name": "waters_geo",
+            "status": "extend_existing",
+            "vorhanden": true,
+            "fehlende_inhalte": [
+              "optional geometry/polygons",
+              "privacy levels fuer exakte orte",
+              "external refs"
+            ],
+            "warum_wichtig": [
+              "spaeter geofencing, regelchecks, spatial ux, kontrollierte sichtbarkeit"
+            ],
+            "verbindungen": [
+              "water_areas.water_body_id -> water_bodies.id"
+            ]
+          },
+          {
+            "name": "permits_cards",
+            "status": "new_major_family",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "card type master data",
+              "permit assignments",
+              "time validity",
+              "special/youth/honor variants",
+              "price/quota hooks"
+            ],
+            "warum_wichtig": [
+              "kerniges fachobjekt zwischen memberships, waters, pricing, documents"
+            ],
+            "verbindungen": [
+              "permit_assignments.membership_id -> memberships.id",
+              "permit_assignments.card_type_id -> permit_card_types.id",
+              "permit_water_links.card_type_id -> permit_card_types.id",
+              "permit_water_links.water_body_id -> water_bodies.id"
+            ]
+          },
+          {
+            "name": "trip_catch_context",
+            "status": "extend_existing",
+            "vorhanden": true,
+            "fehlende_inhalte": [
+              "saubere trennung user-owned vs club-reporting snapshot",
+              "finalization/freeze semantics",
+              "media ownership/licensing flags"
+            ],
+            "warum_wichtig": [
+              "austritt/anonymisierung darf statistik nicht zerstoeren"
+            ],
+            "verbindungen": [
+              "fishing_trips.membership_id or identity_id -> memberships/identity_core",
+              "catch_entries.trip_id -> fishing_trips.id",
+              "catch_entries.club_snapshot_id -> reporting snapshots"
+            ]
+          }
+        ]
+      },
+      {
+        "module": "events_work_meetings_tasks",
+        "present": ["club_events", "event_planner_configs", "event_planner_slots", "event_planner_registrations", "work_events", "work_event_leads", "work_checkins", "work_participations", "meeting_sessions", "meeting_agenda_items", "meeting_session_attendees", "meeting_tasks", "task_assignees"],
+        "problematik": [
+          "mehrere event-artige konzepte existieren parallel",
+          "teilnahme-, status- und tasklogik likely dupliziert"
+        ],
+        "families": [
+          {
+            "name": "event_core",
+            "status": "extend_and_align",
+            "vorhanden": "teilweise",
+            "fehlende_inhalte": [
+              "gemeinsame event primitives oder mindestens alignte standards",
+              "frozen/finalized evidence state"
+            ],
+            "warum_wichtig": [
+              "weniger duplikation, konsistentere lifecycle-handhabung"
+            ],
+            "verbindungen": [
+              "typed event tables -> event core"
+            ]
+          },
+          {
+            "name": "participation_core",
+            "status": "new_or_alignment",
+            "vorhanden": "teilweise",
+            "fehlende_inhalte": [
+              "vereinheitlichte participant semantics fuer planner/work/meeting"
+            ],
+            "warum_wichtig": [
+              "participation ist wiederkehrendes bridge-muster"
+            ],
+            "verbindungen": [
+              "participation_core.membership_id -> memberships.id",
+              "participation_core.event_id -> event_core.id"
+            ]
+          },
+          {
+            "name": "task_linking",
+            "status": "extend_existing",
+            "vorhanden": "teilweise",
+            "fehlende_inhalte": [
+              "generic task-owner/task-target link"
+            ],
+            "warum_wichtig": [
+              "tasks koennen an meetings, events, memberships, documents haengen"
+            ],
+            "verbindungen": [
+              "task_links.task_id -> tasks.id",
+              "task_links.entity_id -> domain entity"
+            ]
+          }
+        ]
+      },
+      {
+        "module": "work_hours_settlement",
+        "present": ["work_events", "work_checkins", "work_participations"],
+        "problematik": [
+          "work participation vorhanden, aber year account/settlement/exemption/transfer logic fehlt als komplette familienstruktur"
+        ],
+        "families": [
+          {
+            "name": "work_rule_sets",
+            "status": "new",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "required hours",
+              "exemption conditions",
+              "replacement amount",
+              "carry-over behavior"
+            ],
+            "warum_wichtig": [
+              "arbeitsstunden brauchen explizite regelbasis, nicht nur teilnahmeeintraege"
+            ],
+            "verbindungen": [
+              "work_rule_sets.tenant_id -> tenant_nodes.tenant_id"
+            ]
+          },
+          {
+            "name": "work_accounts",
+            "status": "new",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "target/actual/confirmed/charged balances"
+            ],
+            "warum_wichtig": [
+              "transparenz im mitgliedercockpit und jahresabschluss"
+            ],
+            "verbindungen": [
+              "work_accounts.membership_id -> memberships.id",
+              "work_accounts.rule_set_id -> work_rule_sets.id"
+            ]
+          },
+          {
+            "name": "work_settlements",
+            "status": "new",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "final settlement snapshot",
+              "reasoning and actor"
+            ],
+            "warum_wichtig": [
+              "rechtlich/finanziell nachvollziehbarer year-end abschluss"
+            ],
+            "verbindungen": [
+              "work_settlements.work_account_id -> work_accounts.id"
+            ]
+          }
+        ]
+      },
+      {
+        "module": "billing_finance_legal_documents",
+        "present": ["club_billing_subscriptions", "club_billing_webhook_events", "legal_documents", "legal_acceptance_events", "dsgvo_compliance_events"],
+        "problematik": [
+          "billing ist eher club/platform subscription als vollstaendige member-finance-domain",
+          "invoice/claim/allocation/journal families fehlen",
+          "legal events existieren, aber keine einheitlich gehaertete immutable struktur"
+        ],
+        "families": [
+          {
+            "name": "pricing_rules",
+            "status": "new_major_family",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "member fees",
+              "card prices",
+              "special prices",
+              "group rules",
+              "tenant-valid time ranges"
+            ],
+            "warum_wichtig": [
+              "historisch korrekte claims und invoices brauchen explizite preisregeln"
+            ],
+            "verbindungen": [
+              "pricing_rules.product_id -> product_catalog.id",
+              "pricing_rules.tenant_id -> tenant_nodes.tenant_id"
+            ]
+          },
+          {
+            "name": "member_claims",
+            "status": "new_major_family",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "line-based claims",
+              "charge reason",
+              "snapshot of source conditions",
+              "due dates and statuses"
+            ],
+            "warum_wichtig": [
+              "trennt fachliche schuld von zahlungskanal"
+            ],
+            "verbindungen": [
+              "member_claims.membership_id -> memberships.id",
+              "member_claims.pricing_rule_id -> pricing_rules.id"
+            ]
+          },
+          {
+            "name": "financial_documents",
+            "status": "new_major_family",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "document number",
+              "immutable amount snapshot",
+              "tax information",
+              "document status"
+            ],
+            "warum_wichtig": [
+              "finance/legal exports und accounting-defensibility"
+            ],
+            "verbindungen": [
+              "financial_documents.claim_id -> member_claims.id"
+            ]
+          },
+          {
+            "name": "payment_events_allocations",
+            "status": "new_major_family",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "raw provider event",
+              "normalized payment event",
+              "allocation to claims/documents",
+              "refund handling",
+              "idempotency"
+            ],
+            "warum_wichtig": [
+              "stripe ist zahlungskanal, nicht accounting truth"
+            ],
+            "verbindungen": [
+              "payment_events.external_provider_event_id -> webhook events if retained",
+              "payment_allocations.payment_event_id -> payment_events.id",
+              "payment_allocations.claim_id -> member_claims.id"
+            ]
+          },
+          {
+            "name": "legal_event_log",
+            "status": "unify_and_harden",
+            "vorhanden": "teilweise",
+            "fehlende_inhalte": [
+              "document version link",
+              "channel",
+              "ip/user-agent/source",
+              "immutability rules"
+            ],
+            "warum_wichtig": [
+              "rechtsbeweis, audits, policy/version changes"
+            ],
+            "verbindungen": [
+              "legal_event_log.document_version_id -> legal_document_versions.id",
+              "legal_event_log.identity_id -> identity_core.identity_id",
+              "legal_event_log.membership_id -> memberships.id"
+            ]
+          }
+        ]
+      },
+      {
+        "module": "documents_media_notifications_feed",
+        "present": ["documents", "feed_posts", "feed_post_media", "member_notifications", "app_notes", "contact_requests", "bug_reports"],
+        "problematik": [
+          "documents/media ohne ownership/licensing/retention universals",
+          "notifications ohne sichtbare channel/delivery abstraction",
+          "intake-tabellen koennen spaeter an generische message/workflow/event patterns gehangen werden"
+        ],
+        "families": [
+          {
+            "name": "media_assets",
+            "status": "new_or_extract",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "owner_type",
+              "owner_id",
+              "license/usage scope",
+              "privacy scope",
+              "retention/anonymization policy"
+            ],
+            "warum_wichtig": [
+              "fotos, galerien, legal safety, leave-club handling"
+            ],
+            "verbindungen": [
+              "media_assets.linked_entity_id -> domain entity",
+              "media_assets.owner_identity_id -> identity_core.identity_id"
+            ]
+          },
+          {
+            "name": "document_links",
+            "status": "new",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "entity_type",
+              "entity_id",
+              "link role"
+            ],
+            "warum_wichtig": [
+              "attachment pattern muss nicht pro modul neu gebaut werden"
+            ],
+            "verbindungen": [
+              "document_links.document_id -> documents/media_assets",
+              "document_links.entity_id -> domain entity"
+            ]
+          },
+          {
+            "name": "notifications_delivery",
+            "status": "extend_existing",
+            "vorhanden": "teilweise",
+            "fehlende_inhalte": [
+              "channel-independent message object",
+              "delivery attempts",
+              "retry/error state",
+              "user preferences"
+            ],
+            "warum_wichtig": [
+              "skalierbare kommunikation ueber app/email/push"
+            ],
+            "verbindungen": [
+              "notification_messages.identity_id -> identity_core.identity_id",
+              "delivery_attempts.message_id -> notification_messages.id"
+            ]
+          }
+        ]
+      },
+      {
+        "module": "inventory_equipment_shop_future",
+        "present": [],
+        "problematik": [
+          "kein inventory/equipment/product ownership/use layer im aktuellen stand"
+        ],
+        "families": [
+          {
+            "name": "product_catalog",
+            "status": "new_major_family",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "product/item definitions",
+              "brand/model/category",
+              "external refs/affiliate hooks"
+            ],
+            "warum_wichtig": [
+              "basis fuer inventory, recommendations, shop und normalisierte produktsicht"
+            ],
+            "verbindungen": [
+              "product_catalog.category_id -> product_categories.id"
+            ]
+          },
+          {
+            "name": "item_instances",
+            "status": "new_major_family",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "actual owned item",
+              "condition",
+              "purchase info",
+              "state history"
+            ],
+            "warum_wichtig": [
+              "trennt produktdefinition vom konkreten besitzobjekt"
+            ],
+            "verbindungen": [
+              "item_instances.product_id -> product_catalog.id"
+            ]
+          },
+          {
+            "name": "item_ownership",
+            "status": "new_major_family",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "owner_type user/club/platform",
+              "valid_from",
+              "valid_until",
+              "transfer reason"
+            ],
+            "warum_wichtig": [
+              "inventory bleibt portabel und erlaubt club-owned/loaned items"
+            ],
+            "verbindungen": [
+              "item_ownership.item_instance_id -> item_instances.id",
+              "item_ownership.owner_identity_id/tenant_id -> identity_core/tenant_nodes"
+            ]
+          },
+          {
+            "name": "gear_setups_and_usage",
+            "status": "new_major_family",
+            "vorhanden": false,
+            "fehlende_inhalte": [
+              "gear setup header",
+              "gear setup items",
+              "usage on trip/catch/event"
+            ],
+            "warum_wichtig": [
+              "spaetere analyse/recommendations besser als direktes catch->rod linking"
+            ],
+            "verbindungen": [
+              "gear_setup_items.setup_id -> gear_setups.id",
+              "gear_setup_items.item_instance_id -> item_instances.id",
+              "gear_usage.setup_id -> gear_setups.id",
+              "gear_usage.trip_id/catch_id -> fishing_trips/catch_entries"
+            ]
+          }
+        ]
+      }
+    ],
+    "global_standards": {
+      "audit_standard": {
+        "required_fields": ["created_at", "created_by", "updated_at", "updated_by"],
+        "recommended_fields": ["version", "source", "external_ref"],
+        "note": "updated_at ist kein vollaudit; kritische mutationen brauchen append-only audit/event tabellen"
+      },
+      "context_standard": {
+        "required_fields_for_tenant_scoped_data": ["tenant_id"],
+        "recommended_fields": ["module_key", "domain_key", "club_code_snapshot"],
+        "note": "club_id darf operational bestehen bleiben, zielmodell sollte tenant_id aber first-class vorbereiten"
+      },
+      "status_standard": {
+        "required_fields": ["status", "status_changed_at", "status_changed_by"],
+        "required_companion": "status_history_table_for_critical_entities"
+      },
+      "ownership_standard": {
+        "recommended_fields": ["owner_type", "owner_id", "valid_from", "valid_until"],
+        "note": "wichtig fuer documents, media, items, inventory und spaeter uebertragbare assets"
+      },
+      "legal_standard": {
+        "required_fields": ["legal_event_type", "document_version_id", "accepted_at", "actor_id", "channel"],
+        "recommended_fields": ["ip_address", "user_agent", "source"],
+        "immutability": "append_only"
+      },
+      "finance_standard": {
+        "required_fields": ["currency", "amount_gross", "amount_net_optional", "tax_rate_optional", "snapshot_json", "source_event_ref"],
+        "note": "preise und financial documents muessen historisch rekonstruierbar sein"
+      },
+      "bridge_standard": {
+        "required_fields": ["id", "valid_from", "valid_until", "created_at", "created_by", "reason_optional"],
+        "note": "keine wichtigen bridges nur ueber composite keys definieren"
+      }
+    },
+    "critical_relationships": [
+      {
+        "relationship": "identity_to_membership_to_tenant",
+        "must_hold": "one identity -> many memberships over time; one tenant -> many memberships; membership is canonical bridge",
+        "danger_if_broken": "user/club logic bleibt gemischt, exit/history wird bruechig"
+      },
+      {
+        "relationship": "membership_to_roles_to_permissions",
+        "must_hold": "role assignments sitzen auf membership oder tenant-context relation, nicht nur auf raw user",
+        "danger_if_broken": "rechte werden bei mehreren clubs uneindeutig"
+      },
+      {
+        "relationship": "permit_assignment_to_membership_and_waters",
+        "must_hold": "fishing permissions/cards verknuepfen membership, permit type und waters mit validity",
+        "danger_if_broken": "card logic, legal proof und pricing fragmentieren"
+      },
+      {
+        "relationship": "trip_and_catch_dual_context",
+        "must_hold": "trip/catch behalten user-owned aspekt plus optionalen club-reporting snapshot/context",
+        "danger_if_broken": "club leave oder anonymisierung zerstoert statistik oder persoenliche historie"
+      },
+      {
+        "relationship": "claims_documents_payments_allocations",
+        "must_hold": "was geschuldet, fakturiert, bezahlt und wie zugeordnet wurde, bleibt getrennt aber verknuepft",
+        "danger_if_broken": "finance wird intransparent und rechtlich schwach"
+      },
+      {
+        "relationship": "legal_document_versions_to_legal_event_log",
+        "must_hold": "acceptances verweisen auf konkrete dokumentversionen",
+        "danger_if_broken": "kein verlaesslicher nachweis, was akzeptiert wurde"
+      },
+      {
+        "relationship": "media_assets_to_owner_and_domain_entity",
+        "must_hold": "medium braucht ownership/licensing scope plus domain links",
+        "danger_if_broken": "foto-/dokumentrechte brechen bei club leave oder galerienutzung"
+      },
+      {
+        "relationship": "product_catalog_to_item_instance_to_item_ownership_to_usage",
+        "must_hold": "definitions, actual owned items, ownership und usage bleiben getrennte layer",
+        "danger_if_broken": "inventory wird unbrauchbar fuer portability, analytics oder shop evolution"
+      }
+    ]
+  },
+  "compact_views_for_other_models": {
+    "claude_ultra_compact": {
+      "goal": "low-token review request for structure/blind spots only",
+      "known_now": [
+        "existing db already has profiles, club member/role tables, waters/catches/trips, work events, meetings, documents, notifications, legal events and stripe-related club billing",
+        "current risk: grown feature-by-feature, not yet one unified target model"
+      ],
+      "target_now": [
+        "keep fcp focus",
+        "model membership as central relation object",
+        "preserve user-owned assets beyond club leave",
+        "prepare tenant evolution, audit, finance, legal proof, inventory and workflows"
+      ],
+      "ask": [
+        "which table families or bridge layers are still missing",
+        "which standards are mandatory for audit/dsgvo/finance/security",
+        "which blind spots or fallstricks remain"
+      ]
+    },
+    "gemini_ultra_compact": {
+      "goal": "low-token review request for product/ux/legal-practical future-fit only",
+      "known_now": [
+        "existing db covers clubs, users, catches, trips, work events, meetings, docs, notifications, legal and basic billing",
+        "system still needs a fully thought-through target model"
+      ],
+      "target_now": [
+        "clean user vs membership vs club separation",
+        "inventory/equipment/shop readiness",
+        "leave-club without losing user-owned value",
+        "better workflow/offline/media/consent/practical legal handling"
+      ],
+      "ask": [
+        "what product layers, ux blind spots and practical legal requirements are still missing",
+        "what intermediate concepts help future growth without overengineering"
+      ]
+    }
+  }
+}

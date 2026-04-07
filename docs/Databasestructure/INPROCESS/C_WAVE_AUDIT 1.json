@@ -1,0 +1,22 @@
+[
+  {
+    "table_name": "canonical_memberships",
+    "total_rows": 349
+  },
+  {
+    "table_name": "club_core",
+    "total_rows": 2
+  },
+  {
+    "table_name": "identity_core",
+    "total_rows": 349
+  },
+  {
+    "table_name": "profiles_platform",
+    "total_rows": 349
+  },
+  {
+    "table_name": "tenant_nodes",
+    "total_rows": 2
+  }
+]

@@ -17,6 +17,7 @@ const {
   canonical: canonicalProp,
   containerClass = "container",
   density,
+  appThemeOverride,
 } = Astro.props as {
   title?: string;
   description?: string;
@@ -24,6 +25,7 @@ const {
   canonical?: string;
   containerClass?: string;
   density?: "comfortable" | "compact";
+  appThemeOverride?: string;
 };
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
@@ -66,9 +68,10 @@ if (staticPageBlocked) {
   Astro.response.status = 404;
 }
 const runtimeSiteName = isFcpMode ? "Fishing-Club-Portal" : "VDAN Ottenheim";
-const effectiveAppTheme = isFcpMode
+const resolvedAppThemeOverride = String(appThemeOverride || "").trim();
+const effectiveAppTheme = resolvedAppThemeOverride || (isFcpMode
   ? (APP.theme === "fcp_brand" && isAppPath ? "fcp_tactical" : (APP.theme || "fcp_tactical"))
-  : "vdan_default";
+  : "vdan_default");
 const themeColor = isFcpMode ? "#2f352a" : "#0b1220";
 const normalizedTitle = String(title || runtimeSiteName).replace(APP.name, runtimeSiteName);
 const displayTitle = isBetaChannel && !String(title).toLowerCase().includes("beta")

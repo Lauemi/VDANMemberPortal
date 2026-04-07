@@ -1,0 +1,602 @@
+[
+  {
+    "table_schema": "public",
+    "table_name": "app_notes",
+    "constraint_name": "2200_17494_1_not_null",
+    "check_clause": "id IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_notes",
+    "constraint_name": "2200_17494_2_not_null",
+    "check_clause": "user_id IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_notes",
+    "constraint_name": "2200_17494_3_not_null",
+    "check_clause": "text IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_notes",
+    "constraint_name": "2200_17494_4_not_null",
+    "check_clause": "created_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_notes",
+    "constraint_name": "2200_17494_5_not_null",
+    "check_clause": "club_id IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_1_not_null",
+    "check_clause": "route_key IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_2_not_null",
+    "check_clause": "route_path IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_3_not_null",
+    "check_clause": "route_type IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_4_not_null",
+    "check_clause": "guard_class IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_5_not_null",
+    "check_clause": "is_template_bindable IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_6_not_null",
+    "check_clause": "is_brand_override_allowed IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_7_not_null",
+    "check_clause": "created_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "2200_49956_8_not_null",
+    "check_clause": "updated_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_route_catalog",
+    "constraint_name": "app_route_catalog_route_type_check",
+    "check_clause": "(route_type = ANY (ARRAY['static_web'::text, 'app_mask'::text, 'legal_core'::text]))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "2200_50024_10_not_null",
+    "check_clause": "created_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "2200_50024_1_not_null",
+    "check_clause": "id IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "2200_50024_3_not_null",
+    "check_clause": "scope_type IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "2200_50024_4_not_null",
+    "check_clause": "scope_key IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "2200_50024_5_not_null",
+    "check_clause": "entity_type IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "2200_50024_6_not_null",
+    "check_clause": "entity_key IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "2200_50024_7_not_null",
+    "check_clause": "action IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_audit_log",
+    "constraint_name": "app_runtime_audit_log_scope_type_check",
+    "check_clause": "(scope_type = ANY (ARRAY['global'::text, 'site_mode'::text, 'club'::text]))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_12_not_null",
+    "check_clause": "created_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_13_not_null",
+    "check_clause": "updated_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_15_not_null",
+    "check_clause": "is_active IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_1_not_null",
+    "check_clause": "id IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_2_not_null",
+    "check_clause": "scope_type IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_3_not_null",
+    "check_clause": "scope_key IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_4_not_null",
+    "check_clause": "config_key IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_5_not_null",
+    "check_clause": "config_value IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_6_not_null",
+    "check_clause": "status IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "2200_49895_8_not_null",
+    "check_clause": "version IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "app_runtime_configs_config_key_check",
+    "check_clause": "(config_key ~ '^[a-z0-9]+(\\.[a-z0-9_]+)+$'::text)"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "app_runtime_configs_scope_type_check",
+    "check_clause": "(scope_type = ANY (ARRAY['global'::text, 'site_mode'::text, 'club'::text]))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "app_runtime_configs_status_check",
+    "check_clause": "(status = ANY (ARRAY['draft'::text, 'review'::text, 'published'::text, 'archived'::text]))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "app_runtime_configs_supersedes_version_check",
+    "check_clause": "((supersedes_version IS NULL) OR (supersedes_version >= 1))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_configs",
+    "constraint_name": "app_runtime_configs_version_check",
+    "check_clause": "(version >= 1)"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "2200_50010_10_not_null",
+    "check_clause": "payload_json IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "2200_50010_1_not_null",
+    "check_clause": "id IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "2200_50010_2_not_null",
+    "check_clause": "release_key IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "2200_50010_3_not_null",
+    "check_clause": "scope_type IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "2200_50010_4_not_null",
+    "check_clause": "scope_key IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "2200_50010_5_not_null",
+    "check_clause": "release_type IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "2200_50010_8_not_null",
+    "check_clause": "published_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_runtime_releases",
+    "constraint_name": "app_runtime_releases_scope_type_check",
+    "check_clause": "(scope_type = ANY (ARRAY['global'::text, 'site_mode'::text, 'club'::text]))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_secure_settings",
+    "constraint_name": "2200_24235_1_not_null",
+    "check_clause": "setting_key IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_secure_settings",
+    "constraint_name": "2200_24235_2_not_null",
+    "check_clause": "setting_value IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_secure_settings",
+    "constraint_name": "2200_24235_3_not_null",
+    "check_clause": "updated_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_11_not_null",
+    "check_clause": "created_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_12_not_null",
+    "check_clause": "updated_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_1_not_null",
+    "check_clause": "id IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_2_not_null",
+    "check_clause": "scope_type IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_3_not_null",
+    "check_clause": "scope_key IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_4_not_null",
+    "check_clause": "route_key IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_5_not_null",
+    "check_clause": "route_path IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_6_not_null",
+    "check_clause": "template_key IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "2200_49971_8_not_null",
+    "check_clause": "is_active IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_bindings",
+    "constraint_name": "app_template_bindings_scope_type_check",
+    "check_clause": "(scope_type = ANY (ARRAY['global'::text, 'site_mode'::text, 'club'::text]))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_10_not_null",
+    "check_clause": "status IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_11_not_null",
+    "check_clause": "version IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_13_not_null",
+    "check_clause": "created_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_14_not_null",
+    "check_clause": "updated_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_1_not_null",
+    "check_clause": "id IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_2_not_null",
+    "check_clause": "template_key IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_3_not_null",
+    "check_clause": "template_type IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_4_not_null",
+    "check_clause": "brand_scope IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_5_not_null",
+    "check_clause": "schema_version IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "2200_49928_6_not_null",
+    "check_clause": "template_json IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "app_template_library_brand_scope_check",
+    "check_clause": "(brand_scope = ANY (ARRAY['vdan'::text, 'fcp'::text, 'shared'::text]))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "app_template_library_schema_version_check",
+    "check_clause": "(schema_version >= 1)"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "app_template_library_status_check",
+    "check_clause": "(status = ANY (ARRAY['draft'::text, 'review'::text, 'published'::text, 'archived'::text]))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "app_template_library_supersedes_version_check",
+    "check_clause": "((supersedes_version IS NULL) OR (supersedes_version >= 1))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "app_template_library_template_type_check",
+    "check_clause": "(template_type = ANY (ARRAY['page_shell'::text, 'mask_layout'::text, 'card_stack'::text, 'form_template'::text]))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_template_library",
+    "constraint_name": "app_template_library_version_check",
+    "check_clause": "(version >= 1)"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_10_not_null",
+    "check_clause": "is_active IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_11_not_null",
+    "check_clause": "created_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_12_not_null",
+    "check_clause": "updated_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_1_not_null",
+    "check_clause": "id IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_2_not_null",
+    "check_clause": "scope_type IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_3_not_null",
+    "check_clause": "scope_key IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_4_not_null",
+    "check_clause": "theme_key IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_5_not_null",
+    "check_clause": "tokens_json IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_6_not_null",
+    "check_clause": "status IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "2200_49990_7_not_null",
+    "check_clause": "version IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "app_theme_tokens_scope_type_check",
+    "check_clause": "(scope_type = ANY (ARRAY['global'::text, 'site_mode'::text, 'club'::text]))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "app_theme_tokens_status_check",
+    "check_clause": "(status = ANY (ARRAY['draft'::text, 'review'::text, 'published'::text, 'archived'::text]))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "app_theme_tokens",
+    "constraint_name": "app_theme_tokens_version_check",
+    "check_clause": "(version >= 1)"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bug_reports",
+    "constraint_name": "2200_32018_10_not_null",
+    "check_clause": "priority IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bug_reports",
+    "constraint_name": "2200_32018_15_not_null",
+    "check_clause": "created_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bug_reports",
+    "constraint_name": "2200_32018_16_not_null",
+    "check_clause": "updated_at IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bug_reports",
+    "constraint_name": "2200_32018_1_not_null",
+    "check_clause": "id IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bug_reports",
+    "constraint_name": "2200_32018_2_not_null",
+    "check_clause": "reporter_user_id IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bug_reports",
+    "constraint_name": "2200_32018_3_not_null",
+    "check_clause": "title IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bug_reports",
+    "constraint_name": "2200_32018_4_not_null",
+    "check_clause": "description IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bug_reports",
+    "constraint_name": "2200_32018_9_not_null",
+    "check_clause": "status IS NOT NULL"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bug_reports",
+    "constraint_name": "bug_reports_description_check",
+    "check_clause": "((char_length(description) >= 10) AND (char_length(description) <= 4000))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bug_reports",
+    "constraint_name": "bug_reports_priority_check",
+    "check_clause": "(priority = ANY (ARRAY['low'::text, 'normal'::text, 'high'::text, 'critical'::text]))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bug_reports",
+    "constraint_name": "bug_reports_status_check",
+    "check_clause": "(status = ANY (ARRAY['open'::text, 'in_progress'::text, 'needs_info'::text, 'fixed'::text, 'closed'::text]))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bug_reports",
+    "constraint_name": "bug_reports_title_check",
+    "check_clause": "((char_length(title) >= 4) AND (char_length(title) <= 140))"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "catch_entries",
+    "constraint_name": "2200_17663_10_not_null",
+    "check_clause": "created_at IS NOT NULL"
+  }
+]

@@ -1,0 +1,463 @@
+{
+  "_template": {
+    "name": "ADM Mask Template",
+    "version": "1.0",
+    "purpose": "Authoring template for Admin Panel masks under the FCP Mask System Contract.",
+    "targetPath": "docs/masks/adm/ADM_<mask_name>.json"
+  },
+  "_validationContract": {
+    "errorIfMissing": [
+      "maskId",
+      "maskFamily",
+      "maskType",
+      "header.title",
+      "sections"
+    ],
+    "warningIfMissing": [
+      "header.description",
+      "toolbar",
+      "securityContext",
+      "sections[].permissions",
+      "sections[].securityContext",
+      "sections[].panels[].meta",
+      "sections[].panels[].meta.sourceTable",
+      "sections[].panels[].meta.sourceKind",
+      "sections[].panels[].meta.sourceOfTruth",
+      "sections[].panels[].meta.sqlContract.sqlFile",
+      "sections[].panels[].meta.sqlContract.expectedColumns",
+      "sections[].panels[].securityContext",
+      "sections[].panels[].content",
+      "sections[].panels[].componentType",
+      "sections[].panels[].rowsPath",
+      "sections[].panels[].tableConfig.tableId",
+      "sections[].panels[].tableConfig.rowKeyField",
+      "sections[].panels[].tableConfig.deletePayloadDefaults",
+      "sections[].panels[].tableConfig.deleteConfirmMessage",
+      "sections[].panels[].tableConfig.duplicatePayloadDefaults",
+      "sections[].panels[].content.blocks[].componentType",
+      "sections[].panels[].content.blocks[].rowsPath",
+      "sections[].panels[].content.blocks[].tableConfig.tableId",
+      "sections[].panels[].content.blocks[].tableConfig.rowKeyField",
+      "sections[].panels[].content.blocks[].tableConfig.deletePayloadDefaults",
+      "sections[].panels[].content.blocks[].tableConfig.deleteConfirmMessage",
+      "sections[].panels[].content.blocks[].tableConfig.duplicatePayloadDefaults"
+    ],
+    "feedbackWhenPresent": [
+      "workspaceMode",
+      "metaPolicy.autoDetect",
+      "loadBinding",
+      "saveBinding",
+      "specialCases"
+    ]
+  },
+  "maskId": "replace_me",
+  "maskFamily": "ADM",
+  "maskType": "workspace",
+  "workspaceMode": "full_width",
+  "workspaceNav": {
+    "enabled": true,
+    "position": "left",
+    "defaultSectionId": "replace_workspace",
+    "items": [
+      {
+        "id": "nav_replace_workspace",
+        "label": "Replace Workspace",
+        "targetSectionId": "replace_workspace",
+        "icon": "grid"
+      }
+    ]
+  },
+  "securityContext": {
+    "rlsKey": "tenant_id",
+    "membershipKey": "canonical_membership_id",
+    "requiresTenantAccess": true,
+    "requiresRoleCheck": true,
+    "allowedRoles": [
+      "admin",
+      "superadmin"
+    ],
+    "serverValidated": true
+  },
+  "header": {
+    "kicker": "Replace Me",
+    "title": "Replace Me",
+    "description": "Replace me with the semantic admin workspace purpose."
+  },
+  "toolbar": {
+    "enabled": true,
+    "actions": []
+  },
+  "metaPolicy": {
+    "autoDetect": true,
+    "auditFields": [
+      "created_at",
+      "created_by",
+      "updated_at",
+      "updated_by"
+    ],
+    "appendOnlyHandling": "explicit"
+  },
+  "dataContract": {
+    "sourceOfTruth": "sql",
+    "contracts": [
+      "docs/contracts/FCP_MASK_SYSTEM_CONTRACT.md",
+      "docs/contracts/FCP_RLS_SECURITY_STANDARD.md",
+      "docs/contracts/FCP_ADM_QFM_INTERACTION_CONTRACT.md"
+    ]
+  },
+  "_processSqlContractGuide": {
+    "purpose": "SQL-Vertraege sollen pro Prozesskanal abgelegt und von der Maske explizit referenziert werden.",
+    "preferredSqlPathPattern": "docs/sql-contracts/processes/<prozess>/<bereich>/READ_<contract_name>.sql",
+    "howToThink": [
+      "SQL ist die Datenwahrheit.",
+      "JSON ist die Sicht- und Interaktionswahrheit.",
+      "Bestehende loadBinding/saveBinding/Actions bleiben unberuehrt."
+    ],
+    "exampleAreas": [
+      "overview",
+      "club-data",
+      "members",
+      "cards",
+      "waters",
+      "settings"
+    ]
+  },
+  "_interactionContractGuide": {
+    "renderModes": [
+      "readonly",
+      "form",
+      "mixed",
+      "table",
+      "stats"
+    ],
+    "componentTypes": [
+      "ReadonlyPanel",
+      "FormPanel",
+      "MixedPanel",
+      "data-table",
+      "inline-data-table",
+      "stats"
+    ],
+    "rowInteractionModes": {
+      "data-table": [
+        "dialog",
+        "custom",
+        "none"
+      ],
+      "inline-data-table": [
+        "inline",
+        "dialog",
+        "custom",
+        "none"
+      ]
+    },
+    "tableActions": [
+      "edit",
+      "duplicate",
+      "delete"
+    ],
+    "tableActionContractKeys": [
+      "deletePayloadDefaults",
+      "deleteConfirmMessage",
+      "deleteConfirmLabel",
+      "duplicatePayloadDefaults",
+      "duplicateConfirmMessage",
+      "duplicateConfirmLabel"
+    ],
+    "runtimeEvents": [
+      "fcp-mask:table-row-click",
+      "fcp-mask:table-row-edit-request",
+      "fcp-mask:table-row-action",
+      "fcp-mask:table-row-create",
+      "fcp-mask:table-row-save",
+      "fcp-mask:table-row-duplicate",
+      "fcp-mask:table-row-delete-request"
+    ],
+    "standards": [
+      "data-table -> dialog",
+      "inline-data-table -> inline",
+      "confirm -> zentraler App-Dialog",
+      "save -> bestehender saveBinding-Pfad"
+    ]
+  },
+  "loadBinding": {
+    "kind": "edge_function",
+    "target": "replace-admin-loader",
+    "path": "edge:replace-admin-loader"
+  },
+  "sections": [
+    {
+      "id": "replace_workspace",
+      "label": "Replace Workspace",
+      "title": "Replace Workspace",
+      "description": "Replace with the workspace purpose.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": true,
+        "update": true,
+        "delete": false,
+        "roles": [
+          "admin",
+          "superadmin"
+        ]
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": [
+          "admin",
+          "superadmin"
+        ],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "replace_admin_overview",
+          "title": "Replace Admin Overview",
+          "renderMode": "mixed",
+          "componentType": "MixedPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": [
+              "admin",
+              "superadmin"
+            ]
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "superadmin"
+            ],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.replace_admin_table",
+            "sourceKind": "table",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/<prozess>/<bereich>/READ_<contract_name>.sql",
+              "expectedColumns": [
+                "col_a",
+                "col_b",
+                "actions"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto"
+          },
+          "_authoringHint": {
+            "processChannel": "Lege die SQL-Datei im Prozessordner ab, nicht nur in einem globalen Fachordner.",
+            "keepStable": [
+              "loadBinding",
+              "saveBinding",
+              "tableConfig",
+              "existing actions"
+            ],
+            "deriveExpectedColumnsFrom": [
+              "columns[].key",
+              "content.fields[].valuePath",
+              "resolver.fieldDefs[].name"
+            ]
+          },
+          "loadBinding": {
+            "kind": "edge_function",
+            "target": "replace-admin-overview-load",
+            "path": "edge:replace-admin-overview-load"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "rowsPath": "",
+          "tableConfig": {
+            "tableId": "",
+            "rowKeyField": "",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "",
+            "sortDir": "asc",
+            "filterFields": [],
+            "deletePayloadDefaults": {},
+            "deleteConfirmMessage": "",
+            "deleteConfirmLabel": "Loeschen",
+            "duplicatePayloadDefaults": {},
+            "duplicateConfirmMessage": "",
+            "duplicateConfirmLabel": "Duplizieren"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": [],
+            "blocks": [
+              {
+                "id": "replace_kpi_strip",
+                "type": "stats",
+                "componentType": "stats",
+                "renderMode": "stats",
+                "label": "KPI Strip",
+                "valuePath": "record.stats"
+              },
+              {
+                "id": "replace_main_table",
+                "type": "table",
+                "componentType": "data-table",
+                "renderMode": "table",
+                "label": "Main Table",
+                "rowsPath": "rows",
+                "tableConfig": {
+                  "tableId": "replace-admin-main-table",
+                  "rowKeyField": "id",
+                  "gridTemplateColumns": "minmax(180px, 1.2fr) minmax(140px, 1fr) 120px",
+                  "rowInteractionMode": "dialog",
+                  "selectionMode": "single",
+                  "viewMode": "table",
+                  "sortKey": "col_a",
+                  "sortDir": "asc",
+                  "filterFields": [],
+                  "deletePayloadDefaults": {
+                    "action": "delete"
+                  },
+                  "deleteConfirmMessage": "Diesen Eintrag wirklich loeschen?",
+                  "deleteConfirmLabel": "Loeschen",
+                  "duplicatePayloadDefaults": {
+                    "action": "duplicate"
+                  },
+                  "duplicateConfirmMessage": "",
+                  "duplicateConfirmLabel": "Duplizieren"
+                },
+                "columns": [
+                  { "key": "col_a", "label": "Spalte A", "type": "primary" },
+                  { "key": "col_b", "label": "Spalte B", "type": "text" },
+                  { "key": "actions", "label": "Aktionen", "type": "actions" }
+                ],
+                "emptyStateText": "Keine Eintraege vorhanden."
+              },
+              {
+                "id": "replace_inline_detail_table",
+                "type": "table_inline",
+                "componentType": "inline-data-table",
+                "renderMode": "table",
+                "label": "Inline Detail Table",
+                "rowsPath": "detailRows",
+                "tableConfig": {
+                  "tableId": "replace-admin-inline-detail-table",
+                  "rowKeyField": "detail_id",
+                  "gridTemplateColumns": "minmax(180px, 1.2fr) minmax(140px, 1fr)",
+                  "rowInteractionMode": "inline",
+                  "selectionMode": "single",
+                  "viewMode": "table",
+                  "sortKey": "detail_a",
+                  "sortDir": "asc",
+                  "filterFields": [],
+                  "deletePayloadDefaults": {},
+                  "deleteConfirmMessage": "",
+                  "deleteConfirmLabel": "Loeschen",
+                  "duplicatePayloadDefaults": {},
+                  "duplicateConfirmMessage": "",
+                  "duplicateConfirmLabel": "Duplizieren"
+                },
+                "columns": [
+                  { "key": "detail_a", "label": "Detail A", "type": "primary", "editable": true, "editorType": "text" },
+                  { "key": "detail_b", "label": "Detail B", "type": "text", "editable": true, "editorType": "text" }
+                ],
+                "emptyStateText": "Keine Details vorhanden."
+              }
+            ]
+          }
+        },
+        {
+          "id": "replace_side_form",
+          "title": "Replace Side Form",
+          "renderMode": "form",
+          "componentType": "FormPanel",
+          "contentArea": "side",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": true,
+            "delete": false,
+            "roles": [
+              "admin",
+              "superadmin"
+            ]
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "superadmin"
+            ],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.replace_admin_form_source",
+            "sourceKind": "record",
+            "sourceOfTruth": "sql",
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto"
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.replace_admin_form_get",
+            "path": "rpc:public.replace_admin_form_get"
+          },
+          "saveBinding": {
+            "kind": "rpc",
+            "target": "public.replace_admin_form_save",
+            "path": "rpc:public.replace_admin_form_save"
+          },
+          "content": {
+            "fields": [
+              {
+                "name": "title",
+                "label": "Titel",
+                "type": "text",
+                "componentType": "input",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "valuePath": "record.title",
+                "payloadKey": "p_title",
+                "group": "default",
+                "displaySpan": "full",
+                "order": 10,
+                "placeholder": "Titel eingeben",
+                "helpText": "",
+                "readonly": false,
+                "required": false,
+                "defaultValue": null,
+                "validationRules": []
+              }
+            ],
+            "rows": [],
+            "actions": []
+          }
+        }
+      ]
+    }
+  ],
+  "specialCases": []
+}

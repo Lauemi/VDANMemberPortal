@@ -1,0 +1,22 @@
+[
+  {
+    "table_schema": "public",
+    "table_name": "export_members",
+    "view_definition": " SELECT membership_number,\n    first_name,\n    last_name,\n    birthdate,\n    street,\n    zip,\n    city,\n    fishing_card_type,\n    is_local,\n    created_at\n   FROM members m\n  WHERE (status = 'active'::text);"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "memberships",
+    "view_definition": " SELECT id AS user_id,\n    club_id,\n    'active'::text AS status,\n    COALESCE(last_seen_at, last_sign_in_at, last_login_at, first_login_at, created_at, now()) AS updated_at\n   FROM profiles p\n  WHERE (club_id IS NOT NULL);"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "v_admin_online_users",
+    "view_definition": " SELECT id AS user_id,\n    member_no,\n    display_name,\n    first_login_at,\n    last_seen_at,\n    ((last_seen_at IS NOT NULL) AND (last_seen_at >= (now() - '00:05:00'::interval))) AS is_online\n   FROM profiles p\n  WHERE is_admin_or_vorstand();"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "v_my_responsibilities",
+    "view_definition": " SELECT 'meeting_task'::text AS responsibility_type,\n    mt.id AS source_id,\n    mt.title,\n    (mt.status)::text AS status,\n    mt.due_date,\n    mt.status_note,\n    NULL::timestamp with time zone AS starts_at,\n    NULL::timestamp with time zone AS ends_at,\n    NULL::text AS location,\n    mt.created_at,\n    mt.updated_at\n   FROM (meeting_tasks mt\n     JOIN task_assignees ta ON (((ta.task_id = mt.id) AND (ta.user_id = auth.uid()))))\nUNION ALL\n SELECT 'work_event_lead'::text AS responsibility_type,\n    we.id AS source_id,\n    we.title,\n    (we.status)::text AS status,\n    ((we.starts_at AT TIME ZONE 'Europe/Berlin'::text))::date AS due_date,\n    NULL::text AS status_note,\n    we.starts_at,\n    we.ends_at,\n    we.location,\n    we.created_at,\n    we.updated_at\n   FROM (work_events we\n     JOIN work_event_leads wl ON (((wl.work_event_id = we.id) AND (wl.user_id = auth.uid()))));"
+  }
+]

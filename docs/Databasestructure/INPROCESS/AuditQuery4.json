@@ -1,0 +1,37 @@
+[
+  {
+    "table_name": "catch_entries",
+    "total_rows": 3,
+    "mapped_rows": 0
+  },
+  {
+    "table_name": "club_member_identities",
+    "total_rows": 349,
+    "mapped_rows": 0
+  },
+  {
+    "table_name": "club_members",
+    "total_rows": 350,
+    "mapped_rows": 0
+  },
+  {
+    "table_name": "club_user_roles",
+    "total_rows": 350,
+    "mapped_rows": 0
+  },
+  {
+    "table_name": "fishing_trips",
+    "total_rows": 4,
+    "mapped_rows": 0
+  },
+  {
+    "table_name": "profiles",
+    "total_rows": 349,
+    "mapped_rows": 0
+  },
+  {
+    "table_name": "user_roles",
+    "total_rows": 352,
+    "mapped_rows": 0
+  }
+]

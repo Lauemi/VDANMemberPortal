@@ -1,0 +1,264 @@
+{
+  "document_key": "FCP_DB_TARGETMODEL_STRATEGY_VARIANTS_V1",
+  "version": "1.0",
+  "date": "2026-04-01",
+  "intent": {
+    "goal": "Maschinenverstaendliche Auswertung des Zielmodells mit drei strukturellen Varianten: Bestaetigung, Gegenvorschlag und alternativer Ansatz mit logischer Folge.",
+    "for_models": ["Codex", "Claude", "Gemini"],
+    "mode": "structure_only_no_sql",
+    "migration_rule": "keine bestehende app-logik zerreissen; additive, nachvollziehbare strukturpfade bevorzugen"
+  },
+  "principles": [
+    "FCP bleibt fachlicher Fokus.",
+    "Mitgliedschaft ist Beziehung, nicht Identitaet.",
+    "Userbezogene Assets duerfen nicht am Verein sterben.",
+    "DB ist strukturelle Wahrheit.",
+    "Bestehende club-scoped Sicherheitsarchitektur darf nicht aufweichen.",
+    "Erweiterung soll additiv und logisch verkettet sein.",
+    "Audit, Legal, Finance und Ownership brauchen frueh klare strukturelle Grenzen."
+  ],
+  "ist": {
+    "reference_document": "MasterDBV14AIConvo.json",
+    "known_strengths": [
+      "Zielbild trennt Identity, Membership und Club bereits fachlich sauberer als der aktuelle Ist-Zustand.",
+      "Querschnittsthemen wie Audit, Legal, Finance und Ownership sind explizit benannt.",
+      "Bestehende Module fuer catches, trips, meetings, work und onboarding werden nicht ignoriert, sondern eingebettet."
+    ],
+    "known_risks": [
+      {
+        "key": "membership_transition_risk",
+        "problem": "die bestehende Mitgliedslogik liegt aktuell verteilt auf mehreren Tabellen und Pfaden",
+        "impact": "wenn die kanonische bridge unsauber eingefuehrt wird, entstehen doppelte wahrheiten"
+      },
+      {
+        "key": "generic_layer_risk",
+        "problem": "workflow-, owner- und entity-link-muster koennen zu frueh zu generisch werden",
+        "impact": "spaetere migration, debugging und fachliche lesbarkeit werden schwerer"
+      },
+      {
+        "key": "finance_legal_depth_risk",
+        "problem": "finance und legal sind strukturell richtig gedacht, aber operativ sensibel",
+        "impact": "kleine modellunsauberkeiten fuehren spaeter zu grossen nachweis- und historienproblemen"
+      }
+    ]
+  },
+  "soll": {
+    "target_shape": [
+      "Drei valide Strukturpfade werden beschrieben, ohne das Grundziel von FCP zu verlassen.",
+      "Alle Pfade respektieren membership als fachliche Kernbeziehung und club als operativen tenant-kontext.",
+      "Alle Pfade vermeiden Big-Bang-Redesign und bleiben additiv.",
+      "Die Unterschiede liegen in der Reihenfolge, Haerte der Kanonisierung und Tiefe der generischen Schichten."
+    ],
+    "must_not_break": [
+      "bestehende aktive tabellen und laufende app-logik",
+      "club-scoped security-/rls-architektur",
+      "fachpfade fuer catches, trips, meetings, work, onboarding, billing",
+      "user-owned daten bei austritt oder anonymisierung"
+    ],
+    "strategy_variants": [
+      {
+        "variant_key": "1_bestaetigung",
+        "title": "Bestaetigung des aktuellen Zielmodells",
+        "position": "Das analysierte Zielmodell ist strukturell richtig und sollte in dieser Richtung weitergedacht werden.",
+        "warum_das_stark_ist": [
+          "membership als zentrale bridge ist die fachlich richtige normalform fuer verein versus user",
+          "identity, membership und club werden sauber genug getrennt, ohne die aktuelle app sofort zu zerlegen",
+          "tenant wird vorbereitet, aber nicht sofort uebermodelliert",
+          "legal, finance, audit und inventory werden als eigene wahrheitsraeume verstanden statt als felderanhaenge"
+        ],
+        "begruendung": [
+          "dieser pfad minimiert spaetere fachliche schuld",
+          "er passt am besten zu den bereits formulierten grundsaetzen",
+          "er schafft die beste basis fuer austritt, historische nachvollziehbarkeit und spaetere erweiterbarkeit"
+        ],
+        "kritische_bedingungen": [
+          "memberships muss wirklich die kanonische bridge werden und darf nicht nur eine weitere tabelle neben club_members und members sein",
+          "rollen und rechte muessen sauber an membership oder tenant-kontext haengen",
+          "trip/catch braucht klaren dualen kontext aus user-owned und club-snapshot",
+          "finance und legal duerfen nicht nur vorgedacht, sondern strukturell strikt getrennt bleiben"
+        ],
+        "geeignet_wenn": [
+          "du mittelfristig mehr als nur den heutigen club-flow sauber tragen willst",
+          "du exit-history, rights, fees und legal proof von anfang an belastbar haben willst",
+          "du lieber einmal sauber strukturierst als spaeter unter druck mehrfach umzubauen"
+        ]
+      },
+      {
+        "variant_key": "2_gegenvorschlag",
+        "title": "Gegenvorschlag: Membership zuerst hart kanonisieren, Generics spaeter",
+        "position": "Nicht das Ziel aendern, sondern die Ausdehnung bremsen: zuerst nur identity, membership, club, roles, legal und finance haerten; generische workflow- und polymorphe entity-patterns spaeter.",
+        "warum_ich_das_als_gegenvorschlag_sehe": [
+          "das aktuelle zielmodell ist fachlich stark, aber an manchen stellen schon zwei schritte weiter als die migrationsrealitaet",
+          "besonders workflow_instances, task_linking, document_links und owner_entity-muster sind sinnvoll, koennen aber zu frueh zu viel abstrahieren",
+          "fuer FCP ist der groesste hebel zuerst die saubere kanonische beziehungsachse und der rechts- bzw. finanzfeste nachweisraum"
+        ],
+        "begruendung": [
+          "die meisten spaeteren brueche entstehen nicht aus fehlender generik, sondern aus unsauberer identitaets- und membership-logik",
+          "ein fruehes generic-layer-design kann fachliche grenzfaelle verdecken",
+          "eine spaetere generalisierung ist billiger als eine fruehe fehlabstraktion"
+        ],
+        "was_dieser_pfad_bewusst_zurueckstellt": [
+          "voll generischer workflow layer",
+          "voll generische attachment- und task-link abstractions",
+          "breite inventory-/shop-zukunft vor der stabilen kernbeziehung"
+        ],
+        "was_trotzdem_sofort_klar_sein_muss": [
+          "identity_core",
+          "profiles_platform",
+          "memberships",
+          "membership_roles",
+          "membership_status_history",
+          "legal_event_log mit document version link",
+          "member_claims plus payment allocation logik"
+        ],
+        "geeignet_wenn": [
+          "du migrationsrisiko staerker gewichten willst als modellvollstaendigkeit",
+          "du die bestehende app schrittweise beruhigen willst",
+          "du zuerst die teuersten spaeteren fehler in rights, austritt, legal und finance vermeiden willst"
+        ]
+      },
+      {
+        "variant_key": "3_anderer_ansatz",
+        "title": "Anderer Ansatz: Drei logisch verkettete Ausbauwellen",
+        "position": "Gleiches Ziel, aber als strenge Reihenfolge statt als voll ausgeschriebenes Endmodell.",
+        "logische_folge": [
+          {
+            "welle": "welle_1_beziehungswahrheit",
+            "fokus": [
+              "identity_core",
+              "profiles_platform",
+              "memberships",
+              "membership_roles",
+              "membership_status_history",
+              "tenant_nodes nur als vorbereitete huelle"
+            ],
+            "warum_zuerst": [
+              "hier entscheidet sich, ob user, club und rechte spaeter sauber bleiben",
+              "fast alle anderen module haengen direkt oder indirekt daran"
+            ],
+            "erwarteter_effekt": [
+              "austritt, join-history, multi-club und rollenlogik bekommen eine stabile achse"
+            ]
+          },
+          {
+            "welle": "welle_2_nachweis_und_geld",
+            "fokus": [
+              "legal_document_versions und legal_event_log",
+              "pricing_rules",
+              "member_claims",
+              "financial_documents",
+              "payment_events_allocations",
+              "audit- und status-standards auf kritischen tabellen"
+            ],
+            "warum_danach": [
+              "sobald membership stabil ist, koennen schuld, akzeptanz und beweis sauber daran haengen",
+              "dies ist der zweite harte wahrheitsraum mit hoher spaeterer kostenwirkung"
+            ],
+            "erwarteter_effekt": [
+              "historische rekonstruktion, rechtsnachweis und zuordnung von geldstroemen werden belastbar"
+            ]
+          },
+          {
+            "welle": "welle_3_modulvereinheitlichung",
+            "fokus": [
+              "trip_catch_context",
+              "permits_cards",
+              "participation_core",
+              "event_core",
+              "document_links",
+              "notifications_delivery",
+              "spaeter inventory/equipment"
+            ],
+            "warum_zuletzt": [
+              "diese module profitieren am meisten davon, wenn beziehungs-, legal- und finance-wahrheit schon stehen",
+              "hier kann man generische patterns mit deutlich geringerem fehlabstraktionsrisiko einfuehren"
+            ],
+            "erwarteter_effekt": [
+              "die produktflaeche wird konsistenter, ohne den kern zu destabilisieren"
+            ]
+          }
+        ],
+        "begruendung": [
+          "dieser ansatz passt gut zu deiner art, systeme nicht nur zu entwerfen, sondern logisch belastbar aufzubauen",
+          "er respektiert, dass du gross denken willst, aber gleichzeitig keine sandfundamente magst",
+          "er reduziert mentale und technische last, weil jede spaetere schicht sichtbar auf der vorigen aufsetzt"
+        ],
+        "geeignet_wenn": [
+          "du ein grosses zielmodell behalten willst, aber fuer umsetzung und review eine klare verkettung brauchst",
+          "du entscheidungen lieber entlang von wahrheitsraeumen als entlang einzelner features triffst",
+          "du spaetere diskussionen im projekt strukturieren willst, ohne jedes mal alles neu zu erklaeren"
+        ]
+      }
+    ],
+    "global_standards": {
+      "architectural_priority_order": [
+        "identity_and_membership_truth",
+        "legal_and_finance_truth",
+        "module_alignment_and_generic_patterns"
+      ],
+      "stability_rule": {
+        "must_hold": [
+          "eine fachliche kernbeziehung darf nur eine kanonische wahrheit haben",
+          "bestehende operative tabellen duerfen uebergangsweise leben, aber nicht gegen die neue wahrheit konkurrieren",
+          "generische patterns duerfen keine fachlichen grenzen verwischen"
+        ]
+      },
+      "migration_safety_rule": {
+        "must_hold": [
+          "erst bruecken und standards klaeren, dann module dranhaengen",
+          "legal und finance immer mit historischer rekonstruierbarkeit denken",
+          "user-owned daten immer unabhaengig vom club-ueberleben modellieren"
+        ]
+      }
+    },
+    "critical_relationships": [
+      {
+        "relationship": "identity_to_membership_to_tenant",
+        "must_hold": "membership bleibt die kanonische beziehungsachse zwischen person und verein",
+        "danger_if_broken": "alle spaeteren module bauen auf instabiler user-club-logik"
+      },
+      {
+        "relationship": "membership_to_roles_to_permissions",
+        "must_hold": "rechte sitzen auf membership-kontext und nicht diffus auf raw user oder historisch gewachsenen tabellen",
+        "danger_if_broken": "mehrvereinsfaehigkeit und statuswechsel werden inkonsistent"
+      },
+      {
+        "relationship": "membership_to_claims_to_documents_to_payments",
+        "must_hold": "schuld, dokument und zahlung bleiben getrennt, aber sauber verkettet",
+        "danger_if_broken": "finance verliert nachvollziehbarkeit"
+      },
+      {
+        "relationship": "legal_document_versions_to_legal_event_log",
+        "must_hold": "jedes acceptance-event zeigt auf eine konkrete version",
+        "danger_if_broken": "der rechtsnachweis ist strukturell schwach"
+      },
+      {
+        "relationship": "trip_and_catch_to_identity_membership_and_snapshot",
+        "must_hold": "persoenliche historie und vereinsreporting duerfen sich nicht gegenseitig zerstoeren",
+        "danger_if_broken": "austritt, anonymisierung und statistik kollidieren"
+      },
+      {
+        "relationship": "documents_media_to_owner_and_domain_context",
+        "must_hold": "ownership, privacy und linked entity muessen gleichzeitig klar sein",
+        "danger_if_broken": "content rights und dsgvo werden spaeter unklar"
+      }
+    ]
+  },
+  "compact_views_for_other_models": {
+    "confirmation_compact": {
+      "core_message": "Das aktuelle Zielmodell ist strukturell gut und sollte grundsaetzlich bestaetigt werden.",
+      "main_reason": "Membership als kanonische bridge plus getrennte legal- und finance-raeume ist die richtige Richtung.",
+      "warning": "Die Zielrichtung ist richtig, aber die Migrationszone zwischen Alt- und Neu-Wahrheit bleibt der groesste Risikopunkt."
+    },
+    "counterproposal_compact": {
+      "core_message": "Nicht das Ziel verwerfen, sondern die Generalisierung verlangsamen.",
+      "main_reason": "Erst identity, membership, legal und finance haerten; generische workflow- und link-patterns spaeter.",
+      "warning": "Zu fruehe Generik kann fachliche Grenzfaelle verdecken."
+    },
+    "sequenced_approach_compact": {
+      "core_message": "Gleiches Zielmodell, aber in drei verketteten Ausbauwellen.",
+      "main_reason": "Erst Beziehungswahrheit, dann Nachweis und Geld, dann Modulvereinheitlichung.",
+      "warning": "Ohne diese Reihenfolge wirkt das Zielmodell schnell groesser als die operative Realitaet."
+    }
+  }
+}

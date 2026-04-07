@@ -1,0 +1,7 @@
+[
+  {
+    "tenant_nodes_total": 2,
+    "tenant_nodes_with_legacy_club_id": 2,
+    "distinct_legacy_club_ids": 2
+  }
+]

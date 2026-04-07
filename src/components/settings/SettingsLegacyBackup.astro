@@ -1,0 +1,193 @@
+<section class="card">
+  <div class="card__body">
+    <h2>Account</h2>
+    <p class="small">Persönliche Kontodaten und Stammdaten im Vereinskontext.</p>
+    <div class="resp-form-grid" id="settingsAccountView">
+      <label class="resp-half">
+        <span>Mitgliedsnummer</span>
+        <input id="accountViewMemberNo" value="-" disabled />
+      </label>
+      <label class="resp-half">
+        <span>Verein</span>
+        <input id="accountViewClubCode" value="-" disabled />
+      </label>
+      <label class="resp-half">
+        <span>Vorname</span>
+        <input id="accountViewFirstName" value="-" disabled />
+      </label>
+      <label class="resp-half">
+        <span>Nachname</span>
+        <input id="accountViewLastName" value="-" disabled />
+      </label>
+      <label class="resp-full">
+        <span>E-Mail</span>
+        <input id="accountViewEmail" value="-" disabled />
+      </label>
+      <label class="resp-full">
+        <span>Strasse</span>
+        <input id="accountViewStreet" value="-" disabled />
+      </label>
+      <label class="resp-half">
+        <span>PLZ</span>
+        <input id="accountViewZip" value="-" disabled />
+      </label>
+      <label class="resp-half">
+        <span>Ort</span>
+        <input id="accountViewCity" value="-" disabled />
+      </label>
+      <label class="resp-half">
+        <span>Telefon</span>
+        <input id="accountViewPhone" value="-" disabled />
+      </label>
+      <label class="resp-half">
+        <span>Mobil</span>
+        <input id="accountViewMobile" value="-" disabled />
+      </label>
+      <div class="resp-full settings-actions-row">
+        <button type="button" id="settingsEditAccountBtn" class="feed-btn">Account bearbeiten</button>
+      </div>
+    </div>
+
+    <form id="settingsAccountForm" class="resp-form-grid hidden" hidden>
+      <label class="resp-half">
+        <span>Mitgliedsnummer</span>
+        <input id="accountMemberNo" disabled />
+      </label>
+      <label class="resp-half">
+        <span>Verein</span>
+        <input id="accountClubCode" disabled />
+      </label>
+      <label class="resp-half">
+        <span>Vorname</span>
+        <input id="accountFirstName" autocomplete="given-name" />
+      </label>
+      <label class="resp-half">
+        <span>Nachname</span>
+        <input id="accountLastName" autocomplete="family-name" />
+      </label>
+      <label class="resp-full">
+        <span>E-Mail</span>
+        <input id="accountEmail" type="email" autocomplete="email" />
+      </label>
+      <label class="resp-full">
+        <span>Strasse</span>
+        <input id="accountStreet" autocomplete="street-address" />
+      </label>
+      <label class="resp-half">
+        <span>PLZ</span>
+        <input id="accountZip" autocomplete="postal-code" />
+      </label>
+      <label class="resp-half">
+        <span>Ort</span>
+        <input id="accountCity" autocomplete="address-level2" />
+      </label>
+      <label class="resp-half">
+        <span>Telefon</span>
+        <input id="accountPhone" autocomplete="tel" />
+      </label>
+      <label class="resp-half">
+        <span>Mobil</span>
+        <input id="accountMobile" autocomplete="tel" />
+      </label>
+      <div class="resp-full settings-actions-row">
+        <button type="button" id="settingsCancelAccountBtn" class="feed-btn feed-btn--ghost">Abbrechen</button>
+        <button type="submit" class="feed-btn">Account speichern</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card__body">
+    <h1>Einstellungen</h1>
+    <p class="small">Zentraler Bereich für App-Update, Benachrichtigungen und Kontooptionen.</p>
+    <p id="settingsMsg" class="small" aria-live="polite"></p>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card__body">
+    <h2>Benachrichtigungen und Portal</h2>
+    <form id="settingsNotifyForm" class="resp-form-grid">
+      <label class="resp-full settings-check-row">
+        <span>
+          <input id="setNotifyPosts" type="checkbox" checked />
+          Neue Posts
+        </span>
+      </label>
+      <label class="resp-full settings-check-row">
+        <span>
+          <input id="setNotifyEvents" type="checkbox" checked />
+          Neue Termine
+        </span>
+      </label>
+      <label class="resp-full settings-check-row">
+        <span>
+          <input id="setNotifyWorkEvents" type="checkbox" checked />
+          Neue Arbeitseinsätze
+        </span>
+      </label>
+      <label class="resp-full settings-check-row">
+        <span>
+          <input id="setNotifyAppUpdate" type="checkbox" checked />
+          App-Update verfügbar
+        </span>
+      </label>
+      <label class="resp-full">
+        <span>Portal-Seite</span>
+        <select id="setHandedness">
+          <option value="right">Rechts (Standard)</option>
+          <option value="auto">Auto</option>
+          <option value="left">Links</option>
+        </select>
+      </label>
+      <div id="settingsPrimaryActions" class="resp-full settings-actions-row" style="display:flex;justify-content:flex-end;">
+        <button type="submit" class="feed-btn">Speichern</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card__body">
+    <h2>App-Update</h2>
+    <p class="small">Version: <strong id="settingsAppVersion">-</strong></p>
+    <div id="settingsUpdateActions" class="settings-actions-row" style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" id="settingsEnableNotifyBtn" class="feed-btn feed-btn--ghost">Benachrichtigung erlauben</button>
+      <button type="button" id="settingsCheckUpdateBtn" class="feed-btn feed-btn--ghost">Auf Update prüfen</button>
+      <button type="button" id="settingsReloadBtn" class="feed-btn feed-btn--ghost">Neu laden</button>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card__body">
+    <h2>Zugangsprüfung</h2>
+    <p class="small">Preview der späteren Pflichtmaske zur Verifizierung von Kontodaten und Auth-E-Mail.</p>
+    <a class="feed-btn feed-btn--ghost" href="/app/zugang-pruefen/?preview=1">Prüfmaske im Preview öffnen</a>
+  </div>
+</section>
+
+<script src="/js/app-settings.js" defer></script>
+<style>
+  #settingsNotifyForm.settings-handed-right .settings-check-row > span {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-start;
+  }
+  #settingsNotifyForm.settings-handed-left .settings-check-row > span {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+    flex-direction: row-reverse;
+    text-align: right;
+  }
+  .settings-actions-row.settings-handed-right {
+    justify-content: flex-end !important;
+  }
+  .settings-actions-row.settings-handed-left {
+    justify-content: flex-start !important;
+  }
+</style>

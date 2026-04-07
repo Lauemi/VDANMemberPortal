@@ -1,0 +1,32 @@
+[
+  {
+    "constraint_name": "canonical_memberships_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "created_by"
+  },
+  {
+    "constraint_name": "canonical_memberships_identity_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "identity_id"
+  },
+  {
+    "constraint_name": "canonical_memberships_tenant_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "tenant_id"
+  },
+  {
+    "constraint_name": "canonical_memberships_updated_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "updated_by"
+  },
+  {
+    "constraint_name": "canonical_memberships_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "columns": "id"
+  },
+  {
+    "constraint_name": "uq_canonical_memberships_identity_tenant",
+    "constraint_type": "UNIQUE",
+    "columns": "identity_id, tenant_id"
+  }
+]

@@ -1,0 +1,461 @@
+{
+  "document_key": "FCP_DB_SYSTEM_CONTRACT_V17_FINAL",
+  "version": "1.0",
+  "date": "2026-04-01",
+  "intent": {
+    "goal": "Finaler Systemvertrag fuer Datenbankwahrheit, Uebergangsregeln, Wellenmodell und modulare Umsetzungsuebergabe an externe KI-Modelle.",
+    "mode": "structure_first_handoff_ready",
+    "no_sql_in_this_document": true,
+    "no_feature_logic_in_this_document": true,
+    "primary_use": [
+      "Master-Referenz fuer Codex",
+      "Kontext fuer ChatGPT, Claude und Gemini",
+      "Basis fuer spaetere SQL-, Postgres-, Prozess- und UI-Ableitung pro Modul"
+    ]
+  },
+  "principles": [
+    "membership_is_relationship_not_identity",
+    "user_data_survives_club",
+    "db_is_structural_truth",
+    "single_source_of_truth_per_domain",
+    "additive_migration_only",
+    "no_break_existing_app",
+    "read_transition_allowed_write_truth_not_split",
+    "adapters_have_no_own_truth",
+    "new_modules_attach_to_canonical_only"
+  ],
+  "system_scope": {
+    "product": "FCP_Fishing_Club_Portal",
+    "core_focus": [
+      "identity_profile_access",
+      "membership_roles_club_context",
+      "legal_finance_truth",
+      "module_alignment_for_catches_events_work_meetings_documents_inventory"
+    ],
+    "non_goals_of_this_document": [
+      "no SQL syntax",
+      "no migration scripts",
+      "no service implementation",
+      "no UI screen design"
+    ]
+  },
+  "truth_contract": {
+    "A_canonical_truth": [
+      "identity_core",
+      "profiles_platform",
+      "memberships",
+      "membership_roles",
+      "membership_status_history",
+      "club_core",
+      "tenant_nodes"
+    ],
+    "B_transition_adapter": [
+      "profiles",
+      "club_members",
+      "club_member_identities",
+      "members",
+      "club_user_roles",
+      "user_roles"
+    ],
+    "C_later_removable": [
+      "direct_user_club_links",
+      "raw_user_role_paths",
+      "parallel_status_paths_outside_membership",
+      "any_non_membership_based_relation"
+    ],
+    "canonical_meaning": {
+      "identity_core": "plattformweite person/principal wahrheit",
+      "profiles_platform": "clubfreie user-basis und profilwahrheit",
+      "memberships": "einzige kanonische beziehung zwischen identity und club/tenant",
+      "membership_roles": "rollenwahrheit im membership-kontext",
+      "membership_status_history": "historie aller relevanten statuswechsel",
+      "club_core": "kanonischer fachlicher club-kontext",
+      "tenant_nodes": "kanonischer vorbereiteter tenant-kontext ohne sofortige vollhierarchie"
+    }
+  },
+  "read_contract": {
+    "canonical_reads": {
+      "identity": "identity_core",
+      "profile": "profiles_platform",
+      "membership": "memberships",
+      "membership_status": "membership_status_history plus memberships.current_state",
+      "roles": "membership_roles plus canonical role catalog",
+      "club_context": [
+        "club_core",
+        "tenant_nodes"
+      ]
+    },
+    "transition_reads": {
+      "allowed": true,
+      "sources": [
+        "profiles",
+        "club_members",
+        "club_member_identities",
+        "members",
+        "club_user_roles",
+        "user_roles"
+      ],
+      "rule": "adapter_reads_only",
+      "constraint": "adapter_reads_have_no_truth_authority"
+    },
+    "read_rules": [
+      "new_modules_read_canonical_only",
+      "existing_modules_may_read_adapter_temporarily",
+      "reports_and_exports_should_move_to_canonical_as_early_as_possible",
+      "no_new_read_path_may_bypass_memberships_for_user_club_relation"
+    ]
+  },
+  "write_contract": {
+    "canonical_only_writes": {
+      "identity": [
+        "identity_core"
+      ],
+      "profile": [
+        "profiles_platform"
+      ],
+      "membership_events": [
+        "memberships",
+        "membership_status_history"
+      ],
+      "roles": [
+        "membership_roles"
+      ],
+      "club_context": [
+        "club_core"
+      ]
+    },
+    "adapter_writes": {
+      "allowed": true,
+      "mode": "derived_only",
+      "rules": [
+        "write_canonical_first",
+        "adapter_sync_is_deterministic",
+        "never_write_adapter_first",
+        "adapter_never_originates_business_truth"
+      ]
+    },
+    "write_rules": [
+      "no_parallel_write_truth",
+      "membership_is_only_relationship_write_path",
+      "roles_are_never_written_on_raw_user_paths",
+      "club_membership_state_must_not_be_maintained_outside_memberships"
+    ]
+  },
+  "adapter_contract": {
+    "rules": [
+      "adapter_has_no_own_truth",
+      "adapter_maps_1_to_1_from_canonical_where_possible",
+      "adapter_never_decides_logic",
+      "adapter_never_interprets_missing_data",
+      "canonical_overrides_on_conflict",
+      "no_new_dependencies_on_adapter",
+      "adapter_removed_per_domain_after_full_read_write_shift"
+    ],
+    "anti_patterns": [
+      "fallback_to_old_table_as_hidden_truth",
+      "conditional_business_logic_inside_adapter",
+      "reading_new_modules_from_old_tables_for_convenience",
+      "writing_old_tables_without_deterministic_derivation_from_canonical"
+    ]
+  },
+  "stability_rules": [
+    "one_truth_per_domain",
+    "one_write_origin_per_domain",
+    "membership_is_only_relationship_source",
+    "roles_bound_to_membership_not_user",
+    "no_parallel_status_management",
+    "club_id_must_map_to_single_tenant_id",
+    "tenant_truth_must_not_diverge_from_club_truth",
+    "new_features_use_canonical_only"
+  ],
+  "critical_relations": [
+    {
+      "relation": "identity_core.identity_id -> memberships.identity_id",
+      "why_it_must_hold": "alle club-beziehungen, rights und spaeteren module bauen darauf auf"
+    },
+    {
+      "relation": "memberships.tenant_id -> tenant_nodes.tenant_id",
+      "why_it_must_hold": "club/tenant-kontext darf nicht doppelt oder unscharf werden"
+    },
+    {
+      "relation": "membership_roles.membership_id -> memberships.id",
+      "why_it_must_hold": "rollen sind nur im membership-kontext eindeutig"
+    },
+    {
+      "relation": "membership_roles.role_id -> canonical_roles.id",
+      "why_it_must_hold": "rechte duerfen nicht aus altpfaden oder user-bezug entstehen"
+    },
+    {
+      "relation": "club_core.tenant_id -> tenant_nodes.tenant_id",
+      "why_it_must_hold": "club und tenant duerfen nie getrennte operative wahrheiten bilden"
+    }
+  ],
+  "wave_contract": {
+    "strategy": "wave_based",
+    "waves": [
+      {
+        "wave": 1,
+        "name": "relationship_truth",
+        "focus": [
+          "identity_core",
+          "profiles_platform",
+          "memberships",
+          "membership_roles",
+          "membership_status_history",
+          "club_core",
+          "tenant_nodes"
+        ],
+        "must_be_true_after_wave": [
+          "identity_profile_membership_club_split_is_canonical",
+          "all_new_relationship_reads_use_memberships",
+          "all_new_relationship_writes_use_memberships",
+          "roles_are_membership_bound"
+        ]
+      },
+      {
+        "wave": 2,
+        "name": "legal_finance_truth",
+        "focus": [
+          "legal_document_versions",
+          "legal_event_log",
+          "pricing_rules",
+          "member_claims",
+          "financial_documents",
+          "payment_events",
+          "payment_allocations"
+        ],
+        "must_be_true_after_wave": [
+          "acceptance_points_to_concrete_document_version",
+          "charges_documents_payments_allocations_are_separate_but_linked",
+          "financial_history_is_reconstructable",
+          "legal_history_is_append_only"
+        ]
+      },
+      {
+        "wave": 3,
+        "name": "module_alignment",
+        "focus": [
+          "trip_catch_context",
+          "permits_cards",
+          "event_core",
+          "participation_core",
+          "document_links",
+          "notifications_delivery",
+          "inventory_equipment"
+        ],
+        "must_be_true_after_wave": [
+          "modules_attach_to_wave_1_and_wave_2_truth_only",
+          "user_owned_and_club_snapshot_contexts_do_not_conflict",
+          "module_specific_structures_do_not_reintroduce_alt_truth"
+        ]
+      }
+    ],
+    "migration_rules": [
+      "never_break_existing_paths",
+      "introduce_canonical_then_bridge",
+      "deprecate_only_after_full_read_write_shift",
+      "no_parallel_truth_creation",
+      "every_wave_depends_on_previous_wave_truth"
+    ]
+  },
+  "domain_standards": {
+    "audit_standard": {
+      "required_fields": [
+        "created_at",
+        "created_by",
+        "updated_at",
+        "updated_by"
+      ],
+      "recommended_fields": [
+        "version",
+        "source",
+        "external_ref"
+      ],
+      "note": "kritische mutationen brauchen append-only event oder history-raeume"
+    },
+    "status_standard": {
+      "required_fields": [
+        "status",
+        "status_changed_at",
+        "status_changed_by"
+      ],
+      "required_companion": "status_history_for_critical_entities"
+    },
+    "context_standard": {
+      "required_for_tenant_scoped_data": [
+        "tenant_id"
+      ],
+      "recommended": [
+        "module_key",
+        "domain_key",
+        "club_code_snapshot"
+      ],
+      "note": "club_id darf operativ bestehen, muss aber eindeutig in tenant_id aufgehen"
+    },
+    "ownership_standard": {
+      "recommended_fields": [
+        "owner_type",
+        "owner_id",
+        "valid_from",
+        "valid_until"
+      ],
+      "note": "wichtig fuer media, documents, inventory und spaetere portable assets"
+    },
+    "legal_standard": {
+      "required_fields": [
+        "legal_event_type",
+        "document_version_id",
+        "accepted_at",
+        "actor_id",
+        "channel"
+      ],
+      "recommended_fields": [
+        "ip_address",
+        "user_agent",
+        "source"
+      ],
+      "immutability": "append_only"
+    },
+    "finance_standard": {
+      "required_fields": [
+        "currency",
+        "amount_gross",
+        "amount_net_optional",
+        "tax_rate_optional",
+        "snapshot_json",
+        "source_event_ref"
+      ],
+      "note": "claims, documents and payments must remain historically reconstructable"
+    },
+    "bridge_standard": {
+      "required_fields": [
+        "id",
+        "valid_from",
+        "valid_until",
+        "created_at",
+        "created_by",
+        "reason_optional"
+      ],
+      "note": "wichtige bridges nie nur implizit oder nur ueber zusammengesetzte schluessel denken"
+    }
+  },
+  "module_docking_contract": {
+    "rule": "every_future_module_must_declare_its_truth_anchors_before_sql_or_ui_work_starts",
+    "required_for_each_module": [
+      "module_name",
+      "wave_assignment",
+      "canonical_owner_tables",
+      "required_relations_to_wave_1_truth",
+      "required_relations_to_wave_2_truth_if_finance_or_legal_is_involved",
+      "read_paths",
+      "write_paths",
+      "adapter_dependencies_if_any",
+      "status_model",
+      "audit_requirements",
+      "user_owned_vs_club_owned_boundary",
+      "ui_views_that_read_this_truth",
+      "processes_that_write_this_truth"
+    ],
+    "ui_rule": [
+      "ui_reads_from_canonical_view_of_truth",
+      "ui_actions_must_map_to_single_canonical_write_path",
+      "ui_must_not_reconstruct_business_truth_from_multiple_old_tables"
+    ],
+    "process_rule": [
+      "each_process_declares_trigger_actor_state_change_and_written_truth",
+      "each_process_names_which_history_or_event_space_it_must_append_to",
+      "no_process_writes_old_and_new_truth_as_equal_peers"
+    ]
+  },
+  "ai_handoff_contract": {
+    "purpose": "Externe Modelle sollen SQL, Postgres-Struktur, Modulprozesse und UI-Ableitungen nur auf Basis dieses Vertrags und des konkreten Modulbriefings erzeugen.",
+    "models": [
+      "ChatGPT",
+      "Claude",
+      "Gemini"
+    ],
+    "what_they_must_receive_from_us": [
+      "this_system_contract",
+      "the_selected_module_name",
+      "the_wave_of_that_module",
+      "the_business_processes_for_that_module",
+      "the_ui_surfaces_for_that_module",
+      "the_existing_tables_that_the_module_touches",
+      "clear_statement_of_what_is_canonical_vs_adapter"
+    ],
+    "what_we_expect_from_them": [
+      "proposed_sql_schema_or_changes",
+      "postgres_constraints_and_relations",
+      "read_write_path_enforcement",
+      "migration_safe_adapter_strategy",
+      "process_to_db_mapping",
+      "ui_to_truth_mapping",
+      "explicit_risk_list_if_the_module_breaks_contract"
+    ],
+    "non_negotiables_for_external_models": [
+      "do_not_create_parallel_truth",
+      "do_not_bind_roles_to_raw_user_if_membership_exists",
+      "do_not_use_adapter_as_primary_source",
+      "do_not_break_existing_app_paths_without_transition",
+      "do_not_mix_user_owned_and_club_owned_data_without_explicit_boundary"
+    ]
+  },
+  "module_request_template_for_external_ai": {
+    "use_case": "Prompt-Grundlage fuer ein konkretes Modul, damit externe KI gezielt SQL, Postgres, Prozesse und UI ableiten kann.",
+    "template_fields": {
+      "module_name": "string",
+      "wave": "1_or_2_or_3",
+      "business_goal": "short_text",
+      "processes": [
+        "list_of_business_processes"
+      ],
+      "ui_surfaces": [
+        "list_of_screens_or_views"
+      ],
+      "canonical_truth_anchors": [
+        "tables_or_families_from_this_contract"
+      ],
+      "existing_tables_touched": [
+        "existing_tables"
+      ],
+      "read_requirements": [
+        "what_must_be_read"
+      ],
+      "write_requirements": [
+        "what_must_be_written"
+      ],
+      "legal_or_finance_involved": true,
+      "user_owned_vs_club_owned_boundary": "short_text",
+      "expected_output_from_model": [
+        "postgres_schema_plan",
+        "constraints_and_relations",
+        "migration_safe_read_write_paths",
+        "process_mapping",
+        "ui_mapping",
+        "risk_notes"
+      ]
+    }
+  },
+  "compact_external_review_block": {
+    "known": [
+      "current db mixes identity membership and some club-bound user paths across multiple tables",
+      "membership truth is not yet centralized",
+      "club-scoped logic is active and must not break"
+    ],
+    "target": [
+      "wave_1 creates single canonical relationship truth",
+      "wave_2 creates legal and finance truth",
+      "wave_3 aligns modules only onto canonical truth"
+    ],
+    "open_risks": [
+      "duplicate_membership_truth",
+      "role_conflicts_between_old_and_new_paths",
+      "club_id_vs_tenant_id_drift"
+    ],
+    "question": [
+      "where_are_hidden_write_paths",
+      "which_reads_bypass_canonical_membership",
+      "what_module_boundaries_are_still_unclear"
+    ]
+  }
+}

@@ -1,0 +1,3282 @@
+{
+  "maskId": "ADM_CLUB_SETTINGS_ONBOARDING",
+  "maskFamily": "ADM",
+  "maskType": "workspace",
+  "workspaceMode": "full_width",
+  "workspaceNav": {
+    "enabled": true,
+    "position": "left",
+    "defaultSectionId": "club_settings_overview",
+    "items": [
+      {
+        "id": "nav_club_settings_overview",
+        "label": "Overview",
+        "targetSectionId": "club_settings_overview",
+        "icon": "grid"
+      },
+      {
+        "id": "nav_club_settings_club_data",
+        "label": "Vereinsdaten",
+        "targetSectionId": "club_settings_club_data",
+        "icon": "home"
+      },
+      {
+        "id": "nav_club_settings_invites",
+        "label": "Einladungen",
+        "targetSectionId": "club_settings_invites",
+        "icon": "send"
+      },
+      {
+        "id": "nav_club_settings_members",
+        "label": "Mitglieder",
+        "targetSectionId": "club_settings_members",
+        "icon": "users"
+      },
+      {
+        "id": "nav_club_settings_roles",
+        "label": "Rollen / Rechte",
+        "targetSectionId": "club_settings_roles",
+        "icon": "shield"
+      },
+      {
+        "id": "nav_club_settings_waters",
+        "label": "Gewaesser",
+        "targetSectionId": "club_settings_waters",
+        "icon": "droplet"
+      },
+      {
+        "id": "nav_club_settings_rules",
+        "label": "Regelwerke",
+        "targetSectionId": "club_settings_rules",
+        "icon": "file-text"
+      },
+      {
+        "id": "nav_club_settings_cards",
+        "label": "Ausweise",
+        "targetSectionId": "club_settings_cards",
+        "icon": "badge"
+      },
+      {
+        "id": "nav_club_settings_work",
+        "label": "Arbeitseinsaetze",
+        "targetSectionId": "club_settings_work",
+        "icon": "briefcase"
+      },
+      {
+        "id": "nav_club_settings_approvals",
+        "label": "Fangfreigaben",
+        "targetSectionId": "club_settings_approvals",
+        "icon": "check"
+      },
+      {
+        "id": "nav_club_settings_settings",
+        "label": "Einstellungen",
+        "targetSectionId": "club_settings_settings",
+        "icon": "sliders"
+      }
+    ]
+  },
+  "securityContext": {
+    "rlsKey": "tenant_id",
+    "membershipKey": "canonical_membership_id",
+    "requiresTenantAccess": true,
+    "requiresRoleCheck": true,
+    "allowedRoles": [
+      "admin",
+      "vorstand",
+      "superadmin"
+    ],
+    "serverValidated": true
+  },
+  "header": {
+    "kicker": "Onboarding Workspace",
+    "title": "ClubSettings",
+    "description": "ADM-Workspace fuer den operativen ClubSettings-Bereich nach Billing oder Freigabe. Der Workspace nutzt bestehende RPCs und Edge Functions fuer Prozesskontext, Stammdaten, Einladungen, Mitglieder und Gewaesser."
+  },
+  "toolbar": {
+    "enabled": true,
+    "actions": []
+  },
+  "metaPolicy": {
+    "autoDetect": true,
+    "auditFields": [
+      "created_at",
+      "created_by",
+      "updated_at",
+      "updated_by"
+    ],
+    "appendOnlyHandling": "explicit"
+  },
+  "dataContract": {
+    "sourceOfTruth": "sql",
+    "contracts": [
+      "docs/contracts/FCP_MASK_SYSTEM_CONTRACT.md",
+      "docs/contracts/FCP_RLS_SECURITY_STANDARD.md",
+      "docs/contracts/FCP_ONBOARDING_PROCESS_STATE_CONTRACT.md",
+      "docs/contracts/ADM_CLUB_SETTINGS_WORK_APPROVALS_CONTRACT.md"
+    ]
+  },
+  "loadBinding": {
+    "kind": "local_only",
+    "target": "app_status",
+    "path": "local:app_status"
+  },
+  "sections": [
+    {
+      "id": "club_settings_overview",
+      "label": "Overview",
+      "title": "Overview",
+      "description": "Prozess-, Routing- und Audit-Kontext fuer den ClubSettings-Einstieg.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "identity_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": false,
+        "requiresRoleCheck": false,
+        "allowedRoles": [],
+        "serverValidated": true
+      },
+      "ownership": "global_user",
+      "scope": "global_user",
+      "panels": [
+        {
+          "id": "club_settings_process_context",
+          "title": "Prozesskontext",
+          "renderMode": "readonly",
+          "componentType": "ReadonlyPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "identity_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": false,
+            "requiresRoleCheck": false,
+            "allowedRoles": [],
+            "serverValidated": false
+          },
+          "meta": {
+            "sourceTable": "public.get_onboarding_process_state",
+            "sourceKind": "process",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/overview/READ_process_context.sql",
+              "expectedColumns": [
+                "process_status",
+                "current_step_id",
+                "billing_status",
+                "setup_state",
+                "approved_club_id"
+              ]
+            },
+            "scope": "global_user",
+            "ownership": "global_user",
+            "metaDisplay": "auto",
+            "panelState": "preview",
+            "panelStateLabel": "Vorschau",
+            "panelStateHint": "Der Prozessvertrag ist fachlich definiert, wird in ClubSettings aktuell aber bewusst nicht live ueber RPC geladen.",
+            "processAdapter": "club_settings_handoff",
+            "resolver": {
+              "entryRouteCurrent": "/app/mitgliederverwaltung/",
+              "canonicalMaskName": "ClubSettings",
+              "resumeRouteBeforeAdm": "/verein-anfragen/",
+              "entryRules": {
+                "resumeDuringIdentityOrMailGate": true,
+                "enterAdmAfterAnyOf": [
+                  "billing_pending",
+                  "approved",
+                  "approved_club_id_present"
+                ]
+              },
+              "fieldDefs": [
+                {
+                  "name": "process_status",
+                  "label": "Prozessstatus",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "global_user",
+                  "ownership": "global_user",
+                  "valuePath": "record.process_status",
+                  "payloadKey": "",
+                  "group": "process",
+                  "displaySpan": null,
+                  "order": 10,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "current_step_id",
+                  "label": "Aktueller Schritt",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "global_user",
+                  "ownership": "global_user",
+                  "valuePath": "record.current_step_id",
+                  "payloadKey": "",
+                  "group": "process",
+                  "displaySpan": null,
+                  "order": 20,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "billing_status",
+                  "label": "Billingstatus",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "global_user",
+                  "ownership": "global_user",
+                  "valuePath": "record.billing_status",
+                  "payloadKey": "",
+                  "group": "process",
+                  "displaySpan": null,
+                  "order": 30,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "setup_state",
+                  "label": "Setupstatus",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "global_user",
+                  "ownership": "global_user",
+                  "valuePath": "record.setup_state",
+                  "payloadKey": "",
+                  "group": "process",
+                  "displaySpan": null,
+                  "order": 40,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "approved_club_id",
+                  "label": "Freigegebener Verein",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "global_user",
+                  "ownership": "global_user",
+                  "valuePath": "record.approved_club_id",
+                  "payloadKey": "",
+                  "group": "process",
+                  "displaySpan": "full",
+                  "order": 50,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                }
+              ]
+            }
+          },
+          "loadBinding": {
+            "kind": "local_only",
+            "target": "app_status",
+            "path": "local:app_status"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [
+              {
+                "label": "Status",
+                "value": "Prozesskontext ist vorbereitet, aber in ClubSettings aktuell nur als Vorschau hinterlegt.",
+                "span": "full"
+              }
+            ],
+            "actions": []
+          },
+          "rowsPath": "",
+          "tableConfig": {
+            "tableId": "",
+            "rowKeyField": "",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "",
+            "sortDir": "asc",
+            "filterFields": []
+          }
+        },
+        {
+          "id": "club_settings_request_audit",
+          "title": "Vereinsanfrage und Audit",
+          "renderMode": "readonly",
+          "componentType": "ReadonlyPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "identity_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": false,
+            "requiresRoleCheck": false,
+            "allowedRoles": [],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.club_request_gate_state",
+            "sourceKind": "record",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/overview/READ_request_audit.sql",
+              "expectedColumns": [
+                "request_id",
+                "status",
+                "created_at",
+                "updated_at",
+                "rejection_reason"
+              ]
+            },
+            "scope": "global_user",
+            "ownership": "global_user",
+            "metaDisplay": "auto",
+            "resolver": {
+              "fieldDefs": [
+                {
+                  "name": "request_id",
+                  "label": "Anfrage-ID",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "global_user",
+                  "ownership": "global_user",
+                  "valuePath": "record.request_id",
+                  "payloadKey": "",
+                  "group": "audit",
+                  "displaySpan": null,
+                  "order": 10,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "status",
+                  "label": "Anfragestatus",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "global_user",
+                  "ownership": "global_user",
+                  "valuePath": "record.status",
+                  "payloadKey": "",
+                  "group": "audit",
+                  "displaySpan": null,
+                  "order": 20,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "created_at",
+                  "label": "Erstellt am",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "global_user",
+                  "ownership": "global_user",
+                  "valuePath": "record.created_at",
+                  "payloadKey": "",
+                  "group": "audit",
+                  "displaySpan": null,
+                  "order": 30,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "updated_at",
+                  "label": "Zuletzt aktualisiert",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "global_user",
+                  "ownership": "global_user",
+                  "valuePath": "record.updated_at",
+                  "payloadKey": "",
+                  "group": "audit",
+                  "displaySpan": null,
+                  "order": 40,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "rejection_reason",
+                  "label": "Ablehnungsgrund",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "global_user",
+                  "ownership": "global_user",
+                  "valuePath": "record.rejection_reason",
+                  "payloadKey": "",
+                  "group": "audit",
+                  "displaySpan": "full",
+                  "order": 50,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                }
+              ]
+            }
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.club_request_gate_state",
+            "path": "rpc:public.club_request_gate_state"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [
+              {
+                "label": "Ladevertrag",
+                "value": "Wird ueber public.club_request_gate_state befuellt.",
+                "span": "full"
+              }
+            ],
+            "actions": []
+          },
+          "rowsPath": "",
+          "tableConfig": {
+            "tableId": "",
+            "rowKeyField": "",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "",
+            "sortDir": "asc",
+            "filterFields": []
+          }
+        },
+        {
+          "id": "club_settings_route_contract",
+          "title": "Routing und Resume-Vertrag",
+          "renderMode": "readonly",
+          "componentType": "ReadonlyPanel",
+          "contentArea": "side",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "identity_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": false,
+            "requiresRoleCheck": false,
+            "allowedRoles": [],
+            "serverValidated": false
+          },
+          "meta": {
+            "sourceTable": "process_contract",
+            "sourceKind": "snapshot",
+            "sourceOfTruth": "json",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/overview/READ_route_contract.sql",
+              "expectedColumns": [
+                "resume_route",
+                "adm_entry_route"
+              ]
+            },
+            "scope": "global_user",
+            "ownership": "global_user",
+            "metaDisplay": "full",
+            "panelState": "preview",
+            "panelStateLabel": "Vorschau",
+            "panelStateHint": "Routing- und Resume-Infos bleiben in ClubSettings vorerst eine Vorschau, bis der Prozessvertrag serverseitig vollstaendig verifiziert ist.",
+            "resolver": {
+              "fieldDefs": [
+                {
+                  "name": "resume_route",
+                  "label": "Resume vor ADM",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "global_user",
+                  "ownership": "global_user",
+                  "valuePath": "record.resume_route",
+                  "payloadKey": "",
+                  "group": "routing",
+                  "displaySpan": "full",
+                  "order": 10,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": "/verein-anfragen/",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "adm_entry_route",
+                  "label": "Aktuelle ADM-Route",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "global_user",
+                  "ownership": "global_user",
+                  "valuePath": "record.adm_entry_route",
+                  "payloadKey": "",
+                  "group": "routing",
+                  "displaySpan": "full",
+                  "order": 20,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": "/app/mitgliederverwaltung/",
+                  "validationRules": [],
+                  "options": []
+                }
+              ]
+            }
+          },
+          "loadBinding": {
+            "kind": "local_only",
+            "target": "app_status",
+            "path": "local:app_status"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [
+              {
+                "label": "Status",
+                "value": "Resume und ADM-Einstieg bleiben hier vorerst als Vorschau dokumentiert.",
+                "span": "full"
+              }
+            ],
+            "actions": []
+          },
+          "rowsPath": "",
+          "tableConfig": {
+            "tableId": "",
+            "rowKeyField": "",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "",
+            "sortDir": "asc",
+            "filterFields": []
+          }
+        },
+        {
+          "id": "club_settings_onboarding_snapshot",
+          "title": "Setup- und Billing-Snapshot",
+          "renderMode": "readonly",
+          "componentType": "ReadonlyPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "club-onboarding-status",
+            "sourceKind": "record",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/overview/READ_onboarding_snapshot.sql",
+              "expectedColumns": [
+                "club_id",
+                "billing_state",
+                "portal_state",
+                "club_data_complete",
+                "waters_complete",
+                "member_directory_count",
+                "manager_count",
+                "setup_ready"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "panelState": "live",
+            "panelStateLabel": "Live",
+            "panelStateHint": "Snapshot wird per Edge Function club-onboarding-status geladen.",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Snapshot wird erst nach Billing oder Freigabe geladen.",
+              "loadPayloadDefaults": {
+                "club_id": "{club_id}"
+              },
+              "fieldDefs": [
+                {
+                  "name": "club_id",
+                  "label": "Club-ID",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.club_id",
+                  "payloadKey": "",
+                  "group": "snapshot",
+                  "displaySpan": "full",
+                  "order": 10,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "billing_state",
+                  "label": "Billing-State",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "billing_snapshot",
+                  "ownership": "system",
+                  "valuePath": "record.billing.billing_state",
+                  "payloadKey": "",
+                  "group": "snapshot",
+                  "displaySpan": null,
+                  "order": 20,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "portal_state",
+                  "label": "Portal-State",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.snapshot.portal_state",
+                  "payloadKey": "",
+                  "group": "snapshot",
+                  "displaySpan": null,
+                  "order": 30,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "club_data_complete",
+                  "label": "Stammdaten komplett",
+                  "type": "boolean",
+                  "componentType": "readonly",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.snapshot.club_data_complete",
+                  "payloadKey": "",
+                  "group": "snapshot",
+                  "displaySpan": null,
+                  "order": 40,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "waters_complete",
+                  "label": "Gewaesser komplett",
+                  "type": "boolean",
+                  "componentType": "readonly",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.snapshot.waters_complete",
+                  "payloadKey": "",
+                  "group": "snapshot",
+                  "displaySpan": null,
+                  "order": 50,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "member_directory_count",
+                  "label": "Mitglieder im Verzeichnis",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.snapshot.member_directory_count",
+                  "payloadKey": "",
+                  "group": "snapshot",
+                  "displaySpan": null,
+                  "order": 60,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "manager_count",
+                  "label": "Manager-Rollen",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.snapshot.manager_count",
+                  "payloadKey": "",
+                  "group": "snapshot",
+                  "displaySpan": null,
+                  "order": 70,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "setup_ready",
+                  "label": "Setup bereit",
+                  "type": "boolean",
+                  "componentType": "readonly",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.snapshot.setup_ready",
+                  "payloadKey": "",
+                  "group": "snapshot",
+                  "displaySpan": null,
+                  "order": 80,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": null,
+                  "validationRules": [],
+                  "options": []
+                }
+              ]
+            }
+          },
+          "loadBinding": {
+            "kind": "edge_function",
+            "target": "club-onboarding-status",
+            "path": "edge:club-onboarding-status"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [
+              {
+                "label": "Ladevertrag",
+                "value": "Wird per Edge Function club-onboarding-status geladen.",
+                "span": "full"
+              }
+            ],
+            "actions": []
+          },
+          "rowsPath": "",
+          "tableConfig": {
+            "tableId": "",
+            "rowKeyField": "",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "",
+            "sortDir": "asc",
+            "filterFields": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "club_settings_club_data",
+      "label": "Vereinsdaten",
+      "title": "Vereinsdaten",
+      "description": "Stammdaten und Kontaktinformationen fuer den freigegebenen Verein.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": true,
+        "update": true,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": [
+          "admin",
+          "vorstand",
+          "superadmin"
+        ],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "club_settings_club_master_data",
+          "title": "Vereinsstammdaten",
+          "renderMode": "form",
+          "componentType": "FormPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": true,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "club-onboarding-workspace",
+            "sourceKind": "record",
+            "sourceOfTruth": "edge",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/club-data/READ_club_master_data.sql",
+              "expectedColumns": [
+                "club_name",
+                "street",
+                "zip",
+                "city",
+                "contact_name",
+                "contact_email",
+                "contact_phone"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Vereinsdaten werden erst nach Billing oder Freigabe geladen.",
+              "loadPayloadDefaults": {
+                "action": "get",
+                "club_id": "{club_id}"
+              },
+              "savePayloadDefaults": {
+                "action": "save_club_data",
+                "club_id": "{club_id}"
+              },
+              "successMessage": "Vereinsdaten gespeichert.",
+              "fieldDefs": [
+                {
+                  "name": "club_name",
+                  "label": "Vereinsname",
+                  "type": "text",
+                  "componentType": "input",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.club_data.club_name",
+                  "payloadKey": "club_name",
+                  "group": "club",
+                  "displaySpan": "full",
+                  "order": 10,
+                  "placeholder": "z. B. Angelsportverein Musterstadt",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": true,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "street",
+                  "label": "Strasse",
+                  "type": "text",
+                  "componentType": "input",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.club_data.street",
+                  "payloadKey": "street",
+                  "group": "club",
+                  "displaySpan": null,
+                  "order": 20,
+                  "placeholder": "Strasse und Hausnummer",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "zip",
+                  "label": "PLZ",
+                  "type": "text",
+                  "componentType": "input",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.club_data.zip",
+                  "payloadKey": "zip",
+                  "group": "club",
+                  "displaySpan": null,
+                  "order": 30,
+                  "placeholder": "12345",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "city",
+                  "label": "Ort",
+                  "type": "text",
+                  "componentType": "input",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.club_data.city",
+                  "payloadKey": "city",
+                  "group": "club",
+                  "displaySpan": null,
+                  "order": 40,
+                  "placeholder": "Musterstadt",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "contact_name",
+                  "label": "Kontaktperson",
+                  "type": "text",
+                  "componentType": "input",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.club_data.contact_name",
+                  "payloadKey": "contact_name",
+                  "group": "contact",
+                  "displaySpan": null,
+                  "order": 50,
+                  "placeholder": "Vor- und Nachname",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "contact_email",
+                  "label": "Kontakt-E-Mail",
+                  "type": "email",
+                  "componentType": "email",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.club_data.contact_email",
+                  "payloadKey": "contact_email",
+                  "group": "contact",
+                  "displaySpan": null,
+                  "order": 60,
+                  "placeholder": "verein@beispiel.de",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "contact_phone",
+                  "label": "Telefon",
+                  "type": "text",
+                  "componentType": "input",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.club_data.contact_phone",
+                  "payloadKey": "contact_phone",
+                  "group": "contact",
+                  "displaySpan": "full",
+                  "order": 70,
+                  "placeholder": "+49 ...",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                }
+              ]
+            }
+          },
+          "loadBinding": {
+            "kind": "edge_function",
+            "target": "club-onboarding-workspace",
+            "path": "edge:club-onboarding-workspace"
+          },
+          "saveBinding": {
+            "kind": "edge_function",
+            "target": "club-onboarding-workspace",
+            "path": "edge:club-onboarding-workspace"
+          },
+          "content": {
+            "fields": [
+              {
+                "name": "club_name",
+                "label": "Vereinsname",
+                "type": "text",
+                "componentType": "input",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "value": "",
+                "placeholder": "z. B. Angelsportverein Musterstadt",
+                "help": "",
+                "disabled": false,
+                "valuePath": "record.workspace.club_data.club_name",
+                "payloadKey": "club_name",
+                "readonly": false,
+                "defaultValue": "",
+                "options": [],
+                "span": "full",
+                "order": 10
+              },
+              {
+                "name": "street",
+                "label": "Strasse",
+                "type": "text",
+                "componentType": "input",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "value": "",
+                "placeholder": "Strasse und Hausnummer",
+                "help": "",
+                "disabled": false,
+                "valuePath": "record.workspace.club_data.street",
+                "payloadKey": "street",
+                "readonly": false,
+                "defaultValue": "",
+                "options": [],
+                "order": 20
+              },
+              {
+                "name": "zip",
+                "label": "PLZ",
+                "type": "text",
+                "componentType": "input",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "value": "",
+                "placeholder": "12345",
+                "help": "",
+                "disabled": false,
+                "valuePath": "record.workspace.club_data.zip",
+                "payloadKey": "zip",
+                "readonly": false,
+                "defaultValue": "",
+                "options": [],
+                "order": 30
+              },
+              {
+                "name": "city",
+                "label": "Ort",
+                "type": "text",
+                "componentType": "input",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "value": "",
+                "placeholder": "Musterstadt",
+                "help": "",
+                "disabled": false,
+                "valuePath": "record.workspace.club_data.city",
+                "payloadKey": "city",
+                "readonly": false,
+                "defaultValue": "",
+                "options": [],
+                "order": 40
+              },
+              {
+                "name": "contact_name",
+                "label": "Kontaktperson",
+                "type": "text",
+                "componentType": "input",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "value": "",
+                "placeholder": "Vor- und Nachname",
+                "help": "",
+                "disabled": false,
+                "valuePath": "record.workspace.club_data.contact_name",
+                "payloadKey": "contact_name",
+                "readonly": false,
+                "defaultValue": "",
+                "options": [],
+                "order": 50
+              },
+              {
+                "name": "contact_email",
+                "label": "Kontakt-E-Mail",
+                "type": "email",
+                "componentType": "email",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "value": "",
+                "placeholder": "verein@beispiel.de",
+                "help": "",
+                "disabled": false,
+                "valuePath": "record.workspace.club_data.contact_email",
+                "payloadKey": "contact_email",
+                "readonly": false,
+                "defaultValue": "",
+                "options": [],
+                "order": 60
+              },
+              {
+                "name": "contact_phone",
+                "label": "Telefon",
+                "type": "text",
+                "componentType": "input",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "value": "",
+                "placeholder": "+49 ...",
+                "help": "",
+                "disabled": false,
+                "valuePath": "record.workspace.club_data.contact_phone",
+                "payloadKey": "contact_phone",
+                "readonly": false,
+                "defaultValue": "",
+                "options": [],
+                "span": "full",
+                "order": 70
+              }
+            ],
+            "rows": [],
+            "actions": []
+          },
+          "rowsPath": "",
+          "tableConfig": {
+            "tableId": "",
+            "rowKeyField": "",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "",
+            "sortDir": "asc",
+            "filterFields": []
+          }
+        },
+        {
+          "id": "club_settings_club_approvals_inline_preview",
+          "title": "Freigaben im Vereinskontext",
+          "renderMode": "table",
+          "componentType": "inline-data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.work_participations + public.event_planner_registrations",
+            "sourceKind": "table",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/club-data/READ_club_approvals_inline_preview.sql",
+              "expectedColumns": [
+                "context_label",
+                "entry_title",
+                "member_label",
+                "status",
+                "approval_mode",
+                "updated_at"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "full",
+            "panelState": "preview",
+            "panelStateLabel": "Vorschau",
+            "panelStateHint": "Die Vergleichsflaeche ist sichtbar, aber der kombinierte Live-Read-Vertrag fehlt noch.",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Die Vergleichsflaeche fuer Helfer und Freigaben kann erst im Club-Kontext beurteilt werden.",
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "local_only",
+            "target": "app_status",
+            "path": "local:app_status"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            {
+              "key": "context_label",
+              "label": "Kontext",
+              "type": "text"
+            },
+            {
+              "key": "entry_title",
+              "label": "Eintrag",
+              "type": "text"
+            },
+            {
+              "key": "member_label",
+              "label": "Person",
+              "type": "text"
+            },
+            {
+              "key": "status",
+              "label": "Status",
+              "type": "text"
+            },
+            {
+              "key": "approval_mode",
+              "label": "Freigabemodus",
+              "type": "text"
+            },
+            {
+              "key": "updated_at",
+              "label": "Zuletzt bewegt",
+              "type": "text"
+            }
+          ],
+          "rowsPath": "rows",
+          "tableConfig": {
+            "tableId": "adm-club-settings-club-data-approvals-preview",
+            "rowKeyField": "id",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "updated_at",
+            "sortDir": "desc",
+            "filterFields": [
+              {
+                "key": "context_label",
+                "label": "Kontext",
+                "type": "text",
+                "placeholder": "Arbeitseinsatz / Freigabe"
+              },
+              {
+                "key": "status",
+                "label": "Status",
+                "type": "text",
+                "placeholder": "pending / approved"
+              },
+              {
+                "key": "member_label",
+                "label": "Person",
+                "type": "text",
+                "placeholder": "Name"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "club_settings_invites",
+      "label": "Einladungen",
+      "title": "Einladungen",
+      "description": "Registrierungslink und QR-Code fuer Vereinsbeitritte auf Basis des bestehenden Invite-Prozesses.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": true,
+        "update": true,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": [
+          "admin",
+          "vorstand",
+          "superadmin"
+        ],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "club_settings_invite_create",
+          "title": "Einladungsprozess",
+          "renderMode": "form",
+          "componentType": "FormPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": true,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "club-invite-create",
+            "sourceKind": "process",
+            "sourceOfTruth": "edge",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/invites/READ_invite_create.sql",
+              "expectedColumns": [
+                "club_name",
+                "club_code",
+                "max_uses",
+                "expires_in_days",
+                "invite_token",
+                "invite_register_url",
+                "invite_qr_url",
+                "invite_expires_at"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "panelState": "partial",
+            "panelStateLabel": "Teilweise live",
+            "panelStateHint": "Der Write-Pfad existiert bereits, ein vollstaendiger Read-/History-Vertrag fuer Einladungen fehlt noch.",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Einladungen werden erst im freigegebenen Club-Kontext erzeugt.",
+              "loadPayloadDefaults": {},
+              "savePayloadDefaults": {
+                "club_id": "{club_id}",
+                "club_code": "{club_code}"
+              },
+              "successMessage": "Einladungslink erfolgreich erzeugt.",
+              "resultFieldMap": {
+                "invite_token": "invite_token",
+                "invite_register_url": "invite_register_url",
+                "invite_qr_url": "invite_qr_url",
+                "invite_expires_at": "invite_expires_at"
+              },
+              "fieldDefs": [
+                {
+                  "name": "club_name",
+                  "label": "Verein",
+                  "type": "text",
+                  "componentType": "input",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.club_name",
+                  "payloadKey": "",
+                  "group": "invite",
+                  "displaySpan": "full",
+                  "order": 10,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "club_code",
+                  "label": "Club-Code",
+                  "type": "text",
+                  "componentType": "input",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.club_code",
+                  "payloadKey": "",
+                  "group": "invite",
+                  "displaySpan": null,
+                  "order": 20,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "max_uses",
+                  "label": "Max. Nutzungen",
+                  "type": "number",
+                  "componentType": "number",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.max_uses",
+                  "payloadKey": "max_uses",
+                  "group": "invite",
+                  "displaySpan": null,
+                  "order": 30,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": true,
+                  "defaultValue": 25,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "expires_in_days",
+                  "label": "Gueltig (Tage)",
+                  "type": "number",
+                  "componentType": "number",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.expires_in_days",
+                  "payloadKey": "expires_in_days",
+                  "group": "invite",
+                  "displaySpan": null,
+                  "order": 40,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": true,
+                  "defaultValue": 14,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "invite_token",
+                  "label": "Invite-Token",
+                  "type": "text",
+                  "componentType": "input",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.invite_token",
+                  "payloadKey": "",
+                  "group": "invite_result",
+                  "displaySpan": "full",
+                  "order": 50,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "invite_register_url",
+                  "label": "Registrierungs-URL",
+                  "type": "text",
+                  "componentType": "input",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.invite_register_url",
+                  "payloadKey": "",
+                  "group": "invite_result",
+                  "displaySpan": "full",
+                  "order": 60,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "invite_qr_url",
+                  "label": "QR-URL",
+                  "type": "text",
+                  "componentType": "input",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.invite_qr_url",
+                  "payloadKey": "",
+                  "group": "invite_result",
+                  "displaySpan": "full",
+                  "order": 70,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "invite_expires_at",
+                  "label": "Gueltig bis",
+                  "type": "text",
+                  "componentType": "input",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.invite_expires_at",
+                  "payloadKey": "",
+                  "group": "invite_result",
+                  "displaySpan": "full",
+                  "order": 80,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                }
+              ]
+            }
+          },
+          "loadBinding": {
+            "kind": "local_only",
+            "target": "app_status",
+            "path": "local:app_status"
+          },
+          "saveBinding": {
+            "kind": "edge_function",
+            "target": "club-invite-create",
+            "path": "edge:club-invite-create"
+          },
+          "content": {
+            "fields": [
+              {
+                "name": "max_uses",
+                "label": "Max. Nutzungen",
+                "type": "number",
+                "componentType": "number",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "value": 25,
+                "placeholder": "",
+                "help": "",
+                "disabled": false,
+                "valuePath": "record.max_uses",
+                "payloadKey": "max_uses",
+                "readonly": false,
+                "defaultValue": 25,
+                "options": [],
+                "order": 30
+              }
+            ],
+            "rows": [],
+            "actions": []
+          },
+          "rowsPath": "",
+          "tableConfig": {
+            "tableId": "",
+            "rowKeyField": "",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "",
+            "sortDir": "asc",
+            "filterFields": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "club_settings_members",
+      "label": "Mitglieder",
+      "title": "Mitglieder",
+      "description": "Mitgliederverzeichnis ueber den bestehenden Admin-Registry-RPC.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": [
+          "admin",
+          "vorstand",
+          "superadmin"
+        ],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "club_settings_members_registry",
+          "title": "Mitgliederverzeichnis",
+          "renderMode": "table",
+          "componentType": "inline-data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.admin_member_registry",
+            "sourceKind": "table",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/members/READ_members_overview.sql",
+              "expectedColumns": [
+                "club_code",
+                "club_member_no",
+                "member_no",
+                "last_name",
+                "first_name",
+                "role",
+                "status",
+                "fishing_card_type",
+                "last_sign_in_at",
+                "email",
+                "street",
+                "zip",
+                "city",
+                "phone",
+                "mobile",
+                "birthdate",
+                "guardian_member_no",
+                "sepa_approved",
+                "iban_last4"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Mitglieder werden erst im Club-Kontext geladen.",
+              "enrichMemberRegistry": true,
+              "rowsPath": "rows",
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              }
+            }
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.admin_member_registry",
+            "path": "rpc:public.admin_member_registry"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [
+              {
+                "label": "Vertragsstand",
+                "value": "ACL-Matrix bleibt readonly, bis ein serverseitiger Rollenvertrag belegt ist.",
+                "span": "full"
+              }
+            ],
+            "actions": []
+          },
+          "columns": [
+            {
+              "key": "club_code",
+              "label": "Club",
+              "type": "text"
+            },
+            {
+              "key": "club_member_no",
+              "label": "Vereins-Nr.",
+              "type": "text"
+            },
+            {
+              "key": "member_no",
+              "label": "FCP-ID",
+              "type": "text"
+            },
+            {
+              "key": "last_name",
+              "label": "Name",
+              "type": "text"
+            },
+            {
+              "key": "first_name",
+              "label": "Vorname",
+              "type": "text"
+            },
+            {
+              "key": "role",
+              "label": "Rolle",
+              "type": "text"
+            },
+            {
+              "key": "status",
+              "label": "Status",
+              "type": "text"
+            },
+            {
+              "key": "fishing_card_type",
+              "label": "Angelkarte",
+              "type": "text"
+            },
+            {
+              "key": "last_sign_in_at",
+              "label": "Zuletzt angemeldet",
+              "type": "text"
+            },
+            {
+              "key": "email",
+              "label": "E-Mail",
+              "type": "text"
+            },
+            {
+              "key": "street",
+              "label": "Adresse",
+              "type": "text"
+            },
+            {
+              "key": "zip",
+              "label": "PLZ",
+              "type": "text"
+            },
+            {
+              "key": "city",
+              "label": "Ort",
+              "type": "text"
+            },
+            {
+              "key": "phone",
+              "label": "Tel",
+              "type": "text"
+            },
+            {
+              "key": "mobile",
+              "label": "Mobil",
+              "type": "text"
+            },
+            {
+              "key": "birthdate",
+              "label": "Geburtstag",
+              "type": "text"
+            },
+            {
+              "key": "guardian_member_no",
+              "label": "Bezugsperson",
+              "type": "text"
+            },
+            {
+              "key": "sepa_approved",
+              "label": "SEPA",
+              "type": "boolean"
+            },
+            {
+              "key": "iban_last4",
+              "label": "IBAN (letzte 4)",
+              "type": "text"
+            }
+          ],
+          "rowsPath": "rows",
+          "tableConfig": {
+            "tableId": "adm-club-settings-members",
+            "rowKeyField": "member_no",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "club_member_no",
+            "sortDir": "asc",
+            "filterFields": [
+              {
+                "key": "status",
+                "label": "Status",
+                "type": "text",
+                "placeholder": "aktiv / passiv"
+              },
+              {
+                "key": "club_code",
+                "label": "Club",
+                "type": "text",
+                "placeholder": "Club"
+              },
+              {
+                "key": "role",
+                "label": "Rolle",
+                "type": "text",
+                "placeholder": "Rolle"
+              },
+              {
+                "key": "email",
+                "label": "E-Mail",
+                "type": "text",
+                "placeholder": "suche@email"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "club_settings_roles",
+      "label": "Rollen / Rechte",
+      "title": "Rollen / Rechte",
+      "description": "Backend-seitige Rollenstruktur vorhanden, aber die alte ACL-Matrix war nur ein LocalStorage-Pilot.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": [
+          "admin",
+          "vorstand",
+          "superadmin"
+        ],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "club_settings_roles_backend_contract",
+          "title": "Rollen- und Rechtevertrag",
+          "renderMode": "readonly",
+          "componentType": "ReadonlyPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.club_user_roles",
+            "sourceKind": "table",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/roles/READ_roles_backend_contract.sql",
+              "expectedColumns": [
+                "backend_relation",
+                "legacy_acl_state",
+                "allowed_roles"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "full",
+            "panelState": "gap",
+            "panelStateLabel": "Vertrag offen",
+            "panelStateHint": "Backend-Relation public.club_user_roles existiert, aber kein club-scoped Read-Vertrag fuer eine Rollen-Uebersicht in ClubSettings vorhanden. ACL-Matrix war nur LocalStorage-Pilot.",
+            "resolver": {
+              "fieldDefs": [
+                {
+                  "name": "backend_relation",
+                  "label": "Backend-Relation",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.backend_relation",
+                  "payloadKey": "",
+                  "group": "roles",
+                  "displaySpan": "full",
+                  "order": 10,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": "public.club_user_roles",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "legacy_acl_state",
+                  "label": "Legacy-ACL-Stand",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.legacy_acl_state",
+                  "payloadKey": "",
+                  "group": "roles",
+                  "displaySpan": "full",
+                  "order": 20,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": "Nur LocalStorage-Pilot. Kein belastbarer Write-Vertrag fuer die alte ACL-Matrix.",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "allowed_roles",
+                  "label": "Freigegebene Manager-Rollen",
+                  "type": "text",
+                  "componentType": "readonly",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.allowed_roles",
+                  "payloadKey": "",
+                  "group": "roles",
+                  "displaySpan": "full",
+                  "order": 30,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": true,
+                  "required": false,
+                  "defaultValue": "admin, vorstand, superadmin",
+                  "validationRules": [],
+                  "options": []
+                }
+              ]
+            }
+          },
+          "loadBinding": {
+            "kind": "local_only",
+            "target": "app_status",
+            "path": "local:app_status"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [
+              {
+                "label": "Status",
+                "value": "Noch nicht final angebunden. Separater Read-/Write-Vertrag fehlt.",
+                "span": "full"
+              }
+            ],
+            "actions": []
+          },
+          "rowsPath": "",
+          "tableConfig": {
+            "tableId": "",
+            "rowKeyField": "",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "",
+            "sortDir": "asc",
+            "filterFields": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "club_settings_waters",
+      "label": "Gewaesser",
+      "title": "Gewaesser",
+      "description": "Gewaesserliste aus dem bestehenden Club-Workspace.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": [
+          "admin",
+          "vorstand",
+          "superadmin"
+        ],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "club_settings_waters_table",
+          "title": "Gewaesser",
+          "renderMode": "table",
+          "componentType": "inline-data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "club-onboarding-workspace",
+            "sourceKind": "record",
+            "sourceOfTruth": "edge",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/waters/READ_waters_overview.sql",
+              "expectedColumns": [
+                "name",
+                "water_type",
+                "water_status",
+                "is_youth_allowed",
+                "requires_board_approval",
+                "water_cards"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Gewaesser werden erst im Club-Kontext geladen.",
+              "loadPayloadDefaults": {
+                "action": "get",
+                "club_id": "{club_id}"
+              },
+              "rowsPath": "record.workspace.waters"
+            }
+          },
+          "loadBinding": {
+            "kind": "edge_function",
+            "target": "club-onboarding-workspace",
+            "path": "edge:club-onboarding-workspace"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            {
+              "key": "name",
+              "label": "Gewaesser",
+              "type": "text"
+            },
+            {
+              "key": "water_type",
+              "label": "Typ",
+              "type": "text"
+            },
+            {
+              "key": "water_status",
+              "label": "Status",
+              "type": "text"
+            },
+            {
+              "key": "is_youth_allowed",
+              "label": "Jugend",
+              "type": "boolean"
+            },
+            {
+              "key": "requires_board_approval",
+              "label": "Vorstand",
+              "type": "boolean"
+            },
+            {
+              "key": "water_cards",
+              "label": "Angelkarten",
+              "type": "text"
+            }
+          ],
+          "rowsPath": "record.workspace.waters",
+          "tableConfig": {
+            "tableId": "adm-club-settings-waters",
+            "rowKeyField": "id",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "name",
+            "sortDir": "asc",
+            "filterFields": [
+              {
+                "key": "name",
+                "label": "Gewaesser",
+                "type": "text",
+                "placeholder": "z. B. Angelweiher"
+              },
+              {
+                "key": "water_status",
+                "label": "Status",
+                "type": "text",
+                "placeholder": "aktiv / inaktiv"
+              },
+              {
+                "key": "water_type",
+                "label": "Typ",
+                "type": "text",
+                "placeholder": "See / Fluss"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "club_settings_rules",
+      "label": "Regelwerke",
+      "title": "Regelwerke",
+      "description": "Vereinsregeln, Dokumentbezug und Verwendungsstatus.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": [
+          "admin",
+          "vorstand",
+          "superadmin"
+        ],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "club_settings_rules_table",
+          "title": "Regelwerke",
+          "renderMode": "table",
+          "componentType": "inline-data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": false
+          },
+          "meta": {
+            "sourceTable": "regulations_contract_pending",
+            "sourceKind": "table",
+            "sourceOfTruth": "json",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/rules/READ_rules_overview.sql",
+              "expectedColumns": [
+                "rule_name",
+                "rule_scope",
+                "version_label",
+                "status",
+                "updated_at"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "full",
+            "panelState": "gap",
+            "panelStateLabel": "Vertrag offen",
+            "panelStateHint": "Dieser Bereich ist im Workspace vorbereitet, aber noch nicht live an eine echte Datenquelle angeschlossen.",
+            "resolver": {
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "local_only",
+            "target": "app_status",
+            "path": "local:app_status"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            {
+              "key": "rule_name",
+              "label": "Regelwerk",
+              "type": "text"
+            },
+            {
+              "key": "rule_scope",
+              "label": "Bereich",
+              "type": "text"
+            },
+            {
+              "key": "version_label",
+              "label": "Version",
+              "type": "text"
+            },
+            {
+              "key": "status",
+              "label": "Status",
+              "type": "text"
+            },
+            {
+              "key": "updated_at",
+              "label": "Zuletzt aktualisiert",
+              "type": "text"
+            }
+          ],
+          "rowsPath": "rows",
+          "tableConfig": {
+            "tableId": "adm-club-settings-rules",
+            "rowKeyField": "id",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "updated_at",
+            "sortDir": "asc",
+            "filterFields": [
+              {
+                "key": "rule_name",
+                "label": "Regelwerk",
+                "type": "text",
+                "placeholder": "Name"
+              },
+              {
+                "key": "status",
+                "label": "Status",
+                "type": "text",
+                "placeholder": "draft / live"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "club_settings_cards",
+      "label": "Ausweise",
+      "title": "Ausweise",
+      "description": "Ausweis-Lifecycle, Freigaben und Gueltigkeiten.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": [
+          "admin",
+          "vorstand",
+          "superadmin"
+        ],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "club_settings_cards_table",
+          "title": "Ausweise",
+          "renderMode": "table",
+          "componentType": "data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": false
+          },
+          "meta": {
+            "sourceTable": "public.admin_member_cards_overview_v2",
+            "sourceKind": "table",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/cards/READ_cards_overview.sql",
+              "expectedColumns": [
+                "club_member_no",
+                "member_name",
+                "fishing_card_type",
+                "status",
+                "validity_label",
+                "updated_at"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "full",
+            "panelState": "partial",
+            "panelStateLabel": "Teilweise live",
+            "panelStateHint": "Die erste Ausweise-Uebersicht laeuft auf bestehender Mitglieder-/Profilwahrheit. Scanner-, PDF- und spaetere Claim-/Preislogik bleiben getrennte Ausbaupfade.",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Ausweise werden erst im Club-Kontext geladen.",
+              "rowsPath": "rows",
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              }
+            }
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.admin_member_cards_overview_v2",
+            "path": "rpc:public.admin_member_cards_overview_v2"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            {
+              "key": "club_member_no",
+              "label": "Vereinsnummer",
+              "type": "text"
+            },
+            {
+              "key": "member_name",
+              "label": "Mitglied",
+              "type": "text"
+            },
+            {
+              "key": "fishing_card_type",
+              "label": "Ausweistyp",
+              "type": "text"
+            },
+            {
+              "key": "status",
+              "label": "Status",
+              "type": "text"
+            },
+            {
+              "key": "validity_label",
+              "label": "Gueltigkeit",
+              "type": "text"
+            },
+            {
+              "key": "updated_at",
+              "label": "Zuletzt aktualisiert",
+              "type": "text"
+            }
+          ],
+          "rowsPath": "rows",
+          "tableConfig": {
+            "tableId": "adm-club-settings-cards",
+            "rowKeyField": "id",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "club_member_no",
+            "sortDir": "asc",
+            "filterFields": [
+              {
+                "key": "club_member_no",
+                "label": "Vereinsnummer",
+                "type": "text",
+                "placeholder": "Vereinsnummer"
+              },
+              {
+                "key": "member_name",
+                "label": "Mitglied",
+                "type": "text",
+                "placeholder": "Name"
+              },
+              {
+                "key": "fishing_card_type",
+                "label": "Ausweistyp",
+                "type": "text",
+                "placeholder": "FCP Standard"
+              },
+              {
+                "key": "status",
+                "label": "Status",
+                "type": "text",
+                "placeholder": "aktiv / abgelaufen"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "club_settings_work",
+      "label": "Arbeitseinsätze",
+      "title": "Arbeitseinsätze",
+      "description": "Planung und Verwaltung von Arbeitseinsätzen.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": [
+          "admin",
+          "vorstand",
+          "superadmin"
+        ],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "club_settings_work_helpers_table",
+          "title": "Helfer und Arbeitseinsaetze",
+          "renderMode": "table",
+          "componentType": "inline-data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": false
+          },
+          "meta": {
+            "sourceTable": "public.work_events + public.work_participations + public.event_planner_configs + public.event_planner_registrations",
+            "sourceKind": "table",
+            "sourceOfTruth": "json",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/work/READ_work_overview.sql",
+              "expectedColumns": [
+                "event_title",
+                "slot_label",
+                "helper_count",
+                "approval_mode",
+                "status",
+                "starts_at"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "full",
+            "panelState": "gap",
+            "panelStateLabel": "Vertrag offen",
+            "panelStateHint": "Datenbausteine sind vorhanden, aber der kombinierte ClubSettings-Reader fuer Helfer und Einsaetze fehlt noch.",
+            "resolver": {
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "local_only",
+            "target": "app_status",
+            "path": "local:app_status"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            {
+              "key": "event_title",
+              "label": "Einsatz",
+              "type": "text"
+            },
+            {
+              "key": "slot_label",
+              "label": "Slot / Rolle",
+              "type": "text"
+            },
+            {
+              "key": "helper_count",
+              "label": "Helfer",
+              "type": "text"
+            },
+            {
+              "key": "approval_mode",
+              "label": "Freigabe",
+              "type": "text"
+            },
+            {
+              "key": "status",
+              "label": "Status",
+              "type": "text"
+            },
+            {
+              "key": "starts_at",
+              "label": "Termin",
+              "type": "text"
+            }
+          ],
+          "rowsPath": "rows",
+          "tableConfig": {
+            "tableId": "adm-club-settings-work",
+            "rowKeyField": "id",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "starts_at",
+            "sortDir": "desc",
+            "filterFields": [
+              {
+                "key": "event_title",
+                "label": "Einsatz",
+                "type": "text",
+                "placeholder": "Titel"
+              },
+              {
+                "key": "status",
+                "label": "Status",
+                "type": "text",
+                "placeholder": "open / approved"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "club_settings_approvals",
+      "label": "Fangfreigaben",
+      "title": "Fangfreigaben",
+      "description": "Freigabe- und Pruefbereich fuer Fangmeldungen.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": [
+          "admin",
+          "vorstand",
+          "superadmin"
+        ],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "club_settings_approvals_table",
+          "title": "Fangfreigaben",
+          "renderMode": "table",
+          "componentType": "inline-data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": false
+          },
+          "meta": {
+            "sourceTable": "catch_approvals_contract_pending",
+            "sourceKind": "table",
+            "sourceOfTruth": "json",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/approvals/READ_approvals_overview.sql",
+              "expectedColumns": [
+                "water_name",
+                "member_label",
+                "trip_date",
+                "status",
+                "requires_board_approval",
+                "updated_at"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "full",
+            "panelState": "gap",
+            "panelStateLabel": "Vertrag offen",
+            "panelStateHint": "Fangfreigaben sind als Zielbereich angelegt, der finale Live-Vertrag ist aber noch nicht belegt.",
+            "resolver": {
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "local_only",
+            "target": "app_status",
+            "path": "local:app_status"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            {
+              "key": "water_name",
+              "label": "Gewaesser",
+              "type": "text"
+            },
+            {
+              "key": "member_label",
+              "label": "Mitglied",
+              "type": "text"
+            },
+            {
+              "key": "trip_date",
+              "label": "Datum",
+              "type": "text"
+            },
+            {
+              "key": "status",
+              "label": "Status",
+              "type": "text"
+            },
+            {
+              "key": "requires_board_approval",
+              "label": "Vorstand",
+              "type": "boolean"
+            },
+            {
+              "key": "updated_at",
+              "label": "Zuletzt aktualisiert",
+              "type": "text"
+            }
+          ],
+          "rowsPath": "rows",
+          "tableConfig": {
+            "tableId": "adm-club-settings-approvals",
+            "rowKeyField": "id",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "updated_at",
+            "sortDir": "desc",
+            "filterFields": [
+              {
+                "key": "water_name",
+                "label": "Gewaesser",
+                "type": "text",
+                "placeholder": "Name"
+              },
+              {
+                "key": "status",
+                "label": "Status",
+                "type": "text",
+                "placeholder": "pending / approved"
+              },
+              {
+                "key": "member_label",
+                "label": "Mitglied",
+                "type": "text",
+                "placeholder": "Name"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "club_settings_settings",
+      "label": "Einstellungen",
+      "title": "Einstellungen",
+      "description": "Vereinsspezifische Betriebsoptionen und weitere Konfiguration.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": [
+          "admin",
+          "vorstand",
+          "superadmin"
+        ],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "club_settings_settings_qfm",
+          "title": "Einstellungen",
+          "renderMode": "form",
+          "componentType": "FormPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": true,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": false
+          },
+          "meta": {
+            "sourceTable": "club_settings_contract_pending",
+            "sourceKind": "record",
+            "sourceOfTruth": "json",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/settings/READ_settings_qfm.sql",
+              "expectedColumns": [
+                "club_visibility_mode",
+                "default_approval_mode",
+                "helper_mode",
+                "settings_notes"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "full",
+            "panelState": "gap",
+            "panelStateLabel": "Vertrag offen",
+            "panelStateHint": "Diese QFM-Flaeche zeigt das Zielbild, aber der finale serverseitige Write-Vertrag fuer Einstellungen fehlt noch.",
+            "resolver": {
+              "fieldDefs": [
+                {
+                  "name": "club_visibility_mode",
+                  "label": "Sichtbarkeit des Vereins",
+                  "type": "select",
+                  "componentType": "select",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.club_visibility_mode",
+                  "payloadKey": "club_visibility_mode",
+                  "group": "settings",
+                  "displaySpan": "full",
+                  "order": 10,
+                  "placeholder": "",
+                  "helpText": "Zielbild fuer die kuenftige QFM-Blockstruktur innerhalb von ADM. Backend-Vertrag fuer die echten Einstellungen fehlt noch.",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "club_only",
+                  "validationRules": [],
+                  "options": [
+                    {
+                      "value": "club_only",
+                      "label": "Nur vereinsintern"
+                    },
+                    {
+                      "value": "members_and_managers",
+                      "label": "Mitglieder und Manager"
+                    },
+                    {
+                      "value": "public_preview",
+                      "label": "Oeffentliche Vorschau"
+                    }
+                  ]
+                },
+                {
+                  "name": "default_approval_mode",
+                  "label": "Standard-Freigabemodus",
+                  "type": "select",
+                  "componentType": "select",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.default_approval_mode",
+                  "payloadKey": "default_approval_mode",
+                  "group": "settings",
+                  "displaySpan": null,
+                  "order": 20,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "manual",
+                  "validationRules": [],
+                  "options": [
+                    {
+                      "value": "manual",
+                      "label": "Manuelle Freigabe"
+                    },
+                    {
+                      "value": "auto",
+                      "label": "Automatische Freigabe"
+                    }
+                  ]
+                },
+                {
+                  "name": "helper_mode",
+                  "label": "Helferplanung",
+                  "type": "select",
+                  "componentType": "select",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.helper_mode",
+                  "payloadKey": "helper_mode",
+                  "group": "settings",
+                  "displaySpan": null,
+                  "order": 30,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "structured",
+                  "validationRules": [],
+                  "options": [
+                    {
+                      "value": "structured",
+                      "label": "Mit Slots"
+                    },
+                    {
+                      "value": "simple",
+                      "label": "Einfach"
+                    }
+                  ]
+                },
+                {
+                  "name": "settings_notes",
+                  "label": "Hinweis fuer die Finalisierung",
+                  "type": "textarea",
+                  "componentType": "textarea",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.settings_notes",
+                  "payloadKey": "settings_notes",
+                  "group": "settings",
+                  "displaySpan": "full",
+                  "order": 40,
+                  "placeholder": "Welche Betriebsoptionen sollen spaeter wirklich serverseitig gespeichert werden?",
+                  "helpText": "Dieser Block dient aktuell als QFM-Zielform innerhalb von ADM, noch nicht als finaler Write-Vertrag.",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                }
+              ]
+            }
+          },
+          "loadBinding": {
+            "kind": "local_only",
+            "target": "app_status",
+            "path": "local:app_status"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [
+              {
+                "name": "club_visibility_mode",
+                "label": "Sichtbarkeit des Vereins",
+                "type": "select",
+                "componentType": "select",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "value": "club_only",
+                "placeholder": "",
+                "help": "Zielbild fuer die kuenftige QFM-Blockstruktur innerhalb von ADM. Backend-Vertrag fuer die echten Einstellungen fehlt noch.",
+                "disabled": false,
+                "valuePath": "record.club_visibility_mode",
+                "payloadKey": "club_visibility_mode",
+                "readonly": false,
+                "defaultValue": "club_only",
+                "options": [
+                  {
+                    "value": "club_only",
+                    "label": "Nur vereinsintern"
+                  },
+                  {
+                    "value": "members_and_managers",
+                    "label": "Mitglieder und Manager"
+                  },
+                  {
+                    "value": "public_preview",
+                    "label": "Oeffentliche Vorschau"
+                  }
+                ],
+                "span": "full",
+                "order": 10
+              }
+            ],
+            "rows": [
+              {
+                "label": "Status",
+                "value": "QFM-Zielstruktur vorhanden, aber finaler Read-/Write-Vertrag fuer Club-Einstellungen fehlt noch.",
+                "span": "full"
+              }
+            ],
+            "actions": []
+          },
+          "rowsPath": "",
+          "tableConfig": {
+            "tableId": "",
+            "rowKeyField": "",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "",
+            "sortDir": "asc",
+            "filterFields": []
+          }
+        }
+      ]
+    }
+  ],
+  "specialCases": [
+    {
+      "id": "club_settings_resume_before_adm",
+      "type": "routing_contract",
+      "domKey": "adm-club-settings-resume-before-adm",
+      "cssKey": "adm-club-settings-resume-before-adm",
+      "reason": "Wenn die E-Mail-Verifikation oder Identity-Klaerung noch nicht abgeschlossen ist, muss der Resume-Link zuerst wieder auf /verein-anfragen/ fuehren. Erst nach Billing oder Freigabe darf in diese ADM-Maske gewechselt werden."
+    },
+    {
+      "id": "club_settings_current_known_route",
+      "type": "route_note",
+      "domKey": "adm-club-settings-current-route",
+      "cssKey": "adm-club-settings-current-route",
+      "reason": "Aktuell ist der bekannte Einstieg noch /app/mitgliederverwaltung/. Diese Maske beschreibt denselben kuenftigen Bereich semantisch als ClubSettings, ohne die bestehende Route im Repo bereits hart umzubenennen."
+    },
+    {
+      "id": "club_settings_acl_backend_gap",
+      "type": "contract_gap",
+      "domKey": "adm-club-settings-acl-gap",
+      "cssKey": "adm-club-settings-acl-gap",
+      "reason": "Die alte ACL-Matrix war nur ein LocalStorage-Pilot. Fuer Rollen/Rechte wird erst dann ein editierbarer Panel-Block sauber, wenn ein serverseitiger Read-/Write-Vertrag fuer club_user_roles und Modulrechte explizit belegt ist."
+    },
+    {
+      "id": "club_settings_roles_matrix_renderer_gap",
+      "type": "renderer_gap",
+      "domKey": "adm-club-settings-roles-matrix-renderer-gap",
+      "cssKey": "adm-club-settings-roles-matrix-renderer-gap",
+      "reason": "Fuer Rollen/Rechte existiert fachlich eine Matrix, aber aktuell keine angeschlossene Rendererfunktion in ADM/QFM. Erst wenn DOM-, CSS-, Load-/Save- und Audit-Vertrag zusammen definiert sind, darf hier eine echte Rechte-Matrix live gehen."
+    },
+    {
+      "id": "club_settings_audit_auto_fields",
+      "type": "audit_contract",
+      "domKey": "adm-club-settings-audit-auto",
+      "cssKey": "adm-club-settings-audit-auto",
+      "reason": "Audit-Felder wie created_at, created_by, updated_at und updated_by werden serverseitig gepflegt. Die Maske darf sie anzeigen, aber nicht frei im Frontend setzen."
+    },
+    {
+      "id": "club_settings_snapshot_security_pending",
+      "type": "security_review_pending",
+      "domKey": "adm-club-settings-snapshot-security-pending",
+      "cssKey": "adm-club-settings-snapshot-security-pending",
+      "reason": "Snapshot- und Setup-Overview bleiben vorsichtig angebunden, bis public.club_onboarding_snapshot und public.get_onboarding_process_state gegen den echten Zielstand serverseitig verifiziert sind."
+    },
+    {
+      "id": "club_settings_edge_contracts_verified_locally",
+      "type": "security_note",
+      "domKey": "adm-club-settings-edge-contracts-verified-locally",
+      "cssKey": "adm-club-settings-edge-contracts-verified-locally",
+      "reason": "Die lokalen Edge-Functions club-onboarding-workspace und club-invite-create pruefen Club-Ownership serverseitig. Remote-Deploy und Laufzeit muessen trotzdem separat gegen den Zielstand verifiziert werden."
+    },
+    {
+      "id": "club_settings_dual_access_approvals_helpers",
+      "type": "ux_contract",
+      "domKey": "adm-club-settings-dual-access-approvals-helpers",
+      "cssKey": "adm-club-settings-dual-access-approvals-helpers",
+      "reason": "Freigaben und Helfer koennen bewusst an zwei Stellen auftauchen: einmal im fachlich richtigen Spezialbereich und einmal als Vergleichszugang innerhalb der Vereinsdaten. Die zweite Flaeche dient der Bedienpruefung und ersetzt den spaeteren Spezial-Workflow nicht automatisch."
+    },
+    {
+      "id": "club_settings_work_approvals_read_contract_pending",
+      "type": "contract_gap",
+      "domKey": "adm-club-settings-work-approvals-read-contract-pending",
+      "cssKey": "adm-club-settings-work-approvals-read-contract-pending",
+      "reason": "Fuer Helfer- und Freigabeflaechen existieren bereits Datenbausteine und Tabellen im Backend, aber noch kein finaler kombinierter Board-Read-Vertrag fuer ADM. Der aktuelle Vertragsstand ist in docs/contracts/ADM_CLUB_SETTINGS_WORK_APPROVALS_CONTRACT.md dokumentiert und darf erst nach echter Read-Anbindung live gehen."
+    },
+    {
+      "id": "club_settings_adm_qfm_inner_content_contract",
+      "type": "renderer_contract",
+      "domKey": "adm-club-settings-adm-qfm-inner-content-contract",
+      "cssKey": "adm-club-settings-adm-qfm-inner-content-contract",
+      "reason": "ADM bleibt die aeussere Maskenfamilie und der Workspace-Rahmen. Einzelne Inhaltsbloecke innerhalb von ADM duerfen bewusst im QFM-Stil gerendert werden. Dafuer wird keine dritte Maskenfamilie eingefuehrt, solange ADM den QFM-Inhalt ueber bestehende Form- und Content-Renderer sauber tragen kann."
+    }
+  ]
+}

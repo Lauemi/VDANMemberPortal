@@ -1,0 +1,92 @@
+{
+  "model_name": "fcp_full_target_db_model",
+  "version": "0.2",
+  "principles": [
+    "club_scoped_first",
+    "regelwerk_getrennt_von_buchung",
+    "snapshot_statt_live_neuberechnung",
+    "optionalitaet_ohne_schemaumbau",
+    "append_only_fuer_bewegungsnahe_finanzdaten",
+    "ui_darf_einfach_sein_db_bleibt_vollstaendig",
+    "bestehende_member_dualitaet_beruecksichtigen"
+  ],
+  "existing_anchor_tables": [
+    "club_members",
+    "members",
+    "club_member_identities",
+    "club_onboarding_state",
+    "club_onboarding_audit",
+    "water_bodies",
+    "work_events",
+    "work_participations",
+    "work_checkins",
+    "club_roles",
+    "club_role_permissions",
+    "club_user_roles"
+  ],
+  "domains": [
+    {
+      "domain": "membership_core",
+      "tables": [
+        "club_member_categories",
+        "club_member_category_assignments"
+      ]
+    },
+    {
+      "domain": "card_system",
+      "tables": [
+        "club_card_types",
+        "club_card_type_waters",
+        "club_member_card_assignments"
+      ]
+    },
+    {
+      "domain": "pricing_rules",
+      "tables": [
+        "club_fee_rules",
+        "club_fee_rule_overrides",
+        "club_fee_rule_override_audit"
+      ]
+    },
+    {
+      "domain": "work_hours",
+      "tables": [
+        "club_work_hour_rules",
+        "club_work_hour_entries",
+        "club_work_hour_settlements",
+        "club_work_hour_carryovers"
+      ]
+    },
+    {
+      "domain": "additional_costs",
+      "tables": [
+        "club_surcharges",
+        "club_association_fees"
+      ]
+    },
+    {
+      "domain": "billing_generation_control",
+      "tables": [
+        "club_billing_cycles",
+        "club_billing_cycle_rules",
+        "club_billing_runs"
+      ]
+    },
+    {
+      "domain": "billing_and_payments",
+      "tables": [
+        "club_billing_positions",
+        "club_payments",
+        "club_payment_allocations",
+        "club_dunning_records",
+        "club_sepa_mandates"
+      ]
+    },
+    {
+      "domain": "compatibility_and_transition",
+      "tables": [
+        "club_member_financial_snapshot"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,530 @@
+[
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "indexname": "catch_entries_pkey",
+    "indexdef": "CREATE UNIQUE INDEX catch_entries_pkey ON public.catch_entries USING btree (id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "indexname": "idx_catch_entries_canonical_membership_id",
+    "indexdef": "CREATE INDEX idx_catch_entries_canonical_membership_id ON public.catch_entries USING btree (canonical_membership_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "indexname": "idx_catch_entries_caught_on",
+    "indexdef": "CREATE INDEX idx_catch_entries_caught_on ON public.catch_entries USING btree (caught_on DESC)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "indexname": "idx_catch_entries_club_id",
+    "indexdef": "CREATE INDEX idx_catch_entries_club_id ON public.catch_entries USING btree (club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "indexname": "idx_catch_entries_identity_id",
+    "indexdef": "CREATE INDEX idx_catch_entries_identity_id ON public.catch_entries USING btree (identity_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "indexname": "idx_catch_entries_member_water_id",
+    "indexdef": "CREATE INDEX idx_catch_entries_member_water_id ON public.catch_entries USING btree (member_water_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "indexname": "idx_catch_entries_tenant_id",
+    "indexdef": "CREATE INDEX idx_catch_entries_tenant_id ON public.catch_entries USING btree (tenant_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "indexname": "idx_catch_entries_trip_catch_context_id",
+    "indexdef": "CREATE INDEX idx_catch_entries_trip_catch_context_id ON public.catch_entries USING btree (trip_catch_context_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "indexname": "idx_catch_entries_trip_id",
+    "indexdef": "CREATE INDEX idx_catch_entries_trip_id ON public.catch_entries USING btree (fishing_trip_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "indexname": "idx_catch_entries_user_date",
+    "indexdef": "CREATE INDEX idx_catch_entries_user_date ON public.catch_entries USING btree (user_id, caught_on DESC)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "indexname": "idx_catch_entries_water_source",
+    "indexdef": "CREATE INDEX idx_catch_entries_water_source ON public.catch_entries USING btree (water_source)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_subscriptions",
+    "indexname": "club_billing_subscriptions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_billing_subscriptions_pkey ON public.club_billing_subscriptions USING btree (club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_subscriptions",
+    "indexname": "club_billing_subscriptions_provider_stripe_checkout_session_key",
+    "indexdef": "CREATE UNIQUE INDEX club_billing_subscriptions_provider_stripe_checkout_session_key ON public.club_billing_subscriptions USING btree (provider, stripe_checkout_session_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_subscriptions",
+    "indexname": "club_billing_subscriptions_provider_stripe_subscription_id_key",
+    "indexdef": "CREATE UNIQUE INDEX club_billing_subscriptions_provider_stripe_subscription_id_key ON public.club_billing_subscriptions USING btree (provider, stripe_subscription_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_subscriptions",
+    "indexname": "idx_club_billing_subscriptions_club_core_id",
+    "indexdef": "CREATE INDEX idx_club_billing_subscriptions_club_core_id ON public.club_billing_subscriptions USING btree (club_core_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_subscriptions",
+    "indexname": "idx_club_billing_subscriptions_state",
+    "indexdef": "CREATE INDEX idx_club_billing_subscriptions_state ON public.club_billing_subscriptions USING btree (billing_state, updated_at DESC)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_subscriptions",
+    "indexname": "idx_club_billing_subscriptions_tenant_id",
+    "indexdef": "CREATE INDEX idx_club_billing_subscriptions_tenant_id ON public.club_billing_subscriptions USING btree (tenant_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_webhook_events",
+    "indexname": "club_billing_webhook_events_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_billing_webhook_events_pkey ON public.club_billing_webhook_events USING btree (id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_webhook_events",
+    "indexname": "club_billing_webhook_events_provider_event_id_key",
+    "indexdef": "CREATE UNIQUE INDEX club_billing_webhook_events_provider_event_id_key ON public.club_billing_webhook_events USING btree (provider, event_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_webhook_events",
+    "indexname": "idx_club_billing_webhook_events_canonical_membership_id",
+    "indexdef": "CREATE INDEX idx_club_billing_webhook_events_canonical_membership_id ON public.club_billing_webhook_events USING btree (canonical_membership_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_webhook_events",
+    "indexname": "idx_club_billing_webhook_events_club",
+    "indexdef": "CREATE INDEX idx_club_billing_webhook_events_club ON public.club_billing_webhook_events USING btree (club_id, processed_at DESC)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_webhook_events",
+    "indexname": "idx_club_billing_webhook_events_club_core_id",
+    "indexdef": "CREATE INDEX idx_club_billing_webhook_events_club_core_id ON public.club_billing_webhook_events USING btree (club_core_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_webhook_events",
+    "indexname": "idx_club_billing_webhook_events_tenant_id",
+    "indexdef": "CREATE INDEX idx_club_billing_webhook_events_tenant_id ON public.club_billing_webhook_events USING btree (tenant_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_events",
+    "indexname": "club_events_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_events_pkey ON public.club_events USING btree (id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_events",
+    "indexname": "idx_club_events_club_id",
+    "indexdef": "CREATE INDEX idx_club_events_club_id ON public.club_events USING btree (club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_events",
+    "indexname": "idx_club_events_event_core_id",
+    "indexdef": "CREATE INDEX idx_club_events_event_core_id ON public.club_events USING btree (event_core_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_events",
+    "indexname": "idx_club_events_is_youth_start",
+    "indexdef": "CREATE INDEX idx_club_events_is_youth_start ON public.club_events USING btree (is_youth, starts_at)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_events",
+    "indexname": "idx_club_events_status_start",
+    "indexdef": "CREATE INDEX idx_club_events_status_start ON public.club_events USING btree (status, starts_at)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_events",
+    "indexname": "idx_club_events_tenant_id",
+    "indexdef": "CREATE INDEX idx_club_events_tenant_id ON public.club_events USING btree (tenant_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_member_identities",
+    "indexname": "club_member_identities_club_id_member_no_key",
+    "indexdef": "CREATE UNIQUE INDEX club_member_identities_club_id_member_no_key ON public.club_member_identities USING btree (club_id, member_no)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_member_identities",
+    "indexname": "club_member_identities_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_member_identities_pkey ON public.club_member_identities USING btree (club_id, user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_member_identities",
+    "indexname": "idx_club_member_identities_canonical_membership_id",
+    "indexdef": "CREATE INDEX idx_club_member_identities_canonical_membership_id ON public.club_member_identities USING btree (canonical_membership_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_member_identities",
+    "indexname": "idx_club_member_identities_identity_id",
+    "indexdef": "CREATE INDEX idx_club_member_identities_identity_id ON public.club_member_identities USING btree (identity_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_member_identities",
+    "indexname": "idx_club_member_identities_member",
+    "indexdef": "CREATE INDEX idx_club_member_identities_member ON public.club_member_identities USING btree (member_no)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_member_identities",
+    "indexname": "idx_club_member_identities_tenant_id",
+    "indexdef": "CREATE INDEX idx_club_member_identities_tenant_id ON public.club_member_identities USING btree (tenant_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_member_identities",
+    "indexname": "idx_club_member_identities_user",
+    "indexdef": "CREATE INDEX idx_club_member_identities_user ON public.club_member_identities USING btree (user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_members",
+    "indexname": "club_members_club_id_member_no_key",
+    "indexdef": "CREATE UNIQUE INDEX club_members_club_id_member_no_key ON public.club_members USING btree (club_id, member_no)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_members",
+    "indexname": "club_members_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_members_pkey ON public.club_members USING btree (member_no)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_members",
+    "indexname": "idx_club_members_canonical_membership_id",
+    "indexdef": "CREATE INDEX idx_club_members_canonical_membership_id ON public.club_members USING btree (canonical_membership_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_members",
+    "indexname": "idx_club_members_club_code",
+    "indexdef": "CREATE INDEX idx_club_members_club_code ON public.club_members USING btree (club_code)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_members",
+    "indexname": "idx_club_members_club_id",
+    "indexdef": "CREATE INDEX idx_club_members_club_id ON public.club_members USING btree (club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_members",
+    "indexname": "idx_club_members_club_member_no_unique",
+    "indexdef": "CREATE UNIQUE INDEX idx_club_members_club_member_no_unique ON public.club_members USING btree (club_id, club_member_no) WHERE (NULLIF(TRIM(BOTH FROM club_member_no), ''::text) IS NOT NULL)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_members",
+    "indexname": "idx_club_members_identity_id",
+    "indexdef": "CREATE INDEX idx_club_members_identity_id ON public.club_members USING btree (identity_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_members",
+    "indexname": "idx_club_members_is_youth",
+    "indexdef": "CREATE INDEX idx_club_members_is_youth ON public.club_members USING btree (is_youth)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_members",
+    "indexname": "idx_club_members_member_no_unique",
+    "indexdef": "CREATE UNIQUE INDEX idx_club_members_member_no_unique ON public.club_members USING btree (member_no)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_members",
+    "indexname": "idx_club_members_status",
+    "indexdef": "CREATE INDEX idx_club_members_status ON public.club_members USING btree (status)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_members",
+    "indexname": "idx_club_members_tenant_id",
+    "indexdef": "CREATE INDEX idx_club_members_tenant_id ON public.club_members USING btree (tenant_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_user_roles",
+    "indexname": "club_user_roles_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_user_roles_pkey ON public.club_user_roles USING btree (user_id, club_id, role_key)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_user_roles",
+    "indexname": "idx_club_user_roles_canonical_membership_id",
+    "indexdef": "CREATE INDEX idx_club_user_roles_canonical_membership_id ON public.club_user_roles USING btree (canonical_membership_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_user_roles",
+    "indexname": "idx_club_user_roles_identity_id",
+    "indexdef": "CREATE INDEX idx_club_user_roles_identity_id ON public.club_user_roles USING btree (identity_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_user_roles",
+    "indexname": "idx_club_user_roles_tenant_id",
+    "indexdef": "CREATE INDEX idx_club_user_roles_tenant_id ON public.club_user_roles USING btree (tenant_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "documents",
+    "indexname": "documents_pkey",
+    "indexdef": "CREATE UNIQUE INDEX documents_pkey ON public.documents USING btree (id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "documents",
+    "indexname": "idx_documents_active",
+    "indexdef": "CREATE INDEX idx_documents_active ON public.documents USING btree (is_active)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "documents",
+    "indexname": "idx_documents_category_sort",
+    "indexdef": "CREATE INDEX idx_documents_category_sort ON public.documents USING btree (category, sort_order, title)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "documents",
+    "indexname": "idx_documents_club_id",
+    "indexdef": "CREATE INDEX idx_documents_club_id ON public.documents USING btree (club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "documents",
+    "indexname": "idx_documents_document_link_id",
+    "indexdef": "CREATE INDEX idx_documents_document_link_id ON public.documents USING btree (document_link_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "documents",
+    "indexname": "idx_documents_tenant_id",
+    "indexdef": "CREATE INDEX idx_documents_tenant_id ON public.documents USING btree (tenant_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "indexname": "fishing_trips_pkey",
+    "indexdef": "CREATE UNIQUE INDEX fishing_trips_pkey ON public.fishing_trips USING btree (id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "indexname": "idx_fishing_trips_canonical_membership_id",
+    "indexdef": "CREATE INDEX idx_fishing_trips_canonical_membership_id ON public.fishing_trips USING btree (canonical_membership_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "indexname": "idx_fishing_trips_club_id",
+    "indexdef": "CREATE INDEX idx_fishing_trips_club_id ON public.fishing_trips USING btree (club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "indexname": "idx_fishing_trips_identity_id",
+    "indexdef": "CREATE INDEX idx_fishing_trips_identity_id ON public.fishing_trips USING btree (identity_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "indexname": "idx_fishing_trips_member_water_id",
+    "indexdef": "CREATE INDEX idx_fishing_trips_member_water_id ON public.fishing_trips USING btree (member_water_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "indexname": "idx_fishing_trips_tenant_id",
+    "indexdef": "CREATE INDEX idx_fishing_trips_tenant_id ON public.fishing_trips USING btree (tenant_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "indexname": "idx_fishing_trips_trip_catch_context_id",
+    "indexdef": "CREATE INDEX idx_fishing_trips_trip_catch_context_id ON public.fishing_trips USING btree (trip_catch_context_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "indexname": "idx_fishing_trips_trip_date",
+    "indexdef": "CREATE INDEX idx_fishing_trips_trip_date ON public.fishing_trips USING btree (trip_date DESC)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "indexname": "idx_fishing_trips_user_trip_date",
+    "indexdef": "CREATE INDEX idx_fishing_trips_user_trip_date ON public.fishing_trips USING btree (user_id, trip_date DESC)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "indexname": "idx_fishing_trips_water_source",
+    "indexdef": "CREATE INDEX idx_fishing_trips_water_source ON public.fishing_trips USING btree (water_source)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "indexname": "uq_fishing_trips_user_date_member_no_catch",
+    "indexdef": "CREATE UNIQUE INDEX uq_fishing_trips_user_date_member_no_catch ON public.fishing_trips USING btree (user_id, trip_date, member_water_id) WHERE ((entry_type = 'no_catch'::text) AND (water_source = 'member'::text) AND (member_water_id IS NOT NULL))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "indexname": "uq_fishing_trips_user_date_official_no_catch",
+    "indexdef": "CREATE UNIQUE INDEX uq_fishing_trips_user_date_official_no_catch ON public.fishing_trips USING btree (user_id, trip_date, water_body_id) WHERE ((entry_type = 'no_catch'::text) AND (water_source = 'official'::text) AND (water_body_id IS NOT NULL))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "indexname": "idx_profiles_canonical_membership_id",
+    "indexdef": "CREATE INDEX idx_profiles_canonical_membership_id ON public.profiles USING btree (canonical_membership_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "indexname": "idx_profiles_club_member_no",
+    "indexdef": "CREATE INDEX idx_profiles_club_member_no ON public.profiles USING btree (club_id, member_no)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "indexname": "idx_profiles_first_login_at",
+    "indexdef": "CREATE INDEX idx_profiles_first_login_at ON public.profiles USING btree (first_login_at)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "indexname": "idx_profiles_identity_id",
+    "indexdef": "CREATE INDEX idx_profiles_identity_id ON public.profiles USING btree (identity_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "indexname": "idx_profiles_last_seen_at",
+    "indexdef": "CREATE INDEX idx_profiles_last_seen_at ON public.profiles USING btree (last_seen_at DESC)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "indexname": "idx_profiles_member_card_checked_at",
+    "indexdef": "CREATE INDEX idx_profiles_member_card_checked_at ON public.profiles USING btree (member_card_checked_at DESC)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "indexname": "idx_profiles_member_card_valid",
+    "indexdef": "CREATE INDEX idx_profiles_member_card_valid ON public.profiles USING btree (member_card_valid, member_card_valid_until)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "indexname": "idx_profiles_must_change_password",
+    "indexdef": "CREATE INDEX idx_profiles_must_change_password ON public.profiles USING btree (must_change_password)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "indexname": "idx_profiles_must_verify_identity",
+    "indexdef": "CREATE INDEX idx_profiles_must_verify_identity ON public.profiles USING btree (must_verify_identity) WHERE (must_verify_identity = true)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "indexname": "idx_profiles_tenant_id",
+    "indexdef": "CREATE INDEX idx_profiles_tenant_id ON public.profiles USING btree (tenant_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "indexname": "profiles_email_key",
+    "indexdef": "CREATE UNIQUE INDEX profiles_email_key ON public.profiles USING btree (email)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "indexname": "profiles_pkey",
+    "indexdef": "CREATE UNIQUE INDEX profiles_pkey ON public.profiles USING btree (id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "indexname": "uq_profiles_club_member_no",
+    "indexdef": "CREATE UNIQUE INDEX uq_profiles_club_member_no ON public.profiles USING btree (COALESCE(club_id, '00000000-0000-0000-0000-000000000000'::uuid), member_no)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "indexname": "uq_profiles_member_card_id",
+    "indexdef": "CREATE UNIQUE INDEX uq_profiles_member_card_id ON public.profiles USING btree (member_card_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_roles",
+    "indexname": "idx_user_roles_canonical_membership_id",
+    "indexdef": "CREATE INDEX idx_user_roles_canonical_membership_id ON public.user_roles USING btree (canonical_membership_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_roles",
+    "indexname": "idx_user_roles_club_id",
+    "indexdef": "CREATE INDEX idx_user_roles_club_id ON public.user_roles USING btree (club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_roles",
+    "indexname": "idx_user_roles_identity_id",
+    "indexdef": "CREATE INDEX idx_user_roles_identity_id ON public.user_roles USING btree (identity_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_roles",
+    "indexname": "idx_user_roles_tenant_id",
+    "indexdef": "CREATE INDEX idx_user_roles_tenant_id ON public.user_roles USING btree (tenant_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_roles",
+    "indexname": "user_roles_pkey",
+    "indexdef": "CREATE UNIQUE INDEX user_roles_pkey ON public.user_roles USING btree (user_id, club_id, role)"
+  }
+]

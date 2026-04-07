@@ -1,0 +1,72 @@
+[
+  {
+    "table_name": "profiles",
+    "total_rows": 349,
+    "filled_identity_id": 0,
+    "filled_tenant_id": 0,
+    "filled_canonical_membership_id": 0
+  },
+  {
+    "table_name": "club_members",
+    "total_rows": 350,
+    "filled_identity_id": 0,
+    "filled_tenant_id": 0,
+    "filled_canonical_membership_id": 0
+  },
+  {
+    "table_name": "club_member_identities",
+    "total_rows": 349,
+    "filled_identity_id": 0,
+    "filled_tenant_id": 0,
+    "filled_canonical_membership_id": 0
+  },
+  {
+    "table_name": "club_user_roles",
+    "total_rows": 350,
+    "filled_identity_id": 0,
+    "filled_tenant_id": 0,
+    "filled_canonical_membership_id": 0
+  },
+  {
+    "table_name": "user_roles",
+    "total_rows": 352,
+    "filled_identity_id": 0,
+    "filled_tenant_id": 0,
+    "filled_canonical_membership_id": 0
+  },
+  {
+    "table_name": "catch_entries",
+    "total_rows": 3,
+    "filled_identity_id": 0,
+    "filled_tenant_id": 0,
+    "filled_canonical_membership_id": 0
+  },
+  {
+    "table_name": "fishing_trips",
+    "total_rows": 4,
+    "filled_identity_id": 0,
+    "filled_tenant_id": 0,
+    "filled_canonical_membership_id": 0
+  },
+  {
+    "table_name": "club_billing_webhook_events",
+    "total_rows": 0,
+    "filled_identity_id": 0,
+    "filled_tenant_id": 0,
+    "filled_canonical_membership_id": 0
+  },
+  {
+    "table_name": "club_events",
+    "total_rows": 7,
+    "filled_identity_id": 0,
+    "filled_tenant_id": 0,
+    "filled_canonical_membership_id": 0
+  },
+  {
+    "table_name": "documents",
+    "total_rows": 8,
+    "filled_identity_id": 0,
+    "filled_tenant_id": 0,
+    "filled_canonical_membership_id": 0
+  }
+]

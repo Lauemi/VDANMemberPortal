@@ -1,0 +1,665 @@
+/*
+  OFM / QFM Scoped Mask CSS
+  Ziel:
+  - nur innerhalb der Maskenfamilie greifen
+  - vorhandene FCP-Tokens weiterverwenden
+  - keine VDAN-Optik
+  - keine globale App-Shell anfassen
+
+  Empfohlener Hook im DOM:
+  <div class="qfp-shell" data-mask-family="OFM">...</div>
+
+  Optional kompatibel auch fuer QFM:
+  <div class="qfp-shell" data-mask-family="QFM">...</div>
+*/
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) {
+  --ofm-bg: var(--panel, #181d18);
+  --ofm-surface: var(--surface, #181d18);
+  --ofm-surface-2: var(--surface-2, #212721);
+  --ofm-soft: color-mix(in srgb, var(--surface, #181d18) 82%, white 18%);
+  --ofm-text: var(--text, #f5f1e8);
+  --ofm-muted: var(--muted, rgba(232,223,205,.78));
+  --ofm-line: var(--line, rgba(232,217,181,.12));
+  --ofm-line-strong: color-mix(in srgb, var(--line, rgba(232,217,181,.12)) 55%, white 45%);
+  --ofm-accent: var(--accent, #595a3d);
+  --ofm-accent-strong: var(--accent-strong, #4b4c33);
+  --ofm-accent-warm: var(--accent-warm, #e8d9b5);
+  --ofm-shadow: var(--shadow, 0 20px 60px rgba(0,0,0,.45));
+  --ofm-radius-xl: 28px;
+  --ofm-radius-lg: 22px;
+  --ofm-radius-md: 16px;
+  --ofm-radius-sm: 12px;
+  --ofm-gap-xl: 24px;
+  --ofm-gap-lg: 18px;
+  --ofm-gap-md: 14px;
+  --ofm-gap-sm: 10px;
+  --ofm-panel-toggle-h: 60px;
+  --ofm-maxw: 1180px;
+
+  width: 100%;
+  max-width: var(--ofm-maxw);
+  margin-inline: auto;
+  color: var(--ofm-text);
+  font: inherit;
+  display: grid;
+  gap: var(--ofm-gap-lg);
+}
+
+.qfp-companion-surface {
+  --ofm-bg: var(--panel, #181d18);
+  --ofm-surface: var(--surface, #181d18);
+  --ofm-surface-2: var(--surface-2, #212721);
+  --ofm-soft: color-mix(in srgb, var(--surface, #181d18) 82%, white 18%);
+  --ofm-text: var(--text, #f5f1e8);
+  --ofm-muted: var(--muted, rgba(232,223,205,.78));
+  --ofm-line: var(--line, rgba(232,217,181,.12));
+  --ofm-line-strong: color-mix(in srgb, var(--line, rgba(232,217,181,.12)) 55%, white 45%);
+  --ofm-accent: var(--accent, #595a3d);
+  --ofm-accent-strong: var(--accent-strong, #4b4c33);
+  --ofm-accent-warm: var(--accent-warm, #e8d9b5);
+  --ofm-shadow: var(--shadow, 0 20px 60px rgba(0,0,0,.45));
+  --ofm-radius-xl: 28px;
+  --ofm-radius-lg: 22px;
+  --ofm-radius-md: 16px;
+  --ofm-radius-sm: 12px;
+  color: var(--ofm-text);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) *,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) *::before,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) *::after {
+  box-sizing: border-box;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) :where(h1, h2, h3, h4, h5, h6, p) {
+  margin: 0;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-mask-header,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-mask-content,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-mask-status {
+  min-width: 0;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-card {
+  border: 1px solid var(--ofm-line);
+  border-radius: var(--ofm-radius-xl);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--ofm-accent) 12%, transparent), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--ofm-surface) 94%, black 6%), color-mix(in srgb, var(--ofm-bg) 96%, black 4%));
+  box-shadow: var(--ofm-shadow);
+}
+
+.qfp-companion-surface.qfp-card {
+  border: 1px solid var(--ofm-line);
+  border-radius: var(--ofm-radius-xl);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--ofm-accent) 12%, transparent), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--ofm-surface) 94%, black 6%), color-mix(in srgb, var(--ofm-bg) 96%, black 4%));
+  box-shadow: var(--ofm-shadow);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-card--header,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-card--section-header {
+  padding: 24px;
+}
+
+.qfp-companion-surface.qfp-card--header,
+.qfp-companion-surface.qfp-card--section-header {
+  padding: 24px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-kicker {
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ofm-accent-warm);
+  opacity: .9;
+}
+
+.qfp-companion-surface .qfp-kicker {
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ofm-accent-warm);
+  opacity: .9;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-title {
+  margin-top: 8px;
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1.02;
+  letter-spacing: -.03em;
+  color: var(--ofm-text);
+}
+
+.qfp-shell[data-mask-family="OFM"] .qfp-section-title,
+.qfp-shell[data-mask-family="OFM"] .qfp-panel-title,
+.qfp-shell[data-mask-family="OFM"] .qfp-subtitle,
+.qfp-shell[data-mask-family="QFM"] .qfp-section-title,
+.qfp-shell[data-mask-family="QFM"] .qfp-panel-title,
+.qfp-shell[data-mask-family="QFM"] .qfp-subtitle {
+  color: var(--ofm-text);
+}
+
+.qfp-companion-surface .qfp-section-title,
+.qfp-companion-surface .qfp-panel-title,
+.qfp-companion-surface .qfp-subtitle {
+  color: var(--ofm-text);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-section-title {
+  margin-top: 6px;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  line-height: 1.05;
+}
+
+.qfp-shell[data-mask-family="OFM"] .qfp-description,
+.qfp-shell[data-mask-family="OFM"] .qfp-panel-meta,
+.qfp-shell[data-mask-family="OFM"] .qfp-field-help,
+.qfp-shell[data-mask-family="OFM"] .qfp-panel-state,
+.qfp-shell[data-mask-family="QFM"] .qfp-description,
+.qfp-shell[data-mask-family="QFM"] .qfp-panel-meta,
+.qfp-shell[data-mask-family="QFM"] .qfp-field-help,
+.qfp-shell[data-mask-family="QFM"] .qfp-panel-state {
+  color: var(--ofm-muted);
+}
+
+.qfp-companion-surface .qfp-description,
+.qfp-companion-surface .qfp-panel-meta,
+.qfp-companion-surface .qfp-field-help,
+.qfp-companion-surface .qfp-panel-state {
+  color: var(--ofm-muted);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-description {
+  margin-top: 10px;
+  line-height: 1.6;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-mask-nav {
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-nav-list {
+  display: flex;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-nav-item {
+  appearance: none;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--ofm-line);
+  background: color-mix(in srgb, var(--ofm-surface) 82%, transparent);
+  color: var(--ofm-muted);
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: .18s ease;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-nav-item:hover,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-nav-item:focus-visible {
+  border-color: var(--ofm-line-strong);
+  color: var(--ofm-text);
+  outline: none;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-nav-item.is-active {
+  border-color: color-mix(in srgb, var(--ofm-accent) 70%, white 30%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ofm-accent) 86%, white 14%), color-mix(in srgb, var(--ofm-accent-strong) 94%, black 6%));
+  color: var(--ofm-accent-warm);
+  box-shadow: 0 10px 24px rgba(0,0,0,.22);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-mask-content {
+  display: grid;
+  gap: var(--ofm-gap-lg);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-section {
+  display: grid;
+  gap: var(--ofm-gap-lg);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-panel-list {
+  display: grid;
+  gap: 12px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-card--panel {
+  overflow: hidden;
+  border-radius: var(--ofm-radius-lg);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-panel-toggle {
+  appearance: none;
+  width: 100%;
+  min-height: var(--ofm-panel-toggle-h);
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-panel-toggle:hover,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-panel-toggle:focus-visible {
+  background: rgba(255,255,255,.03);
+  outline: none;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-panel-toggle-main,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-panel-toggle-side,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-panel-title-wrap {
+  min-width: 0;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-panel-title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-panel-meta {
+  margin-top: 4px;
+  font-size: .82rem;
+  overflow-wrap: anywhere;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-panel-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--ofm-line);
+  background: rgba(255,255,255,.05);
+  color: var(--ofm-accent-warm);
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-panel-chevron {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,.05);
+  color: var(--ofm-accent-warm);
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-panel-body {
+  padding: 0 18px 18px;
+  border-top: 1px solid rgba(255,255,255,.04);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-content-slot {
+  padding-top: 14px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-readonly-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-readonly-item,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-stat-card,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-mixed-block {
+  padding: 14px 16px;
+  border: 1px solid var(--ofm-line);
+  border-radius: var(--ofm-radius-md);
+  min-height: 96px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ofm-surface) 96%, white 4%),
+      color-mix(in srgb, var(--ofm-surface-2) 94%, black 6%)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.03),
+    0 10px 24px rgba(0,0,0,.16);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-readonly-item.is-full,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-field.is-full {
+  grid-column: 1 / -1;
+}
+
+.qfp-shell[data-mask-family="OFM"] .qfp-field-label,
+.qfp-shell[data-mask-family="QFM"] .qfp-field-label {
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ofm-muted) 72%, var(--ofm-accent-warm) 28%);
+}
+
+.qfp-companion-surface .qfp-field-label {
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ofm-muted) 72%, var(--ofm-accent-warm) 28%);
+}
+
+.qfp-shell[data-mask-family="OFM"] .qfp-field-value,
+.qfp-shell[data-mask-family="OFM"] .qfp-stat-value,
+.qfp-shell[data-mask-family="QFM"] .qfp-field-value,
+.qfp-shell[data-mask-family="QFM"] .qfp-stat-value {
+  margin-top: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ofm-text);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.qfp-companion-surface .qfp-field-value,
+.qfp-companion-surface .qfp-stat-value {
+  margin-top: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ofm-text);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-readonly-item .qfp-field-value {
+  min-height: 1.35em;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-field {
+  display: grid;
+  gap: 8px;
+}
+
+.qfp-companion-surface .qfp-form-field {
+  display: grid;
+  gap: 8px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-field :where(input, select, textarea) {
+  width: 100%;
+  min-height: 50px;
+  border-radius: var(--ofm-radius-sm);
+  border: 1px solid var(--ofm-line);
+  background: color-mix(in srgb, var(--ofm-surface) 78%, white 22%);
+  color: var(--ofm-text);
+  font: inherit;
+  padding: 0 14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.qfp-companion-surface .qfp-form-field :where(input, select, textarea) {
+  width: 100%;
+  min-height: 50px;
+  border-radius: var(--ofm-radius-sm);
+  border: 1px solid var(--ofm-line);
+  background: color-mix(in srgb, var(--ofm-surface) 78%, white 22%);
+  color: var(--ofm-text);
+  font: inherit;
+  padding: 0 14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-field textarea {
+  min-height: 112px;
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+.qfp-companion-surface .qfp-form-field textarea {
+  min-height: 112px;
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-field :where(input, select, textarea)::placeholder {
+  color: color-mix(in srgb, var(--ofm-muted) 85%, transparent);
+}
+
+.qfp-companion-surface .qfp-form-field :where(input, select, textarea)::placeholder {
+  color: color-mix(in srgb, var(--ofm-muted) 85%, transparent);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-field :where(input, select, textarea):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ofm-accent) 70%, white 30%);
+  outline-offset: 1px;
+}
+
+.qfp-companion-surface .qfp-form-field :where(input, select, textarea):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ofm-accent) 70%, white 30%);
+  outline-offset: 1px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-field :where(input, select, textarea):disabled {
+  opacity: .8;
+  background: color-mix(in srgb, var(--ofm-surface) 88%, black 12%);
+  color: var(--ofm-muted);
+  cursor: not-allowed;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 50px;
+  padding: 10px 14px;
+  border: 1px solid var(--ofm-line);
+  border-radius: var(--ofm-radius-sm);
+  background: color-mix(in srgb, var(--ofm-surface) 78%, white 22%);
+}
+
+.qfp-companion-surface .qfp-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 50px;
+  padding: 10px 14px;
+  border: 1px solid var(--ofm-line);
+  border-radius: var(--ofm-radius-sm);
+  background: color-mix(in srgb, var(--ofm-surface) 78%, white 22%);
+}
+
+.qfp-companion-surface .qfp-toggle-label,
+.qfp-companion-surface .qfp-toggle-label a {
+  color: var(--ofm-text);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.qfp-companion-surface .qfp-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-btn {
+  appearance: none;
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid var(--ofm-line);
+  background: rgba(255,255,255,.04);
+  color: var(--ofm-text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: .18s ease;
+}
+
+.qfp-companion-surface .qfp-btn {
+  appearance: none;
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid var(--ofm-line);
+  background: rgba(255,255,255,.04);
+  color: var(--ofm-text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: .18s ease;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-btn:hover,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-btn:focus-visible {
+  border-color: var(--ofm-line-strong);
+  outline: none;
+}
+
+.qfp-companion-surface .qfp-btn:hover,
+.qfp-companion-surface .qfp-btn:focus-visible {
+  border-color: var(--ofm-line-strong);
+  outline: none;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-btn--primary {
+  border-color: color-mix(in srgb, var(--ofm-accent) 70%, white 30%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ofm-accent) 86%, white 14%), color-mix(in srgb, var(--ofm-accent-strong) 94%, black 6%));
+  color: var(--ofm-accent-warm);
+}
+
+.qfp-companion-surface .qfp-btn--primary {
+  border-color: color-mix(in srgb, var(--ofm-accent) 70%, white 30%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ofm-accent) 86%, white 14%), color-mix(in srgb, var(--ofm-accent-strong) 94%, black 6%));
+  color: var(--ofm-accent-warm);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-btn--ghost {
+  background: rgba(255,255,255,.03);
+  color: var(--ofm-text);
+}
+
+.qfp-companion-surface .qfp-btn--ghost {
+  background: rgba(255,255,255,.03);
+  color: var(--ofm-text);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--ofm-line);
+  border-radius: var(--ofm-radius-md);
+  background: color-mix(in srgb, var(--ofm-surface) 84%, black 16%);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 680px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-table :where(th, td) {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--ofm-line);
+  text-align: left;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-table th {
+  font-size: .74rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ofm-muted);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-table td {
+  color: var(--ofm-text);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-inline-error,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-status-line.is-error {
+  padding: 12px 14px;
+  border: 1px solid rgba(239,83,80,.28);
+  border-radius: var(--ofm-radius-sm);
+  background: rgba(239,83,80,.12);
+  color: #ffd3d2;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-status-line.is-info {
+  padding: 12px 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--ofm-radius-sm);
+  background: rgba(255,255,255,.04);
+  color: var(--ofm-muted);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-empty,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-custom-text {
+  padding: 14px 16px;
+  border: 1px dashed var(--ofm-line);
+  border-radius: var(--ofm-radius-md);
+  color: var(--ofm-muted);
+  background: rgba(255,255,255,.02);
+}
+
+@media (max-width: 900px) {
+  :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) {
+    --ofm-panel-toggle-h: 54px;
+  }
+
+  :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-readonly-grid,
+  :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-card--header,
+  :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-card--section-header,
+  :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-panel-body,
+  :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-panel-toggle {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-title {
+    font-size: 1.7rem;
+  }
+
+  :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-nav-item {
+    min-height: 44px;
+    padding-inline: 14px;
+  }
+
+  :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-btn {
+    width: 100%;
+  }
+
+  :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-action-bar {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

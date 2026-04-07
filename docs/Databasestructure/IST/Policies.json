@@ -1,0 +1,1002 @@
+[
+  {
+    "schemaname": "public",
+    "tablename": "app_notes",
+    "policyname": "notes_delete_own_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(is_same_club(club_id) AND ((auth.uid() = user_id) OR is_admin()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_notes",
+    "policyname": "notes_insert_own_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_same_club(club_id) AND ((auth.uid() = user_id) OR is_admin()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_notes",
+    "policyname": "notes_select_own_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(is_same_club(club_id) AND ((auth.uid() = user_id) OR is_admin()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_notes",
+    "policyname": "notes_update_own_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(is_same_club(club_id) AND ((auth.uid() = user_id) OR is_admin()))",
+    "with_check": "(is_same_club(club_id) AND ((auth.uid() = user_id) OR is_admin()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_route_catalog",
+    "policyname": "app_route_catalog_deny_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "false",
+    "with_check": "false"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_runtime_audit_log",
+    "policyname": "app_runtime_audit_log_deny_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "false",
+    "with_check": "false"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_runtime_configs",
+    "policyname": "app_runtime_configs_deny_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "false",
+    "with_check": "false"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_runtime_releases",
+    "policyname": "app_runtime_releases_deny_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "false",
+    "with_check": "false"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_secure_settings",
+    "policyname": "app_secure_settings_deny_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{anon,authenticated}",
+    "cmd": "ALL",
+    "qual": "false",
+    "with_check": "false"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_template_bindings",
+    "policyname": "app_template_bindings_deny_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "false",
+    "with_check": "false"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_template_library",
+    "policyname": "app_template_library_deny_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "false",
+    "with_check": "false"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_theme_tokens",
+    "policyname": "app_theme_tokens_deny_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "false",
+    "with_check": "false"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "bug_reports",
+    "policyname": "bug_reports_insert_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = reporter_user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "bug_reports",
+    "policyname": "bug_reports_select_own_or_manager",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((auth.uid() = reporter_user_id) OR is_admin_or_vorstand())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "bug_reports",
+    "policyname": "bug_reports_update_manager",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "is_admin_or_vorstand()",
+    "with_check": "is_admin_or_vorstand()"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "bug_reports",
+    "policyname": "bug_reports_update_own_limited",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "((auth.uid() = reporter_user_id) AND (status = ANY (ARRAY['open'::text, 'needs_info'::text])))",
+    "with_check": "(auth.uid() = reporter_user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "policyname": "catch_delete_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(is_same_club(club_id) AND ((auth.uid() = user_id) OR is_admin_or_vorstand_in_club(club_id)))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "policyname": "catch_insert_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_same_club(club_id) AND ((auth.uid() = user_id) OR is_admin_or_vorstand_in_club(club_id)))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "policyname": "catch_select_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((auth.uid() = user_id) OR (is_admin_or_vorstand_in_club(club_id) AND is_same_club(club_id)))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "catch_entries",
+    "policyname": "catch_update_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(is_same_club(club_id) AND ((auth.uid() = user_id) OR is_admin_or_vorstand_in_club(club_id)))",
+    "with_check": "(is_same_club(club_id) AND ((auth.uid() = user_id) OR is_admin_or_vorstand_in_club(club_id)))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_subscriptions",
+    "policyname": "club_billing_subscriptions_admin_any_club_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin_in_any_club()",
+    "with_check": "is_admin_in_any_club()"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_subscriptions",
+    "policyname": "club_billing_subscriptions_select_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(is_admin_or_vorstand_in_club(club_id) OR is_admin_in_any_club())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_webhook_events",
+    "policyname": "club_billing_webhook_events_admin_any_club_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin_in_any_club()",
+    "with_check": "is_admin_in_any_club()"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_billing_webhook_events",
+    "policyname": "club_billing_webhook_events_select_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(((club_id IS NOT NULL) AND is_admin_or_vorstand_in_club(club_id)) OR is_admin_in_any_club())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_events",
+    "policyname": "club_events_manager_same_club_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(is_admin_or_vorstand_in_club(club_id) AND is_same_club(club_id))",
+    "with_check": "(is_admin_or_vorstand_in_club(club_id) AND is_same_club(club_id))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_events",
+    "policyname": "club_events_manager_same_club_all_mt",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin_or_vorstand_in_club(club_id)",
+    "with_check": "is_admin_or_vorstand_in_club(club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_events",
+    "policyname": "club_events_select_tenant_published_or_manager",
+    "permissive": "PERMISSIVE",
+    "roles": "{anon,authenticated}",
+    "cmd": "SELECT",
+    "qual": "(can_access_club_content(club_id) AND ((status = 'published'::work_event_status) OR ((auth.uid() IS NOT NULL) AND is_admin_or_vorstand_in_club(club_id) AND is_same_club(club_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_member_identities",
+    "policyname": "club_member_identities_admin_manage",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(is_admin_in_club(club_id) OR is_admin_in_any_club())",
+    "with_check": "(is_admin_in_club(club_id) OR is_admin_in_any_club())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_member_identities",
+    "policyname": "club_member_identities_select_self_or_admin",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((user_id = ( SELECT auth.uid() AS uid)) OR is_admin_in_club(club_id) OR ( SELECT is_admin_in_any_club() AS is_admin_in_any_club))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_members",
+    "policyname": "club_members_superadmin_read",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = 'c7137e8c-ee7d-4b59-9e2f-1e0262d67d0d'::uuid)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_module_usecases",
+    "policyname": "club_module_usecases_admin_same_club_or_admin",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(is_admin_in_club(club_id) OR is_admin_in_any_club())",
+    "with_check": "(is_admin_in_club(club_id) OR is_admin_in_any_club())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_module_usecases",
+    "policyname": "club_module_usecases_select_same_club_or_admin",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(is_same_club(club_id) OR is_admin_in_any_club())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_onboarding_audit",
+    "policyname": "club_onboarding_audit_insert_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_admin_or_vorstand_in_club(club_id) OR is_admin_in_any_club())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_onboarding_audit",
+    "policyname": "club_onboarding_audit_select_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(is_admin_or_vorstand_in_club(club_id) OR is_admin_in_any_club())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_onboarding_state",
+    "policyname": "club_onboarding_state_manage_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(is_admin_or_vorstand_in_club(club_id) OR is_admin_in_any_club())",
+    "with_check": "(is_admin_or_vorstand_in_club(club_id) OR is_admin_in_any_club())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_onboarding_state",
+    "policyname": "club_onboarding_state_select_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(is_admin_or_vorstand_in_club(club_id) OR is_admin_in_any_club())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_registration_requests",
+    "policyname": "club_registration_requests_select_own_or_admin",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((requester_user_id = ( SELECT auth.uid() AS uid)) OR ( SELECT is_admin_in_any_club() AS is_admin_in_any_club))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_role_permissions",
+    "policyname": "club_role_permissions_admin_same_club_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin_in_club(club_id)",
+    "with_check": "is_admin_in_club(club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_role_permissions",
+    "policyname": "club_role_permissions_select_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "is_same_club(club_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_roles",
+    "policyname": "club_roles_admin_same_club_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin_in_club(club_id)",
+    "with_check": "is_admin_in_club(club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_roles",
+    "policyname": "club_roles_select_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "is_same_club(club_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_user_roles",
+    "policyname": "club_user_roles_admin_same_club_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin_in_club(club_id)",
+    "with_check": "is_admin_in_club(club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "club_user_roles",
+    "policyname": "club_user_roles_manager_same_club_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "is_admin_or_vorstand_in_club(club_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "contact_requests",
+    "policyname": "contact_requests_admin_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin()",
+    "with_check": "is_admin()"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "contact_requests",
+    "policyname": "contact_requests_manager_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "is_admin_or_vorstand_in_club(club_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "documents",
+    "policyname": "documents_manager_same_club_all_mt",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin_or_vorstand_in_club(club_id)",
+    "with_check": "is_admin_or_vorstand_in_club(club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "documents",
+    "policyname": "documents_select_tenant_public",
+    "permissive": "PERMISSIVE",
+    "roles": "{anon,authenticated}",
+    "cmd": "SELECT",
+    "qual": "((is_active = true) AND can_access_club_content(club_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "documents",
+    "policyname": "documents_write_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(is_admin_or_vorstand_in_club(club_id) AND is_same_club(club_id))",
+    "with_check": "(is_admin_or_vorstand_in_club(club_id) AND is_same_club(club_id))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "dsgvo_compliance_events",
+    "policyname": "dsgvo_events_admin_same_club_insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_admin() AND ((club_id IS NULL) OR is_same_club(club_id)))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "dsgvo_compliance_events",
+    "policyname": "dsgvo_events_admin_same_club_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(is_admin() AND ((club_id IS NULL) OR is_same_club(club_id)))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "event_planner_configs",
+    "policyname": "event_planner_configs_manager_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin_or_vorstand_in_club(club_id)",
+    "with_check": "is_admin_or_vorstand_in_club(club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "event_planner_configs",
+    "policyname": "event_planner_configs_select_same_club_or_manager",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((can_access_club_content(club_id) AND event_planner_config_is_published(base_kind, base_club_event_id, base_work_event_id)) OR is_admin_or_vorstand_in_club(club_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "event_planner_registrations",
+    "policyname": "event_planner_registrations_select_own_or_manager",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((auth_uid = ( SELECT auth.uid() AS uid)) OR is_admin_or_vorstand_in_club(club_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "event_planner_slots",
+    "policyname": "event_planner_slots_manager_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin_or_vorstand_in_club(club_id)",
+    "with_check": "is_admin_or_vorstand_in_club(club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "event_planner_slots",
+    "policyname": "event_planner_slots_select_same_club_or_manager",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM event_planner_configs c\n  WHERE ((c.id = event_planner_slots.planner_config_id) AND ((can_access_club_content(c.club_id) AND event_planner_config_is_published(c.base_kind, c.base_club_event_id, c.base_work_event_id)) OR is_admin_or_vorstand_in_club(c.club_id)))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "feature_flags",
+    "policyname": "feature_flags_manager_write",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "is_admin_or_vorstand()",
+    "with_check": "is_admin_or_vorstand()"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "feature_flags",
+    "policyname": "feature_flags_select_authenticated",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() IS NOT NULL)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "feed_post_media",
+    "policyname": "feed_media_delete_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(is_admin_or_vorstand_in_club(club_id) AND is_same_club(club_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "feed_post_media",
+    "policyname": "feed_media_insert_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_admin_or_vorstand_in_club(club_id) AND (auth.uid() = created_by) AND is_same_club(club_id))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "feed_post_media",
+    "policyname": "feed_media_select_tenant",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "can_access_club_content(club_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "feed_post_media",
+    "policyname": "feed_media_update_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(is_admin_or_vorstand_in_club(club_id) AND is_same_club(club_id))",
+    "with_check": "(is_admin_or_vorstand_in_club(club_id) AND is_same_club(club_id))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "feed_posts",
+    "policyname": "feed_delete_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(is_admin_or_vorstand_in_club(club_id) AND is_same_club(club_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "feed_posts",
+    "policyname": "feed_insert_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_admin_or_vorstand_in_club(club_id) AND (auth.uid() = author_id) AND is_same_club(club_id))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "feed_posts",
+    "policyname": "feed_select_tenant_public_or_member_only",
+    "permissive": "PERMISSIVE",
+    "roles": "{anon,authenticated}",
+    "cmd": "SELECT",
+    "qual": "(can_access_club_content(club_id) AND ((category <> 'nur_mitglieder'::text) OR (auth.uid() IS NOT NULL)))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "feed_posts",
+    "policyname": "feed_update_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(is_admin_or_vorstand_in_club(club_id) AND is_same_club(club_id))",
+    "with_check": "(is_admin_or_vorstand_in_club(club_id) AND is_same_club(club_id))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fish_species",
+    "policyname": "species_select_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fish_species",
+    "policyname": "species_write_manager",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "is_admin_or_vorstand()",
+    "with_check": "is_admin_or_vorstand()"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fish_species_rules",
+    "policyname": "fish_rules_select_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fish_species_rules",
+    "policyname": "fish_rules_write_manager",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "is_admin_or_vorstand()",
+    "with_check": "is_admin_or_vorstand()"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "policyname": "fishing_trips_delete_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(is_same_club(club_id) AND ((auth.uid() = user_id) OR is_admin_or_vorstand_in_club(club_id)))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "policyname": "fishing_trips_insert_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_same_club(club_id) AND ((auth.uid() = user_id) OR is_admin_or_vorstand_in_club(club_id)))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "policyname": "fishing_trips_select_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((auth.uid() = user_id) OR (is_admin_or_vorstand_in_club(club_id) AND is_same_club(club_id)))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fishing_trips",
+    "policyname": "fishing_trips_update_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(is_same_club(club_id) AND ((auth.uid() = user_id) OR is_admin_or_vorstand_in_club(club_id)))",
+    "with_check": "(is_same_club(club_id) AND ((auth.uid() = user_id) OR is_admin_or_vorstand_in_club(club_id)))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "legal_acceptance_events",
+    "policyname": "legal_acceptance_events_self_or_club_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((accepted_by_user_id = ( SELECT auth.uid() AS uid)) OR ((club_id IS NOT NULL) AND is_admin_or_vorstand_in_club(club_id)))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "legal_documents",
+    "policyname": "legal_documents_authenticated_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "is_active",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "meeting_agenda_items",
+    "policyname": "meeting_agenda_items_manager_write",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "is_admin_or_vorstand_in_club(club_id)",
+    "with_check": "is_admin_or_vorstand_in_club(club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "meeting_agenda_items",
+    "policyname": "meeting_agenda_items_select_manager",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "is_admin_or_vorstand_in_club(club_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "meeting_session_attendees",
+    "policyname": "meeting_session_attendees_manager_write",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "is_admin_or_vorstand_in_club(club_id)",
+    "with_check": "is_admin_or_vorstand_in_club(club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "meeting_session_attendees",
+    "policyname": "meeting_session_attendees_select_own_or_manager",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((user_id = auth.uid()) OR is_admin_or_vorstand_in_club(club_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "meeting_sessions",
+    "policyname": "meeting_sessions_manager_write",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "is_admin_or_vorstand_in_club(club_id)",
+    "with_check": "is_admin_or_vorstand_in_club(club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "meeting_sessions",
+    "policyname": "meeting_sessions_select_manager",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "is_admin_or_vorstand_in_club(club_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "meeting_tasks",
+    "policyname": "meeting_tasks_manager_write",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "is_admin_or_vorstand_in_club(club_id)",
+    "with_check": "is_admin_or_vorstand_in_club(club_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "meeting_tasks",
+    "policyname": "meeting_tasks_select_assignee_or_manager",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(is_admin_or_vorstand_in_club(club_id) OR (created_by = auth.uid()) OR (EXISTS ( SELECT 1\n   FROM task_assignees ta\n  WHERE ((ta.task_id = meeting_tasks.id) AND (ta.user_id = auth.uid())))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "member_bank_data",
+    "policyname": "member_bank_data_admin_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin()",
+    "with_check": "is_admin()"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "member_notifications",
+    "policyname": "member_notifications_select_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(user_id = ( SELECT auth.uid() AS uid))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "member_water_mappings",
+    "policyname": "member_water_mappings_delete_manager_scoped",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(is_admin_or_vorstand_in_club(club_id) AND (club_id IS NOT NULL) AND is_same_club(club_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "member_water_mappings",
+    "policyname": "member_water_mappings_insert_scoped",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((proposed_by = auth.uid()) OR (is_admin_or_vorstand_in_club(club_id) AND (club_id IS NOT NULL) AND is_same_club(club_id)))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "member_water_mappings",
+    "policyname": "member_water_mappings_select_scoped",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((proposed_by = auth.uid()) OR (is_admin_or_vorstand_in_club(club_id) AND (club_id IS NOT NULL) AND is_same_club(club_id)))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "member_water_mappings",
+    "policyname": "member_water_mappings_update_manager_scoped",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(is_admin_or_vorstand_in_club(club_id) AND (club_id IS NOT NULL) AND is_same_club(club_id))",
+    "with_check": "(is_admin_or_vorstand_in_club(club_id) AND (club_id IS NOT NULL) AND is_same_club(club_id))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "member_waters",
+    "policyname": "member_waters_delete_user_or_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "((auth.uid() = user_id) OR (is_admin_or_vorstand_in_club(club_id) AND (club_id IS NOT NULL) AND is_same_club(club_id)))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "member_waters",
+    "policyname": "member_waters_insert_user_or_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((auth.uid() = user_id) OR (is_admin_or_vorstand_in_club(club_id) AND (club_id IS NOT NULL) AND is_same_club(club_id)))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "member_waters",
+    "policyname": "member_waters_select_user_or_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((auth.uid() = user_id) OR (is_admin_or_vorstand_in_club(club_id) AND (club_id IS NOT NULL) AND is_same_club(club_id)))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "member_waters",
+    "policyname": "member_waters_update_user_or_manager_same_club",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "((auth.uid() = user_id) OR (is_admin_or_vorstand_in_club(club_id) AND (club_id IS NOT NULL) AND is_same_club(club_id)))",
+    "with_check": "((auth.uid() = user_id) OR (is_admin_or_vorstand_in_club(club_id) AND (club_id IS NOT NULL) AND is_same_club(club_id)))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "members",
+    "policyname": "members_admin_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin()",
+    "with_check": "is_admin()"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "members",
+    "policyname": "members_manager_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "is_admin_or_vorstand_in_club(club_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "membership_application_audit",
+    "policyname": "membership_application_audit_admin_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin()",
+    "with_check": "is_admin()"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "membership_application_audit",
+    "policyname": "membership_application_audit_manager_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "is_admin_or_vorstand_in_club(club_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "membership_application_bank_data",
+    "policyname": "membership_application_bank_data_admin_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin()",
+    "with_check": "is_admin()"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "membership_applications",
+    "policyname": "membership_applications_admin_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin()",
+    "with_check": "is_admin()"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "membership_applications",
+    "policyname": "membership_applications_anon_insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{anon}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((status = 'pending'::text) AND (decision_by IS NULL) AND (decision_at IS NULL) AND (internal_questionnaire IS NULL) AND (rejection_reason IS NULL) AND (sepa_approved = true))"
+  }
+]

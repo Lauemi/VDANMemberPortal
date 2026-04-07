@@ -150,7 +150,21 @@
 
     function rowKey(row) {
       if (typeof config?.rowKey === "function") return String(config.rowKey(row) || "");
-      return String(row?.id || row?.row_id || "");
+      const configuredField = String(config?.rowKeyField || "").trim();
+      if (configuredField) {
+        const configuredValue = row?.[configuredField];
+        if (configuredValue != null && String(configuredValue).trim()) {
+          return String(configuredValue);
+        }
+      }
+      return String(
+        row?.id
+        || row?.row_id
+        || row?.member_no
+        || row?.club_member_no
+        || row?.profile_user_id
+        || ""
+      );
     }
 
     function filteredRows() {
@@ -592,6 +606,10 @@
       const rowClickOpensEditor = config?.rowClickOpensEditor !== false;
 
       if (target?.closest?.("[data-inline-create-toggle]")) {
+        if (String(config?.rowInteractionMode || "").trim() === "dialog" && typeof config?.onCreateOpen === "function") {
+          config.onCreateOpen?.({ open: true });
+          return;
+        }
         openCreateRow();
         return;
       }
@@ -683,7 +701,11 @@
         const action = String(actionBtn.getAttribute("data-row-action") || "");
         if (row && action) {
           if (action === "edit") {
-            openEditor(row);
+            if (String(config?.rowInteractionMode || "").trim() === "dialog") {
+              config?.onRowClick?.(row, { type: "row-action-edit" });
+            } else {
+              openEditor(row);
+            }
           } else if (action === "duplicate") {
             await config?.onDuplicate?.(row);
           } else if (action === "delete") {

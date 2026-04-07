@@ -1,0 +1,513 @@
+FCP – CODEX MASTER PROMPT
+THEMA: ADM CLUB SETTINGS / BESTEHENDES SYSTEM KORREKT NUTZEN / KEIN BLINDFLUG
+
+ZIEL
+Du sollst die bestehende FCP-Architektur sauber nutzen und gezielt weiterverdrahten.
+Du sollst NICHT neu erfinden.
+Du sollst NICHT breit durchs Projekt laufen.
+Du sollst NICHT aus einer Maskenlücke eine neue Parallelwelt bauen.
+
+ARBEITSREGEL
+Immer zuerst:
+
+1. Was existiert bereits fachlich?
+2. Wo ist die technische Wahrheit?
+3. Was fehlt wirklich?
+4. Nur das fehlende Stück ergänzen.
+
+Die aktuelle ADM-Wahrheit ist `ADM_clubSettings.json`. Sie zeigt bereits klar:
+
+* was live ist
+* was preview ist
+* was gap ist
+* welche Bereiche bewusst nur vorbereitet sind 
+
+Die aktuelle DB-/Schema-Wahrheit ist `02_04_26_DB_V5.json`. Sie bleibt die bevorzugte lesbare SQL-Referenz. 
+
+---
+
+1. NICHT VERHANDELBARER GRUNDSATZ
+
+---
+
+A) JSON / ADM ist NICHT die Sicherheits- oder Fachwahrheit.
+JSON beschreibt Maske, Renderer, Verträge und Zielzustände.
+Wahrheit ist:
+
+* SQL
+* Tabellen
+* Views
+* RPCs
+* Edge Functions
+* RLS / serverseitige Guards
+
+B) Bestehendes verwenden.
+Nicht:
+
+* neue Tabellen erfinden
+* neue Logik erfinden
+* neue Maskenfamilie erfinden
+* bestehende Wahrheit doppeln
+
+C) ADM bleibt der Workspace-Rahmen.
+QFM-Inhalte dürfen innerhalb von ADM gerendert werden.
+Es gibt KEINE dritte Maskenfamilie. Das ist im ADM-Sonderfall bereits fest verankert. 
+
+---
+
+2. WIE DU DENKEN SOLLST
+
+---
+
+Immer in dieser Reihenfolge:
+
+DB / View / RPC / Edge
+→ dann ADM-Panel
+→ dann Resolver / rowsPath / loadBinding / saveBinding
+→ dann Renderer / UI
+
+Nicht umgekehrt.
+
+Wenn ein Bereich in der ADM auf `local_only`, `preview` oder `gap` steht:
+
+* nicht heimlich live machen
+* nicht künstlich eine Fake-Datenquelle bauen
+* zuerst klären, ob echte Datenbasis, View, RPC oder Edge-Vertrag existiert
+
+---
+
+3. PANEL-STÄNDE SIND ECHT
+
+---
+
+Die aktuelle ADM trennt bewusst:
+
+* live
+* preview
+* gap / Vertrag offen
+* teilweise live
+
+Diese Zustände sind ernst zu nehmen und nicht nur Deko. Beispiele:
+
+* Prozesskontext bleibt aktuell Vorschau
+* Snapshot bleibt vorsichtig / preview
+* Rollen / Rechte ist Vertrag offen
+* Regelwerke ist Vertrag offen
+* Ausweise ist Vertrag offen
+* Arbeitseinsätze ist Vertrag offen
+* Fangfreigaben ist Vertrag offen
+* Einstellungen ist QFM-Zielbild mit offenem Vertrag 
+
+Du sollst diese Struktur respektieren und gezielt weiterentwickeln, nicht nivellieren.
+
+---
+
+4. WICHTIGSTE PRODUKTENTSCHEIDUNGEN (GELTEN AB SOFORT)
+
+---
+
+A) Fangfreigaben werden NICHT als operativer Einzel-Freigabeprozess gebaut.
+Stattdessen:
+
+* Fänge werden erfasst
+* Auswertung später zum Jahresabschluss / für Generalversammlung
+* daraus wird perspektivisch eher Statistik / Erkennung / Auswertung
+  Also:
+  `club_settings_approvals` NICHT als echter operativer Freigabeflow weiterdenken.
+
+B) Arbeitseinsätze und Termine nicht mehr extrem getrennt denken.
+Tabellen dürfen verschieden bleiben.
+Fachlich gehören sie unter gemeinsame Event-/Planungslogik.
+Der Eventplaner ist die künftige Steuerungsebene.
+
+C) Arbeitseinsätze gehören NICHT als dauerhafter Hauptprozess in ClubSettings.
+Sie sollen aus ClubSettings herausgelöst werden.
+Dafür gibt es ein eigenes Eventplaner-ADM.
+Die bestehende Eventplaner-Maske ist Zielbasis.
+Wegen Kalenderlogik braucht sie Sonderbehandlung / Spezial-Renderer.
+
+D) Arbeitsstunden werden als eigene Statistik-/Übersichtsseite gedacht.
+Nicht als operativer Hauptbereich in ClubSettings.
+Zielbild:
+
+* Arbeitsstunden-Übersicht
+* mitgliedsbezogener Saldo
+* später Soll/Ist / genehmigt / offen / ggf. Jahresbezug
+
+E) Fangfreigaben werden als Statistik-/Auswertungsseite gedacht.
+Zielbild:
+
+* Fangstatistik
+* Jahresauswertung
+* keine Admin-Einzelfreigaben im ClubSettings
+
+F) ClubSettings bleibt der Verwaltungs-Workspace.
+Dort gehören sauber hin:
+
+* Vereinsdaten
+* Einladungen
+* Mitglieder
+* Rollen/Rechte nur vorsichtig und vertragsklar
+* Gewässer
+* Regelwerke
+* Ausweise
+* Einstellungen
+  Nicht mehr als Mischraum für Event- und Freigabelogik.
+
+---
+
+5. AKTUELLER ADM-ISTSTAND, DEN DU BEACHTEN MUSST
+
+---
+
+Die Navigation enthält aktuell noch:
+
+* Overview
+* Vereinsdaten
+* Einladungen
+* Mitglieder
+* Rollen / Rechte
+* Gewaesser
+* Regelwerke
+* Ausweise
+* Arbeitseinsaetze
+* Fangfreigaben
+* Einstellungen 
+
+WICHTIG:
+Nicht alles davon ist fachlich Endziel.
+Teile davon sind bewusst Zwischenzustand / Umbauzustand.
+
+Du sollst daher:
+
+* ClubSettings nicht weiter als End-Ziel fuer Arbeitseinsaetze/Fangfreigaben ausbauen
+* diese Bereiche eher kontrolliert entschärfen / vorbereiten / herauslösen
+* bestehende Daten-/Panelstände nicht kaputtmachen
+
+---
+
+6. AUSWEISE – WICHTIGER SONDERFALL
+
+---
+
+SEHR WICHTIG:
+Im Bereich `Ausweise` soll KEINE neue fachliche Ausweislogik gebaut werden.
+
+Die eigentliche Karten-/ID-/QR-/Verify-Logik existiert bereits im Mitgliederkontext und ist an den Scanner-/Verifikationspfad gebunden.
+Das darf NICHT verdoppelt werden.
+
+Das heißt:
+
+* keine zweite Kartenquelle
+* keine neue QR-Fachlogik
+* keine neue Ausweisdomäne
+
+Was ClubSettings/Ausweise stattdessen werden soll:
+
+* eine Verwaltungs-/Übersichtsoberfläche auf bestehende Logik
+* innerhalb der bestehenden ADM-/Dialog-/Table-Struktur
+* reale Nutzung des Systems, keine neue Handmaske
+
+WICHTIGER REALITÄTSCHECK:
+Die ursprünglich angedachte Claim-/Preis-View auf `member_claims` ist als späteres Zielbild okay, aber im aktuellen Stand unbrauchbar, weil `member_claims` in der Ziel-DB leer ist.
+`club_members` ist dagegen real befüllt und daher aktuell die richtige Live-Basis für den ersten Ausweise-Einbau. Die Claim-/Preisdomäne ist modelliert, aber noch nicht operationalisiert. 
+
+Deshalb gilt jetzt:
+
+AUSWEISE – JETZT
+
+* baue eine erste nutzbare Ausweise-/Mitgliederkarten-Übersicht auf Basis der bestehenden Mitglieder-/Scannerwahrheit
+* nutze `club_members` / bestehende Mitgliederlogik
+* Table im Panel `club_settings_cards`
+* Row-Klick öffnet Dialog
+* Dialog nutzt soweit möglich bestehende Karten-/Scanner-/Verify-Logik
+* darunter Button für PDF-Druckpfad vorbereiten
+
+AUSWEISE – SPÄTER
+
+* wenn `member_claims` real befüllt wird, kann der Bereich um Claim-/Preis-/Regellogik erweitert werden
+* nicht jetzt erzwingen
+
+WICHTIG:
+Der aktuelle Dummy-Stand in der ADM (`permit_cards_contract_pending`, 5 Placeholder-Spalten) ist fachlich zu dünn und soll durch reale erste Nutzung ersetzt werden. 
+
+---
+
+7. EINLADUNGEN
+
+---
+
+Einladungen sind aktuell teilweise live:
+
+* Write-Pfad existiert bereits
+* QR-/Read-/History-Seite ist noch nicht voll fertig
+* `invite_qr_url` ist im Panel vorgesehen, aber die funktionale QR-Erzeugung ist noch nicht als vollständig erledigt zu behandeln 
+
+Du sollst:
+
+* bestehende Edge Function nutzen
+* keinen neuen Invite-Prozess erfinden
+* QR-Thema sauber als noch fehlenden oder zu prüfenden Funktionsbaustein behandeln
+* Einladungen klar getrennt von Ausweis-QR denken
+
+Merksatz:
+Ausweise = Mitglieder-/Scanner-/Kartenkontext
+Einladungen = Join-/Onboarding-Link-/QR-Kontext
+
+---
+
+8. GEWÄSSER
+
+---
+
+Gewaesser ist aktuell live read-seitig an `club-onboarding-workspace` gebunden.
+Das Panel ist real angeschlossen, Save/CRUD fehlt aber noch. 
+
+Deshalb:
+
+* NICHT neue Gewässerlogik bauen
+* bestehenden Contract erweitern / sauberes CRUD anschließen
+* Gewässer bleiben ein echter ClubSettings-Bereich
+
+---
+
+9. MITGLIEDER
+
+---
+
+Mitglieder sind eine der stabilsten Live-Basen.
+Das bestehende `admin_member_registry`-Panel ist Referenz dafür, wie ein belastbar verdrahteter ClubSettings-Bereich aussieht. 
+
+Das heißt:
+
+* Mitgliederlogik nicht duplizieren
+* wenn für Ausweise Daten gebraucht werden, zuerst prüfen, ob sie schon im Mitgliederkontext oder `club_members` liegen
+* RPC nicht als Join-Quelle missbrauchen
+* tabellarische Wahrheit bevorzugen, RPC nur als fertige Lesefläche nutzen
+
+---
+
+10. ROLLEN / RECHTE
+
+---
+
+Rollen/Rechte ist aktuell bewusst NICHT fertig.
+Es gibt:
+
+* Backend-Struktur
+* specialCases, die den ACL- und Renderer-Gap klar markieren
+* aber KEINEN sauberen Live-Editorvertrag fuer die Matrix 
+
+Regel:
+
+* keine Fake-Matrix
+* keine LocalStorage-Nachbauten
+* kein Schnellschuss
+* allenfalls readonly / Vertragsstatus / spätere Zielmarkierung
+
+Wenn du in diesem Bereich etwas anfasst, dann nur:
+
+* Verträge klarziehen
+* Gap offen benennen
+* nichts halb-live machen
+
+---
+
+11. REGELWERKE
+
+---
+
+Regelwerke sind aktuell explizit `gap`.
+Nicht künstlich anschließen.
+Nicht erfinden.
+Erst wenn echte Datenquelle / View / RPC / Edge dafür definiert ist. 
+
+---
+
+12. ARBEITSEINSÄTZE / EVENTPLANER
+
+---
+
+Die aktuelle ADM enthält noch `club_settings_work` als Vertrags-Gap.
+Das ist Umbauzustand, nicht Endziel. 
+
+Ab jetzt gilt:
+
+* ClubSettings hier nicht weiter zur endgültigen Heimat machen
+* Eventplaner-ADM ist die Zielarchitektur
+* Kalender braucht Sonderbehandlung / Spezial-Renderer
+* Termine und Arbeitseinsätze werden prozessual über denselben Planungsrahmen gedacht
+
+Wenn du hier arbeitest:
+
+* keine dritte Eventwelt bauen
+* keine doppelte UI für Arbeit / Termine bauen
+* nicht nach Tabelle schneiden, sondern nach Nutzungslogik
+
+---
+
+13. FANGFREIGABEN / FANGSTATISTIK
+
+---
+
+Die aktuelle ADM zeigt Fangfreigaben noch als Gap-Bereich.
+Fachlich ist aber entschieden:
+
+* keine operative Einzel-Freigabe
+* stattdessen Statistik / Jahresauswertung / Bewertung
+
+Daher:
+
+* `club_settings_approvals` nicht als finalen Admin-Freigabeprozess ausbauen
+* eher reduzieren / umdeuten / für spätere Statistikarchitektur sauber einordnen
+* keine unnötige Approval-Logik mehr hineinbauen 
+
+---
+
+14. EINSTELLUNGEN
+
+---
+
+Einstellungen sind aktuell bewusst Zielbild / QFM-Vorschau mit offenem Write-Vertrag.
+Nicht aktivieren.
+Nicht so tun, als wäre das produktiv live.
+Nur wenn echte serverseitige Einstellungen sauber belegt und angebunden sind. 
+
+---
+
+15. WIE DU FEHLER UND LÜCKEN KLASSIFIZIERST
+
+---
+
+Wenn du beim Einbau auf etwas stößt, klassifiziere sauber:
+
+* `DB fehlt`
+* `View fehlt`
+* `RPC fehlt`
+* `Edge fehlt`
+* `nur ADM fehlt`
+* `nur Resolver/rowsPath fehlt`
+* `fachliche Regeldefinition fehlt`
+* `bewusst preview/gap – nicht live ziehen`
+
+Keine schwammigen Aussagen.
+Keine breite Exploration.
+Keine freien Konstruktionen.
+
+---
+
+16. WIE DU KONKRET ARBEITEN SOLLST
+
+---
+
+Jede Änderung läuft nach diesem Schema:
+
+1. Bestehende Wahrheit prüfen
+
+   * Tabelle?
+   * View?
+   * RPC?
+   * Edge?
+   * bereits in anderer Maske vorhanden?
+
+2. Endziel gegen Produktentscheidungen prüfen
+
+   * gehört das noch in ClubSettings?
+   * oder in Eventplaner?
+   * oder in Statistik?
+
+3. Nur fehlendes Stück ergänzen
+
+   * LoadBinding
+   * SaveBinding
+   * rowsPath
+   * Spalten
+   * Dialog
+   * Ziel-Button / vorbereiteter Pfad
+
+4. Offene Punkte sauber markieren
+
+   * kein Fake-Fertig
+   * kein stilles Umgehen
+
+---
+
+17. KONKRETE NÄCHSTE UMSETZUNG FÜR DICH
+
+---
+
+PRIO 1
+Ausweise in ClubSettings real nutzbar machen:
+
+* auf Basis bestehender Mitglieder-/Scannerwahrheit
+* kein `member_claims` erzwingen
+* Table + Row-Dialog
+* PDF-Button vorbereiten
+* keine neue Kartenlogik
+
+PRIO 2
+Einladungen:
+
+* bestehenden Write-Pfad respektieren
+* QR-Thema sauber als fehlenden oder zu prüfenden Baustein behandeln
+* nicht mit Ausweise vermischen
+
+PRIO 3
+Gewässer:
+
+* bestehendes Read beibehalten
+* CRUD sauber und kontrolliert anschließen
+
+PRIO 4
+ClubSettings strukturell bereinigen:
+
+* Arbeitseinsätze nicht weiter als Endziel dort denken
+* Fangfreigaben nicht weiter als operative Freigaben denken
+* auf Zielarchitektur Eventplaner + Statistik zuschneiden
+
+---
+
+18. WICHTIGSTE FALLSTRICKE
+
+---
+
+NICHT TUN:
+
+* `member_claims` als Live-Quelle erzwingen, obwohl leer
+* RPC als Join-Tabelle missbrauchen
+* Arbeitseinsätze und Termine wieder doppelt bauen
+* Fangfreigabe-Workflow weiter aufblasen
+* neue Ausweislogik neben der Scannerlogik bauen
+* Gap-/Preview-Panels heimlich live machen
+* den Nutzer mit technischer Sprache wie `contract_gap` belasten
+
+---
+
+19. ERWARTETES ERGEBNIS
+
+---
+
+Ich will keine freie Neuentwicklung.
+Ich will eine saubere Weiterentwicklung des vorhandenen Systems.
+
+Erwartet wird:
+
+* reale Nutzung des bestehenden ADM-/Runtime-Systems
+* gezielte Verdrahtung
+* klare Trennung zwischen Verwaltungs-Workspace, Eventplaner und Statistik
+* ehrliche Sichtbarkeit von echten Lücken
+* kein Blindflug
+
+---
+
+20. MERKSATZ
+
+---
+
+Du baust kein neues System.
+Du legst die vorhandenen Teile korrekt zusammen.
+
+Wenn etwas noch nicht tragfähig ist:
+benennen, nicht kaschieren.
+Wenn etwas schon existiert:
+nutzen, nicht doppeln.

@@ -17,9 +17,9 @@ JSON-Dateien bleiben fuer Bootstrap, Export und Fallback wichtig, sind aber nich
 Jede relevante Aenderung im Projekt hat zwei verpflichtende Ergebnisse:
 
 1. Code / Struktur / Dokumentation geaendert
-2. betroffener Board-State aktualisiert
+2. passender SQL-Block fuer den betroffenen Board-State liegt vor
 
-Ohne aktualisierten Board-State gilt eine Aenderung nicht als abgeschlossen.
+Ohne SQL-Block zur Pflege des operativen Board-Standes gilt eine Aenderung nicht als abgeschlossen.
 
 ## 2. Single Source of Truth
 
@@ -42,9 +42,23 @@ Die Wahrheit ueber den aktuellen Systemzustand liegt in den Board-Tabellen der D
 - DB ist Pflegequelle
 - JSON ist Bootstrap/Export
 
-Codex darf den Status niemals nur im HTML aendern, ohne die operative Datenquelle mitzupflegen.
+Codex darf den Status niemals nur im HTML oder nur in JSON aendern, ohne die operative Datenquelle mitzupflegen.
 
-## 3. Wann Codex den Board-State aktualisieren MUSS
+## 3. Was Codex zusaetzlich liefern MUSS
+
+Wenn Codex etwas Relevantes umsetzt, muss am Ende immer zusaetzlich ein DB-Pflegeblock mitgeliefert werden:
+
+- fuer Architektur-/Masterboard-Aenderungen:
+  - SQL fuer `public.system_board_nodes`
+- fuer Prozess-/Kontrollboard-Aenderungen:
+  - SQL fuer `public.system_process_controls`
+
+Empfohlene Form:
+
+- `insert ... on conflict ... do update`
+- alternativ `update ...`
+
+## 4. Wann Codex den Board-State aktualisieren MUSS
 
 Codex muss den Board-State aktualisieren, wenn mindestens einer dieser Punkte zutrifft:
 
@@ -62,17 +76,17 @@ Codex muss den Board-State aktualisieren, wenn mindestens einer dieser Punkte zu
 - Bug wurde geschlossen oder neu eroeffnet
 - Review-Stand wurde veraendert
 
-## 4. Pflichtregel: Done Definition
+## 5. Pflichtregel: Done Definition
 
 Eine Aufgabe ist nur dann DONE, wenn alle drei Bedingungen erfuellt sind:
 
 1. Code-/Strukturaenderung ist umgesetzt
-2. betroffene Board-Knoten sind aktualisiert
-3. `last_verified_at` wurde gesetzt
+2. passender SQL-Block fuer die Board-Pflege liegt vor
+3. `last_verified_at` wird im DB-Update mitgefuehrt
 
 Fehlt einer dieser Punkte, ist die Aufgabe nicht abgeschlossen.
 
-## 5. Pflichtfelder im Masterboard-State
+## 6. Pflichtfelder im Masterboard-State
 
 Codex muss betroffene Knoten im Masterboard-State pflegen:
 
@@ -86,7 +100,7 @@ Codex muss betroffene Knoten im Masterboard-State pflegen:
 - `refs`
 - `last_verified_at`
 
-## 6. Pflichtfelder im operativen Kontrollboard-State
+## 7. Pflichtfelder im operativen Kontrollboard-State
 
 Codex muss betroffene Eintraege im operativen Kontrollboard-State pflegen:
 
@@ -99,7 +113,7 @@ Codex muss betroffene Eintraege im operativen Kontrollboard-State pflegen:
 - Review-Status
 - Review-Datum
 
-## 7. Unsichtbare Fortschritte sind Pflicht
+## 8. Unsichtbare Fortschritte sind Pflicht
 
 Codex darf Fortschritt nicht nur dann pflegen, wenn neue UI sichtbar wird.
 
@@ -120,7 +134,7 @@ Diese Aenderungen gehoeren in:
 
 - `progress_invisible`
 
-## 8. Keine stillen Aenderungen
+## 9. Keine stillen Aenderungen
 
 Codex darf keine stillen Architektur- oder Statusaenderungen durchfuehren.
 
@@ -133,49 +147,50 @@ Wenn bei einer Umsetzung eine dieser Situationen entsteht:
 
 dann muss Codex den Board-State entsprechend ergaenzen.
 
-## 9. Pflichtablauf bei jeder relevanten Umsetzung
+## 10. Pflichtablauf bei jeder relevanten Umsetzung
 
 Codex arbeitet bei jeder relevanten Aenderung in dieser Reihenfolge:
 
 1. betroffenen Knoten / Prozess identifizieren
 2. technische Aenderung umsetzen
-3. Status im Board-State aktualisieren
-4. sichtbaren oder unsichtbaren Fortschritt eintragen
-5. `refs` ergaenzen
-6. `gaps` entfernen oder ergaenzen
-7. `decisions_open` pruefen
-8. `launch_class` und `risk_level` neu bewerten
-9. `last_verified_at` setzen
+3. passenden SQL-Block fuer die DB-Pflege schreiben
+4. Status im Board-State aktualisieren
+5. sichtbaren oder unsichtbaren Fortschritt eintragen
+6. `refs` ergaenzen
+7. `gaps` entfernen oder ergaenzen
+8. `decisions_open` pruefen
+9. `launch_class` und `risk_level` neu bewerten
+10. `last_verified_at` setzen
 
-## 10. Verbot
+## 11. Verbot
 
 Nicht erlaubt ist:
 
 - nur Code aendern
 - nur HTML aendern
-- Board-Update spaeter machen
+- SQL-Board-Update spaeter machen
 - Fortschritt nur im Chat erwaehnen
 - Risiken stillschweigend mitziehen
 - Bugs schliessen, ohne Kontrollboard zu pflegen
 
-## 11. Fuehrungsregel
+## 12. Fuehrungsregel
 
 Das Board soll kuenftig den aktuellen Stand zeigen, ohne dass Michael den Status aktiv nachfragen muss.
 
 Deshalb gilt:
 
-Wenn Codex etwas Relevantes baut, muss der Board-State direkt mitgezogen werden.
+Wenn Codex etwas Relevantes baut, muss der Board-State direkt mitgezogen werden und der passende SQL-Block am Ende vorliegen.
 
-## 12. Kurzregel fuer Codex
+## 13. Kurzregel fuer Codex
 
 ```text
-Code ohne Board-Update ist nicht fertig.
-HTML ohne Board-Update ist nicht gueltig.
-Statusaenderung ohne last_verified_at ist unvollstaendig.
-Unsichtbarer Fortschritt darf nicht verloren gehen.
+Code ohne DB-Board-Update ist nicht fertig.
+JSON ist nicht mehr die operative Wahrheit.
+Die DB ist die Wahrheit.
+Am Ende jeder relevanten Umsetzung ist ein SQL-Update fuer den Board-State mitzuliefern.
 ```
 
-## 13. Zielbild
+## 14. Zielbild
 
 Wenn dieser Vertrag eingehalten wird, dann gilt:
 
@@ -186,7 +201,7 @@ Wenn dieser Vertrag eingehalten wird, dann gilt:
 
 Damit wird das Board zu einem echten Steuerungssystem statt zu einer huebschen Momentaufnahme.
 
-## 14. UI ist schreibende Quelle
+## 15. UI ist schreibende Quelle
 
 Das Masterboard ist nicht nur Anzeige, sondern aktive Eingabeoberflaeche.
 

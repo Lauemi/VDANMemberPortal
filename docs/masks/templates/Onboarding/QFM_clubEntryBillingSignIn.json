@@ -1,0 +1,523 @@
+{
+  "maskId": "QFM_CLUB_REQUEST_ENTRY",
+  "maskFamily": "QFM",
+  "maskType": "sectioned",
+  "securityContext": {
+    "rlsKey": "identity_id",
+    "membershipKey": null,
+    "requiresTenantAccess": false,
+    "requiresRoleCheck": false,
+    "allowedRoles": [],
+    "serverValidated": true
+  },
+  "header": {
+    "kicker": "Vereinsanfrage",
+    "title": "Verein anfragen",
+    "description": "QuickFlow-Formular fuer neue Vereinsanfragen mit bestehendem Read-RPC und Edge-Submit."
+  },
+  "metaPolicy": {
+    "autoDetect": true,
+    "auditFields": [
+      "created_at",
+      "created_by",
+      "updated_at",
+      "updated_by"
+    ],
+    "appendOnlyHandling": "explicit"
+  },
+  "dataContract": {
+    "sourceOfTruth": "sql",
+    "contracts": [
+      "docs/contracts/FCP_MASK_SYSTEM_CONTRACT.md",
+      "docs/contracts/FCP_RLS_SECURITY_STANDARD.md"
+    ]
+  },
+  "loadBinding": {
+    "kind": "rpc",
+    "target": "public.club_request_gate_state",
+    "path": "rpc:public.club_request_gate_state"
+  },
+  "sections": [
+    {
+      "id": "club_request_entry",
+      "label": "Anfrage",
+      "title": "Vereinsanfrage",
+      "description": "Die Maske nutzt den vorhandenen Read-RPC fuer Gate- und Statusdaten und sendet neue Anfragen ueber die bestehende Edge Function.",
+      "permissions": {
+        "view": true,
+        "write": true,
+        "update": true,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "identity_id",
+        "membershipKey": null,
+        "requiresTenantAccess": false,
+        "requiresRoleCheck": false,
+        "allowedRoles": [],
+        "serverValidated": true
+      },
+      "ownership": "global_user",
+      "scope": "global_user",
+      "panels": [
+        {
+          "id": "request_form",
+          "title": "Anfragedaten",
+          "renderMode": "form",
+          "componentType": "FormPanel",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": true,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "identity_id",
+            "membershipKey": null,
+            "requiresTenantAccess": false,
+            "requiresRoleCheck": false,
+            "allowedRoles": [],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.club_registration_requests",
+            "sourceKind": "record",
+            "sourceOfTruth": "sql",
+            "scope": "global_user",
+            "ownership": "global_user",
+            "metaDisplay": "auto",
+            "resolver": {
+              "draftStorageKey": "vdan_club_request_pending_v1",
+              "savePayloadDefaults": {
+                "auto_approve": false
+              },
+              "draftPayloadDefaults": {
+                "registration_mode": "club_request_pending",
+                "onboarding_path": "club_request",
+                "billing_status": "billing_pending"
+              },
+              "authRequiredMessage": "Zum Absenden brauchst du einen Zugang. Dein Formularentwurf bleibt erhalten.",
+              "postSubmitRouting": {
+                "pending": {
+                  "target": "/app/anfrage-offen/"
+                },
+                "approved": {
+                  "target": "/app/?club_id={club_id}"
+                },
+                "fallback": {
+                  "target": "/verein-anfragen/"
+                }
+              }
+            }
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.club_request_gate_state",
+            "path": "rpc:public.club_request_gate_state"
+          },
+          "saveBinding": {
+            "kind": "edge_function",
+            "target": "club-request-submit",
+            "path": "edge:club-request-submit"
+          },
+          "content": {
+            "fields": [
+              {
+                "name": "club_name",
+                "label": "Vereinsname",
+                "type": "text",
+                "componentType": "input",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.club_name",
+                "payloadKey": "club_name",
+                "group": "club",
+                "displaySpan": "full",
+                "order": 10,
+                "placeholder": "z. B. Angelsportverein Musterstadt",
+                "helpText": "Offizieller Name des anfragenden Vereins.",
+                "readonly": false,
+                "required": true,
+                "defaultValue": null,
+                "autocomplete": "organization",
+                "validationRules": []
+              },
+              {
+                "name": "zip",
+                "label": "PLZ",
+                "type": "text",
+                "componentType": "input",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.zip",
+                "payloadKey": "zip",
+                "group": "club",
+                "order": 20,
+                "placeholder": "12345",
+                "helpText": "",
+                "readonly": false,
+                "required": true,
+                "defaultValue": null,
+                "autocomplete": "postal-code",
+                "inputMode": "numeric",
+                "validationRules": []
+              },
+              {
+                "name": "city",
+                "label": "Ort",
+                "type": "text",
+                "componentType": "input",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.city",
+                "payloadKey": "city",
+                "group": "club",
+                "order": 30,
+                "placeholder": "Musterstadt",
+                "helpText": "",
+                "readonly": false,
+                "required": true,
+                "defaultValue": null,
+                "autocomplete": "address-level2",
+                "validationRules": []
+              },
+              {
+                "name": "club_size",
+                "label": "Vereinsgroesse",
+                "type": "select",
+                "componentType": "select",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.club_size",
+                "payloadKey": "club_size",
+                "group": "club",
+                "order": 40,
+                "placeholder": "",
+                "helpText": "Diese Auswahl steuert die Groessenklasse fuer die Anfrage.",
+                "readonly": false,
+                "required": true,
+                "defaultValue": null,
+                "validationRules": [],
+                "options": [
+                  {
+                    "value": "",
+                    "label": "Bitte auswaehlen"
+                  },
+                  {
+                    "value": "small",
+                    "label": "Bis 100 Mitglieder"
+                  },
+                  {
+                    "value": "medium",
+                    "label": "101 bis 300 Mitglieder"
+                  },
+                  {
+                    "value": "large",
+                    "label": "301 bis 700 Mitglieder"
+                  },
+                  {
+                    "value": "xlarge",
+                    "label": "Mehr als 700 Mitglieder"
+                  }
+                ]
+              },
+              {
+                "name": "club_address",
+                "label": "Vereinsanschrift",
+                "type": "textarea",
+                "componentType": "textarea",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.club_address",
+                "payloadKey": "club_address",
+                "group": "club",
+                "displaySpan": "full",
+                "order": 50,
+                "placeholder": "Strasse, Hausnummer",
+                "helpText": "Postalische Anschrift des Vereins.",
+                "readonly": false,
+                "required": true,
+                "defaultValue": null,
+                "autocomplete": "street-address",
+                "validationRules": []
+              },
+              {
+                "name": "responsible_name",
+                "label": "Verantwortliche Person",
+                "type": "text",
+                "componentType": "input",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.responsible_name",
+                "payloadKey": "responsible_name",
+                "group": "contact",
+                "order": 60,
+                "placeholder": "Vor- und Nachname",
+                "helpText": "",
+                "readonly": false,
+                "required": true,
+                "defaultValue": null,
+                "autocomplete": "name",
+                "validationRules": []
+              },
+              {
+                "name": "responsible_role",
+                "label": "Funktion im Verein",
+                "type": "text",
+                "componentType": "input",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.responsible_role",
+                "payloadKey": "responsible_role",
+                "group": "contact",
+                "order": 70,
+                "placeholder": "z. B. Vorstand, Gruendungsmitglied",
+                "helpText": "",
+                "readonly": false,
+                "required": true,
+                "defaultValue": null,
+                "autocomplete": "organization-title",
+                "validationRules": []
+              },
+              {
+                "name": "responsible_email",
+                "label": "E-Mail der verantwortlichen Person",
+                "type": "email",
+                "componentType": "email",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.responsible_email",
+                "payloadKey": "responsible_email",
+                "group": "contact",
+                "order": 80,
+                "placeholder": "vorstand@verein.de",
+                "helpText": "Nach Moeglichkeit eine offizielle Vereinsadresse verwenden.",
+                "readonly": false,
+                "required": true,
+                "defaultValue": null,
+                "autocomplete": "email",
+                "validationRules": []
+              },
+              {
+                "name": "club_mail_confirmed",
+                "label": "Vereins-E-Mail bestaetigt",
+                "type": "toggle",
+                "componentType": "toggle",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.club_mail_confirmed",
+                "payloadKey": "club_mail_confirmed",
+                "group": "confirmations",
+                "displaySpan": "full",
+                "order": 90,
+                "placeholder": "",
+                "helpText": "Ich bestaetige, dass fuer diesen Zugang nach Moeglichkeit eine offizielle Vereins-E-Mail-Adresse verwendet wird und mir bewusst ist, dass der benannte Verantwortliche dem Eintrag widersprechen kann.",
+                "readonly": false,
+                "required": true,
+                "defaultValue": false,
+                "validationRules": []
+              },
+              {
+                "name": "legal_confirmed",
+                "label": "Berechtigung bestaetigt",
+                "type": "toggle",
+                "componentType": "toggle",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.legal_confirmed",
+                "payloadKey": "legal_confirmed",
+                "group": "confirmations",
+                "displaySpan": "full",
+                "order": 100,
+                "placeholder": "",
+                "helpText": "Ich bestaetige, dass ich fuer diese Vereinsanfrage berechtigt bin, wahrheitsgemaesse Angaben mache und einer Kontaktaufnahme zur Pruefung zustimme.",
+                "readonly": false,
+                "required": true,
+                "defaultValue": false,
+                "validationRules": []
+              }
+            ],
+            "rows": [],
+            "actions": []
+          },
+          "actions": [
+            {
+              "id": "reset_form",
+              "label": "Zuruecksetzen",
+              "variant": "ghost",
+              "action": "cancel"
+            },
+            {
+              "id": "submit_request",
+              "label": "Verein anfragen",
+              "variant": "primary",
+              "action": "submit"
+            }
+          ]
+        },
+        {
+          "id": "request_status",
+          "title": "Anfragestatus",
+          "renderMode": "readonly",
+          "componentType": "ReadonlyPanel",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "identity_id",
+            "membershipKey": null,
+            "requiresTenantAccess": false,
+            "requiresRoleCheck": false,
+            "allowedRoles": [],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.club_registration_requests",
+            "sourceKind": "record",
+            "sourceOfTruth": "sql",
+            "scope": "auth_system",
+            "ownership": "auth_system",
+            "metaDisplay": "auto"
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.club_request_gate_state",
+            "path": "rpc:public.club_request_gate_state"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [
+              {
+                "name": "request_id",
+                "label": "Anfrage-ID",
+                "type": "text",
+                "componentType": "readonly",
+                "scope": "auth_system",
+                "ownership": "auth_system",
+                "valuePath": "record.request_id",
+                "payloadKey": "",
+                "group": "system",
+                "order": 10,
+                "readonly": true,
+                "required": false,
+                "validationRules": []
+              },
+              {
+                "name": "status",
+                "label": "Status",
+                "type": "text",
+                "componentType": "readonly",
+                "scope": "auth_system",
+                "ownership": "auth_system",
+                "valuePath": "record.status",
+                "payloadKey": "",
+                "group": "system",
+                "order": 20,
+                "readonly": true,
+                "required": false,
+                "validationRules": []
+              },
+              {
+                "name": "approved_club_id",
+                "label": "Freigegebener Verein",
+                "type": "text",
+                "componentType": "readonly",
+                "scope": "auth_system",
+                "ownership": "auth_system",
+                "valuePath": "record.approved_club_id",
+                "payloadKey": "",
+                "group": "system",
+                "order": 30,
+                "readonly": true,
+                "required": false,
+                "validationRules": []
+              },
+              {
+                "name": "rejection_reason",
+                "label": "Ablehnungsgrund",
+                "type": "text",
+                "componentType": "readonly",
+                "scope": "auth_system",
+                "ownership": "auth_system",
+                "valuePath": "record.rejection_reason",
+                "payloadKey": "",
+                "group": "system",
+                "order": 40,
+                "readonly": true,
+                "required": false,
+                "validationRules": []
+              },
+              {
+                "name": "created_at",
+                "label": "Erstellt am",
+                "type": "text",
+                "componentType": "readonly",
+                "scope": "auth_system",
+                "ownership": "auth_system",
+                "valuePath": "record.created_at",
+                "payloadKey": "",
+                "group": "system",
+                "order": 50,
+                "readonly": true,
+                "required": false,
+                "validationRules": []
+              },
+              {
+                "name": "updated_at",
+                "label": "Zuletzt aktualisiert",
+                "type": "text",
+                "componentType": "readonly",
+                "scope": "auth_system",
+                "ownership": "auth_system",
+                "valuePath": "record.updated_at",
+                "payloadKey": "",
+                "group": "system",
+                "order": 60,
+                "readonly": true,
+                "required": false,
+                "validationRules": []
+              }
+            ],
+            "rows": [],
+            "actions": []
+          }
+        }
+      ]
+    }
+  ],
+  "specialCases": [
+    {
+      "id": "club_request_entry_auth_required_for_submit",
+      "type": "runtime_requirement",
+      "domKey": "qfp-club-request-auth-required",
+      "cssKey": "qfp-club-request-auth-required",
+      "reason": "Der Submit-Pfad nutzt die bestehende Edge Function club-request-submit und erfordert eine aktive Sitzung. Ohne Login bleibt die Form sichtbar, das Speichern wird aber serverseitig abgewiesen."
+    },
+    {
+      "id": "club_request_entry_partial_read_contract",
+      "type": "binding_assumption",
+      "domKey": "qfp-club-request-partial-read",
+      "cssKey": "qfp-club-request-partial-read",
+      "reason": "public.club_request_gate_state liefert nur Gate- und Statusdaten. Nicht enthaltene Formularfelder werden deshalb aus lokalem Pending-Draft oder Formdefaults vorbelegt."
+    },
+    {
+      "id": "club_request_entry_post_submit_routing_contract",
+      "type": "process_contract",
+      "domKey": "qfp-club-request-routing-contract",
+      "cssKey": "qfp-club-request-routing-contract",
+      "reason": "Die Post-Submit-Navigation wird ueber meta.resolver.postSubmitRouting aus der Masken-JSON getragen. pending fuehrt auf /app/anfrage-offen/, approved mit club_id direkt ins Portal."
+    }
+  ]
+}

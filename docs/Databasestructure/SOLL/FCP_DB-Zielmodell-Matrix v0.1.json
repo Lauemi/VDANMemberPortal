@@ -1,0 +1,557 @@
+{
+  "model_name": "fcp_full_target_db_model",
+  "version": "0.1",
+  "principles": [
+    "club_scoped_first",
+    "regelwerk_getrennt_von_buchung",
+    "snapshot_statt_live_neuberechnung",
+    "optionalitaet_ohne_schemaumbau",
+    "ui_darf_einfach_sein_db_bleibt_vollstaendig",
+    "bestehende_member_dualitaet_beruecksichtigen"
+  ],
+  "existing_anchor_tables": [
+    "club_members",
+    "members",
+    "club_member_identities",
+    "club_onboarding_state",
+    "club_onboarding_audit",
+    "water_bodies",
+    "work_events",
+    "work_participations",
+    "work_checkins",
+    "club_roles",
+    "club_role_permissions",
+    "club_user_roles"
+  ],
+  "domains": [
+    {
+      "domain": "membership_core",
+      "goal": "Mitglied fachlich sauber klassifizieren, ohne Rolle, Status und Preisgruppe zu vermischen",
+      "tables": [
+        {
+          "table": "club_member_categories",
+          "status": "new",
+          "purpose": "Preis- und Regelkategorien pro Verein, z.B. Standard, Jugend, Ehrenmitglied, Rentner",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid", "fk": "club scope"},
+            {"name": "category_key", "type": "text", "unique_scope": ["club_id"]},
+            {"name": "label", "type": "text"},
+            {"name": "description", "type": "text", "nullable": true},
+            {"name": "min_age", "type": "integer", "nullable": true},
+            {"name": "max_age", "type": "integer", "nullable": true},
+            {"name": "is_default", "type": "boolean", "default": false},
+            {"name": "is_exempt_from_fees", "type": "boolean", "default": false},
+            {"name": "is_exempt_from_work_hours", "type": "boolean", "default": false},
+            {"name": "is_active", "type": "boolean", "default": true},
+            {"name": "sort_order", "type": "integer", "default": 100},
+            {"name": "created_at", "type": "timestamptz"},
+            {"name": "updated_at", "type": "timestamptz"}
+          ],
+          "relations": [
+            "club_member_categories.club_id -> club context",
+            "fee rules may reference member category",
+            "work hour rules may reference member category",
+            "association fees may reference member category",
+            "member category assignments may reference member category"
+          ],
+          "notes": [
+            "status, category und role bleiben getrennt",
+            "nicht als Ersatz fuer club_members.status oder club_user_roles verwenden"
+          ]
+        },
+        {
+          "table": "club_member_category_assignments",
+          "status": "new",
+          "purpose": "Zuweisung einer Kategorie zu einem Vereinsmitglied mit gueltigem Zeitraum",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "member_no", "type": "text"},
+            {"name": "member_category_id", "type": "uuid"},
+            {"name": "valid_from", "type": "date"},
+            {"name": "valid_to", "type": "date", "nullable": true},
+            {"name": "assignment_reason", "type": "text", "nullable": true},
+            {"name": "created_by", "type": "uuid", "nullable": true},
+            {"name": "created_at", "type": "timestamptz"},
+            {"name": "updated_at", "type": "timestamptz"}
+          ],
+          "relations": [
+            "member_no should reference club_members via club scope",
+            "member_category_id -> club_member_categories.id"
+          ],
+          "notes": [
+            "bewusst zeitfaehig, damit Jugend -> Erwachsen spaeter ohne Datenbruch moeglich wird"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "card_system",
+      "goal": "Kartentypen als echte Fachentitaeten statt als Freitext oder Settings",
+      "tables": [
+        {
+          "table": "club_card_types",
+          "status": "new",
+          "purpose": "Kartentypen / Erlaubnisse pro Verein",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "card_key", "type": "text", "unique_scope": ["club_id"]},
+            {"name": "label", "type": "text"},
+            {"name": "description", "type": "text", "nullable": true},
+            {"name": "card_kind", "type": "text"},
+            {"name": "validity_mode", "type": "text"},
+            {"name": "valid_from_month", "type": "integer", "nullable": true},
+            {"name": "valid_to_month", "type": "integer", "nullable": true},
+            {"name": "is_transferable", "type": "boolean", "default": false},
+            {"name": "max_concurrent", "type": "integer", "nullable": true},
+            {"name": "is_default", "type": "boolean", "default": false},
+            {"name": "is_active", "type": "boolean", "default": true},
+            {"name": "sort_order", "type": "integer", "default": 100},
+            {"name": "created_at", "type": "timestamptz"},
+            {"name": "updated_at", "type": "timestamptz"}
+          ],
+          "relations": [
+            "club_card_types.club_id -> club scope",
+            "fee rules may reference card type",
+            "card type waters may reference card type"
+          ],
+          "notes": [
+            "ersetzt langfristig den heutigen Textanker fishing_card_type als fachliche Wahrheit",
+            "kompatibilitaetsmapping zu club_members.fishing_card_type bleibt zunaechst bestehen"
+          ]
+        },
+        {
+          "table": "club_card_type_waters",
+          "status": "new",
+          "purpose": "n:m Zuordnung Kartentyp -> Gewaesser",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "card_type_id", "type": "uuid"},
+            {"name": "water_body_id", "type": "uuid"},
+            {"name": "access_level", "type": "text"},
+            {"name": "created_at", "type": "timestamptz"}
+          ],
+          "relations": [
+            "card_type_id -> club_card_types.id",
+            "water_body_id -> water_bodies.id"
+          ],
+          "notes": [
+            "setzt club-scoped water body uniqueness/fachliche Sauberkeit voraus"
+          ]
+        },
+        {
+          "table": "club_member_card_assignments",
+          "status": "new",
+          "purpose": "Zuweisung eines Kartentyps an ein Mitglied mit Laufzeit",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "member_no", "type": "text"},
+            {"name": "card_type_id", "type": "uuid"},
+            {"name": "valid_from", "type": "date"},
+            {"name": "valid_to", "type": "date", "nullable": true},
+            {"name": "status", "type": "text"},
+            {"name": "source_kind", "type": "text"},
+            {"name": "created_by", "type": "uuid", "nullable": true},
+            {"name": "created_at", "type": "timestamptz"},
+            {"name": "updated_at", "type": "timestamptz"}
+          ],
+          "relations": [
+            "member_no scoped to club_members",
+            "card_type_id -> club_card_types.id"
+          ],
+          "notes": [
+            "wichtig fuer spaetere Historie und digitale Kartengueltigkeit",
+            "nicht direkt in billing einbauen, sondern ueber Regeln und Positionen"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "pricing_rules",
+      "goal": "Versioniertes Preisregelwerk fuer Karten, Mitgliedschaften, Ausnahmen und wiederkehrende Kosten",
+      "tables": [
+        {
+          "table": "club_fee_rules",
+          "status": "new",
+          "purpose": "Preisregeln pro Verein, Kategorie, Status, Kartentyp und Zeitraum",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "rule_key", "type": "text", "unique_scope": ["club_id"]},
+            {"name": "label", "type": "text"},
+            {"name": "fee_type", "type": "text"},
+            {"name": "member_status", "type": "text", "nullable": true},
+            {"name": "member_category_id", "type": "uuid", "nullable": true},
+            {"name": "card_type_id", "type": "uuid", "nullable": true},
+            {"name": "amount", "type": "numeric"},
+            {"name": "currency", "type": "text", "default": "EUR"},
+            {"name": "interval_kind", "type": "text"},
+            {"name": "billing_anchor_mode", "type": "text", "nullable": true},
+            {"name": "billing_anchor_day", "type": "integer", "nullable": true},
+            {"name": "billing_anchor_month", "type": "integer", "nullable": true},
+            {"name": "is_mandatory", "type": "boolean", "default": true},
+            {"name": "is_active", "type": "boolean", "default": true},
+            {"name": "valid_from", "type": "date"},
+            {"name": "valid_to", "type": "date", "nullable": true},
+            {"name": "notes", "type": "text", "nullable": true},
+            {"name": "created_at", "type": "timestamptz"},
+            {"name": "updated_at", "type": "timestamptz"}
+          ],
+          "relations": [
+            "member_category_id -> club_member_categories.id",
+            "card_type_id -> club_card_types.id"
+          ],
+          "notes": [
+            "regelwerk, nicht live-forderung",
+            "spaetere Generierung von billing positions baut darauf auf"
+          ]
+        },
+        {
+          "table": "club_fee_rule_overrides",
+          "status": "new",
+          "purpose": "Gezielte individuelle Ueberschreibungen fuer Sonderfaelle",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "member_no", "type": "text"},
+            {"name": "base_fee_rule_id", "type": "uuid"},
+            {"name": "override_kind", "type": "text"},
+            {"name": "override_value", "type": "numeric", "nullable": true},
+            {"name": "reason", "type": "text", "nullable": true},
+            {"name": "valid_from", "type": "date"},
+            {"name": "valid_to", "type": "date", "nullable": true},
+            {"name": "created_by", "type": "uuid", "nullable": true},
+            {"name": "created_at", "type": "timestamptz"},
+            {"name": "updated_at", "type": "timestamptz"}
+          ],
+          "relations": [
+            "base_fee_rule_id -> club_fee_rules.id",
+            "member_no scoped to club_members"
+          ],
+          "notes": [
+            "fuer Ehrenmitglieder, Sonderpreise, Kulanz, individuelle Befreiungen"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "work_hours",
+      "goal": "Pflichtstunden fachlich sauber von Eventteilnahme und Verrechnung trennen",
+      "tables": [
+        {
+          "table": "club_work_hour_rules",
+          "status": "new",
+          "purpose": "Regelwerk fuer Pflichtstunden pro Verein/Kategorie/Status",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "rule_key", "type": "text", "unique_scope": ["club_id"]},
+            {"name": "label", "type": "text"},
+            {"name": "member_status", "type": "text", "nullable": true},
+            {"name": "member_category_id", "type": "uuid", "nullable": true},
+            {"name": "hours_required", "type": "numeric"},
+            {"name": "compensation_per_hour", "type": "numeric", "nullable": true},
+            {"name": "requires_confirmation", "type": "boolean", "default": true},
+            {"name": "max_carryover_hours", "type": "numeric", "nullable": true},
+            {"name": "is_active", "type": "boolean", "default": true},
+            {"name": "valid_from", "type": "date"},
+            {"name": "valid_to", "type": "date", "nullable": true},
+            {"name": "created_at", "type": "timestamptz"},
+            {"name": "updated_at", "type": "timestamptz"}
+          ],
+          "relations": [
+            "member_category_id -> club_member_categories.id"
+          ],
+          "notes": [
+            "optional pro Verein aktivierbar, aber strukturell immer vorhanden"
+          ]
+        },
+        {
+          "table": "club_work_hour_entries",
+          "status": "new",
+          "purpose": "Geleistete/gemeldete/bestaetigte Stunden je Mitglied",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "member_no", "type": "text"},
+            {"name": "work_event_id", "type": "uuid", "nullable": true},
+            {"name": "entry_year", "type": "integer"},
+            {"name": "hours_reported", "type": "numeric"},
+            {"name": "hours_confirmed", "type": "numeric", "nullable": true},
+            {"name": "status", "type": "text"},
+            {"name": "reported_by", "type": "uuid", "nullable": true},
+            {"name": "confirmed_by", "type": "uuid", "nullable": true},
+            {"name": "confirmed_at", "type": "timestamptz", "nullable": true},
+            {"name": "note", "type": "text", "nullable": true},
+            {"name": "created_at", "type": "timestamptz"},
+            {"name": "updated_at", "type": "timestamptz"}
+          ],
+          "relations": [
+            "member_no scoped to club_members",
+            "work_event_id -> work_events.id"
+          ],
+          "notes": [
+            "nicht als Ersatz fuer work_participations, sondern als verrechnungsnahe Fachsicht",
+            "spaeter kann ein Trigger/Sync an work_participations andocken"
+          ]
+        },
+        {
+          "table": "club_work_hour_settlements",
+          "status": "new",
+          "purpose": "Jahresabschluss Pflichtstunden pro Mitglied",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "member_no", "type": "text"},
+            {"name": "settlement_year", "type": "integer"},
+            {"name": "rule_id", "type": "uuid", "nullable": true},
+            {"name": "hours_required_snapshot", "type": "numeric"},
+            {"name": "hours_fulfilled_snapshot", "type": "numeric"},
+            {"name": "hours_deficit_snapshot", "type": "numeric"},
+            {"name": "compensation_amount_snapshot", "type": "numeric", "nullable": true},
+            {"name": "settlement_status", "type": "text"},
+            {"name": "billing_position_id", "type": "uuid", "nullable": true},
+            {"name": "settled_at", "type": "timestamptz", "nullable": true},
+            {"name": "created_at", "type": "timestamptz"},
+            {"name": "updated_at", "type": "timestamptz"}
+          ],
+          "relations": [
+            "rule_id -> club_work_hour_rules.id",
+            "billing_position_id -> club_billing_positions.id"
+          ],
+          "notes": [
+            "snapshot statt Neuberechnung",
+            "trennt Stundenjahr von spaeterer Forderung"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "additional_costs",
+      "goal": "Zusatzkosten und Verbandsbeitraege als echte Positionstypen statt Sonderfelder",
+      "tables": [
+        {
+          "table": "club_surcharges",
+          "status": "new",
+          "purpose": "Zusatzkosten-Definitionen pro Verein",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "surcharge_key", "type": "text", "unique_scope": ["club_id"]},
+            {"name": "label", "type": "text"},
+            {"name": "description", "type": "text", "nullable": true},
+            {"name": "amount", "type": "numeric"},
+            {"name": "currency", "type": "text", "default": "EUR"},
+            {"name": "interval_kind", "type": "text"},
+            {"name": "trigger_type", "type": "text"},
+            {"name": "card_type_id", "type": "uuid", "nullable": true},
+            {"name": "is_optional", "type": "boolean", "default": false},
+            {"name": "is_active", "type": "boolean", "default": true},
+            {"name": "valid_from", "type": "date", "nullable": true},
+            {"name": "valid_to", "type": "date", "nullable": true},
+            {"name": "created_at", "type": "timestamptz"},
+            {"name": "updated_at", "type": "timestamptz"}
+          ],
+          "relations": [
+            "card_type_id -> club_card_types.id"
+          ],
+          "notes": [
+            "fuer Aufnahmegebuehr, Boot, Kaution, Schluessel, etc."
+          ]
+        },
+        {
+          "table": "club_association_fees",
+          "status": "new",
+          "purpose": "Verbandsbeitraege / Umlagen pro Verein und Zielgruppe",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "fee_key", "type": "text", "unique_scope": ["club_id"]},
+            {"name": "association_name", "type": "text"},
+            {"name": "label", "type": "text"},
+            {"name": "amount", "type": "numeric"},
+            {"name": "currency", "type": "text", "default": "EUR"},
+            {"name": "member_status", "type": "text", "nullable": true},
+            {"name": "member_category_id", "type": "uuid", "nullable": true},
+            {"name": "is_passed_through", "type": "boolean", "default": true},
+            {"name": "valid_from", "type": "date"},
+            {"name": "valid_to", "type": "date", "nullable": true},
+            {"name": "is_active", "type": "boolean", "default": true},
+            {"name": "created_at", "type": "timestamptz"},
+            {"name": "updated_at", "type": "timestamptz"}
+          ],
+          "relations": [
+            "member_category_id -> club_member_categories.id"
+          ],
+          "notes": [
+            "wichtig, damit Verbandsbeitraege nie als Sonderhack entstehen"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "billing_and_payments",
+      "goal": "Soll- und Ist-Seite der Vereinsabrechnung sauber trennen",
+      "tables": [
+        {
+          "table": "club_billing_positions",
+          "status": "new",
+          "purpose": "Abrechenbare Forderungspositionen je Mitglied als Snapshot",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "member_no", "type": "text"},
+            {"name": "billing_year", "type": "integer"},
+            {"name": "position_type", "type": "text"},
+            {"name": "reference_table", "type": "text", "nullable": true},
+            {"name": "reference_id", "type": "uuid", "nullable": true},
+            {"name": "description", "type": "text"},
+            {"name": "amount_snapshot", "type": "numeric"},
+            {"name": "currency", "type": "text", "default": "EUR"},
+            {"name": "due_date", "type": "date", "nullable": true},
+            {"name": "status", "type": "text"},
+            {"name": "is_manual", "type": "boolean", "default": false},
+            {"name": "created_by", "type": "uuid", "nullable": true},
+            {"name": "created_at", "type": "timestamptz"},
+            {"name": "updated_at", "type": "timestamptz"},
+            {"name": "canceled_at", "type": "timestamptz", "nullable": true},
+            {"name": "waived_at", "type": "timestamptz", "nullable": true}
+          ],
+          "relations": [
+            "member_no scoped to club_members",
+            "may reference fee rules, surcharges, association fees, work settlements"
+          ],
+          "notes": [
+            "zentrale Snapshot-Tabelle",
+            "kein Live-Preis aus Regelwerk ziehen"
+          ]
+        },
+        {
+          "table": "club_payments",
+          "status": "new",
+          "purpose": "Tatsaechliche Zahlungseingaenge",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "member_no", "type": "text", "nullable": true},
+            {"name": "amount", "type": "numeric"},
+            {"name": "currency", "type": "text", "default": "EUR"},
+            {"name": "payment_method", "type": "text"},
+            {"name": "payment_date", "type": "date"},
+            {"name": "external_reference", "type": "text", "nullable": true},
+            {"name": "bank_reference", "type": "text", "nullable": true},
+            {"name": "recorded_by", "type": "uuid", "nullable": true},
+            {"name": "note", "type": "text", "nullable": true},
+            {"name": "status", "type": "text"},
+            {"name": "created_at", "type": "timestamptz"},
+            {"name": "updated_at", "type": "timestamptz"}
+          ],
+          "relations": [
+            "member_no scoped to club_members"
+          ],
+          "notes": [
+            "bewusst separat von payment allocation",
+            "spaeter an Bankschnittstelle andockbar"
+          ]
+        },
+        {
+          "table": "club_payment_allocations",
+          "status": "new",
+          "purpose": "Zuordnung einer Zahlung zu einer oder mehreren Forderungspositionen",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "payment_id", "type": "uuid"},
+            {"name": "billing_position_id", "type": "uuid"},
+            {"name": "allocated_amount", "type": "numeric"},
+            {"name": "created_at", "type": "timestamptz"}
+          ],
+          "relations": [
+            "payment_id -> club_payments.id",
+            "billing_position_id -> club_billing_positions.id"
+          ],
+          "notes": [
+            "n:m verpflichtend, auch wenn erste UI oft 1:1 bleibt"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "billing_generation_control",
+      "goal": "Spaetere Generierung von Forderungen aus Regeln kontrollierbar vorbereiten",
+      "tables": [
+        {
+          "table": "club_billing_cycles",
+          "status": "new",
+          "purpose": "Definition wiederkehrender Abrechnungszyklen pro Verein",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "cycle_key", "type": "text", "unique_scope": ["club_id"]},
+            {"name": "label", "type": "text"},
+            {"name": "interval_kind", "type": "text"},
+            {"name": "anchor_mode", "type": "text"},
+            {"name": "anchor_day", "type": "integer", "nullable": true},
+            {"name": "anchor_month", "type": "integer", "nullable": true},
+            {"name": "is_active", "type": "boolean", "default": true},
+            {"name": "created_at", "type": "timestamptz"},
+            {"name": "updated_at", "type": "timestamptz"}
+          ],
+          "relations": [],
+          "notes": [
+            "bereitet monatlich, jaehrlich, einmalig, Stichtage sauber vor"
+          ]
+        },
+        {
+          "table": "club_billing_runs",
+          "status": "new",
+          "purpose": "Protokoll spaeterer Forderungslaufe",
+          "columns": [
+            {"name": "id", "type": "uuid", "pk": true},
+            {"name": "club_id", "type": "uuid"},
+            {"name": "run_kind", "type": "text"},
+            {"name": "billing_year", "type": "integer", "nullable": true},
+            {"name": "started_at", "type": "timestamptz"},
+            {"name": "finished_at", "type": "timestamptz", "nullable": true},
+            {"name": "status", "type": "text"},
+            {"name": "summary_json", "type": "jsonb", "default": {}},
+            {"name": "started_by", "type": "uuid", "nullable": true}
+          ],
+          "relations": [],
+          "notes": [
+            "noch nicht sofort aktiv nutzen noetig, aber als Vollmodell sinnvoll"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "compatibility_and_transition",
+      "goal": "Vorhandene Felder und RPCs nicht hart brechen, sondern kontrolliert ueberfuehren",
+      "tables": [
+        {
+          "table": "club_member_financial_snapshot",
+          "status": "optional_new",
+          "purpose": "Leichte Projektion fuer schnelle UI/Registry-Sichten pro Mitglied",
+          "columns": [
+            {"name": "club_id", "type": "uuid"},
+            {"name": "member_no", "type": "text"},
+            {"name": "current_member_category_id", "type": "uuid", "nullable": true},
+            {"name": "current_card_type_id", "type": "uuid", "nullable": true},
+            {"name": "current_open_amount", "type": "numeric", "nullable": true},
+            {"name": "current_paid_amount", "type": "numeric", "nullable": true},
+            {"name": "billing_status", "type": "text", "nullable": true},
+            {"name": "updated_at", "type": "timestamptz"}
+          ],
+          "relations": [],
+          "notes": [
+            "kann auch spaeter als view statt echter Tabelle gebaut werden"
+          ]
+        }
+      ]
+    }
+  ]
+}

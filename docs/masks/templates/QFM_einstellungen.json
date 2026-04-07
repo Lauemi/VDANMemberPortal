@@ -1,0 +1,749 @@
+{
+  "maskId": "einstellungen",
+  "maskFamily": "QFM",
+  "maskType": "sectioned",
+  "securityContext": {
+    "rlsKey": "identity_id",
+    "membershipKey": null,
+    "requiresTenantAccess": false,
+    "requiresRoleCheck": false,
+    "allowedRoles": [],
+    "serverValidated": true
+  },
+  "header": {
+    "kicker": "Konto",
+    "title": "Einstellungen",
+    "description": "Zentrale Verwaltungsmaske fuer Profil, Vereine, Sicherheit, Benachrichtigungen, Rechtliches und App-System."
+  },
+  "metaPolicy": {
+    "autoDetect": true,
+    "auditFields": [
+      "created_at",
+      "created_by",
+      "updated_at",
+      "updated_by"
+    ],
+    "appendOnlyHandling": "explicit"
+  },
+  "dataContract": {
+    "sourceOfTruth": "sql",
+    "contracts": [
+      "docs/contracts/FCP_MASK_SYSTEM_CONTRACT.md",
+      "docs/contracts/FCP_SETTINGS_CONFIG_CONTRACT.md",
+      "docs/contracts/FCP_RLS_SECURITY_STANDARD.md"
+    ]
+  },
+  "loadBinding": {
+    "kind": "rpc",
+    "target": "public.self_member_profile_get",
+    "path": "rpc:public.self_member_profile_get"
+  },
+  "sections": [
+    {
+      "id": "profile_clubs",
+      "label": "Profil & Vereine",
+      "title": "Profil & Vereine",
+      "description": "Globale Profildaten und vereinsbezogene Kontexte.",
+      "permissions": {
+        "view": true,
+        "write": true,
+        "update": true,
+        "delete": false,
+        "roles": [
+          "member",
+          "admin",
+          "vorstand",
+          "superadmin"
+        ]
+      },
+      "securityContext": {
+        "rlsKey": "identity_id",
+        "membershipKey": null,
+        "requiresTenantAccess": false,
+        "requiresRoleCheck": false,
+        "allowedRoles": [],
+        "serverValidated": true
+      },
+      "ownership": "global_user",
+      "scope": "global_user",
+      "panels": [
+        {
+          "id": "global_profile",
+          "title": "Globales Profil",
+          "renderMode": "form",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": true,
+            "delete": false,
+            "roles": [
+              "member",
+              "admin",
+              "vorstand",
+              "superadmin"
+            ]
+          },
+          "securityContext": {
+            "rlsKey": "identity_id",
+            "membershipKey": null,
+            "requiresTenantAccess": false,
+            "requiresRoleCheck": false,
+            "allowedRoles": [],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.self_member_profile_get",
+            "sourceKind": "process",
+            "sourceOfTruth": "sql",
+            "scope": "global_user",
+            "ownership": "global_user",
+            "metaDisplay": "auto",
+            "inferredSecurity": {
+              "rlsKey": "identity_id",
+              "membershipKey": null,
+              "requiresTenantAccess": false,
+              "requiresRoleCheck": false,
+              "allowedRoles": [],
+              "serverValidatedRecommended": true
+            },
+            "securityHints": [
+              "self_service_function",
+              "security_definer"
+            ],
+            "riskFlags": []
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.self_member_profile_get",
+            "path": "rpc:public.self_member_profile_get"
+          },
+          "saveBinding": {
+            "kind": "rpc",
+            "target": "public.self_member_profile_update",
+            "path": "rpc:public.self_member_profile_update"
+          },
+          "content": {
+            "fields": [
+              {
+                "name": "first_name",
+                "label": "Vorname",
+                "type": "text",
+                "componentType": "input",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.first_name",
+                "payloadKey": "p_first_name",
+                "group": "person",
+                "order": 10,
+                "placeholder": "Vorname eingeben",
+                "helpText": "Wird global fuer dein Profil verwendet.",
+                "readonly": false,
+                "required": false,
+                "defaultValue": null,
+                "validationRules": []
+              },
+              {
+                "name": "last_name",
+                "label": "Nachname",
+                "type": "text",
+                "componentType": "input",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.last_name",
+                "payloadKey": "p_last_name",
+                "group": "person",
+                "order": 20,
+                "placeholder": "Nachname eingeben",
+                "helpText": "Wird global fuer dein Profil verwendet.",
+                "readonly": false,
+                "required": false,
+                "defaultValue": null,
+                "validationRules": []
+              },
+              {
+                "name": "email",
+                "label": "E-Mail",
+                "type": "text",
+                "componentType": "readonly",
+                "scope": "auth_system",
+                "ownership": "auth_system",
+                "valuePath": "record.email",
+                "payloadKey": "email",
+                "group": "contact",
+                "displaySpan": "half",
+                "order": 30,
+                "placeholder": "",
+                "helpText": "Login- und Referenzadresse. Nicht direkt hier aenderbar.",
+                "readonly": true,
+                "required": false,
+                "defaultValue": null,
+                "validationRules": []
+              },
+              {
+                "name": "street",
+                "label": "Strasse",
+                "type": "text",
+                "componentType": "input",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.street",
+                "payloadKey": "p_street",
+                "group": "address",
+                "displaySpan": "half",
+                "order": 40,
+                "placeholder": "Strasse eingeben",
+                "helpText": "Wird global fuer Kommunikation und Abrechnung verwendet.",
+                "readonly": false,
+                "required": false,
+                "defaultValue": null,
+                "validationRules": []
+              },
+              {
+                "name": "zip",
+                "label": "PLZ",
+                "type": "text",
+                "componentType": "input",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.zip",
+                "payloadKey": "p_zip",
+                "group": "address",
+                "displaySpan": "half",
+                "order": 50,
+                "placeholder": "PLZ eingeben",
+                "helpText": "",
+                "readonly": false,
+                "required": false,
+                "defaultValue": null,
+                "validationRules": []
+              },
+              {
+                "name": "city",
+                "label": "Ort",
+                "type": "text",
+                "componentType": "input",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.city",
+                "payloadKey": "p_city",
+                "group": "address",
+                "displaySpan": "half",
+                "order": 60,
+                "placeholder": "Ort eingeben",
+                "helpText": "",
+                "readonly": false,
+                "required": false,
+                "defaultValue": null,
+                "validationRules": []
+              },
+              {
+                "name": "phone",
+                "label": "Telefon",
+                "type": "text",
+                "componentType": "phone",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.phone",
+                "payloadKey": "p_phone",
+                "group": "contact",
+                "displaySpan": "half",
+                "order": 70,
+                "placeholder": "Telefonnummer eingeben",
+                "helpText": "",
+                "readonly": false,
+                "required": false,
+                "defaultValue": null,
+                "validationRules": []
+              },
+              {
+                "name": "mobile",
+                "label": "Mobil",
+                "type": "text",
+                "componentType": "phone",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.mobile",
+                "payloadKey": "p_mobile",
+                "group": "contact",
+                "displaySpan": "half",
+                "order": 80,
+                "placeholder": "Mobilnummer eingeben",
+                "helpText": "Wichtig fuer spaetere MFA-/Kontaktprozesse.",
+                "readonly": false,
+                "required": false,
+                "defaultValue": null,
+                "validationRules": []
+              }
+            ],
+            "rows": [],
+            "actions": []
+          }
+        },
+        {
+          "id": "membership_overview",
+          "title": "Mitgliedschaften",
+          "renderMode": "readonly",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": [
+              "member",
+              "admin",
+              "vorstand",
+              "superadmin"
+            ]
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": false,
+            "allowedRoles": [],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.canonical_memberships",
+            "sourceKind": "table",
+            "sourceOfTruth": "sql",
+            "scope": "club_scoped",
+            "ownership": "club_scoped",
+            "metaDisplay": "auto",
+            "inferredSecurity": {
+              "rlsKey": "tenant_id",
+              "membershipKey": "canonical_membership_id",
+              "requiresTenantAccess": true,
+              "requiresRoleCheck": false,
+              "allowedRoles": [],
+              "serverValidatedRecommended": true
+            },
+            "securityHints": [
+              "tenant_key_present",
+              "membership_key_present"
+            ],
+            "riskFlags": []
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.self_member_profile_get",
+            "path": "rpc:public.self_member_profile_get"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [
+              {
+                "name": "member_no",
+                "label": "Mitgliedsnummer",
+                "type": "text",
+                "componentType": "readonly",
+                "scope": "club_scoped",
+                "ownership": "club_scoped",
+                "valuePath": "record.member_no",
+                "payloadKey": "member_no",
+                "group": "membership",
+                "displaySpan": "half",
+                "order": 10,
+                "placeholder": "",
+                "helpText": "Wird durch den Verein gefuehrt.",
+                "readonly": true,
+                "required": false,
+                "defaultValue": null,
+                "validationRules": []
+              },
+              {
+                "name": "internal_member_no",
+                "label": "Interne Mitgliedsnummer",
+                "type": "text",
+                "componentType": "readonly",
+                "scope": "club_scoped",
+                "ownership": "club_scoped",
+                "valuePath": "record.internal_member_no",
+                "payloadKey": "internal_member_no",
+                "group": "membership",
+                "displaySpan": "half",
+                "order": 20,
+                "placeholder": "",
+                "helpText": "Systemseitiger Vereinskontext.",
+                "readonly": true,
+                "required": false,
+                "defaultValue": null,
+                "validationRules": []
+              },
+              {
+                "name": "club_code",
+                "label": "Verein",
+                "type": "text",
+                "componentType": "readonly",
+                "scope": "club_scoped",
+                "ownership": "club_scoped",
+                "valuePath": "record.club_code",
+                "payloadKey": "club_code",
+                "group": "membership",
+                "displaySpan": "half",
+                "order": 30,
+                "placeholder": "",
+                "helpText": "Aktueller Vereinskontext.",
+                "readonly": true,
+                "required": false,
+                "defaultValue": null,
+                "validationRules": []
+              }
+            ],
+            "rows": [],
+            "actions": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "label": "Sicherheit",
+      "title": "Sicherheit",
+      "description": "Verifizierung, Sitzungen und kritische Kontoaktionen.",
+      "permissions": {
+        "view": true,
+        "write": true,
+        "update": true,
+        "delete": false,
+        "roles": [
+          "member",
+          "admin",
+          "vorstand",
+          "superadmin"
+        ]
+      },
+      "securityContext": {
+        "rlsKey": "identity_id",
+        "membershipKey": null,
+        "requiresTenantAccess": false,
+        "requiresRoleCheck": false,
+        "allowedRoles": [],
+        "serverValidated": true
+      },
+      "ownership": "auth_system",
+      "scope": "auth_system",
+      "panels": [
+        {
+          "id": "identity_verification",
+          "title": "Zugangspruefung",
+          "renderMode": "actions",
+          "flowType": "auth_critical",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": false,
+            "delete": false,
+            "roles": [
+              "member",
+              "admin",
+              "vorstand",
+              "superadmin"
+            ]
+          },
+          "securityContext": {
+            "rlsKey": "identity_id",
+            "membershipKey": null,
+            "requiresTenantAccess": false,
+            "requiresRoleCheck": false,
+            "allowedRoles": [],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.self_identity_verification_complete",
+            "sourceKind": "process",
+            "sourceOfTruth": "sql",
+            "scope": "auth_system",
+            "ownership": "auth_system",
+            "metaDisplay": "auto",
+            "inferredSecurity": {
+              "rlsKey": "identity_id",
+              "membershipKey": null,
+              "requiresTenantAccess": false,
+              "requiresRoleCheck": false,
+              "allowedRoles": [],
+              "serverValidatedRecommended": true
+            },
+            "securityHints": [
+              "self_service_function",
+              "security_definer"
+            ],
+            "riskFlags": [],
+            "processAdapter": "identity_gate_state"
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.identity_dialog_gate_state",
+            "path": "rpc:public.identity_dialog_gate_state"
+          },
+          "saveBinding": {
+            "kind": "auth_action",
+            "target": "public.self_identity_verification_complete",
+            "path": "auth:public.self_identity_verification_complete"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": [
+              {
+                "id": "open_identity_verification",
+                "label": "Zugangspruefung starten",
+                "kind": "auth_action",
+                "binding": {
+                  "kind": "auth_action",
+                  "target": "public.self_identity_verification_complete",
+                  "path": "auth:public.self_identity_verification_complete"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "active_sessions",
+          "title": "Aktive Sitzungen",
+          "renderMode": "mixed",
+          "flowType": "auth_critical",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": [
+              "member",
+              "admin",
+              "vorstand",
+              "superadmin"
+            ]
+          },
+          "securityContext": {
+            "rlsKey": "identity_id",
+            "membershipKey": null,
+            "requiresTenantAccess": false,
+            "requiresRoleCheck": false,
+            "allowedRoles": [],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "auth.sessions",
+            "sourceKind": "snapshot",
+            "sourceOfTruth": "sql",
+            "scope": "auth_system",
+            "ownership": "auth_system",
+            "metaDisplay": "compact",
+            "processAdapter": "session_snapshot"
+          },
+          "loadBinding": {
+            "kind": "auth_action",
+            "target": "list_sessions",
+            "path": "auth:list_sessions"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": [],
+            "blocks": [
+              {
+                "id": "session_list",
+                "type": "table",
+                "renderMode": "table",
+                "label": "Aktive Sitzungen",
+                "rowsPath": "rows",
+                "columns": [
+                  { "key": "slot", "label": "Bereich" },
+                  { "key": "status", "label": "Status" }
+                ],
+                "emptyStateText": "Keine aktiven Sitzungen sichtbar."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "legal_system",
+      "label": "Rechtliches & App",
+      "title": "Rechtliches & App",
+      "description": "Einwilligungen, App-Status und lokale Systemaktionen.",
+      "permissions": {
+        "view": true,
+        "write": true,
+        "update": false,
+        "delete": false,
+        "roles": [
+          "member",
+          "admin",
+          "vorstand",
+          "superadmin"
+        ]
+      },
+      "securityContext": {
+        "rlsKey": "identity_id",
+        "membershipKey": null,
+        "requiresTenantAccess": false,
+        "requiresRoleCheck": false,
+        "allowedRoles": [],
+        "serverValidated": true
+      },
+      "ownership": "consent_append_only",
+      "scope": "consent_append_only",
+      "panels": [
+        {
+          "id": "legal_acceptance",
+          "title": "Einwilligungen",
+          "renderMode": "actions",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": false,
+            "delete": false,
+            "roles": [
+              "member",
+              "admin",
+              "vorstand",
+              "superadmin"
+            ]
+          },
+          "securityContext": {
+            "rlsKey": "identity_id",
+            "membershipKey": null,
+            "requiresTenantAccess": false,
+            "requiresRoleCheck": false,
+            "allowedRoles": [],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.accept_current_legal",
+            "sourceKind": "append_only",
+            "sourceOfTruth": "sql",
+            "scope": "consent_append_only",
+            "ownership": "consent_append_only",
+            "metaDisplay": "compact",
+            "inferredSecurity": {
+              "rlsKey": "none",
+              "membershipKey": null,
+              "requiresTenantAccess": false,
+              "requiresRoleCheck": false,
+              "allowedRoles": [],
+              "serverValidatedRecommended": true
+            },
+            "securityHints": [
+              "security_definer"
+            ],
+            "riskFlags": [],
+            "processAdapter": "legal_acceptance_state"
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.legal_acceptance_state",
+            "path": "rpc:public.legal_acceptance_state"
+          },
+          "saveBinding": {
+            "kind": "rpc",
+            "target": "public.accept_current_legal",
+            "path": "rpc:public.accept_current_legal"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": [
+              {
+                "id": "accept_current_legal",
+                "label": "Aktuelle Einwilligungen bestaetigen",
+                "kind": "rpc",
+                "binding": {
+                  "kind": "rpc",
+                  "target": "public.accept_current_legal",
+                  "path": "rpc:public.accept_current_legal"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "app_status",
+          "title": "App-Status",
+          "renderMode": "actions",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": false,
+            "delete": false,
+            "roles": [
+              "member",
+              "admin",
+              "vorstand",
+              "superadmin"
+            ]
+          },
+          "securityContext": {
+            "rlsKey": "none",
+            "membershipKey": null,
+            "requiresTenantAccess": false,
+            "requiresRoleCheck": false,
+            "allowedRoles": [],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "local.app_system",
+            "sourceKind": "process",
+            "sourceOfTruth": "sql",
+            "scope": "auth_system",
+            "ownership": "auth_system",
+            "metaDisplay": "compact",
+            "processAdapter": "app_status_local"
+          },
+          "loadBinding": {
+            "kind": "local_only",
+            "target": "app_status",
+            "path": "local:app_status"
+          },
+          "saveBinding": {
+            "kind": "local_only",
+            "target": "app_actions",
+            "path": "local:app_actions"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": [
+              {
+                "id": "check_update",
+                "label": "Auf Update pruefen",
+                "kind": "local_only",
+                "binding": {
+                  "kind": "local_only",
+                  "target": "check_update",
+                  "path": "local:check_update"
+                }
+              },
+              {
+                "id": "reload_app",
+                "label": "Neu laden",
+                "kind": "local_only",
+                "binding": {
+                  "kind": "local_only",
+                  "target": "reload_app",
+                  "path": "local:reload_app"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "specialCases": []
+}

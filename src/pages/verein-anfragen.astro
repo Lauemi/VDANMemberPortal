@@ -1,136 +1,432 @@
 ---
+import path from "node:path";
 import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
+import { readMaskJsonFile } from "../../scripts/fcp-mask-reader.mjs";
 
-const nextRaw = Astro.url.searchParams.get("next") ?? "/app/";
-const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
-const clubSignInHref = `/vereinssignin/?next=${encodeURIComponent(nextTarget)}`;
+const maskFilePath = path.resolve(process.cwd(), "docs/masks/templates/Onboarding/QFM_clubEntryBillingSignIn.json");
+const resolvedMask = await readMaskJsonFile(maskFilePath);
+
+function toQuickFlowField(field) {
+  const typeMap = {
+    input: field.type === "email" ? "email" : field.type === "date" ? "date" : "text",
+    textarea: "textarea",
+    select: "select",
+    toggle: "toggle",
+    date: "date",
+    email: "email",
+    phone: "text",
+    number: "number",
+    readonly: "text",
+    custom: "text",
+  };
+
+  return {
+    name: field.name,
+    label: field.label,
+    type: typeMap[field.componentType] || field.type || "text",
+    value: field.defaultValue ?? "",
+    placeholder: field.placeholder || "",
+    help: field.helpText || "",
+    disabled: field.readonly === true,
+    valuePath: field.valuePath || "",
+    payloadKey: field.payloadKey || field.name,
+    readonly: field.readonly === true,
+    defaultValue: field.defaultValue ?? "",
+    autocomplete:
+      field.autocomplete ||
+      (field.componentType === "email"
+        ? "email"
+        : field.componentType === "phone"
+          ? "tel"
+          : undefined),
+    inputMode: field.inputMode || undefined,
+    options: Array.isArray(field.options) ? field.options : [],
+    span: field.displaySpan || undefined,
+  };
+}
+
+function mapAction(action) {
+  return {
+    id: action.id,
+    label: action.label,
+    variant: action.variant || (action.kind === "rpc" || action.kind === "auth_action" || action.kind === "edge_function" ? "primary" : "ghost"),
+    action: action.action || undefined,
+    disabled: action.disabled === true,
+    binding: action.binding || null,
+  };
+}
+
+function toQuickFlowPanel(panel, index) {
+  const content = panel.content || {};
+  const transformed = {
+    id: panel.id,
+    title: panel.title,
+    renderMode: panel.renderMode,
+    componentType: panel.componentType || null,
+    flowType: panel.flowType,
+    permissions: panel.permissions,
+    open: index === 0,
+    meta: {
+      label: panel.meta?.displayLabel || "",
+      securityContext: panel.securityContext,
+      processAdapter: panel.meta?.processAdapter || "",
+      resolver: {
+        ...(panel.meta?.resolver || {}),
+        fieldDefs: content.fields || [],
+        blockDefs: content.blocks || [],
+      },
+    },
+    loadBinding: panel.loadBinding,
+    saveBinding: panel.saveBinding,
+    content: {
+      fields: [],
+      rows: [],
+      actions: [],
+      blocks: [],
+    },
+    actions: (panel.actions || []).map(mapAction),
+    rows: [],
+    columns: [],
+    tableConfig: panel.tableConfig || null,
+  };
+
+  if (panel.renderMode === "form") {
+    transformed.content.fields = (content.fields || []).map(toQuickFlowField);
+  } else if (panel.renderMode === "readonly") {
+    transformed.content.rows = [];
+  } else if (panel.renderMode === "actions") {
+    transformed.actions = (panel.actions || content.actions || []).map(mapAction);
+  } else if (panel.renderMode === "mixed") {
+    transformed.content.blocks = [];
+  } else if (panel.renderMode === "table") {
+    transformed.columns = panel.columns || [];
+    transformed.rows = panel.rows || [];
+  }
+
+  return transformed;
+}
+
+function toQuickFlowSection(section) {
+  return {
+    id: section.id,
+    label: section.label,
+    title: section.title,
+    description: section.description,
+    permissions: section.permissions,
+    panels: (section.panels || []).map((panel, index) => toQuickFlowPanel(panel, index)),
+  };
+}
+
+const qfmPageConfig = {
+  root: "#clubRequestQfmRoot",
+  maskId: resolvedMask.maskId,
+  maskFamily: resolvedMask.maskFamily || "QFM",
+  maskType: resolvedMask.maskType,
+  activeSectionId: resolvedMask.sections[0]?.id || null,
+  autoLoadOnInit: false,
+  autoLoadSectionOnActivate: false,
+  autoLoadPanelOnOpen: false,
+  currentRoles: [],
+  currentScopes: {
+    globalUser: true,
+    authSystem: true,
+    clubReadonly: true,
+    clubOverride: false,
+    billingSnapshot: true,
+    consentAppendOnly: true,
+  },
+  header: resolvedMask.header,
+  sections: resolvedMask.sections.map(toQuickFlowSection),
+};
+
+const qfmPageConfigJson = JSON.stringify(qfmPageConfig);
+
 ---
 
-<Site title={`Verein anfragen • ${APP.name}`} description="Getrennter Einstieg für neue Vereine." robots="noindex" density="compact">
-  <section class="card ui-card register-flow-card form-shell" style="max-width:840px;margin:0 auto;">
-    <div class="card__body ui-card__body register-flow">
-      <div class="register-flow__intro">
-        <span class="register-flow__eyebrow">Onboarding</span>
-        <div id="registerCurrentPathLabel" class="register-current-path">Aktiver Pfad: Verein anfragen</div>
-        <h1 id="registerIntroTitle">Verein anfragen</h1>
-        <p id="registerModeHint" class="small register-flow__lede">
-          Getrennter Anfrageprozess für neue Vereine mit eigenen Pflichtangaben, Pending-Status und Freigabe.
-        </p>
-        <p id="registerModeContext" class="register-flow__context small">
-          Du befindest dich im Anfrageprozess für neue Vereine. Invite- und Mitgliedsdaten spielen hier keine Rolle.
-        </p>
+<Site title={`Verein anfragen • ${APP.name}`} description="QFM-Einstieg fuer den Club-Request-Prozess." robots="noindex" appThemeOverride="fcp_tactical">
+  <Fragment slot="head">
+    <link rel="stylesheet" href="/css/ofmMask.css" />
+  </Fragment>
+
+  <section class="ofm-mask-stage">
+    <div id="clubRequestQfmRoot"></div>
+    <section id="clubRequestAuthBridge" class="qfp-card qfp-card--section-header qfp-companion-surface club-request-auth-bridge" hidden>
+      <div class="club-request-auth-bridge__header">
+        <div class="qfp-kicker">Zugang</div>
+        <h3 class="qfp-section-title">Anfrage speichern</h3>
+        <p class="qfp-description">Zum Absenden brauchst du einen Zugang. Dein Formularentwurf bleibt auf diesem Geraet erhalten und kann nach Login oder Registrierung direkt weiterverwendet werden.</p>
       </div>
-
-      <form id="registerForm" class="register-flow__form form-shell__section" data-next-target={nextTarget} data-register-mode="create_club">
-        <input id="registerModeValue" type="hidden" name="registration_mode" value="create_club" />
-
-        <section class="register-step register-step--mode is-active">
-          <div class="register-step__head">
-            <span class="register-step__index">0</span>
-            <div>
-              <h2>Pfad: Neuer Verein</h2>
-              <p>Dieser Einstieg ist nur für neue Vereine gedacht. Bestehende Vereine nutzen den separaten VereinsSignIn.</p>
-            </div>
-          </div>
-          <div class="register-mode-grid">
-            <a id="registerModeJoinCardWrap" class="register-mode-card" href={clubSignInHref}>
-              <span class="register-mode-card__badge">Bestehender Verein</span>
-              <span class="register-mode-card__title">VereinsSignIn</span>
-              <span class="register-mode-card__copy">Wechselt in den Join-Flow mit Invite-Link, Invite-Token und Mitgliedsnummer.</span>
-            </a>
-            <div id="registerModeCreateCard" class="register-mode-card is-active">
-              <span class="register-mode-card__badge">Neuer Verein</span>
-              <span class="register-mode-card__title">Verein anfragen</span>
-              <span class="register-mode-card__copy">Eigene Pflichtangaben, Pending-Mail, Sperre bis zur Freigabe und anschließender Portalzugang.</span>
-            </div>
-          </div>
-        </section>
-
-        <section id="registerAuthSection" class="register-step register-step--auth is-active">
-          <div class="register-step__head">
-            <span class="register-step__index">1</span>
-            <div>
-              <h2 id="registerAuthTitle">Zugang für die Vereinsanfrage</h2>
-              <p id="registerAuthCopy">Zuerst legen wir den Auth-Zugang für die anfragende Person an. Danach folgt direkt die eigentliche Vereinsanfrage.</p>
-            </div>
-          </div>
-          <div class="register-grid">
-            <label id="registerEmailField">
-              <span>E-Mail</span>
-              <input id="registerEmail" name="email" type="email" autocomplete="email" required />
-            </label>
-            <label id="registerPasswordField">
-              <span>Passwort</span>
-              <input id="registerPass" name="password" type="password" autocomplete="new-password" minlength="8" required />
-            </label>
-            <label id="registerPasswordRepeatField">
-              <span>Passwort wiederholen</span>
-              <input id="registerPass2" name="password_repeat" type="password" autocomplete="new-password" minlength="8" required />
-            </label>
-          </div>
-          <p id="registerPasswordHint" class="small" aria-live="polite"></p>
-        </section>
-
-        <section id="registerCreateSection" class="register-step register-step--create is-active">
-          <div class="register-step__head">
-            <span class="register-step__index">2</span>
-            <div>
-              <span class="register-step__status">Neue Vereinsanfrage</span>
-              <h2>Verein anfragen</h2>
-              <p>Dein Benutzerkonto wird getrennt vom Invite-Flow angelegt. Danach wird die Vereinsanfrage gespeichert und bis zur Freigabe gesperrt geführt.</p>
-            </div>
-          </div>
-          <div class="register-note small">
-            Nach Möglichkeit sollte hierfür eine offizielle Vereins-E-Mail-Adresse verwendet werden und keine private Einzeladresse.
-          </div>
-          <fieldset id="registerCreateFieldset" class="register-create-fieldset">
-            <div class="register-grid">
-              <label><span>Vereinsname</span><input id="registerClubName" name="club_name" type="text" autocomplete="organization" /></label>
-              <label><span>PLZ</span><input id="registerClubZip" name="zip" type="text" inputmode="numeric" autocomplete="postal-code" /></label>
-              <label><span>Ort</span><input id="registerClubCity" name="city" type="text" autocomplete="address-level2" /></label>
-              <label><span>Vereinsgröße</span><select id="registerClubSize" name="club_size"><option value="">Bitte auswählen</option><option value="small">Bis 100 Mitglieder</option><option value="medium">101 bis 300 Mitglieder</option><option value="large">301 bis 700 Mitglieder</option><option value="xlarge">Mehr als 700 Mitglieder</option></select></label>
-              <label class="register-grid__full"><span>Vereinsanschrift</span><textarea id="registerClubAddress" name="club_address" rows="3" autocomplete="street-address"></textarea></label>
-              <label><span>Verantwortliche Person</span><input id="registerResponsibleName" name="responsible_name" type="text" autocomplete="name" /></label>
-              <label><span>Funktion im Verein</span><input id="registerResponsibleRole" name="responsible_role" type="text" autocomplete="organization-title" placeholder="z. B. Vorstand, Gründungsmitglied" /></label>
-              <label><span>E-Mail der verantwortlichen Person</span><input id="registerResponsibleEmail" name="responsible_email" type="email" autocomplete="email" /></label>
-            </div>
-            <label class="small register-check">
-              <input id="registerClubMailConfirm" type="checkbox" />
-              <span>Ich bestätige, dass für diesen Zugang nach Möglichkeit eine offizielle Vereins-E-Mail-Adresse verwendet wird und mir bewusst ist, dass der benannte Verantwortliche dem Eintrag widersprechen kann.</span>
-            </label>
-            <label class="small register-check">
-              <input id="registerLegalAuthorityConfirm" type="checkbox" />
-              <span>Ich bestätige, dass ich für diese Vereinsanfrage berechtigt bin, wahrheitsgemäße Angaben mache und einer Kontaktaufnahme zur Prüfung zustimme.</span>
-            </label>
-            <div class="register-billing-preview">
-              <div><strong>Freigabe vor Portalzugang</strong><p class="small">Die Daten werden als Vereinsanfrage gespeichert. Solange der Status auf <code>pending</code> steht, gibt es keinen Portalzugang und keinen Club-Kontext.</p></div>
-              <div class="register-billing-preview__state small">Nächster Schritt nach Absenden: <code>/app/anfrage-offen/</code></div>
-            </div>
-          </fieldset>
-        </section>
-
-        <section id="registerLegalSection" class="register-step register-step--legal is-active">
-          <div class="register-step__head">
-            <span class="register-step__index">3</span>
-            <div>
-              <h2 id="registerLegalTitle">Rechtstexte für die Vereinsanfrage</h2>
-              <p id="registerLegalCopy">Ohne bestätigte Rechtstexte wird die Vereinsanfrage nicht gespeichert.</p>
-            </div>
-          </div>
-          <label class="small register-check">
-            <input id="registerAccept" type="checkbox" required />
-            <span>Ich akzeptiere die <a href="/nutzungsbedingungen.html/" target="_blank" rel="noopener noreferrer">Nutzungsbedingungen</a> und die <a href="/datenschutz.html/" target="_blank" rel="noopener noreferrer">Datenschutzerklärung</a>.</span>
-          </label>
-        </section>
-
-        <div class="register-flow__actions">
-          <button id="registerSubmitBtn" class="feed-btn fcp-brand-btn--primary" type="submit">Verein anfragen</button>
-          <a class="feed-btn feed-btn--ghost" href={clubSignInHref}>Stattdessen VereinsSignIn</a>
-          <a class="register-flow__secondary-link" href={`/login/?next=${encodeURIComponent(nextTarget)}`}>Zur Anmeldung</a>
-          <span id="registerMsg" class="small" aria-live="polite"></span>
+      <div class="club-request-auth-bridge__switch">
+        <button id="clubRequestAuthLoginTab" class="qfp-btn qfp-btn--ghost is-active" type="button">Einloggen</button>
+        <button id="clubRequestAuthSignupTab" class="qfp-btn qfp-btn--ghost" type="button">Zugang anlegen</button>
+      </div>
+      <form id="clubRequestAuthForm" class="qfp-form-grid">
+        <label class="qfp-form-field">
+          <span class="qfp-field-label">E-Mail</span>
+          <input id="clubRequestAuthEmail" name="email" type="email" autocomplete="email" required />
+        </label>
+        <label class="qfp-form-field">
+          <span class="qfp-field-label">Passwort</span>
+          <input id="clubRequestAuthPassword" name="password" type="password" autocomplete="current-password" minlength="8" required />
+        </label>
+        <label id="clubRequestAuthPasswordRepeatField" class="qfp-form-field" hidden>
+          <span class="qfp-field-label">Passwort wiederholen</span>
+          <input id="clubRequestAuthPasswordRepeat" name="password_repeat" type="password" autocomplete="new-password" minlength="8" />
+        </label>
+        <label id="clubRequestAuthTermsField" class="qfp-form-field is-full" hidden>
+          <span class="qfp-toggle-row">
+            <input id="clubRequestAuthTerms" name="accept_terms" type="checkbox" />
+            <span class="qfp-toggle-label">Ich akzeptiere die <a href="/nutzungsbedingungen.html/" target="_blank" rel="noopener noreferrer">Nutzungsbedingungen</a> und die <a href="/datenschutz.html/" target="_blank" rel="noopener noreferrer">Datenschutzerklaerung</a>.</span>
+          </span>
+        </label>
+        <div class="qfp-action-bar">
+          <button id="clubRequestAuthSubmit" class="qfp-btn qfp-btn--primary" type="submit">Einloggen</button>
         </div>
       </form>
-    </div>
+      <p id="clubRequestAuthMsg" class="small club-request-auth-bridge__message" aria-live="polite"></p>
+    </section>
+    <p id="clubRequestQfmMsg" class="small ofm-mask-stage__status" aria-live="polite"></p>
   </section>
+
+  <script is:inline src="/js/fcp-mask-process-state.js"></script>
+  <script is:inline src="/js/fcp-adm-qfm-contract-hub.js"></script>
+  <script is:inline src="/js/fcp-mask-data-resolver.js"></script>
+  <script is:inline src="/js/fcp-data-table.js"></script>
+  <script is:inline src="/js/fcp-inline-data-table-v2.js"></script>
+  <script is:inline src="/js/quick-flow-pattern.js"></script>
+  <script is:inline src="/js/fcp-mask-page-loader.js"></script>
+  <script id="clubRequestQfmConfig" type="application/json" set:html={qfmPageConfigJson}></script>
+  <script is:inline>
+    const pageMsgEl = document.getElementById("clubRequestQfmMsg");
+    const authBridgeEl = document.getElementById("clubRequestAuthBridge");
+    const authForm = document.getElementById("clubRequestAuthForm");
+    const authMsgEl = document.getElementById("clubRequestAuthMsg");
+    const loginTabEl = document.getElementById("clubRequestAuthLoginTab");
+    const signupTabEl = document.getElementById("clubRequestAuthSignupTab");
+    const passwordRepeatFieldEl = document.getElementById("clubRequestAuthPasswordRepeatField");
+    const passwordRepeatInputEl = document.getElementById("clubRequestAuthPasswordRepeat");
+    const termsFieldEl = document.getElementById("clubRequestAuthTermsField");
+    const termsInputEl = document.getElementById("clubRequestAuthTerms");
+    const authSubmitEl = document.getElementById("clubRequestAuthSubmit");
+
+    let authMode = "login";
+    let pendingSubmitPayload = null;
+
+    function setPageMessage(text) {
+      if (pageMsgEl) pageMsgEl.textContent = text;
+    }
+
+    function setAuthMessage(text) {
+      if (authMsgEl) authMsgEl.textContent = text;
+    }
+
+    function getCurrentPathWithSearch() {
+      return `${window.location.pathname}${window.location.search}`;
+    }
+
+    function resolveRouteTemplate(template, result) {
+      const rawTemplate = String(template || "").trim();
+      if (!rawTemplate) return "";
+      return rawTemplate.replace(/\{([^}]+)\}/g, (_, key) => {
+        const value = result && Object.prototype.hasOwnProperty.call(result, key) ? result[key] : "";
+        return encodeURIComponent(String(value ?? ""));
+      });
+    }
+
+    function navigateAfterSubmit(detail) {
+      const result = detail?.result || {};
+      const routing = detail?.resolverMeta?.postSubmitRouting || {};
+      const status = String(result?.status || "").trim().toLowerCase();
+      const rule = routing[status] || routing.fallback || null;
+      const target = resolveRouteTemplate(rule?.target, {
+        ...result,
+        club_id: result?.club_id || result?.approved_club_id || "",
+      });
+      if (!target) return;
+      window.location.assign(target);
+    }
+
+    function getDraftFromStorage() {
+      try {
+        const raw = localStorage.getItem("vdan_club_request_pending_v1");
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function setAuthMode(mode) {
+      authMode = mode === "signup" ? "signup" : "login";
+      const isSignup = authMode === "signup";
+      loginTabEl?.classList.toggle("is-active", !isSignup);
+      signupTabEl?.classList.toggle("is-active", isSignup);
+      passwordRepeatFieldEl.hidden = !isSignup;
+      termsFieldEl.hidden = !isSignup;
+      if (passwordRepeatInputEl) {
+        passwordRepeatInputEl.required = isSignup;
+      }
+      if (termsInputEl) {
+        termsInputEl.required = isSignup;
+      }
+      if (authSubmitEl) {
+        authSubmitEl.textContent = isSignup ? "Zugang anlegen" : "Einloggen";
+      }
+      const passwordInput = document.getElementById("clubRequestAuthPassword");
+      if (passwordInput) {
+        passwordInput.setAttribute("autocomplete", isSignup ? "new-password" : "current-password");
+      }
+    }
+
+    function showAuthBridge(message = "") {
+      if (!authBridgeEl) return;
+      authBridgeEl.hidden = false;
+      if (message) setAuthMessage(message);
+      authBridgeEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function updateAuthBridgeVisibility() {
+      const hasSession = Boolean(window.VDAN_AUTH?.loadSession?.()?.access_token);
+      if (authBridgeEl) {
+        authBridgeEl.hidden = hasSession;
+      }
+      if (hasSession) {
+        setAuthMessage("");
+      }
+    }
+
+    async function resumeClubRequestSubmit(payload = null) {
+      const draft = payload || pendingSubmitPayload || getDraftFromStorage();
+      if (!draft || !window.__QFM_CLUB_REQUEST_PAGE__) return;
+      pendingSubmitPayload = draft;
+      await window.__QFM_CLUB_REQUEST_PAGE__.savePanel("club_request_entry", "request_form", draft);
+      pendingSubmitPayload = null;
+    }
+
+    loginTabEl?.addEventListener("click", () => setAuthMode("login"));
+    signupTabEl?.addEventListener("click", () => setAuthMode("signup"));
+
+    window.addEventListener("fcp-mask:auth-required", (event) => {
+      const detail = event?.detail || {};
+      pendingSubmitPayload = detail.payload || getDraftFromStorage();
+      setPageMessage(detail.message || "Zum Absenden bitte zuerst einloggen oder einen Zugang anlegen.");
+      showAuthBridge(detail.message || "Zum Absenden bitte zuerst einloggen oder einen Zugang anlegen.");
+      setAuthMode("signup");
+    });
+
+    document.addEventListener("vdan:session", () => {
+      updateAuthBridgeVisibility();
+    });
+
+    window.addEventListener("fcp-mask:save-success", (event) => {
+      const detail = event?.detail || {};
+      if (detail?.panelId !== "request_form") return;
+      navigateAfterSubmit(detail);
+    });
+
+    authForm?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!window.VDAN_AUTH) {
+        setAuthMessage("Auth-Runtime ist nicht geladen.");
+        return;
+      }
+
+      const email = String(document.getElementById("clubRequestAuthEmail")?.value || "").trim().toLowerCase();
+      const password = String(document.getElementById("clubRequestAuthPassword")?.value || "");
+      const passwordRepeat = String(passwordRepeatInputEl?.value || "");
+      const acceptedTerms = Boolean(termsInputEl?.checked);
+      const draft = pendingSubmitPayload || getDraftFromStorage();
+
+      if (!email || !email.includes("@")) {
+        setAuthMessage("Bitte eine gueltige E-Mail eingeben.");
+        return;
+      }
+      if (password.length < 8) {
+        setAuthMessage("Das Passwort muss mindestens 8 Zeichen lang sein.");
+        return;
+      }
+
+      try {
+        setAuthMessage(authMode === "signup" ? "Zugang wird angelegt..." : "Login laeuft...");
+        if (authMode === "signup") {
+          if (password !== passwordRepeat) {
+            throw new Error("Die Passwoerter stimmen nicht ueberein.");
+          }
+          if (!acceptedTerms) {
+            throw new Error("Bitte Nutzungsbedingungen und Datenschutzerklaerung bestaetigen.");
+          }
+          const signUpMetadata = {
+            ...(draft || {}),
+            registration_mode: "club_request_pending",
+            onboarding_path: "club_request",
+            billing_status: "billing_pending",
+          };
+          const result = await window.VDAN_AUTH.signUpWithPassword(email, password, signUpMetadata);
+          const accessToken = String(result?.access_token || "").trim();
+          if (accessToken) {
+            await window.VDAN_AUTH.acceptCurrentLegal(accessToken).catch(() => null);
+            updateAuthBridgeVisibility();
+            setAuthMessage("Zugang erstellt. Deine Vereinsanfrage wird jetzt gespeichert...");
+            await resumeClubRequestSubmit(draft);
+            return;
+          }
+          setAuthMessage("Registrierung gespeichert. Bitte bestaetige zuerst deine E-Mail und kehre danach auf diese Seite zurueck.");
+          return;
+        }
+
+        const session = await window.VDAN_AUTH.loginWithPassword(email, password);
+        if (!session?.access_token) {
+          throw new Error("Login fehlgeschlagen.");
+        }
+        updateAuthBridgeVisibility();
+        setAuthMessage("Login erfolgreich. Deine Vereinsanfrage wird jetzt gespeichert...");
+        await resumeClubRequestSubmit(draft);
+      } catch (error) {
+        setAuthMessage(error instanceof Error ? error.message : String(error));
+      }
+    });
+
+    setAuthMode("login");
+
+    window.FcpMaskPageLoader.boot({
+      configScriptId: "clubRequestQfmConfig",
+      patternGlobal: "__QFM_CLUB_REQUEST_PAGE__",
+      onMessage: setPageMessage,
+      onReady: async () => {
+        updateAuthBridgeVisibility();
+      },
+    }).catch((error) => {
+      setPageMessage(error instanceof Error ? error.message : String(error));
+    });
+  </script>
+
+  <style>
+    .ofm-mask-stage {
+      display: grid;
+      gap: 10px;
+    }
+    #clubRequestQfmRoot {
+      min-height: 240px;
+    }
+    .ofm-mask-stage__status {
+      margin: 0;
+    }
+    .club-request-auth-bridge {
+      display: grid;
+      gap: 14px;
+    }
+    .club-request-auth-bridge__switch {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .club-request-auth-bridge__switch .qfp-btn.is-active {
+      border-color: rgba(245, 158, 11, 0.48);
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.24), rgba(245, 158, 11, 0.12));
+      color: var(--text);
+    }
+    .club-request-auth-bridge__message {
+      margin: 0;
+    }
+  </style>
 </Site>

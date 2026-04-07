@@ -25,6 +25,7 @@ Empfohlenes Modell:
 2. HTML-/App-Board daraus aktualisieren
 3. JSON-Dateien nur fuer Bootstrap, Export oder Fallback nutzen
 4. tiefe Architektur bleibt in Fachdokumenten und Migrations-/Code-Referenzen
+5. bei jeder relevanten Umsetzung einen direkten SQL-Pflegeblock fuer die DB mitliefern
 
 ## Warum das wichtig ist
 
@@ -111,6 +112,21 @@ Minimaler Inhalt pro Knoten:
 
 Das spart Token, weil bei Updates nicht jedes Mal das ganze HTML semantisch neu gelesen werden muss.
 
+## Pflichtausgabe fuer Codex
+
+Zu jeder relevanten Umsetzung gehoert kuenftig nicht nur Code, sondern auch ein operativer Pflegeblock fuer die DB.
+
+Minimal:
+
+- `insert ... on conflict ... do update`
+- oder `update ...`
+
+Ziel:
+
+- `public.system_board_nodes` direkt aktualisierbar
+- `public.system_process_controls` direkt aktualisierbar
+- kein rein beschreibender Chat ohne nachziehbaren DB-Pflegeblock
+
 ## Launch-Sicht
 
 Das Board sollte nicht nur Modulstatus zeigen, sondern auch Launch-Relevanz.
@@ -155,11 +171,12 @@ Nach jeder relevanten Aenderung:
 
 1. betroffenen Knoten identifizieren
 2. `status` pruefen
-3. `progress_visible` oder `progress_invisible` aktualisieren
-4. neue Referenzen eintragen
-5. `gap` entfernen oder neu markieren
-6. `launch_blocker` und `risk_level` neu einschaetzen
-7. `last_verified_at` setzen
+3. SQL-Block fuer den operativen Board-State schreiben
+4. `progress_visible` oder `progress_invisible` aktualisieren
+5. neue Referenzen eintragen
+6. `gap` entfernen oder neu markieren
+7. `launch_blocker` und `risk_level` neu einschaetzen
+8. `last_verified_at` setzen
 
 ## Praktische Arbeitsregel
 

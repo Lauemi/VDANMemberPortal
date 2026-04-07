@@ -334,11 +334,25 @@ returns table(
   manager_count bigint,
   setup_ready boolean
 )
-language sql
+language plpgsql
 security definer
 stable
 set search_path = public, auth, pg_catalog
 as $$
+begin
+  if p_club_id is null then
+    raise exception 'club_id_required';
+  end if;
+
+  if not (
+    public.is_service_role_request()
+    or public.is_admin_or_vorstand_in_club(p_club_id)
+    or public.is_admin_in_any_club()
+  ) then
+    raise exception 'forbidden_club_scope';
+  end if;
+
+  return query
   with state_src as (
     select *
     from public.club_onboarding_state
@@ -384,6 +398,7 @@ as $$
     ) as setup_ready
   from req
   left join state_src ss on true;
+end;
 $$;
 
 create or replace function public.upsert_club_onboarding_progress(

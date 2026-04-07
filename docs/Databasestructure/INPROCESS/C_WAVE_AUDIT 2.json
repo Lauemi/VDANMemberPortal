@@ -1,0 +1,37 @@
+[
+  {
+    "table_name": "club_member_identities",
+    "total_rows": 349,
+    "filled_identity_id": 349,
+    "filled_tenant_id": 349,
+    "filled_canonical_membership_id": 349
+  },
+  {
+    "table_name": "club_members",
+    "total_rows": 350,
+    "filled_identity_id": 0,
+    "filled_tenant_id": 350,
+    "filled_canonical_membership_id": 349
+  },
+  {
+    "table_name": "club_user_roles",
+    "total_rows": 350,
+    "filled_identity_id": 350,
+    "filled_tenant_id": 350,
+    "filled_canonical_membership_id": 350
+  },
+  {
+    "table_name": "profiles",
+    "total_rows": 349,
+    "filled_identity_id": 349,
+    "filled_tenant_id": 349,
+    "filled_canonical_membership_id": 0
+  },
+  {
+    "table_name": "user_roles",
+    "total_rows": 352,
+    "filled_identity_id": 352,
+    "filled_tenant_id": 350,
+    "filled_canonical_membership_id": 350
+  }
+]

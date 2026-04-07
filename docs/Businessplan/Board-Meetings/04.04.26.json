@@ -1,0 +1,459 @@
+{
+  "meetingId": "board_meeting_2026_04_04_fcp_mask_ai_alignment",
+  "date": "2026-04-04",
+  "title": "FCP Mask System / ClubSettings ADM Alignment",
+  "purpose": "Dieses Dokument ist das gemeinsame Einstiegspaket fuer KI-Kollegen vor dem Meeting. Es beschreibt Zielbild, Altstand, Iststand, offene Baustellen, zentrale Architekturentscheidungen und die relevanten Quellartefakte.",
+  "audience": [
+    "ChatGPT",
+    "Claude",
+    "Gemini",
+    "Codex"
+  ],
+  "readFirst": {
+    "primaryBusinessArtifact": "docs/masks/templates/Onboarding/ADM_clubSettings.json",
+    "primarySchemaArtifact": "docs/masks/templates/02_04_26_DB_V5.json",
+    "schemaFallback": "docs/masks/templates/AISQLSchemaSQL.sql",
+    "note": "Wenn die statische Schema-JSON veraltet oder unvollstaendig wirkt, soll die SQL-Referenzquery genutzt werden, um einen neuen AI-lesbaren Schema-Snapshot zu erzeugen. Fuer das Meeting ist 02_04_26_DB_V5.json die bevorzugte Lesebasis und damit die aktuelle Wahrheitsquelle."
+  },
+  "systemModel": {
+    "corePrinciple": "Das FCP-System wird zentral ueber JSON-Masken, Runtime-Bausteine und klar getrennte KI-Rollen gesteuert. Backend entscheidet Sicherheit und Prozesszustand. JSON beschreibt Struktur und Bindings. Runtime liest, hydriert und rendert.",
+    "truthLayers": [
+      "DB / SQL / RPC / Edge / RLS = technische und sicherheitliche Wahrheit",
+      "JSON = Struktur- und Maskenwahrheit",
+      "Reader = Validierung / RenderPlan",
+      "Resolver = Daten / Binder / Hydration",
+      "Renderer = UI",
+      "CSS = Optik"
+    ],
+    "maskFamilies": [
+      {
+        "family": "QFM",
+        "meaning": "inhaltlicher Standardrenderer fuer Form, Readonly, Actions, Mixed"
+      },
+      {
+        "family": "ADM",
+        "meaning": "Workspace-/Board-Rahmen fuer administrative Bereiche"
+      }
+    ],
+    "importantDecision": "ADM bleibt der aeussere Workspace. QFM kann innerhalb von ADM der innere Inhaltsstil sein. Es wird keine dritte Maskenfamilie wie InnerQFMForADM eingefuehrt.",
+    "runtimePieces": [
+      "scripts/fcp-mask-reader.mjs",
+      "scripts/check-mask-jsons.mjs",
+      "public/js/fcp-mask-data-resolver.js",
+      "public/js/quick-flow-pattern.js",
+      "public/js/admin-panel-mask.js",
+      "public/js/fcp-inline-data-table-v2.js",
+      "public/js/fcp-data-table.js",
+      "public/js/fcp-mask-page-loader.js"
+    ],
+    "stylingAndDom": {
+      "css": [
+        "public/css/ofmMask.css",
+        "src/styles/app-shell.css"
+      ],
+      "domAnchors": [
+        ".qfp-shell",
+        ".qfp-card",
+        ".qfp-form-grid",
+        ".qfp-form-field",
+        ".qfp-field-label",
+        ".qfp-field-help",
+        ".qfp-btn",
+        ".admin-board",
+        ".admin-section",
+        ".admin-card",
+        ".admin-nav-btn"
+      ]
+    }
+  },
+  "aiRoles": [
+    {
+      "actor": "ChatGPT",
+      "role": "Maskenautor / JSON-Ableitung",
+      "source": "docs/masks/prozessAIControlers/ChatGpt.md",
+      "focus": [
+        "DB-/RPC-/Edge-Wahrheit lesen",
+        "saubere QFM-/ADM-JSON daraus ableiten",
+        "keine zweite Wahrheit bauen"
+      ]
+    },
+    {
+      "actor": "Claude",
+      "role": "Struktur- und Security-Review",
+      "source": "docs/masks/prozessAIControlers/Claude.md",
+      "focus": [
+        "Vertrags- und Sicherheitsluecken markieren",
+        "zwischen live_contract, preview_contract und dead_contract unterscheiden",
+        "keine UI-Sichtbarkeit mit echter Sicherheit verwechseln"
+      ]
+    },
+    {
+      "actor": "Gemini",
+      "role": "UX- und Interaktionsberatung",
+      "source": "docs/masks/prozessAIControlers/Gemini.md",
+      "focus": [
+        "UI/UX-Empfehlungen auf Basis realer Komponenten",
+        "kein generisches SaaS-UI empfehlen",
+        "vorhandene DOM-/CSS-Schichten beachten"
+      ]
+    },
+    {
+      "actor": "Codex",
+      "role": "Implementierung / Wiring / Debugging",
+      "source": "docs/masks/prozessAIControlers/codex.md",
+      "focus": [
+        "Reader, Resolver, Renderer und JSON tatsaechlich zusammenbringen",
+        "Bindings pruefen und korrigieren",
+        "echte Repo- und Runtime-Probleme end-to-end loesen"
+      ]
+    }
+  ],
+  "whatWeHad": {
+    "legacyState": [
+      "Club-/Mitglieder-Funktionen waren ueber Legacy-Seiten und spezialisierte JS-Dateien verteilt.",
+      "Der operative ClubSettings-Bereich war noch kein zentraler ADM-Workspace.",
+      "Mehrere Altprozesse bestanden in spezialisierten Screens statt in einem zentralen JSON-System."
+    ],
+    "legacyArtifacts": [
+      "docs/masks/templates/Onboarding/mitgliederverwaltung.BackupoldProcess.astro",
+      "public/js/member-registry-admin.js",
+      "public/js/work-events-cockpit.js",
+      "public/js/work-events-member.js"
+    ],
+    "problemStatement": [
+      "UI, Datenpfade und Sonderlogik waren zu stark verteilt.",
+      "Security-/Contract-Fragen waren schwerer sichtbar.",
+      "Neue KI-Kollegen konnten nicht an einer zentralen JSON-Wahrheit andocken."
+    ]
+  },
+  "whatWeAreDoing": {
+    "project": "Wir ziehen ClubSettings, Onboarding-Handoff und angrenzende Admin-Flaechen in ein zentrales FCP-Maskensystem ueber.",
+    "currentMainMask": "docs/masks/templates/Onboarding/ADM_clubSettings.json",
+    "routeContext": "/app/mitgliederverwaltung/",
+    "goal": [
+      "einen belastbaren ADM-Workspace fuer ClubSettings schaffen",
+      "bestehende Backend-Wahrheit weiterverwenden statt neue Sonderlogik zu erfinden",
+      "QFM-/ADM-Inhalt konsequent aus JSON + Runtime + Vertragen aufbauen",
+      "AI-Kollaboration zentral ueber Rollen und klar lesbare Artefakte organisieren"
+    ]
+  },
+  "whatWeHaveNow": {
+    "workingAreas": [
+      {
+        "area": "Vereinsdaten",
+        "status": "live_read_write_basis",
+        "details": [
+          "Panel club_settings_club_master_data laedt ueber edge_function club-onboarding-workspace.",
+          "LoadPayloadDefaults/SavePayloadDefaults werden wieder korrekt in die Runtime uebergeben.",
+          "QFM-artige Form innerhalb von ADM ist technisch angeschlossen."
+        ]
+      },
+      {
+        "area": "Mitglieder",
+        "status": "live_read",
+        "details": [
+          "admin_member_registry laedt sauber.",
+          "Anreicherung und Tabellen-Rendering wurden korrigiert.",
+          "Zeilen werden nun korrekt dargestellt statt durch leere JSON-defaults verdeckt zu werden."
+        ]
+      },
+      {
+        "area": "Gewaesser",
+        "status": "live_read",
+        "details": [
+          "club_settings_waters_table ist auf echten Workspace-Read umgestellt.",
+          "Rows kommen ueber record.workspace.waters.",
+          "Backend-CRUD existiert bereits, ADM-CRUD-JSON-Anschluss ist noch nicht final."
+        ]
+      }
+    ],
+    "resolvedTechnicalIssues": [
+      "clubContext-Aufloesung in der ADM-Runtime war zu frueh / zu schmal und wurde robuster gemacht.",
+      "Reader hat meta.resolver frueher abgeschnitten; das ist behoben.",
+      "leere content.rows haben geladene panel.rows verdeckt; das ist behoben.",
+      "inline-data-table nutzte ungenuegende Row-Keys; das Edit-Verhalten ist stabilisiert.",
+      "club-onboarding-workspace musste mit no-verify-jwt deployed werden, weil das Edge-Gateway gueltige Tokens der Runtime ablehnte, waehrend die Function den User selbst sauber verifiziert."
+    ],
+    "validation": [
+      "node scripts/check-mask-jsons.mjs",
+      "npm run build"
+    ]
+  },
+  "learnedInThisRollout": [
+    {
+      "theme": "Reader / Resolver contract",
+      "learning": "meta.resolver muss vom Reader voll erhalten bleiben. Wenn loadPayloadDefaults, savePayloadDefaults oder rowsPath verloren gehen, wirken Panels kaputt, obwohl die JSON fachlich korrekt ist."
+    },
+    {
+      "theme": "Preview vs live",
+      "learning": "Nicht jeder Block mit edge/sql als Source of Truth darf sofort live angebunden werden. Snapshot-, Vergleichs- und Preview-Bloecke muessen ehrlich local_only bleiben, bis ein echter Live-Vertrag existiert."
+    },
+    {
+      "theme": "Placeholder masking",
+      "learning": "content.rows oder andere JSON-Defaults duerfen echte Runtime-Daten nicht verdecken. Platzhalter muessen so gebaut sein, dass geladene Rows und Feldwerte Prioritaet behalten."
+    },
+    {
+      "theme": "Club context",
+      "learning": "Club-Kontext muss robust aus Auth- und Rollenpfaden aufgeloest werden. Ein leer gecachter Kontext fuehrt sonst zu falschen Leerstaenden und irrefuehrenden Folgebugs."
+    },
+    {
+      "theme": "Edge auth reality",
+      "learning": "club-onboarding-workspace brauchte im Zielprojekt no-verify-jwt, weil das Edge-Gateway gueltige Browser-Tokens ablehnte, waehrend die Function den User selbst sicher ueber /auth/v1/user verifiziert."
+    },
+    {
+      "theme": "Renderer discipline",
+      "learning": "ADM kann QFM-Inhalt sauber tragen. Die richtige Reaktion auf fehlende Matrix-/Speziallogik ist renderer_gap oder contract_gap, nicht die Einfuehrung einer dritten Maskenfamilie."
+    }
+  ],
+  "innerMeetingDones": [
+    {
+      "theme": "Mask hygiene",
+      "done": "Die ADM-Maske wurde auf einen konsistenten Zwischenstand gebracht: Vereinsdaten, Mitglieder und Gewaesser sind live angeschlossen; Snapshot- und Vergleichsflaechen bleiben bewusst local_only."
+    },
+    {
+      "theme": "Reader / resolver repair",
+      "done": "Der Reader erhaelt meta.resolver wieder vollstaendig. Dadurch funktionieren loadPayloadDefaults, savePayloadDefaults, rowsPath und Club-Kontext-Aufloesung wieder korrekt."
+    },
+    {
+      "theme": "Club settings runtime",
+      "done": "club_settings_club_master_data laedt ueber edge_function club-onboarding-workspace, Mitglieder-Registry ist sichtbar und Gewaesser lesen live ueber record.workspace.waters."
+    },
+    {
+      "theme": "Auth and edge stabilization",
+      "done": "club-onboarding-workspace wurde serverseitig korrigiert und mit no-verify-jwt deployed, weil das Edge-Gateway gueltige Runtime-Tokens abgelehnt hat, die Function den User aber selbst sauber verifiziert."
+    },
+    {
+      "theme": "Snapshot hardening",
+      "done": "public.club_onboarding_snapshot wurde lokal in der SQL-Quelle gehaertet und prueft jetzt service_role oder admin/vorstand oder admin_in_any_club vor der Rueckgabe."
+    },
+    {
+      "theme": "UX state visibility",
+      "done": "ADM-Panels zeigen jetzt sichtbare Zustandsbadges wie Live, Teilweise live, Vorschau und Vertrag offen. Dadurch sind preview_only und contract_gap fuer Nutzer und KI besser erkennbar."
+    },
+    {
+      "theme": "Security metadata cleanup",
+      "done": "serverValidated wurde auf echten local_only-Preview-/Gap-Panels bereinigt. Panels mit realem serverseitigem Write-Pfad wie Einladungen behalten serverValidated true."
+    },
+    {
+      "theme": "Meeting and handoff docs",
+      "done": "Die Meeting-Datei selbst, die allgemeinen ADM/QFM-Learnings und die AI-Rollen-/Quellpfad-Beschreibung wurden aktualisiert, damit weitere KI-Kollegen mit demselben Stand starten."
+    },
+    {
+      "theme": "Still open",
+      "done": "Nach dem stabilisierten Kern bleiben die offenen Themen klar getrennt: Sicherheitsverifikation fuer einzelne Vertragsreste, echte Nutzungsblocker in noch lokalen Bereichen und reine Entwicklungsthemen wie Matrix- oder Spezial-Renderer."
+    },
+    {
+      "theme": "Execution brief correction",
+      "done": "Der Ausfuehrungsfokus wurde praezisiert: work_* ist der naechste haerteste Backend-Blocker fuer Helfer- und Freigabe-Panels, aber nicht der einzige offene Security-Punkt. get_onboarding_process_state und club_onboarding_snapshot bleiben ebenfalls separat zu haerten bzw. gegen den Zielstand zu verifizieren."
+    },
+    {
+      "theme": "Remote SQL hardening confirmed",
+      "done": "club_onboarding_snapshot ist nun auch in der Ziel-DB gehaertet. Die Function prueft p_club_id sowie service_role oder is_admin_or_vorstand_in_club(p_club_id) oder is_admin_in_any_club() vor der Rueckgabe. Dadurch ist der Snapshot nicht mehr frei ueber eine fremde club_id lesbar."
+    },
+    {
+      "theme": "Work hardening migration prepared",
+      "done": "Ein minimal-invasiver SQL-Patch fuer work_approve, work_reject, work_participation_admin_update, work_event_publish und beide work_event_create-Varianten wurde lokal als Migration vorbereitet. Ziel ist club-scoped Guarding ueber is_admin_or_vorstand_in_club(...) und explizites club_id-Setzen bei work_event_create. Remote-Ausfuehrung und Verifikation stehen noch aus."
+    },
+    {
+      "theme": "Work hardening executed",
+      "done": "Die Migration 20260404103000_harden_work_functions_to_club_scope.sql wurde ausgefuehrt. Damit sind die work_-Funktionen nicht mehr nur lokal vorbereitet, sondern auf club-scoped Guards und explizites club_id-Setzen bei work_event_create umgestellt. Die fachliche Verifikation gegen die Ziel-DB sollte als naechster Check noch einmal ueber pg_get_functiondef() bestaetigt werden."
+    },
+    {
+      "theme": "Work hardening verified",
+      "done": "Die Ziel-DB wurde fuer work_approve, work_event_create und work_event_publish per pg_get_functiondef() gegengeprueft. Die Funktionen arbeiten nun club-scoped ueber is_admin_or_vorstand_in_club(...) und work_event_create setzt club_id explizit aus current_user_club_id()."
+    },
+    {
+      "theme": "Gemini feedback integrated",
+      "done": "Geminis UX-Hinweise wurden teilweise aufgenommen: Status-Badges fuer Live/Vorschau/Teilweise live/Vertrag offen sind umgesetzt, Gap-Management bleibt vorgemerkt. Gleichzeitig wurde die Schema-Wahrheit auf 02_04_26_DB_V5.json aktualisiert; V4 gilt nicht mehr als bevorzugte Referenz."
+    },
+    {
+      "theme": "Cards read reference path proven",
+      "done": "Mit public.admin_member_cards_overview_v2() und der verdrahteten club_settings_cards_table ist nun ein echter Referenzpfad bewiesen: DB-/RPC-Readmodell, Admin-Guard, ADM-JSON-Bindung und Runtime-Table laufen zusammen stabil. Das ist noch nicht die vollstaendige ADM-/QFM-Schaltzentrale fuer alle Konstellationen, aber der erste belastbare Standardpfad fuer weitere Vereinheitlichung."
+    }
+  ],
+  "currentOpenWork": {
+    "classifiedAssessment": {
+      "securityRelevant": [
+        {
+          "topic": "Bereits live geschaltete ClubSettings-Kernpfade",
+          "status": "derzeit_keine_akute_rote_luecke",
+          "note": "Vereinsdaten, Mitglieder und Gewaesser-Read laufen im aktuell stabilisierten Stand ohne bekannten akuten Security-Showstopper."
+        },
+        {
+          "topic": "get_onboarding_process_state",
+          "status": "separate_verifikation_offen",
+          "note": "Der Prozessvertrag ist fuer ClubSettings bewusst wieder aus dem Live-Load genommen. Er bleibt ein eigener Verifikations- und Vertrags-Task, aber blockiert den aktuellen ClubSettings-Kern nicht."
+        },
+        {
+          "topic": "Neue Live-Vertraege fuer Helfer, Freigaben, Rollen/Rechte",
+          "status": "bei_freischaltung_serverseitig_pruefen",
+          "note": "Jeder neue Read-/Write-Vertrag in diesen Bereichen muss wieder strikt ueber Backend-Guards, Club-Scope und Audit betrachtet werden."
+        }
+      ],
+      "realUsageBlockers": [
+        {
+          "area": "Gewaesser",
+          "status": "teilweise_live",
+          "note": "Lesen ist live, CRUD in der ADM-Runtime aber noch nicht final verdrahtet."
+        },
+        {
+          "area": "Helfer / Arbeitseinsaetze",
+          "status": "noch_nicht_wirklich_nutzbar",
+          "note": "DB-Bausteine und gehaertete work_-Functions sind da, aber ein finaler kombinierter ADM-Reader und die produktive Flaeche fehlen noch."
+        },
+        {
+          "area": "Freigaben / Fangfreigaben",
+          "status": "noch_nicht_wirklich_nutzbar",
+          "note": "Fachbereich ist vorbereitet, aber finaler ClubSettings-Read-/Write-/Audit-Vertrag fehlt."
+        },
+        {
+          "area": "Rollen / Rechte",
+          "status": "noch_nicht_wirklich_nutzbar",
+          "note": "Es gibt noch keine produktive Verwaltungsflaeche fuer die Matrix und keinen finalen Write-/Audit-Vertrag."
+        },
+        {
+          "area": "Ausweise",
+          "status": "teilweise_live",
+          "note": "Der erste standardisierte Read-Pfad ueber admin_member_cards_overview_v2() laeuft in der ADM-Runtime. Leere Kartenfelder sind derzeit primaer Datenlage in profiles, nicht mehr ein Binding- oder Runtime-Fehler."
+        },
+        {
+          "area": "Einstellungen",
+          "status": "preview_only",
+          "note": "QFM-Ziel ist sichtbar, aber der echte Write-Vertrag ist noch nicht freigegeben."
+        }
+      ],
+      "developmentTopics": [
+        {
+          "topic": "Rollen-/Rechte-Matrix",
+          "status": "entwicklungsthema",
+          "note": "Das ist kein akuter Sicherheits- oder Stabilitaetsbruch, sondern ein spaeter Spezial-Renderer mit klarer Vertrags- und UX-Klaerung."
+        },
+        {
+          "topic": "Kombinierte Reader fuer Helfer / Freigaben",
+          "status": "entwicklungsthema",
+          "note": "Hier geht es um Produktverdrahtung und saubere Datenzusammenfuehrung, nicht mehr um Architektur-Grundsatzfragen."
+        },
+        {
+          "topic": "Audit-/History-Panels und Admin-Komfort",
+          "status": "entwicklungsthema",
+          "note": "Das sind sinnvolle Governance- und Transparenzbausteine fuer spaetere Iterationen."
+        }
+      ],
+      "summary": "Das Fundament gilt als sauber. Mit Ausweise existiert nun ein erster bewiesener Referenzpfad fuer DB-/RPC-Readmodell + Admin-Guard + ADM-Bindung + Runtime-Table. Offen sind heute vor allem fehlende Produkt-Vertraege und die noch ausstehende zentrale ADM-/QFM-Schaltzentrale, nicht mehr primaer kaputte Architektur oder ein akuter Sicherheitsnotstand im bereits live genutzten ClubSettings-Kern."
+    },
+    "contractGaps": [
+      {
+        "area": "Freigaben im Vereinskontext",
+        "status": "preview_only",
+        "reason": "Es gibt noch keinen finalen kombinierten ClubSettings-Read-/Write-/Audit-Vertrag."
+      },
+      {
+        "area": "Regelwerke",
+        "status": "local_only",
+        "reason": "Noch kein finaler Live-Read-Vertrag in der ADM-Maske angeschlossen."
+      },
+      {
+        "area": "Ausweise",
+        "status": "teilweise_live",
+        "reason": "Erster Live-Read-Vertrag ueber public.admin_member_cards_overview_v2() ist angeschlossen. Offene Punkte liegen nun eher in Datenabdeckung und spaeterem Karten-/Scanner-/Claim-Ausbau als in der grundsaetzlichen ADM-Anbindung."
+      },
+      {
+        "area": "Helfer / Arbeitseinsaetze",
+        "status": "local_only",
+        "reason": "DB-Bausteine sind vorhanden, aber kein finaler kombinierter ADM-Reader."
+      },
+      {
+        "area": "Fangfreigaben",
+        "status": "local_only",
+        "reason": "Fachlicher Zielbereich vorhanden, aber noch kein finaler Read-/Write-/Audit-Vertrag."
+      },
+      {
+        "area": "Einstellungen",
+        "status": "qfm_preview",
+        "reason": "Formziel ist sichtbar, aber finaler Write-Vertrag ist noch nicht freigegeben."
+      },
+      {
+        "area": "Rollen / Rechte Matrix",
+        "status": "renderer_gap",
+        "reason": "Fachliche Zielstruktur bekannt, aber noch keine eigene Matrix-Renderfunktion und kein finaler Write-/Audit-Vertrag."
+      }
+    ],
+    "nextLogicalBuildOrder": [
+      "Gewaesser CRUD aus bestehendem Workspace-Vertrag sauber in ADM-Table-Runtime anschliessen",
+      "kombinierten Club-Admin-Reader fuer Helfer / Arbeitseinsaetze definieren",
+      "Freigaben mit echtem Read-/Write-/Audit-Vertrag aufsetzen",
+      "Rollen-/Rechte-Matrix erst nach UX- und Vertragsklaerung bauen"
+    ],
+    "backendBlockerPriority": [
+      {
+        "priority": 1,
+        "topic": "Produktive Vertraege fuer Helfer / Freigaben / Rollen-Rechte",
+        "status": "next_real_usage_blocker",
+        "note": "Die Kernhaertung ist erfolgt; der naechste echte Blocker liegt nun in fehlenden produktiven Read-/Write-/Audit-Vertraegen fuer die noch lokalen ClubSettings-Bereiche."
+      },
+      {
+        "priority": 2,
+        "topic": "get_onboarding_process_state",
+        "status": "verification_open_but_not_core_blocking",
+        "note": "Der Prozessvertrag bleibt separat zu verifizieren, ist in ClubSettings aber bewusst wieder aus dem Live-Load genommen und blockiert den stabilen Kern derzeit nicht."
+      },
+      {
+        "priority": 3,
+        "topic": "Gewaesser CRUD",
+        "status": "next_partial_live_expansion",
+        "note": "Read ist live, der naechste konkrete Ausbaupfad ist der saubere CRUD-Anschluss in der ADM-Table-Runtime."
+      },
+      {
+        "priority": 4,
+        "topic": "ADM-/QFM-Schaltzentrale",
+        "status": "system_standardization_next",
+        "note": "Der Referenzpfad fuer einen standardisierten Live-Read ist bewiesen. Als naechster Systemschritt fehlt die zentrale Vereinheitlichung von Read-, Write-, Table-, Rechte- und Action-/Dialog-Vertrag, damit neue Masken nicht erneut als Sonderfall verdrahtet werden."
+      }
+    ]
+  },
+  "keyDecisionsAlreadyMade": [
+    "Keine neue dritte Maskenfamilie.",
+    "ADM ist Workspace, QFM kann darin der innere Inhaltsstil sein.",
+    "Backend bleibt Source of Truth fuer Sicherheit, Rollen, Prozesszustand und Freigaben.",
+    "Preview-, Stub- und contract_gap-Flaechen werden bewusst als solche markiert und nicht als live missverstanden.",
+    "AI-Kollaboration wird ueber feste Rollenprompts und zentrale Quellartefakte organisiert."
+  ],
+  "importantArtifacts": {
+    "mainMask": "docs/masks/templates/Onboarding/ADM_clubSettings.json",
+    "schemaJson": "docs/masks/templates/02_04_26_DB_V5.json",
+    "schemaQuery": "docs/masks/templates/AISQLSchemaSQL.sql",
+    "workApprovalsContract": "docs/contracts/ADM_CLUB_SETTINGS_WORK_APPROVALS_CONTRACT.md",
+    "securityTriage": "docs/contracts/ADM_CLUB_SETTINGS_SECURITY_TRIAGE.md",
+    "generalExecutorGuidance": "docs/masks/templates/genererlExecuterADMOFM.md",
+    "aiPrompts": [
+      "docs/masks/prozessAIControlers/ChatGpt.md",
+      "docs/masks/prozessAIControlers/Claude.md",
+      "docs/masks/prozessAIControlers/Gemini.md",
+      "docs/masks/prozessAIControlers/codex.md"
+    ]
+  },
+  "meetingAskToAiColleagues": {
+    "chatgpt": [
+      "JSON-Zielbild fuer die noch lokalen ClubSettings-Bloecke sauber ableiten, aber keine freien Live-Contracts behaupten.",
+      "bei neuen Panels streng auf bestehende ADM-/QFM-Runtime anschliessen."
+    ],
+    "claude": [
+      "Contract-Gaps, Security-Risiken und tote vs aktive Bindings sauber unterscheiden.",
+      "insbesondere Freigaben, Rollen/Rechte und offene Admin-Reads strukturell reviewen."
+    ],
+    "gemini": [
+      "fuer Rollen/Rechte-Matrix und Vergleichszugaenge saubere UI-/UX-Empfehlungen geben, aber nur auf Basis vorhandener Renderer / CSS / DOM.",
+      "zwischen Spezialbereich und Vergleichszugang im ClubSettings-Workspace unterscheiden."
+    ],
+    "codex": [
+      "bestehende Backend-Wahrheit praktisch verdrahten, debuggen und schrittweise live machen.",
+      "keine neuen Sonderpfade bauen, wenn bestehende Runtime oder Vertragsdokumente reichen."
+    ]
+  },
+  "notesForMeeting": [
+    "Nicht jede JSON-Deklaration ist automatisch live. Es gibt bewusst aktive Vertrage, Preview-Contracts und Contract-Gaps.",
+    "02_04_26_DB_V5.json ist die bevorzugte lesbare Schemaquelle fuer KI-Kollegen im Meeting.",
+    "AISQLSchemaSQL.sql ist die Fallback- bzw. Regenerationsquelle fuer einen frischen AI-Schema-Snapshot.",
+    "ClubSettings ist kein frei neu gebauter Adminscreen mehr, sondern wird in den zentralen FCP-Maskenrahmen ueberfuehrt."
+  ]
+}

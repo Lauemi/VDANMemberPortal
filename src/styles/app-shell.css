@@ -802,6 +802,23 @@
   min-width: 0;
 }
 
+.admin-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-card__header-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.admin-card__status-hint {
+  margin: 0;
+}
+
 .admin-card--compact {
   padding: 10px 12px;
   gap: 8px;
@@ -810,6 +827,44 @@
 .admin-card h2,
 .admin-card h3 {
   margin: 0;
+}
+
+.admin-state-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.admin-state-badge.is-live {
+  background: color-mix(in srgb, rgba(72, 171, 115, .18) 70%, transparent);
+  border-color: rgba(72, 171, 115, .35);
+  color: color-mix(in srgb, var(--text) 82%, rgba(72, 171, 115, .95));
+}
+
+.admin-state-badge.is-preview {
+  background: color-mix(in srgb, rgba(221, 160, 61, .18) 72%, transparent);
+  border-color: rgba(221, 160, 61, .35);
+  color: color-mix(in srgb, var(--text) 82%, rgba(221, 160, 61, .95));
+}
+
+.admin-state-badge.is-gap {
+  background: color-mix(in srgb, rgba(173, 124, 220, .14) 72%, transparent);
+  border-color: rgba(173, 124, 220, .32);
+  color: color-mix(in srgb, var(--text) 82%, rgba(173, 124, 220, .95));
+}
+
+.admin-state-badge.is-partial {
+  background: color-mix(in srgb, rgba(92, 145, 222, .16) 72%, transparent);
+  border-color: rgba(92, 145, 222, .34);
+  color: color-mix(in srgb, var(--text) 82%, rgba(92, 145, 222, .95));
 }
 
 .admin-card.is-missing {

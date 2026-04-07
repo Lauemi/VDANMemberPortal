@@ -1,0 +1,42 @@
+[
+  {
+    "table_name": "canonical_memberships",
+    "backfilled_rows": 349
+  },
+  {
+    "table_name": "club_core",
+    "backfilled_rows": 2
+  },
+  {
+    "table_name": "club_member_identities",
+    "backfilled_rows": 349
+  },
+  {
+    "table_name": "club_members",
+    "backfilled_rows": 350
+  },
+  {
+    "table_name": "club_user_roles",
+    "backfilled_rows": 350
+  },
+  {
+    "table_name": "identity_core",
+    "backfilled_rows": 349
+  },
+  {
+    "table_name": "profiles",
+    "backfilled_rows": 349
+  },
+  {
+    "table_name": "profiles_platform",
+    "backfilled_rows": 349
+  },
+  {
+    "table_name": "tenant_nodes",
+    "backfilled_rows": 2
+  },
+  {
+    "table_name": "user_roles",
+    "backfilled_rows": 352
+  }
+]

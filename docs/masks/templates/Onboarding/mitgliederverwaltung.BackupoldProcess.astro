@@ -1,0 +1,239 @@
+---
+import Site from "../../../src/layouts/Site.astro";
+import { APP } from "../../../src/config/app";
+---
+
+<Site title={`Mitglieder-Registry • ${APP.name}`} description="Admin: Vereinsmitglieder verwalten" robots="noindex" containerClass="container container--admin-wide">
+  <section class="card">
+    <div class="card__body admin-board member-registry-board">
+      <aside class="admin-board__nav" aria-label="Vereins-Board Navigation">
+        <button type="button" class="admin-nav-btn is-active" data-registry-section="club">Vereinsdaten</button>
+        <button type="button" class="admin-nav-btn" data-registry-section="members">Mitglieder</button>
+        <button type="button" class="admin-nav-btn" data-registry-section="roles">Rollen / Rechte</button>
+        <button type="button" class="admin-nav-btn" data-registry-section="waters">Gewässer</button>
+        <button type="button" class="admin-nav-btn" data-registry-section="rules">Regelwerke</button>
+        <button type="button" class="admin-nav-btn" data-registry-section="cards">Ausweise</button>
+        <button type="button" class="admin-nav-btn" data-registry-section="work">Arbeitseinsätze</button>
+        <button type="button" class="admin-nav-btn" data-registry-section="approvals">Fangfreigaben</button>
+        <button type="button" class="admin-nav-btn" data-registry-section="settings">Einstellungen</button>
+      </aside>
+
+      <div class="admin-board__content">
+        <section class="admin-section is-active" data-registry-panel="club">
+          <article class="admin-card">
+            <h1>Mitglieder-Registry</h1>
+            <p class="small">Vereins-Board für vereinsinterne Selbstverwaltung innerhalb des freigegebenen Rahmens.</p>
+            <p id="memberRegistryMsg" class="small" aria-live="polite"></p>
+          </article>
+
+          <article class="admin-card">
+            <h2>Vereinsdaten</h2>
+            <p class="small">
+              Club-Stammdaten und Kennzahlen fuer den aktuell gewaehlten Verein.
+            </p>
+            <div class="admin-kpi-grid">
+              <article class="admin-kpi"><h3>Verein</h3><p id="clubDataName">-</p></article>
+              <article class="admin-kpi"><h3>Mitglieder</h3><p id="clubDataMembers">-</p></article>
+              <article class="admin-kpi"><h3>Club-ID</h3><p id="clubDataClubId" class="admin-kpi__id">-</p></article>
+            </div>
+            <form id="clubDataForm" class="resp-form-grid" style="margin-top:14px;">
+              <label class="resp-full">
+                <span>Vereinsname</span>
+                <input id="clubDataEditName" type="text" maxlength="160" />
+              </label>
+              <label>
+                <span>Strasse</span>
+                <input id="clubDataEditStreet" type="text" maxlength="160" />
+              </label>
+              <label>
+                <span>PLZ</span>
+                <input id="clubDataEditZip" type="text" maxlength="16" />
+              </label>
+              <label>
+                <span>Ort</span>
+                <input id="clubDataEditCity" type="text" maxlength="120" />
+              </label>
+              <label>
+                <span>Kontaktperson</span>
+                <input id="clubDataEditContactName" type="text" maxlength="120" />
+              </label>
+              <label>
+                <span>Kontakt-E-Mail</span>
+                <input id="clubDataEditContactEmail" type="email" maxlength="160" />
+              </label>
+              <label class="resp-full">
+                <span>Telefon</span>
+                <input id="clubDataEditContactPhone" type="text" maxlength="60" />
+              </label>
+              <div class="resp-full" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <button id="clubDataSaveBtn" type="button" class="feed-btn">Vereinsdaten speichern</button>
+                <button id="clubDataReloadBtn" type="button" class="feed-btn feed-btn--ghost">Neu laden</button>
+                <p id="clubDataFormMsg" class="small" aria-live="polite" style="margin:0;"></p>
+              </div>
+            </form>
+          </article>
+
+          <article class="admin-card">
+            <h2>Einladungsprozess</h2>
+            <p class="small">Registrierungslink und QR-Code für den Vereinsbeitritt erzeugen.</p>
+            <p id="clubInviteMsg" class="small" aria-live="polite"></p>
+            <div class="ui-filter-row registry-invite-grid">
+              <label>
+                <span>Verein auswählen</span>
+                <select id="clubInviteClubSelect">
+                  <option value="">Bitte Verein wählen</option>
+                </select>
+              </label>
+              <label>
+                <span>Club-Code (fix)</span>
+                <input id="clubInviteCreateCode" type="text" readonly />
+              </label>
+              <label>
+                <span>Max. Nutzungen</span>
+                <input id="clubInviteCreateMaxUses" type="number" min="1" max="500" value="25" />
+              </label>
+              <label>
+                <span>Gültig (Tage)</span>
+                <input id="clubInviteCreateDays" type="number" min="1" max="90" value="14" />
+              </label>
+              <button id="clubInviteCreateBtn" type="button" class="feed-btn">Einladungs-QR erzeugen</button>
+            </div>
+
+            <div id="clubInvitePanel" class="member-card-legal hidden" hidden style="margin-top:10px;">
+              <p class="small" id="clubInviteExpires">-</p>
+              <div class="ui-filter-row" style="align-items:start;">
+                <img id="clubInviteQr" alt="Invite QR Code" width="220" height="220" />
+                <div style="display:grid;gap:8px;min-width:0;">
+                  <label>
+                    <span>Invite-Token</span>
+                    <input id="clubInviteToken" type="text" readonly />
+                  </label>
+                  <label>
+                    <span>Registrierungs-URL</span>
+                    <input id="clubInviteUrl" type="text" readonly />
+                  </label>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button id="clubInviteCopyToken" type="button" class="feed-btn feed-btn--ghost">Token kopieren</button>
+                    <button id="clubInviteCopyUrl" type="button" class="feed-btn feed-btn--ghost">URL kopieren</button>
+                    <a id="clubInviteOpenUrl" class="feed-btn feed-btn--ghost" href="#" target="_blank" rel="noopener noreferrer">Link öffnen</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="admin-section" data-registry-panel="members">
+          <article class="admin-card">
+            <div id="memberRegistryInlineTableMount" style="margin-top:10px;"></div>
+          </article>
+        </section>
+
+        <section class="admin-section" data-registry-panel="roles">
+          <article class="admin-card">
+            <h2>Rollen / Rechte</h2>
+            <p class="small">
+              Erste ACL-Stufe im Vereins-Board. Dieser Stand ist lokal persistent (Pilot-Stub) und noch nicht per Backend/RLS erzwungen.
+            </p>
+            <p class="small"><strong>Hinweis:</strong> Für Mitgliedsdaten kann die Rechte-Matrix gezielt pro Rolle gepflegt werden.</p>
+            <p class="small">Logik: <strong>Anzeigen = Lesen standardmäßig aktiv</strong>. Wenn <strong>Anzeigen aus</strong> ist, sind keine weiteren Rechte möglich.</p>
+
+            <p id="roleAclMsg" class="small" aria-live="polite"></p>
+
+            <div class="ui-filter-row">
+              <label>
+                <span>Aktive Vereinsrolle</span>
+                <select id="roleAclRoleSelect"></select>
+              </label>
+              <label>
+                <span>Neue Vereinsrolle</span>
+                <input id="roleAclNewRole" type="text" placeholder="z. B. Gewaesserwart" maxlength="40" />
+              </label>
+              <button id="roleAclAddRoleBtn" type="button" class="feed-btn">Rolle hinzufügen</button>
+              <button id="roleAclDeleteRoleBtn" type="button" class="feed-btn feed-btn--ghost">Rolle löschen</button>
+            </div>
+
+            <div class="work-part-table-wrap" style="margin-top:10px;">
+              <table class="work-part-table" id="roleAclMatrixTable" data-studio-component-type="table" data-studio-library-id="lists--standard-tabelle" data-table-id="role-acl-matrix">
+                <thead>
+                  <tr>
+                    <th>Modul / Funktion</th>
+                    <th>Anzeigen</th>
+                    <th>Lesen</th>
+                    <th>Schreiben</th>
+                    <th>Bearbeiten</th>
+                    <th>Löschen</th>
+                    <th>Hinweis</th>
+                  </tr>
+                </thead>
+                <tbody id="roleAclMatrixRows"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="admin-section" data-registry-panel="waters">
+          <article class="admin-card">
+            <div id="memberRegistryWatersMount"></div>
+          </article>
+        </section>
+
+        <section class="admin-section" data-registry-panel="rules">
+          <article class="admin-card is-missing">
+            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+            <h2>Regelwerke</h2>
+            <p class="small">Vereinsregeln, Dokumentbezug und Veröffentlichungsstatus folgen als eigener Bereich.</p>
+          </article>
+        </section>
+
+        <section class="admin-section" data-registry-panel="cards">
+          <article class="admin-card is-missing">
+            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+            <h2>Ausweise</h2>
+            <p class="small">Ausweis-Lifecycle, Freigaben und Gültigkeiten werden hier gebündelt.</p>
+          </article>
+        </section>
+
+        <section class="admin-section" data-registry-panel="work">
+          <article class="admin-card is-missing">
+            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+            <h2>Arbeitseinsätze</h2>
+            <p class="small">Vereinsinterne Planung, Zuweisung und Pflege der Arbeitseinsätze folgt hier.</p>
+          </article>
+        </section>
+
+        <section class="admin-section" data-registry-panel="approvals">
+          <article class="admin-card is-missing">
+            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+            <h2>Fangfreigaben</h2>
+            <p class="small">Prüfung und Freigabeprozess für Fänge wird als eigener Board-Bereich ergänzt.</p>
+          </article>
+        </section>
+
+        <section class="admin-section" data-registry-panel="settings">
+          <article class="admin-card is-missing">
+            <span class="admin-missing-badge" aria-label="Noch nicht gebaut">✖</span>
+            <h2>Einstellungen</h2>
+            <p class="small">Vereinsspezifische Konfigurationen und Betriebsoptionen folgen in diesem Bereich.</p>
+          </article>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <dialog id="memberRegistryDialog" class="catch-dialog">
+    <form method="dialog" class="catch-dialog__form">
+      <h2 id="memberRegistryDialogTitle">Mitglied verwalten</h2>
+      <p id="memberRegistryDialogMsg" class="small" aria-live="polite"></p>
+      <div id="memberRegistryDialogBody" class="catch-dialog__body"></div>
+      <div class="catch-dialog__actions">
+        <button type="button" id="memberRegistryDeleteBtn" class="feed-btn feed-btn--ghost">Mitglied löschen</button>
+        <button type="button" id="memberRegistrySaveBtn" class="feed-btn">Speichern</button>
+        <button type="submit" class="feed-btn feed-btn--ghost">Schließen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/js/fcp-inline-data-table-v2.js" defer></script>
+  <script src="/js/member-registry-admin.js" defer></script>
+</Site>

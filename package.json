@@ -13,6 +13,7 @@
     "test": "node --test",
     "generate:fcp-components": "node scripts/generate-fcp-component-registry.mjs",
     "check:deploy-gate": "node scripts/release-deploy-gate.mjs",
+    "check:masks": "node scripts/check-mask-jsons.mjs",
     "check:remote-function-smoke": "node scripts/remote-function-smoke.mjs",
     "check:xss-guard": "node scripts/check-xss-guard.mjs",
     "check:studio-contract": "node scripts/check-studio-contract.mjs",

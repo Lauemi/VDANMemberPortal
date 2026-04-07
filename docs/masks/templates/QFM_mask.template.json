@@ -1,0 +1,303 @@
+{
+  "_template": {
+    "name": "QFM Mask Template",
+    "version": "1.0",
+    "purpose": "Authoring template for Quickflow masks under the FCP Mask System Contract.",
+    "targetPath": "docs/masks/qfm/QFM_<mask_name>.json"
+  },
+  "_validationContract": {
+    "errorIfMissing": [
+      "maskId",
+      "maskFamily",
+      "maskType",
+      "header.title",
+      "sections"
+    ],
+    "warningIfMissing": [
+      "header.description",
+      "securityContext",
+      "sections[].description",
+      "sections[].permissions",
+      "sections[].securityContext",
+      "sections[].panels[].meta",
+      "sections[].panels[].meta.sourceTable",
+      "sections[].panels[].meta.sourceKind",
+      "sections[].panels[].meta.sourceOfTruth",
+      "sections[].panels[].meta.sqlContract.sqlFile",
+      "sections[].panels[].meta.sqlContract.expectedColumns",
+      "sections[].panels[].securityContext",
+      "sections[].panels[].content",
+      "sections[].panels[].content.fields[].componentType",
+      "sections[].panels[].content.fields[].valuePath",
+      "sections[].panels[].content.fields[].payloadKey",
+      "sections[].panels[].content.fields[].order",
+      "sections[].panels[].componentType",
+      "sections[].panels[].rowsPath",
+      "sections[].panels[].tableConfig.tableId",
+      "sections[].panels[].tableConfig.rowKeyField",
+      "sections[].panels[].tableConfig.deletePayloadDefaults",
+      "sections[].panels[].tableConfig.deleteConfirmMessage",
+      "sections[].panels[].tableConfig.duplicatePayloadDefaults",
+      "sections[].panels[].content.blocks[].componentType",
+      "sections[].panels[].content.blocks[].rowsPath",
+      "sections[].panels[].content.blocks[].tableConfig.tableId",
+      "sections[].panels[].content.blocks[].tableConfig.rowKeyField",
+      "sections[].panels[].content.blocks[].tableConfig.deletePayloadDefaults",
+      "sections[].panels[].content.blocks[].tableConfig.deleteConfirmMessage",
+      "sections[].panels[].content.blocks[].tableConfig.duplicatePayloadDefaults"
+    ],
+    "feedbackWhenPresent": [
+      "metaPolicy.autoDetect",
+      "loadBinding",
+      "saveBinding",
+      "specialCases",
+      "auditFields"
+    ]
+  },
+  "maskId": "replace_me",
+  "maskFamily": "QFM",
+  "maskType": "sectioned",
+  "securityContext": {
+    "rlsKey": "tenant_id",
+    "membershipKey": "canonical_membership_id",
+    "requiresTenantAccess": true,
+    "requiresRoleCheck": false,
+    "allowedRoles": [],
+    "serverValidated": true
+  },
+  "header": {
+    "kicker": "Replace Me",
+    "title": "Replace Me",
+    "description": "Replace me with the semantic mask purpose."
+  },
+  "metaPolicy": {
+    "autoDetect": true,
+    "auditFields": [
+      "created_at",
+      "created_by",
+      "updated_at",
+      "updated_by"
+    ],
+    "appendOnlyHandling": "explicit"
+  },
+  "dataContract": {
+    "sourceOfTruth": "sql",
+    "contracts": [
+      "docs/contracts/FCP_MASK_SYSTEM_CONTRACT.md",
+      "docs/contracts/FCP_SETTINGS_CONFIG_CONTRACT.md",
+      "docs/contracts/FCP_RLS_SECURITY_STANDARD.md",
+      "docs/contracts/FCP_ADM_QFM_INTERACTION_CONTRACT.md"
+    ]
+  },
+  "_processSqlContractGuide": {
+    "purpose": "QFM-Masken sollen ihre SQL-Wahrheit ueber Prozesskanaele explizit referenzieren.",
+    "preferredSqlPathPattern": "docs/sql-contracts/processes/<prozess>/<bereich>/READ_<contract_name>.sql",
+    "howToThink": [
+      "QFM nutzt denselben Vertragsbaukasten wie ADM.",
+      "SQL beschreibt Felder, Alias-Namen und Berechnungen.",
+      "JSON beschreibt Felder, Input-Typen, Rechte und Interaktion."
+    ],
+    "deriveExpectedColumnsFrom": [
+      "content.fields[].valuePath",
+      "content.fields[].payloadKey",
+      "resolver.fieldDefs[].name"
+    ]
+  },
+  "_interactionContractGuide": {
+    "renderModes": [
+      "readonly",
+      "form",
+      "mixed",
+      "table",
+      "stats"
+    ],
+    "componentTypes": [
+      "ReadonlyPanel",
+      "FormPanel",
+      "MixedPanel",
+      "data-table",
+      "inline-data-table",
+      "stats"
+    ],
+    "rowInteractionModes": {
+      "data-table": [
+        "dialog",
+        "custom",
+        "none"
+      ],
+      "inline-data-table": [
+        "inline",
+        "dialog",
+        "custom",
+        "none"
+      ]
+    },
+    "tableActions": [
+      "edit",
+      "duplicate",
+      "delete"
+    ],
+    "tableActionContractKeys": [
+      "deletePayloadDefaults",
+      "deleteConfirmMessage",
+      "deleteConfirmLabel",
+      "duplicatePayloadDefaults",
+      "duplicateConfirmMessage",
+      "duplicateConfirmLabel"
+    ],
+    "runtimeEvents": [
+      "fcp-mask:table-row-click",
+      "fcp-mask:table-row-edit-request",
+      "fcp-mask:table-row-action",
+      "fcp-mask:table-row-create",
+      "fcp-mask:table-row-save",
+      "fcp-mask:table-row-duplicate",
+      "fcp-mask:table-row-delete-request"
+    ],
+    "standards": [
+      "data-table -> dialog",
+      "inline-data-table -> inline",
+      "confirm -> zentraler App-Dialog",
+      "save -> bestehender saveBinding-Pfad"
+    ]
+  },
+  "loadBinding": {
+    "kind": "rpc",
+    "target": "public.replace_load_rpc",
+    "path": "rpc:public.replace_load_rpc"
+  },
+  "sections": [
+    {
+      "id": "replace_section",
+      "label": "Replace Section",
+      "title": "Replace Section",
+      "description": "Replace with the section purpose.",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": [
+          "member"
+        ]
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": false,
+        "allowedRoles": [],
+        "serverValidated": true
+      },
+      "ownership": "global_user",
+      "scope": "global_user",
+      "panels": [
+        {
+          "id": "replace_panel",
+          "title": "Replace Panel",
+          "renderMode": "readonly",
+          "componentType": "ReadonlyPanel",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": [
+              "member"
+            ]
+          },
+          "securityContext": {
+            "rlsKey": "identity_id",
+            "membershipKey": null,
+            "requiresTenantAccess": false,
+            "requiresRoleCheck": false,
+            "allowedRoles": [],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.replace_table",
+            "sourceKind": "record",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/<prozess>/<bereich>/READ_<contract_name>.sql",
+              "expectedColumns": [
+                "replace_field"
+              ]
+            },
+            "scope": "global_user",
+            "ownership": "global_user",
+            "metaDisplay": "auto"
+          },
+          "_authoringHint": {
+            "processChannel": "QFM-Dateien sollen an denselben Prozesskanal gekoppelt werden wie zugehoerige ADM-Bloecke oder Dialoge.",
+            "keepStable": [
+              "loadBinding",
+              "saveBinding",
+              "existing actions",
+              "existing dialog paths"
+            ],
+            "fieldCoupling": [
+              "SQL liefert Alias-Namen.",
+              "valuePath und payloadKey muessen dazu passen.",
+              "Input-Typen und Rechte bleiben JSON-Verantwortung."
+            ]
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.replace_panel_load_rpc",
+            "path": "rpc:public.replace_panel_load_rpc"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "rowsPath": "",
+          "tableConfig": {
+            "tableId": "",
+            "rowKeyField": "",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "",
+            "sortDir": "asc",
+            "filterFields": [],
+            "deletePayloadDefaults": {},
+            "deleteConfirmMessage": "",
+            "deleteConfirmLabel": "Loeschen",
+            "duplicatePayloadDefaults": {},
+            "duplicateConfirmMessage": "",
+            "duplicateConfirmLabel": "Duplizieren"
+          },
+          "content": {
+            "fields": [
+              {
+                "name": "replace_field",
+                "label": "Replace Field",
+                "type": "text",
+                "componentType": "input",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.replace_field",
+                "payloadKey": "replace_field",
+                "group": "main",
+                "order": 10,
+                "placeholder": "Replace me",
+                "helpText": "Describe what this field is used for.",
+                "readonly": true,
+                "required": false,
+                "defaultValue": null,
+                "validationRules": []
+              }
+            ],
+            "rows": [],
+            "actions": []
+          }
+        }
+      ]
+    }
+  ],
+  "specialCases": []
+}

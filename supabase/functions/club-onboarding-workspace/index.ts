@@ -94,34 +94,55 @@ async function sbServiceFetch(path: string, init: RequestInit = {}) {
   return res;
 }
 
-async function getAuthUser(req: Request) {
-  const base = Deno.env.get("SUPABASE_URL") || "";
-  const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+async function getAuthUser(req: Request, supabaseUrl: string, serviceKey: string) {
   const bearerHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
   const customToken = txt(req.headers.get("x-vdan-access-token"));
   const authHeader = customToken ? `Bearer ${customToken}` : bearerHeader;
-  if (!base || !service || !authHeader) return null;
+  const debug: Record<string, unknown> = {
+    hasAuthorizationHeader: Boolean(bearerHeader),
+    hasCustomToken: Boolean(customToken),
+    bearerHeaderPrefix: bearerHeader ? `${bearerHeader.slice(0, 24)}...` : "",
+    customTokenPrefix: customToken ? `${customToken.slice(0, 24)}...` : "",
+    customTokenSegments: customToken ? customToken.split(".").length : 0,
+    authHeaderPrefix: authHeader ? `${authHeader.slice(0, 32)}...` : "",
+  };
+  if (!supabaseUrl || !authHeader) return { user: null, debug };
   const requestApiKey = txt(req.headers.get("apikey") || req.headers.get("Apikey") || "");
+  debug.requestApiKeyPrefix = requestApiKey ? `${requestApiKey.slice(0, 16)}...` : "";
   const apiKeys = [
     requestApiKey,
-    service,
+    serviceKey,
     Deno.env.get("SUPABASE_ANON_KEY") || "",
     Deno.env.get("PUBLIC_SUPABASE_ANON_KEY") || "",
   ].map((value) => txt(value)).filter(Boolean);
+  const attempts: Array<Record<string, unknown>> = [];
 
   for (const apiKey of apiKeys) {
-    const res = await fetch(`${base}/auth/v1/user`, {
+    const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
       method: "GET",
       headers: {
         apikey: apiKey,
         Authorization: authHeader,
       },
     }).catch(() => null);
-    if (!res?.ok) continue;
+    if (!res) {
+      attempts.push({ apiKeyPrefix: `${apiKey.slice(0, 16)}...`, ok: false, status: "fetch_failed" });
+      continue;
+    }
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      attempts.push({ apiKeyPrefix: `${apiKey.slice(0, 16)}...`, ok: false, status: res.status, body });
+      continue;
+    }
     const user = await res.json().catch(() => null);
-    if (user?.id) return user;
+    attempts.push({ apiKeyPrefix: `${apiKey.slice(0, 16)}...`, ok: true, status: res.status, userId: user?.id || "" });
+    if (user?.id) {
+      debug.attempts = attempts;
+      return { user, debug };
+    }
   }
-  return null;
+  debug.attempts = attempts;
+  return { user: null, debug };
 }
 
 async function loadJson(path: string) {
@@ -138,13 +159,24 @@ async function callRpc(fn: string, payload: Record<string, unknown>) {
 }
 
 async function isAllowed(userId: string, clubId: string) {
-  const [aclRows, legacyAdminRows] = await Promise.all([
+  const configuredSuperadminIds = String(
+    Deno.env.get("PUBLIC_SUPERADMIN_USER_IDS")
+    || Deno.env.get("SUPERADMIN_USER_IDS")
+    || "",
+  )
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (configuredSuperadminIds.includes(String(userId || "").trim())) return true;
+  const [aclRows, legacyClubRows, legacyGlobalAdminRows] = await Promise.all([
     loadJson(`/rest/v1/club_user_roles?select=role_key&user_id=eq.${encodeURIComponent(userId)}&club_id=eq.${encodeURIComponent(clubId)}`),
+    loadJson(`/rest/v1/user_roles?select=role&user_id=eq.${encodeURIComponent(userId)}&club_id=eq.${encodeURIComponent(clubId)}&role=in.(admin,vorstand)&limit=1`),
     loadJson(`/rest/v1/user_roles?select=role&user_id=eq.${encodeURIComponent(userId)}&role=eq.admin&limit=1`),
   ]);
   const manager = (Array.isArray(aclRows) ? aclRows : []).some((row) => ["admin", "vorstand"].includes(txt(row?.role_key).toLowerCase()));
-  const globalAdmin = Array.isArray(legacyAdminRows) && legacyAdminRows.length > 0;
-  return manager || globalAdmin;
+  const legacyManager = Array.isArray(legacyClubRows) && legacyClubRows.length > 0;
+  const globalAdmin = Array.isArray(legacyGlobalAdminRows) && legacyGlobalAdminRows.length > 0;
+  return manager || legacyManager || globalAdmin;
 }
 
 async function readSetting(settingKey: string) {
@@ -239,9 +271,13 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers });
 
   try {
-    const actor = await getAuthUser(req);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    if (!supabaseUrl || !serviceKey) throw new Error("missing_supabase_service_env");
+
+    const { user: actor, debug: authDebug } = await getAuthUser(req, supabaseUrl, serviceKey);
     if (!actor?.id) {
-      return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), {
+      return new Response(JSON.stringify({ ok: false, error: "unauthorized", debug: authDebug }), {
         status: 401,
         headers: { ...headers, "Content-Type": "application/json" },
       });
@@ -382,8 +418,14 @@ Deno.serve(async (req: Request) => {
       headers: { ...headers, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ ok: false, error: err instanceof Error ? err.message : "unexpected_error" }), {
-      status: 500,
+    const message = err instanceof Error ? err.message : "unexpected_error";
+    const status = message === "unauthorized"
+      ? 401
+      : message === "forbidden_club_scope"
+        ? 403
+        : 500;
+    return new Response(JSON.stringify({ ok: false, error: message }), {
+      status,
       headers: { ...headers, "Content-Type": "application/json" },
     });
   }

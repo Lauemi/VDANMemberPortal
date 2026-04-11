@@ -82,6 +82,10 @@ const bootstrapScript = [
 
           <section class="actionbox">
             <div class="eyebrow">Zustand</div>
+            <div class="masterboard-source">
+              <span class="masterboard-source__label">Datenquelle</span>
+              <span id="masterboardSourceBadge" class="masterboard-source__badge is-loading">Lade…</span>
+            </div>
             <div class="stats">
               <div class="stat"><div class="k">Knoten</div><div class="v" id="masterboardStatNodes">0</div></div>
               <div class="stat"><div class="k">Lücken</div><div class="v" id="masterboardStatGaps">0</div></div>
@@ -94,6 +98,28 @@ const bootstrapScript = [
               <button type="button" class="ghost" id="masterboardExportMasterBtn">Master export</button>
               <button type="button" class="ghost" id="masterboardExportOpsBtn">Ops export</button>
             </div>
+          </section>
+        </div>
+
+        <div class="masterboard-app__guidance">
+          <section class="guidebox">
+            <div class="eyebrow">Führung</div>
+            <div class="mode-switch" role="tablist" aria-label="Board-Modus">
+              <button type="button" class="tab active" data-masterboard-mode="lead">Führung</button>
+              <button type="button" class="tab" data-masterboard-mode="detail">Detail</button>
+            </div>
+            <div class="legend-list">
+              <div><span class="legend-dot is-red"></span> Rot = Blocker</div>
+              <div><span class="legend-dot is-yellow"></span> Gelb = offen / Entscheidung fehlt</div>
+              <div><span class="legend-dot is-green"></span> Grün = stabil</div>
+              <div><span class="legend-mark">L1/L2/L3</span> Launch-Klasse / Reife</div>
+              <div><span class="legend-mark">!</span> Risiko hoch</div>
+            </div>
+          </section>
+          <section class="guidebox guidebox--blockers">
+            <div class="eyebrow">Top 3 Blocker</div>
+            <p id="masterboardTopBlockersSummary" class="small masterboard-top-summary"></p>
+            <div id="masterboardTopBlockers" class="blocker-list"></div>
           </section>
         </div>
 
@@ -123,7 +149,7 @@ const bootstrapScript = [
   </section>
 
   <div id="masterboardOverlay" class="masterboard-overlay"></div>
-  <aside id="masterboardDrawer" class="masterboard-drawer" aria-hidden="true">
+  <aside id="masterboardDrawer" class="masterboard-drawer" aria-hidden="true" inert>
     <div class="masterboard-drawer__head">
       <div>
         <div id="masterboardDrawerLane" class="eyebrow">Details</div>

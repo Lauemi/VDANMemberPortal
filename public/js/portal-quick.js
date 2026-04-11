@@ -47,26 +47,18 @@
     { id: "einstellungen", href: "/app/einstellungen/", label: "Einstellungen", short: "ES", access: "member", group: "member" },
 
     { id: "scanner", href: "/app/ausweis/verifizieren/", label: "Scanner", short: "SC", access: "manager", group: "manager" },
-    { id: "as_cockpit", href: "/app/arbeitseinsaetze/cockpit/", label: "Arbeitseinsatz Cockpit", short: "AC", access: "manager", group: "manager" },
-    { id: "termine_cockpit", href: "/app/termine/cockpit/", label: "Termine Cockpit", short: "TC", access: "manager", group: "manager" },
     { id: "eventplaner", href: "/app/eventplaner/", label: "Eventplaner", short: "EP", access: "manager", group: "manager" },
     { id: "feedback", href: "/app/feedback/", label: "Feedback", short: "FB", access: "member", group: "manager" },
     { id: "sitzungen", href: "/app/sitzungen/", label: "Sitzungen", short: "SI", access: "manager", group: "manager" },
-    { id: "bewerbungen", href: "/app/bewerbungen/", label: "Bewerbungen", short: "BW", access: "manager", group: "manager" },
     { id: "dokumente", href: "/app/dokumente/", label: "Dokumente", short: "DV", access: "manager", group: "manager" },
 
-    { id: "mitglieder", href: "/app/mitglieder/", label: "Mitglieder", short: "MV", access: "admin", group: "admin" },
     { id: "feedback_cockpit", href: "/app/feedback/cockpit/", label: "Feedback Cockpit", short: "BC", access: "admin", group: "admin" },
-    { id: "lizenzen", href: "/app/lizenzen/", label: "Wetter & Radar", short: "WR", access: "admin", group: "admin" },
     { id: "admin_board", href: "/app/admin-panel/", label: "Admin Board", short: "AB", access: "superadmin", group: "superadmin" },
-    { id: "mitgliederverwaltung", href: "/app/mitgliederverwaltung/", label: "Mitglieder-Registry", short: "MR", access: "admin", group: "admin" },
-    { id: "vereine_setup", href: "/app/vereine/", label: "Vereins-Setup", short: "VS", access: "superadmin", group: "superadmin" },
+    { id: "mitgliederverwaltung", href: "/app/mitgliederverwaltung/", label: "Vereinsverwaltung", short: "VV", access: "admin", group: "admin" },
     { id: "kontrollboard", href: "/app/kontrollboard/", label: "Kontrollboard", short: "KB", access: "superadmin", group: "superadmin" },
     { id: "masterboard", href: "/app/masterboard/", label: "Masterboard", short: "MB", access: "superadmin", group: "superadmin" },
-    { id: "ui_neumorph_demo", href: "/app/ui-neumorph-demo/", label: "UI Neumorph Demo", short: "UI", access: "superadmin", group: "superadmin" },
     { id: "component_library", href: "/app/component-library/", label: "Component Library", short: "CL", access: "superadmin", group: "superadmin" },
     { id: "template_studio", href: "/app/template-studio/", label: "Template Studio", short: "TS", access: "superadmin", group: "superadmin" },
-    { id: "fangliste_cockpit", href: "/app/fangliste/cockpit/", label: "Fangliste Cockpit", short: "FC", access: "admin", group: "admin" },
   ];
 
   const GROUP_ORDER = ["member", "manager", "admin", "superadmin"];

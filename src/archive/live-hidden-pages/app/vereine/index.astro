@@ -15,7 +15,7 @@ import { APP } from "../../../config/app";
         <div class="club-admin-nav__intro">
           <h1>Vereinssetup</h1>
           <p class="small">
-            Interne Verwaltungsmaske für Club-Anlage, Onboarding-Fortschritt, Blocking und Invite-Verwaltung.
+            Interne Verwaltungsmaske für Club-Anlage, Onboarding-Fortschritt, Blocking und Navigation.
           </p>
         </div>
 
@@ -36,9 +36,8 @@ import { APP } from "../../../config/app";
           <button type="button" class="club-admin-nav__btn" data-club-admin-section="billing">Billing</button>
           <button type="button" class="club-admin-nav__btn" data-club-admin-section="waters">Gewässer</button>
           <button type="button" class="club-admin-nav__btn" data-club-admin-section="cards">Angelkarten</button>
-          <button type="button" class="club-admin-nav__btn" data-club-admin-section="members">Mitglieder</button>
+          <button type="button" class="club-admin-nav__btn" data-club-admin-section="members">Vereinsverwaltung</button>
           <button type="button" class="club-admin-nav__btn" data-club-admin-section="create">Verein anlegen</button>
-          <button type="button" class="club-admin-nav__btn" data-club-admin-section="invite">Invite-Link</button>
         </nav>
       </aside>
 
@@ -230,13 +229,30 @@ import { APP } from "../../../config/app";
               <div>
                 <h2>Billing</h2>
                 <p class="small">
-                  Zweiter geführter Schritt. Für normale Vereins-Admins schaltet Billing die restlichen Verwaltungsbereiche frei.
+                  FCP-Vereinslizenz für das Portal. Dieser Schritt schaltet die restlichen Verwaltungsbereiche frei, betrifft aber nicht die vereinsinternen Angelkartenpreise.
                 </p>
               </div>
             </div>
 
             <div class="club-admin-stage-note" id="clubBillingStageNote">
               Billing-Metadaten werden geladen.
+            </div>
+
+            <div class="club-admin-billing-box">
+              <div>
+                <h3>FCP-Vereinslizenz</h3>
+                <p class="small">
+                  Diese Lizenz betrifft ausschließlich die Nutzung des Fishing Club Portal durch den Verein.
+                  Angelkarten, Kartentypen und Kartenpreise bleiben Vereinskonfiguration.
+                </p>
+              </div>
+              <div class="club-admin-billing-box__cta">
+                <div id="clubBillingLicenseState">-</div>
+                <button id="clubBillingCheckoutBtn" type="button" class="feed-btn">Lizenz aktivieren</button>
+              </div>
+              <p id="clubBillingCheckoutMeta" class="small">
+                Checkout wird über den bestehenden Stripe-Pfad geöffnet.
+              </p>
             </div>
 
             <div class="club-admin-columns">
@@ -253,8 +269,8 @@ import { APP } from "../../../config/app";
                 <h3>Freigabelogik</h3>
                 <ul class="club-admin-list small">
                   <li>Normale Vereins-Admins kommen erst nach freigegebenen Vereinsdaten in diesen Schritt.</li>
-                  <li>Gewässer, Angelkarten und Mitglieder bleiben bis zu aktivem Billing gesperrt.</li>
-                  <li>Im Superadmin-Kontext bleibt der Ablauf sichtbar gleich, Billing blockiert aber nicht.</li>
+                  <li>Gewässer, Angelkarten und Mitglieder bleiben bis zu aktiver FCP-Vereinslizenz gesperrt.</li>
+                  <li>Im Superadmin-Kontext bleibt der Ablauf sichtbar gleich, die FCP-Vereinslizenz blockiert aber nicht.</li>
                 </ul>
               </div>
             </div>
@@ -330,7 +346,7 @@ import { APP } from "../../../config/app";
               <div>
                 <h2>Angelkarten</h2>
                 <p class="small">
-                  Wird nach Billing freigeschaltet oder im Superadmin-Kontext direkt testbar gemacht.
+                  Vereinsinterne Kartenkonfiguration. Dieser Bereich wird nach aktiver FCP-Vereinslizenz freigeschaltet, ist aber nicht Teil des FCP-Billings.
                 </p>
               </div>
               <div class="club-admin-actions">
@@ -347,7 +363,7 @@ import { APP } from "../../../config/app";
                 <div class="club-admin-module-card__head">
                   <div>
                     <h3>Karten-Basis</h3>
-                    <p class="small">Default-Karte und weitere Karten werden hier als eigener Arbeitsbereich geführt.</p>
+                    <p class="small">Default-Karte und weitere Karten werden hier vereinsintern geführt. Preise bleiben Vereinssache.</p>
                   </div>
                   <div id="clubModuleStateCards">-</div>
                 </div>
@@ -390,9 +406,9 @@ import { APP } from "../../../config/app";
           <article class="club-admin-card">
             <div class="club-admin-card__head">
               <div>
-                <h2>Mitglieder</h2>
+                <h2>Vereinsverwaltung</h2>
                 <p class="small">
-                  Nach Billing wird die Mitgliedergrundlage aktiv bearbeitbar. Superadmin kann den Ablauf vorab vollständig testen.
+                  Die operative Vereinsverwaltung mit Mitgliederliste, CSV und Invite läuft im ADM-Bereich.
                 </p>
               </div>
               <div class="club-admin-actions">
@@ -408,8 +424,8 @@ import { APP } from "../../../config/app";
               <article class="club-admin-module-card" id="clubMembersCard">
                 <div class="club-admin-module-card__head">
                   <div>
-                    <h3>Mitgliedergrundlage</h3>
-                    <p class="small">Importiert oder bewusst leer bestätigt. Kein stilles Durchwinken.</p>
+                    <h3>Übergang in die Vereinsverwaltung</h3>
+                    <p class="small">Setup hält nur noch Status und Navigation. Operative Pflege läuft zentral in der Vereinsverwaltung.</p>
                   </div>
                   <div id="clubModuleStateMembers">-</div>
                 </div>
@@ -427,55 +443,12 @@ import { APP } from "../../../config/app";
               </article>
             </div>
 
-            <div class="club-admin-form-grid">
-              <label class="club-admin-field">
-                <span class="small">Vorname</span>
-                <input id="clubMemberFirstName" type="text" placeholder="Max" />
-              </label>
-              <label class="club-admin-field">
-                <span class="small">Nachname</span>
-                <input id="clubMemberLastName" type="text" placeholder="Mustermann" />
-              </label>
-              <label class="club-admin-field">
-                <span class="small">Status</span>
-                <select id="clubMemberStatus">
-                  <option value="active">aktiv</option>
-                  <option value="inactive">inaktiv</option>
-                </select>
-              </label>
-              <label class="club-admin-field">
-                <span class="small">Kartentyp</span>
-                <input id="clubMemberCardType" type="text" placeholder="z. B. Jahreskarte" />
-              </label>
-              <label class="club-admin-field">
-                <span class="small">Ort</span>
-                <input id="clubMemberCity" type="text" placeholder="Ort" />
-              </label>
-              <label class="club-admin-field">
-                <span class="small">Telefon</span>
-                <input id="clubMemberPhone" type="text" placeholder="+49 ..." />
-              </label>
+            <div class="club-admin-stage-note">
+              CSV-Import, Mitglied anlegen und Invite laufen ab jetzt ausschließlich in der ADM-Vereinsverwaltung.
             </div>
 
             <div class="club-admin-actions">
-              <button type="button" class="feed-btn feed-btn--ghost" id="clubMemberCreateBtn">Mitglied anlegen</button>
-            </div>
-
-            <div class="work-part-table-wrap">
-              <table class="work-part-table">
-                <thead>
-                  <tr>
-                    <th>Nr.</th>
-                    <th>Name</th>
-                    <th>Status</th>
-                    <th>Karte</th>
-                    <th>Ort</th>
-                  </tr>
-                </thead>
-                <tbody id="clubMembersTable">
-                  <tr><td colspan="5" class="small">Mitglieder werden geladen...</td></tr>
-                </tbody>
-              </table>
+              <a class="feed-btn" href="/app/mitgliederverwaltung/">Zur Vereinsverwaltung</a>
             </div>
           </article>
         </section>
@@ -538,62 +511,6 @@ import { APP } from "../../../config/app";
           </article>
         </section>
 
-        <section class="club-admin-panel" data-club-admin-panel="invite">
-          <article class="club-admin-card">
-            <div class="club-admin-card__head">
-              <div>
-                <h2>Invite-Link für bestehenden Verein</h2>
-                <p class="small">
-                  Readable Management statt Blindflug: Club-Code, Token, Ablauf und QR an einer Stelle.
-                </p>
-              </div>
-            </div>
-
-            <form id="clubInviteCreateForm" class="resp-form-grid">
-              <label>
-                <span>Club-Code (AA00)</span>
-                <input id="clubInviteCreateCode" type="text" placeholder="z. B. FC01" required />
-              </label>
-              <label>
-                <span>Max. Nutzungen</span>
-                <input id="clubInviteCreateMaxUses" type="number" min="1" max="500" value="25" />
-              </label>
-              <label>
-                <span>Gültigkeit (Tage)</span>
-                <input id="clubInviteCreateDays" type="number" min="1" max="90" value="14" />
-              </label>
-              <div class="resp-full club-admin-actions">
-                <button id="clubInviteCreateBtn" type="button" class="feed-btn feed-btn--ghost">Invite-Link erzeugen</button>
-              </div>
-            </form>
-
-            <section id="clubInvitePanel" class="card hidden" hidden style="margin-top:12px;">
-              <div class="card__body">
-                <h3>Registrierungs-QR</h3>
-                <p class="small">Nur Personen mit diesem Token können sich registrieren.</p>
-                <div style="display:grid;gap:10px;grid-template-columns:220px minmax(0,1fr);align-items:start;">
-                  <img id="clubInviteQr" alt="Registrierungs-QR" width="220" height="220" loading="lazy" />
-                  <div style="display:grid;gap:8px;">
-                    <label>
-                      <span class="small">Invite-Token</span>
-                      <input id="clubInviteToken" type="text" readonly />
-                    </label>
-                    <label>
-                      <span class="small">Registrierungs-Link</span>
-                      <input id="clubInviteUrl" type="text" readonly />
-                    </label>
-                    <p id="clubInviteExpires" class="small"></p>
-                    <div class="club-admin-actions">
-                      <button id="clubInviteCopyToken" type="button" class="feed-btn feed-btn--ghost">Token kopieren</button>
-                      <button id="clubInviteCopyUrl" type="button" class="feed-btn feed-btn--ghost">Link kopieren</button>
-                      <a id="clubInviteOpenUrl" class="feed-btn" href="#" target="_blank" rel="noopener noreferrer">Link öffnen</a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </article>
-        </section>
       </div>
     </div>
   </section>
@@ -855,6 +772,49 @@ import { APP } from "../../../config/app";
   .club-admin-stage-note[data-tone="info"] {
     border-color: rgba(126, 194, 255, 0.45);
     background: rgba(78, 161, 255, 0.12);
+  }
+
+  .club-admin-billing-box {
+    margin-top: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.02);
+    display: grid;
+    gap: 12px;
+  }
+
+  .club-admin-billing-box__cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .club-admin-import-box {
+    margin-top: 14px;
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.02);
+    display: grid;
+    gap: 12px;
+  }
+
+  .club-admin-import-box__head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: start;
+    flex-wrap: wrap;
+  }
+
+  .club-admin-contract-note {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.02);
   }
 
   .club-admin-card.is-locked,

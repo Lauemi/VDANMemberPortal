@@ -341,8 +341,8 @@
       status: String(row?.status || "").trim() || "draft",
       max_participants: row?.max_participants ?? null,
       is_youth: Boolean(row?.is_youth),
-      sourceHref: kind === "work_event" ? "/app/arbeitseinsaetze/cockpit/" : "/app/termine/cockpit/",
-      sourceLabel: kind === "work_event" ? "Arbeitseinsatz" : "Termin",
+      sourceHref: "/app/eventplaner/",
+      sourceLabel: "Eventplaner",
     };
   }
 

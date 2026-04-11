@@ -1,0 +1,196 @@
+---
+import Site from "../../layouts/Site.astro";
+import { APP } from "../../config/app";
+
+const nextRaw = Astro.url.searchParams.get("next") ?? "/verein-registrieren/";
+const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/verein-registrieren/";
+---
+
+<Site title={`Zugang anlegen • ${APP.name}`} description="Zugangsschritt für die Vereinsregistrierung." robots="noindex" density="compact" appThemeOverride="fcp_tactical">
+  <section class="card ui-card register-flow-card form-shell" style="max-width:720px;margin:0 auto;">
+    <div class="card__body ui-card__body register-flow">
+      <div class="register-flow__intro">
+        <span class="register-flow__eyebrow">Vereinsregistrierung</span>
+        <div class="register-current-path">Schritt: Zugang anlegen</div>
+        <h1>Zugang für die Registrierung anlegen</h1>
+        <p class="small register-flow__lede">
+          Deine Vereinsdaten sind vorbereitet. Jetzt legst du den Zugang an, mit dem die Registrierung sicher weitergeführt wird.
+        </p>
+        <p class="register-flow__context small">
+          Danach wird die vorbereitete Registrierung gespeichert und in den Status für die weitere Prüfung oder Freischaltung überführt.
+        </p>
+      </div>
+
+      <form id="clubRegisterAccessForm" class="register-flow__form form-shell__section register-step is-active" data-next-target={nextTarget}>
+        <div class="register-step__head">
+          <span class="register-step__index">1</span>
+          <div>
+            <h2>Zugangsdaten</h2>
+            <p>Verwende die E-Mail-Adresse der verantwortlichen Person. Mit diesem Zugang führst du die Vereinsregistrierung weiter.</p>
+          </div>
+        </div>
+
+        <div class="register-grid">
+          <label>
+            <span>E-Mail</span>
+            <input id="clubRegisterAccessEmail" type="email" autocomplete="email" required />
+          </label>
+          <label>
+            <span>Passwort</span>
+            <input id="clubRegisterAccessPassword" type="password" autocomplete="new-password" minlength="8" required />
+          </label>
+          <label>
+            <span>Passwort wiederholen</span>
+            <input id="clubRegisterAccessPasswordRepeat" type="password" autocomplete="new-password" minlength="8" required />
+          </label>
+        </div>
+
+        <div class="register-flow__actions">
+          <button id="clubRegisterAccessSubmit" class="feed-btn fcp-brand-btn--primary" type="submit">Zugang anlegen und Registrierung fortsetzen</button>
+          <a class="feed-btn feed-btn--ghost" href="/verein-registrieren/">Zurück zur Registrierung</a>
+          <a class="register-flow__secondary-link" href={`/login/?next=${encodeURIComponent(nextTarget)}`}>Ich habe bereits einen Zugang</a>
+          <span id="clubRegisterAccessMsg" class="small" aria-live="polite"></span>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <script is:inline>
+    (() => {
+      const DRAFT_KEY = "vdan_club_register_pending_v1";
+      const LEGACY_KEY = "vdan_club_request_pending_v1";
+      const RESUME_KEY = "vdan_club_register_resume_v1";
+
+      function readDraft() {
+        try {
+          const raw = localStorage.getItem(DRAFT_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function writeLegacyDraft(payload) {
+        try {
+          localStorage.setItem(LEGACY_KEY, JSON.stringify(payload || {}));
+        } catch {}
+      }
+
+      function clearDrafts() {
+        try {
+          localStorage.removeItem(DRAFT_KEY);
+          localStorage.removeItem(LEGACY_KEY);
+        } catch {}
+        try {
+          sessionStorage.removeItem(RESUME_KEY);
+        } catch {}
+      }
+
+      function normalizePayload(source = {}) {
+        const city = String(source.city || source.club_city || source.club_location || "").trim();
+        const street = String(source.street || "").trim();
+        const houseNumber = String(source.house_number || source.houseNumber || "").trim();
+        return {
+          club_name: String(source.club_name || "").trim(),
+          club_location: city,
+          zip: String(source.zip || source.club_zip || "").trim(),
+          city,
+          street,
+          house_number: houseNumber,
+          club_address: String(source.club_address || [street, houseNumber].filter(Boolean).join(" ")).trim(),
+          responsible_name: String(source.responsible_name || "").trim(),
+          responsible_role: String(source.responsible_role || "").trim(),
+          responsible_email: String(source.responsible_email || "").trim().toLowerCase(),
+          club_size: String(source.club_size || "").trim(),
+          club_mail_confirmed: Boolean(source.club_mail_confirmed),
+          legal_confirmed: Boolean(source.legal_confirmed),
+          registration_mode: "club_request_pending",
+          onboarding_path: "club_request",
+          billing_status: "billing_pending",
+        };
+      }
+
+      async function continueWithSession(token, payload, msgEl) {
+        await window.VDAN_AUTH.acceptCurrentLegal(token).catch(() => null);
+        await window.VDAN_AUTH.ensureProfileBootstrap(token).catch(() => null);
+        await window.VDAN_AUTH.submitClubRequestIfNeeded(token, {
+          payload,
+          autoApprove: false,
+        });
+        clearDrafts();
+        if (msgEl) msgEl.textContent = "Registrierung gespeichert. Du wirst jetzt zur Statusseite weitergeleitet.";
+        window.location.assign("/app/anfrage-offen/");
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const form = document.getElementById("clubRegisterAccessForm");
+        const emailInput = document.getElementById("clubRegisterAccessEmail");
+        const passInput = document.getElementById("clubRegisterAccessPassword");
+        const pass2Input = document.getElementById("clubRegisterAccessPasswordRepeat");
+        const msgEl = document.getElementById("clubRegisterAccessMsg");
+
+        const draft = readDraft();
+        if (!draft) {
+          if (msgEl) msgEl.textContent = "Keine vorbereitete Registrierung gefunden. Bitte zuerst die Vereinsdaten erfassen.";
+          form?.setAttribute("hidden", "hidden");
+          return;
+        }
+
+        const payload = normalizePayload(draft);
+        if (emailInput instanceof HTMLInputElement && !emailInput.value) {
+          emailInput.value = payload.responsible_email || "";
+        }
+
+        const session = window.VDAN_AUTH?.loadSession?.();
+        if (session?.access_token) {
+          if (msgEl) msgEl.textContent = "Aktive Sitzung erkannt. Die vorbereitete Registrierung wird jetzt fortgesetzt...";
+          continueWithSession(session.access_token, payload, msgEl).catch((err) => {
+            if (msgEl) msgEl.textContent = err?.message || "Registrierung konnte nicht fortgesetzt werden.";
+          });
+          return;
+        }
+
+        form?.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const email = String(emailInput?.value || "").trim().toLowerCase();
+          const password = String(passInput?.value || "");
+          const passwordRepeat = String(pass2Input?.value || "");
+
+          if (msgEl) msgEl.textContent = "Speichere Zugang...";
+
+          if (!email || !email.includes("@")) {
+            if (msgEl) msgEl.textContent = "Bitte eine gültige E-Mail-Adresse eingeben.";
+            return;
+          }
+          if (password.length < 8) {
+            if (msgEl) msgEl.textContent = "Das Passwort muss mindestens 8 Zeichen haben.";
+            return;
+          }
+          if (password !== passwordRepeat) {
+            if (msgEl) msgEl.textContent = "Die Passwörter stimmen nicht überein.";
+            return;
+          }
+
+          const metadata = {
+            ...payload,
+            responsible_email: email,
+          };
+
+          try {
+            writeLegacyDraft(metadata);
+            const result = await window.VDAN_AUTH.signUpWithPassword(email, password, metadata);
+            if (result?.access_token) {
+              await continueWithSession(result.access_token, metadata, msgEl);
+              return;
+            }
+            if (msgEl) {
+              msgEl.textContent = "Zugang angelegt. Bitte bestätige jetzt deine E-Mail. Danach wird die vorbereitete Vereinsregistrierung automatisch fortgesetzt.";
+            }
+          } catch (err) {
+            if (msgEl) msgEl.textContent = err?.message || "Zugang konnte nicht angelegt werden.";
+          }
+        });
+      });
+    })();
+  </script>
+</Site>

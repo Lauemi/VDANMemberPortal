@@ -1,11 +1,8 @@
 ﻿;(() => {
-  const ADMIN_PATHS = ["/app/mitglieder/", "/app/mitgliederverwaltung/", "/app/fangliste/cockpit/", "/app/lizenzen/", "/app/feedback/cockpit/"];
-  const SUPERADMIN_PATHS = ["/app/admin-panel/", "/app/vereine/", "/app/kontrollboard/", "/app/masterboard/", "/app/ui-neumorph-demo/", "/app/component-library/", "/app/template-studio/"];
+  const ADMIN_PATHS = ["/app/mitgliederverwaltung/"];
+  const SUPERADMIN_PATHS = ["/app/admin-panel/", "/app/kontrollboard/", "/app/masterboard/", "/app/component-library/", "/app/template-studio/"];
   const MANAGER_PATHS = [
     "/app/dokumente/",
-    "/app/bewerbungen/",
-    "/app/arbeitseinsaetze/cockpit/",
-    "/app/termine/cockpit/",
     "/app/sitzungen/",
     "/app/ausweis/verifizieren/",
   ];

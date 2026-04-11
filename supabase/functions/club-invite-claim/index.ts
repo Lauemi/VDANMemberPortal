@@ -289,6 +289,47 @@ async function loadJson(path: string) {
   return await res.json().catch(() => []);
 }
 
+async function callRpc<T = unknown>(fn: string, payload: Record<string, unknown>) {
+  const res = await sbServiceFetch(`/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    body: JSON.stringify(payload || {}),
+  });
+  return await res.json().catch(() => null) as T;
+}
+
+async function queueNotificationEmail(params: {
+  templateKey: string;
+  recipientEmail: string;
+  clubId: string;
+  payload: Record<string, unknown>;
+}) {
+  await callRpc("queue_notification_email", {
+    p_template_key: params.templateKey,
+    p_recipient_email: params.recipientEmail,
+    p_club_id: params.clubId,
+    p_payload: params.payload,
+  });
+}
+
+async function loadClubCardSetting(clubId: string) {
+  const rows = await loadJson(
+    `/rest/v1/app_secure_settings?select=setting_value&setting_key=eq.${encodeURIComponent(`club_cards:${clubId}`)}&limit=1`,
+  );
+  return txt(Array.isArray(rows) && rows.length ? rows[0]?.setting_value : "");
+}
+
+async function resolveMembershipKind(clubId: string, memberNo: string) {
+  const rows = await loadJson(
+    `/rest/v1/club_members?select=membership_kind&club_id=eq.${encodeURIComponent(clubId)}&member_no=eq.${encodeURIComponent(memberNo)}&limit=1`,
+  );
+  return txt(Array.isArray(rows) && rows.length ? rows[0]?.membership_kind : "");
+}
+
+function resolveInviteClaimGroupKey(membershipKind: string) {
+  const value = txt(membershipKind).toLowerCase();
+  return value.includes("honor") || value.includes("ehren") ? "honorary" : "standard";
+}
+
 Deno.serve(async (req: Request) => {
   const headers = cors(req);
   if (req.method === "OPTIONS") return new Response("ok", { headers });
@@ -313,6 +354,7 @@ Deno.serve(async (req: Request) => {
     validateInviteRecord(loaded.record);
 
     const userId = txt(actor.id);
+    const actorEmail = txt((actor as { email?: string })?.email).toLowerCase();
     const record = loaded.record!;
     const assignedMemberNo = await ensureClubMemberRecord(
       record.club_id,
@@ -329,6 +371,36 @@ Deno.serve(async (req: Request) => {
     await ensureProfile(actor, record.club_id, assignedMemberNo, firstName, lastName);
     await ensureMemberRole(userId, record.club_id);
 
+    try {
+      const cardsRaw = await loadClubCardSetting(record.club_id);
+      if (cardsRaw) {
+        const normalized = await callRpc<unknown[]>("normalize_club_cards", { raw_value: cardsRaw });
+        const cards = Array.isArray(normalized) ? normalized : [];
+        const membershipKind = await resolveMembershipKind(record.club_id, assignedMemberNo);
+        const groupKey = resolveInviteClaimGroupKey(membershipKind);
+        const defaults = cards.filter((card) => {
+          const row = card && typeof card === "object" ? card as Record<string, unknown> : {};
+          const groupRules = row.group_rules && typeof row.group_rules === "object"
+            ? row.group_rules as Record<string, unknown>
+            : {};
+          const groupRule = groupRules[groupKey] && typeof groupRules[groupKey] === "object"
+            ? groupRules[groupKey] as Record<string, unknown>
+            : {};
+          return row.is_active !== false && groupRule.is_default === true;
+        });
+
+        if (defaults.length === 1) {
+          await callRpc("admin_member_assign_card", {
+            p_club_id: record.club_id,
+            p_member_no: assignedMemberNo,
+            p_fishing_card_type: txt((defaults[0] as Record<string, unknown>)?.title),
+          });
+        }
+      }
+    } catch {
+      // Card auto-assign after claim is best-effort only.
+    }
+
     if (!alreadyUsedByActor) {
       const nextUsers = [...new Set([...usedUsers, userId])];
       const nextUsedCount = Math.max(Number(record.used_count || 0), nextUsers.length);
@@ -341,6 +413,30 @@ Deno.serve(async (req: Request) => {
         status: nextStatus,
       };
       await upsertSetting(loaded.settingKey, JSON.stringify(nextRecord));
+    }
+
+    if (actorEmail) {
+      try {
+        await queueNotificationEmail({
+          templateKey: "claim_success",
+          recipientEmail: actorEmail,
+          clubId: record.club_id,
+          payload: {
+            club_name: record.club_name,
+            club_code: record.club_code,
+            member_no: assignedMemberNo,
+            subject: `Mitgliedschaft bestaetigt: ${record.club_name}`,
+            html: `
+              <h2>Mitgliedschaft bestaetigt</h2>
+              <p>Deine Zuordnung fuer den Verein <strong>${record.club_name}</strong> wurde erfolgreich bestaetigt.</p>
+              <p>Mitgliedsnummer: <strong>${assignedMemberNo}</strong></p>
+              <p>Du kannst das Portal jetzt als Mitglied nutzen.</p>
+            `,
+          },
+        });
+      } catch {
+        // Claim flow itself must stay available even if queueing fails.
+      }
     }
 
     return new Response(JSON.stringify({

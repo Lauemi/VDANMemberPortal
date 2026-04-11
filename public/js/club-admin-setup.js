@@ -10,6 +10,7 @@
     onboardingBilling: null,
     onboardingLocks: null,
     onboardingWorkspace: null,
+    csvImportDraft: null,
   };
 
   function cfg() {
@@ -180,6 +181,30 @@
     return data;
   }
 
+  async function callMultipartFn(functionName, formData) {
+    const { url, key } = cfg();
+    const s = session();
+    const token = s?.access_token || "";
+    if (!url || !key) throw new Error("supabase_config_missing");
+    if (!token) throw new Error("login_required");
+
+    const res = await fetch(`${url}/functions/v1/${functionName}`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data?.ok === false) {
+      if (res.status === 401) throw new Error("unauthorized");
+      if (res.status === 403) throw new Error("forbidden");
+      throw new Error(String(data?.error || `${functionName}_failed_${res.status}`));
+    }
+    return data;
+  }
+
   async function callWorkspace(action, payload = {}) {
     return await callFn("club-onboarding-workspace", {
       action,
@@ -292,6 +317,27 @@
     return `<span class="onboarding-state-pill" data-tone="${esc(tone)}">${esc(label)}</span>`;
   }
 
+  function billingStateLabel(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+    if (normalized === "active") return "Lizenz aktiv";
+    if (normalized === "checkout_open") return "Checkout offen";
+    if (normalized === "past_due") return "Zahlung offen";
+    if (normalized === "canceled") return "Beendet";
+    if (normalized === "suspended") return "Gesperrt";
+    return "Nicht gestartet";
+  }
+
+  function billingStateTone(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+    if (normalized === "active") return "good";
+    if (["checkout_open", "past_due"].includes(normalized)) return "warn";
+    return "bad";
+  }
+
+  function delimiterValue(raw) {
+    return raw === "tab" ? "\t" : String(raw || ",");
+  }
+
   function clubDataReady(snapshot) {
     return Boolean(
       snapshot
@@ -370,8 +416,8 @@
     }
     if (!locks.downstreamUnlocked) {
       return {
-        title: "Billing abschließen",
-        detail: "Erst aktives Billing schaltet Gewässer, Angelkarten und Mitglieder frei.",
+        title: "FCP-Lizenz abschließen",
+        detail: "Erst eine aktive FCP-Vereinslizenz schaltet Gewässer, Angelkarten und Mitglieder frei.",
       };
     }
     if (!snapshot.waters_complete || !snapshot.has_water_bodies) {
@@ -581,14 +627,14 @@
       ? `Setup abgeschlossen am ${new Date(snapshot.setup_completed_at).toLocaleString("de-DE")}`
       : "Vereinsdaten noch nicht vollständig freigegeben.";
     billingMeta.textContent = billing?.updated_at
-      ? `Billing zuletzt aktualisiert am ${new Date(billing.updated_at).toLocaleString("de-DE")}`
+      ? `FCP-Lizenz zuletzt aktualisiert am ${new Date(billing.updated_at).toLocaleString("de-DE")}`
       : "Noch keine verifizierten Billing-Metadaten vorhanden.";
     portalMeta.textContent = String(snapshot?.portal_state || "draft").toLowerCase() === "active"
       ? "Portal ist freigeschaltet."
-      : "Portal bleibt bis zur Billing-Aktivierung im Entwurfs- oder Suspend-Status.";
+      : "Portal bleibt bis zur Aktivierung der FCP-Vereinslizenz im Entwurfs- oder Suspend-Status.";
     readyMeta.textContent = locks.downstreamUnlocked
-      ? (locks.superadmin && !locks.billingOk ? "Superadmin-Bypass aktiv. Restbereiche sind trotz offenem Billing benutzbar." : "Restbereiche sind operativ freigeschaltet.")
-      : "Gewässer, Angelkarten und Mitglieder bleiben bis nach Billing gesperrt.";
+      ? (locks.superadmin && !locks.billingOk ? "Superadmin-Bypass aktiv. Restbereiche sind trotz offener FCP-Vereinslizenz benutzbar." : "Restbereiche sind operativ freigeschaltet.")
+      : "Gewässer, Angelkarten und Mitglieder bleiben bis nach aktiver FCP-Vereinslizenz gesperrt.";
     const next = nextStepFromSnapshot(snapshot, billing);
     nextStep.textContent = next.title;
     nextStepMeta.textContent = next.detail;
@@ -716,41 +762,207 @@
     const summary = document.getElementById("clubBillingSummary");
     const facts = document.getElementById("clubBillingFacts");
     const note = document.getElementById("clubBillingStageNote");
+    const licenseState = document.getElementById("clubBillingLicenseState");
+    const checkoutMeta = document.getElementById("clubBillingCheckoutMeta");
+    const checkoutBtn = document.getElementById("clubBillingCheckoutBtn");
     if (!summary || !facts) return;
 
     if (!snapshot) {
       summary.textContent = "Kein Verein gewählt.";
       facts.innerHTML = "<li>Keine Daten geladen.</li>";
       if (note) note.textContent = "Kein Verein gewählt.";
+      if (licenseState) licenseState.innerHTML = pill("Nicht gestartet", "bad");
+      if (checkoutMeta) checkoutMeta.textContent = "Bitte zuerst einen Verein wählen.";
+      if (checkoutBtn) checkoutBtn.disabled = true;
       return;
     }
 
     const billingState = String(billing?.billing_state || snapshot?.billing_state || "none").trim();
+    const billingStateLower = billingState.toLowerCase();
     const checkoutState = String(billing?.checkout_state || "none").trim();
     summary.textContent = locks.clubReady
-      ? `Vereinsdaten sind freigegeben. Billing steht aktuell auf ${billingState}.`
-      : "Billing ist noch blockiert, weil die Vereinsdaten nicht vollständig freigegeben sind.";
+      ? `Vereinsdaten sind freigegeben. Die FCP-Vereinslizenz steht aktuell auf ${billingState}.`
+      : "Die FCP-Vereinslizenz ist noch blockiert, weil die Vereinsdaten nicht vollständig freigegeben sind.";
 
     if (note) {
       note.dataset.tone = locks.clubReady ? (locks.superadmin ? "info" : "good") : "warn";
       note.textContent = !locks.clubReady
-        ? "Billing bleibt gesperrt, bis Vereinsdaten, Rollen und Module vollständig sind."
+        ? "Die FCP-Vereinslizenz bleibt gesperrt, bis Vereinsdaten, Rollen und Module vollständig sind."
         : locks.superadmin
-          ? "Superadmin-Bypass aktiv: Du siehst und testest den normalen Flow, aber Billing blockiert dich nicht."
+          ? "Superadmin-Bypass aktiv: Du siehst und testest den normalen Flow, aber die FCP-Vereinslizenz blockiert dich nicht."
           : locks.billingOk
-            ? "Billing ist aktiv. Gewässer, Angelkarten und Mitglieder sind freigeschaltet."
-            : "Billing ist der Freigabeschritt für Gewässer, Angelkarten und Mitglieder.";
+            ? "Die FCP-Vereinslizenz ist aktiv. Gewässer, Angelkarten und Mitglieder sind freigeschaltet."
+            : "Die FCP-Vereinslizenz ist der Freigabeschritt für Gewässer, Angelkarten und Mitglieder.";
     }
 
     const items = [
       `Setup-State: ${snapshot.setup_state || "-"}`,
       `Billing-State: ${billingState || "-"}`,
       `Checkout-State: ${checkoutState || "-"}`,
-      billing?.stripe_customer_id ? `Stripe Customer vorhanden.` : "Noch keine Stripe-Customer-Zuordnung.",
-      billing?.stripe_subscription_id ? `Stripe Subscription vorhanden.` : "Noch keine Stripe-Subscription-Zuordnung.",
       billing?.current_period_end ? `Abrechnungsperiode bis ${new Date(billing.current_period_end).toLocaleString("de-DE")}` : "Noch kein period_end vorhanden.",
+      billing?.canceled_at ? `Beendet am ${new Date(billing.canceled_at).toLocaleString("de-DE")}` : "Keine Beendigung hinterlegt.",
+      "FCP-Billing betrifft nur die Vereinslizenz, nicht die Angelkartenpreise des Vereins.",
     ];
     facts.innerHTML = items.map((item) => `<li>${esc(item)}</li>`).join("");
+
+    if (licenseState) {
+      licenseState.innerHTML = pill(billingStateLabel(billingState), billingStateTone(billingState));
+    }
+
+    if (checkoutBtn) {
+      checkoutBtn.disabled = !locks.clubReady || billingStateLower === "active";
+      checkoutBtn.textContent = billingStateLower === "checkout_open"
+        ? "Checkout öffnen"
+        : billingStateLower === "active"
+          ? "Lizenz aktiv"
+          : "Lizenz aktivieren";
+    }
+
+    if (checkoutMeta) {
+      checkoutMeta.textContent = !locks.clubReady
+        ? "Erst Vereinsdaten abschließen, dann kann die FCP-Vereinslizenz aktiviert werden."
+        : billingStateLower === "active"
+          ? "Die FCP-Vereinslizenz ist aktiv. Gewässer, Karten und Mitglieder sind freigeschaltet."
+          : billingStateLower === "checkout_open"
+            ? "Ein Stripe-Checkout wurde bereits vorbereitet. Du kannst den Checkout erneut öffnen."
+            : "Der Checkout nutzt den bestehenden Stripe-Pfad für die FCP-Vereinslizenz des Vereins.";
+    }
+  }
+
+  async function startBillingCheckout() {
+    const clubId = String(state.onboardingSelectedClubId || "").trim();
+    if (!clubId) {
+      setOnboardingMsg("Bitte zuerst einen Verein wählen.", true);
+      return;
+    }
+
+    setOnboardingMsg("Stripe-Checkout wird vorbereitet ...");
+    const data = await callFn("fcp-create-checkout-session", { club_id: clubId });
+    const checkoutUrl = String(data?.checkout_url || "").trim();
+    if (!checkoutUrl) throw new Error("checkout_url_missing");
+    window.location.assign(checkoutUrl);
+  }
+
+  function renderCsvImportDraft() {
+    const stateEl = document.getElementById("clubMembersCsvState");
+    const metaEl = document.getElementById("clubMembersCsvMeta");
+    const confirmBtn = document.getElementById("clubMembersCsvConfirmBtn");
+    if (!stateEl || !metaEl) return;
+
+    const draft = state.csvImportDraft;
+    if (!draft?.file) {
+      stateEl.innerHTML = pill("Serverseitiger Parse offen", "warn");
+      metaEl.textContent = "Geplanter Pfad: `csv_create_import_job` → serverseitiger Parse/Mapping-Step → `csv_get_preview` → `csv_confirm_import`.";
+      if (confirmBtn) confirmBtn.disabled = true;
+      return;
+    }
+
+    stateEl.innerHTML = pill("CSV vorbereitet", "good");
+    metaEl.textContent = `Bereit für Job-Anlage: ${draft.file.name} · ${draft.file.size} Bytes · Delimiter ${draft.delimiter === "\t" ? "Tab" : draft.delimiter}. Der Parse/Row-Push bleibt serverseitig gekapselt.`;
+    if (confirmBtn) confirmBtn.disabled = !String(draft.job_id || "").trim();
+  }
+
+  function renderCsvPreviewRows(rows = [], note = "") {
+    const tbody = document.getElementById("clubMembersCsvPreviewTable");
+    if (!tbody) return;
+    if (!Array.isArray(rows) || !rows.length) {
+      tbody.innerHTML = `<tr><td colspan="4" class="small">${esc(note || "Preview folgt, sobald der serverseitige Parse-Schritt angeschlossen ist.")}</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map((row) => {
+      const source = row?.source_values && typeof row.source_values === "object"
+        ? Object.entries(row.source_values).map(([key, value]) => `${key}: ${value ?? "-"}`).join(" · ")
+        : "-";
+      const preview = row?.preview_values && typeof row.preview_values === "object"
+        ? Object.entries(row.preview_values).map(([key, value]) => `${key}: ${value ?? "-"}`).join(" · ")
+        : "-";
+      const issues = Array.isArray(row?.issues) && row.issues.length ? row.issues.join(" · ") : "Keine";
+      return `
+        <tr>
+          <td>${esc(row?.row_no ?? "-")}</td>
+          <td>${esc(row?.row_status || "sample")}</td>
+          <td class="small">${esc(preview || source)}</td>
+          <td class="small">${esc(issues)}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function prepareCsvImportDraft() {
+    const fileInput = document.getElementById("clubMembersCsvFile");
+    const delimiterInput = document.getElementById("clubMembersCsvDelimiter");
+    const file = fileInput?.files?.[0] || null;
+    if (!file) {
+      setOnboardingMsg("Bitte zuerst eine CSV-Datei auswählen.", true);
+      return;
+    }
+
+    state.csvImportDraft = {
+      club_id: String(state.onboardingSelectedClubId || "").trim(),
+      file,
+      delimiter: delimiterValue(delimiterInput?.value || ","),
+      has_header: true,
+      contract: {
+        create_job_rpc: "csv_create_import_job",
+        preview_rpc: "csv_get_preview",
+        confirm_rpc: "csv_confirm_import",
+        parse_function: "club-members-csv-parse",
+      },
+    };
+    renderCsvImportDraft();
+    setOnboardingMsg("CSV-Rahmen vorbereitet. Der eigentliche Parse- und Preview-Schritt bleibt serverseitig.", false);
+  }
+
+  async function startCsvImportServerParse() {
+    const fileInput = document.getElementById("clubMembersCsvFile");
+    const delimiterInput = document.getElementById("clubMembersCsvDelimiter");
+    const file = fileInput?.files?.[0] || null;
+    const clubId = String(state.onboardingSelectedClubId || "").trim();
+    if (!clubId) {
+      setOnboardingMsg("Bitte zuerst einen Verein wählen.", true);
+      return;
+    }
+    if (!file) {
+      setOnboardingMsg("Bitte zuerst eine CSV-Datei auswählen.", true);
+      return;
+    }
+
+    prepareCsvImportDraft();
+    const formData = new FormData();
+    formData.set("club_id", clubId);
+    formData.set("delimiter", delimiterValue(delimiterInput?.value || ","));
+    formData.set("has_header", "true");
+    formData.set("file", file, file.name);
+
+    setOnboardingMsg("CSV wird serverseitig vorbereitet ...");
+    const data = await callMultipartFn("club-members-csv-parse", formData);
+    state.csvImportDraft = {
+      ...(state.csvImportDraft || {}),
+      job_id: String(data?.job_id || "").trim(),
+      preview_rows: Array.isArray(data?.preview) ? data.preview : [],
+    };
+    renderCsvImportDraft();
+    renderCsvPreviewRows(
+      Array.isArray(data?.preview) ? data.preview : [],
+      String(data?.note || "Job angelegt. Preview wurde über csv_get_preview geladen."),
+    );
+    setOnboardingMsg("CSV-Job angelegt. Preview stammt aus dem bestehenden Preview-Contract.");
+  }
+
+  async function confirmCsvImportDraft() {
+    const jobId = String(state.csvImportDraft?.job_id || "").trim();
+    if (!jobId) {
+      setOnboardingMsg("Bitte zuerst eine CSV vorbereiten.", true);
+      return;
+    }
+    setOnboardingMsg("CSV-Import wird bestätigt ...");
+    await sb("/rest/v1/rpc/csv_confirm_import", {
+      method: "POST",
+      body: JSON.stringify({ p_job_id: jobId }),
+    }, true);
+    setOnboardingMsg("CSV-Import bestätigt.");
+    await loadOnboardingStatus({ clubId: state.onboardingSelectedClubId });
   }
 
   function applySnapshotToControls(snapshot) {
@@ -870,6 +1082,7 @@
     renderBillingPanel(snapshot, billing);
     applySnapshotToControls(snapshot);
     applySectionLocks(snapshot, billing);
+    renderCsvImportDraft();
   }
 
   async function loadWorkspace() {
@@ -1162,6 +1375,11 @@
       "clubWaterCreateBtn",
       "clubCardCreateBtn",
       "clubMemberCreateBtn",
+      "clubBillingCheckoutBtn",
+      "clubMembersCsvFile",
+      "clubMembersCsvDelimiter",
+      "clubMembersCsvPrepareBtn",
+      "clubMembersCsvConfirmBtn",
     ].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.disabled = true;
@@ -1203,6 +1421,9 @@
     const waterCreateBtn = document.getElementById("clubWaterCreateBtn");
     const cardCreateBtn = document.getElementById("clubCardCreateBtn");
     const memberCreateBtn = document.getElementById("clubMemberCreateBtn");
+    const billingCheckoutBtn = document.getElementById("clubBillingCheckoutBtn");
+    const csvPrepareBtn = document.getElementById("clubMembersCsvPrepareBtn");
+    const csvConfirmBtn = document.getElementById("clubMembersCsvConfirmBtn");
     const clubSelect = document.getElementById("clubOnboardingClubSelect");
     if (!btn && !inviteBtn && !refreshBtn && !saveBtn) return;
 
@@ -1253,6 +1474,23 @@
     if (memberCreateBtn) memberCreateBtn.addEventListener("click", () => createMember().catch((err) => {
       const code = err instanceof Error ? err.message : "unexpected_error";
       setOnboardingMsg(`Mitglied konnte nicht angelegt werden: ${code}`, true);
+    }));
+    if (billingCheckoutBtn) billingCheckoutBtn.addEventListener("click", () => startBillingCheckout().catch((err) => {
+      const code = err instanceof Error ? err.message : "unexpected_error";
+      const msg = code === "no_active_members"
+        ? "Für den Checkout braucht der Verein mindestens ein aktives Mitglied."
+        : code === "checkout_url_missing"
+          ? "Checkout konnte nicht geöffnet werden."
+          : `Checkout konnte nicht gestartet werden: ${code}`;
+      setOnboardingMsg(msg, true);
+    }));
+    if (csvPrepareBtn) csvPrepareBtn.addEventListener("click", () => startCsvImportServerParse().catch((err) => {
+      const code = err instanceof Error ? err.message : "unexpected_error";
+      setOnboardingMsg(`CSV konnte nicht vorbereitet werden: ${code}`, true);
+    }));
+    if (csvConfirmBtn) csvConfirmBtn.addEventListener("click", () => confirmCsvImportDraft().catch((err) => {
+      const code = err instanceof Error ? err.message : "unexpected_error";
+      setOnboardingMsg(`CSV-Import konnte nicht bestätigt werden: ${code}`, true);
     }));
     if (clubSelect) clubSelect.addEventListener("change", () => handleOnboardingClubChange().catch((err) => {
       const code = err instanceof Error ? err.message : "unexpected_error";

@@ -143,7 +143,7 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("PUBLIC_SUPABASE_ANON_KEY") || "",
     );
 
-    const [snapshotRows, billingRes] = await Promise.all([
+    const [snapshotRows, billingRes, workHoursConfig] = await Promise.all([
       // Call snapshot RPC with user JWT — guard passes because user is admin/vorstand.
       fetch(`${supabaseUrl}/rest/v1/rpc/club_onboarding_snapshot`, {
         method: "POST",
@@ -165,6 +165,10 @@ Deno.serve(async (req: Request) => {
         `/rest/v1/club_billing_subscriptions?select=club_id,billing_state,checkout_state,current_period_end,canceled_at,updated_at&club_id=eq.${encodeURIComponent(clubId)}&limit=1`,
         { method: "GET" },
       ).then((r) => r.json()).catch(() => []),
+      sbServiceFetch(`/rest/v1/rpc/get_work_hours_config`, {
+        method: "POST",
+        body: JSON.stringify({ p_club_id: clubId }),
+      }).then((r) => r.json()).catch(() => ({ configured: false, enabled: false })),
     ]);
 
     const snapshot = Array.isArray(snapshotRows) ? (snapshotRows[0] ?? null) : snapshotRows;
@@ -174,7 +178,7 @@ Deno.serve(async (req: Request) => {
 
     return new Response(
       // club_id at root: required by valuePath "record.club_id" in ADM_clubSettings.json
-      JSON.stringify({ ok: true, club_id: clubId, snapshot, billing }),
+      JSON.stringify({ ok: true, club_id: clubId, snapshot, billing, work_hours_config: workHoursConfig }),
       { status: 200, headers: { ...headers, "Content-Type": "application/json" } },
     );
   } catch (err) {

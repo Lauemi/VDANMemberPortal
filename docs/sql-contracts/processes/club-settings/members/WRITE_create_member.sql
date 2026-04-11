@@ -1,0 +1,14 @@
+-- Vereinsverwaltung: Mitglied hinzufügen
+-- Write-Contract
+-- RPC: public.create_member(
+--   p_club_id uuid,
+--   p_first_name text,
+--   p_last_name text,
+--   p_email text,
+--   p_status text default 'active',
+--   p_is_youth boolean default false,
+--   p_membership_kind text default 'standard',
+--   p_birthdate date default null,
+--   p_phone text default null,
+--   p_city text default null
+-- )

@@ -3,6 +3,7 @@
   const SESSION_META_KEY = "vdan_member_session_meta_v1";
   const INVITE_PENDING_KEY = "vdan_invite_claim_pending_v1";
   const CLUB_REQUEST_PENDING_KEY = "vdan_club_request_pending_v1";
+  const CLUB_REGISTER_PENDING_KEY = "vdan_club_register_pending_v1";
   const EXPIRY_SKEW_MS = 30_000;
   const MEMBER_EMAIL_DOMAIN = "members.vdan.local";
   const DEFAULT_MEMBER_HOME = "/app/einstellungen/";
@@ -21,6 +22,50 @@
 
   function nowMs() {
     return Date.now();
+  }
+
+  function currentProjectUrl() {
+    return String(cfg().url || "").trim().replace(/\/+$/, "");
+  }
+
+  function safeBase64UrlDecode(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    try {
+      const normalized = raw.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+      return atob(padded);
+    } catch {
+      return "";
+    }
+  }
+
+  function readJwtPayload(token) {
+    const value = String(token || "").trim();
+    const parts = value.split(".");
+    if (parts.length < 2) return null;
+    const decoded = safeBase64UrlDecode(parts[1]);
+    if (!decoded) return null;
+    try {
+      return JSON.parse(decoded);
+    } catch {
+      return null;
+    }
+  }
+
+  function sessionMatchesCurrentProject(session, meta = null) {
+    const expectedUrl = currentProjectUrl();
+    if (!expectedUrl) return true;
+
+    const metaProjectUrl = String(meta?.projectUrl || "").trim().replace(/\/+$/, "");
+    if (metaProjectUrl) return metaProjectUrl === expectedUrl;
+
+    const token = String(session?.access_token || "").trim();
+    if (!token) return true;
+    const payload = readJwtPayload(token);
+    const issuer = String(payload?.iss || "").trim().replace(/\/+$/, "");
+    if (!issuer) return true;
+    return issuer === `${expectedUrl}/auth/v1`;
   }
 
   function isValidSession(session) {
@@ -48,7 +93,8 @@
 
   function readPendingClubRequest() {
     try {
-      return safeParse(localStorage.getItem(CLUB_REQUEST_PENDING_KEY));
+      return safeParse(localStorage.getItem(CLUB_REQUEST_PENDING_KEY))
+        || safeParse(localStorage.getItem(CLUB_REGISTER_PENDING_KEY));
     } catch {
       return null;
     }
@@ -57,6 +103,7 @@
   function writePendingClubRequest(payload = {}) {
     try {
       localStorage.setItem(CLUB_REQUEST_PENDING_KEY, JSON.stringify(payload || {}));
+      localStorage.setItem(CLUB_REGISTER_PENDING_KEY, JSON.stringify(payload || {}));
     } catch {
       // ignore
     }
@@ -65,6 +112,7 @@
   function clearPendingClubRequest() {
     try {
       localStorage.removeItem(CLUB_REQUEST_PENDING_KEY);
+      localStorage.removeItem(CLUB_REGISTER_PENDING_KEY);
     } catch {
       // ignore
     }
@@ -79,6 +127,7 @@
           }
         : null,
       expiresAt: Number(payload?.expiresAt || 0) || null,
+      projectUrl: currentProjectUrl() || null,
       updated_at: new Date().toISOString(),
     };
   }
@@ -101,17 +150,32 @@
 
   function loadStoredSession() {
     try {
+      const meta = readSessionMeta();
       if (sessionStorageAvailable()) {
         const raw = sessionStorage.getItem(SESSION_KEY);
         const parsed = safeParse(raw);
-        if (parsed) return parsed;
+        if (parsed) {
+          if (!sessionMatchesCurrentProject(parsed, meta)) {
+            clearSession();
+            return null;
+          }
+          return parsed;
+        }
       }
 
       const legacy = readLegacyLocalSession();
       if (legacy && sessionStorageAvailable()) {
+        if (!sessionMatchesCurrentProject(legacy, meta)) {
+          clearSession();
+          return null;
+        }
         sessionStorage.setItem(SESSION_KEY, JSON.stringify(legacy));
         localStorage.setItem(SESSION_META_KEY, JSON.stringify(sessionMetaFrom(legacy)));
         localStorage.removeItem(SESSION_KEY);
+      }
+      if (legacy && !sessionMatchesCurrentProject(legacy, meta)) {
+        clearSession();
+        return null;
       }
       return legacy;
     } catch {
@@ -998,12 +1062,17 @@
 
   function buildClubRequestPayloadFromSource(source = {}) {
     const city = String(source?.city || source?.club_city || source?.club_location || "").trim();
+    const street = String(source?.street || "").trim();
+    const houseNumber = String(source?.house_number || source?.houseNumber || "").trim();
+    const clubAddress = String(source?.club_address || [street, houseNumber].filter(Boolean).join(" ")).trim();
     const payload = {
       club_name: String(source?.club_name || "").trim(),
       club_location: city,
       zip: String(source?.zip || source?.club_zip || "").trim(),
       city,
-      club_address: String(source?.club_address || "").trim(),
+      street,
+      house_number: houseNumber,
+      club_address: clubAddress,
       responsible_name: String(source?.responsible_name || "").trim(),
       responsible_role: String(source?.responsible_role || "").trim(),
       responsible_email: String(source?.responsible_email || "").trim().toLowerCase(),
@@ -1013,9 +1082,12 @@
       registration_mode: String(source?.registration_mode || "").trim(),
       onboarding_path: String(source?.onboarding_path || "").trim(),
     };
-    const looksLikeClubRequest = payload.registration_mode === "club_request_pending" || payload.onboarding_path === "club_request";
+    const looksLikeClubRequest = payload.registration_mode === "club_request_pending"
+      || payload.registration_mode === "club_register_pending"
+      || payload.onboarding_path === "club_request"
+      || payload.onboarding_path === "club_register";
     if (!looksLikeClubRequest) return null;
-    if (!payload.club_name || !payload.city || !payload.zip || !payload.club_address || !payload.responsible_name || !payload.responsible_role || !payload.responsible_email || !payload.club_size || !payload.club_mail_confirmed || !payload.legal_confirmed) {
+    if (!payload.club_name || !payload.city || !payload.zip || !payload.club_address || !payload.responsible_name || !payload.responsible_role || !payload.responsible_email || !payload.club_size || !payload.legal_confirmed) {
       return null;
     }
     return payload;
@@ -1042,6 +1114,8 @@
       club_location: candidate.club_location,
       zip: candidate.zip,
       city: candidate.city,
+      street: candidate.street,
+      house_number: candidate.house_number,
       club_address: candidate.club_address,
       responsible_name: candidate.responsible_name,
       responsible_role: candidate.responsible_role,
@@ -1118,6 +1192,7 @@
     consumeAuthCallbackFromUrl,
     memberNoToEmail,
     ensureProfileBootstrap,
+    submitClubRequestIfNeeded,
     loadLegalAcceptanceState,
     acceptCurrentLegal,
     verifyInviteToken,

@@ -9,6 +9,7 @@ type Action =
   | "get"
   | "save_club_data"
   | "save_cards"
+  | "save_work_hours"
   | "create_water"
   | "update_water"
   | "delete_water"
@@ -54,11 +55,148 @@ function slugify(value: unknown) {
     .replace(/^-+|-+$/g, "");
 }
 
-function toCardRecords(input: unknown) {
-  const names = toList(input);
+type CardGroupKey = "standard" | "youth" | "honorary";
+type CardKind = "annual" | "daily" | "weekly" | "monthly";
+type CardGroupRule = {
+  label: string;
+  is_default: boolean;
+  price: number | null;
+};
+
+type ClubCardRecord = {
+  id: string;
+  title: string;
+  kind: CardKind;
+  is_active: boolean;
+  group_rules: Record<CardGroupKey, CardGroupRule>;
+  standard_default: boolean;
+  youth_default: boolean;
+  honorary_default: boolean;
+  standard_price: number | null;
+  youth_price: number | null;
+  honorary_price: number | null;
+};
+
+type WorkHoursConfig = {
+  configured?: boolean;
+  enabled: boolean;
+  default_hours: number;
+  youth_exempt: boolean;
+  honorary_exempt: boolean;
+  note: string;
+};
+
+type MemberDraftState = {
+  first_name: string;
+  last_name: string;
+  status: string;
+  is_youth: boolean;
+  membership_kind: string;
+  city: string;
+  phone: string;
+  birthdate: string;
+  fishing_card_type: string;
+  auto_assign_skipped: boolean;
+  auto_assign_skip_reason: string | null;
+  auto_assign_hint: string;
+};
+
+type CardDraftState = {
+  title: string;
+  kind: CardKind;
+  is_active: boolean;
+  group_rules: Record<CardGroupKey, CardGroupRule>;
+};
+
+function parseJsonArray(raw: string) {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function validCardKind(input: unknown): CardKind {
+  const kindRaw = txt(input) || "annual";
+  return (["annual", "daily", "weekly", "monthly"].includes(kindRaw) ? kindRaw : "annual") as CardKind;
+}
+
+function parseNullableNumber(value: unknown) {
+  const raw = txt(value);
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function defaultGroupRule(groupKey: CardGroupKey): CardGroupRule {
+  const labels: Record<CardGroupKey, string> = {
+    standard: "Mitglied",
+    youth: "Jugend",
+    honorary: "Ehren",
+  };
+  return {
+    label: labels[groupKey],
+    is_default: true,
+    price: null,
+  };
+}
+
+function normalizeGroupRule(groupKey: CardGroupKey, raw: unknown, fallbackDefault = true): CardGroupRule {
+  const source = raw && typeof raw === "object" && !Array.isArray(raw)
+    ? raw as Record<string, unknown>
+    : {};
+  const fallback = defaultGroupRule(groupKey);
+  return {
+    label: txt(source.label) || fallback.label,
+    is_default: source.is_default === undefined ? fallbackDefault : asBool(source.is_default),
+    price: parseNullableNumber(source.price),
+  };
+}
+
+function buildGroupRules(raw: unknown, fallbackDefault = true): Record<CardGroupKey, CardGroupRule> {
+  const source = raw && typeof raw === "object" && !Array.isArray(raw)
+    ? raw as Record<string, unknown>
+    : {};
+  return {
+    standard: normalizeGroupRule("standard", source.standard, fallbackDefault),
+    youth: normalizeGroupRule("youth", source.youth, fallbackDefault),
+    honorary: normalizeGroupRule("honorary", source.honorary, fallbackDefault),
+  };
+}
+
+function finalizeCardRecord(base: {
+  id: string;
+  title: string;
+  kind: CardKind;
+  is_active: boolean;
+  group_rules: Record<CardGroupKey, CardGroupRule>;
+}): ClubCardRecord {
+  return {
+    ...base,
+    standard_default: base.group_rules.standard.is_default,
+    youth_default: base.group_rules.youth.is_default,
+    honorary_default: base.group_rules.honorary.is_default,
+    standard_price: base.group_rules.standard.price,
+    youth_price: base.group_rules.youth.price,
+    honorary_price: base.group_rules.honorary.price,
+  };
+}
+
+function toNormalizedCardRecords(input: unknown): ClubCardRecord[] {
+  const arr = Array.isArray(input) ? input : [];
   const used = new Set<string>();
-  return names.map((name, index) => {
-    const base = slugify(name) || `card-${index + 1}`;
+  const out: ClubCardRecord[] = [];
+
+  for (let index = 0; index < arr.length; index += 1) {
+    const raw = arr[index];
+    const isObject = raw && typeof raw === "object" && !Array.isArray(raw);
+    const title = txt(isObject ? (raw as Record<string, unknown>).title : raw);
+    if (!title) continue;
+    const objectRaw = isObject ? raw as Record<string, unknown> : {};
+    const kind = validCardKind(objectRaw.kind);
+    const base = txt(objectRaw.id) || slugify(title) || `card-${index + 1}`;
     let id = base;
     let suffix = 2;
     while (used.has(id)) {
@@ -66,8 +204,85 @@ function toCardRecords(input: unknown) {
       suffix += 1;
     }
     used.add(id);
-    return { id, name, is_default: index === 0 };
+
+    const groupRules = isObject && objectRaw.group_rules && typeof objectRaw.group_rules === "object"
+      ? buildGroupRules(objectRaw.group_rules, false)
+      : buildGroupRules({}, true);
+
+    out.push(finalizeCardRecord({
+      id,
+      title,
+      kind,
+      is_active: isObject ? objectRaw.is_active !== false && !String(objectRaw.is_active).toLowerCase().includes("false") : true,
+      group_rules: groupRules,
+    }));
+  }
+
+  return out;
+}
+
+async function normalizeCardsFromSettingValue(raw: string) {
+  const normalized = await callRpc("normalize_club_cards", { raw_value: raw }).catch(() => null);
+  return toNormalizedCardRecords(normalized ?? parseJsonArray(raw));
+}
+
+function defaultWorkHoursConfig(input: unknown): WorkHoursConfig {
+  const raw = input && typeof input === "object" && !Array.isArray(input)
+    ? input as Record<string, unknown>
+    : {};
+  return {
+    configured: asBool(raw.configured),
+    enabled: asBool(raw.enabled),
+    default_hours: Number.isFinite(Number(raw.default_hours)) ? Number(raw.default_hours) : 0,
+    youth_exempt: asBool(raw.youth_exempt),
+    honorary_exempt: asBool(raw.honorary_exempt),
+    note: txt(raw.note),
+  };
+}
+
+function toStoredCardPayload(cards: ClubCardRecord[]) {
+  return cards.map((card) => ({
+    id: card.id,
+    title: card.title,
+    kind: card.kind,
+    is_active: Boolean(card.is_active),
+    group_rules: card.group_rules,
+  }));
+}
+
+function mergeCardsById(currentCards: ClubCardRecord[], incomingCards: ClubCardRecord[]) {
+  const merged = new Map<string, ClubCardRecord>();
+  currentCards.forEach((card) => {
+    merged.set(card.id.toLowerCase(), card);
   });
+  incomingCards.forEach((card) => {
+    merged.set(card.id.toLowerCase(), card);
+  });
+  return [...merged.values()];
+}
+
+function inferMemberGroupKey(body: Record<string, unknown>) {
+  const membershipKind = txt(body.membership_kind).toLowerCase();
+  if (membershipKind === "honorary") return "honorary";
+  if (asBool(body.is_youth)) return "youth";
+  return "standard";
+}
+
+function resolveDefaultCardTitle(cards: ClubCardRecord[], memberGroupKey: string) {
+  const groupKey = (["standard", "youth", "honorary"].includes(memberGroupKey) ? memberGroupKey : "standard") as CardGroupKey;
+  const matches = cards.filter((card) =>
+    card.is_active !== false && card.group_rules?.[groupKey]?.is_default === true
+  );
+  return {
+    title: matches.length === 1 ? matches[0].title : null,
+    matchCount: matches.length,
+    skipped: matches.length !== 1,
+    reason: matches.length === 0
+      ? "no_default_for_group"
+      : matches.length > 1
+        ? "multiple_defaults_for_group"
+        : null,
+  };
 }
 
 function asBool(value: unknown) {
@@ -158,6 +373,30 @@ async function callRpc(fn: string, payload: Record<string, unknown>) {
   return await res.json().catch(() => null);
 }
 
+async function callUserScopedRpc(req: Request, supabaseUrl: string, fn: string, payload: Record<string, unknown>) {
+  const customToken = txt(req.headers.get("x-vdan-access-token"));
+  const bearerHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+  const authHeader = customToken ? `Bearer ${customToken}` : bearerHeader;
+  const anonKey = txt(
+    Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("PUBLIC_SUPABASE_ANON_KEY") || "",
+  );
+  if (!authHeader) throw new Error("unauthorized");
+  const res = await fetch(`${supabaseUrl}/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    headers: {
+      apikey: anonKey || txt(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""),
+      Authorization: authHeader,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload || {}),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`supabase_request_failed_${res.status}:${body}`);
+  }
+  return await res.json().catch(() => null);
+}
+
 async function isAllowed(userId: string, clubId: string) {
   const configuredSuperadminIds = String(
     Deno.env.get("PUBLIC_SUPERADMIN_USER_IDS")
@@ -209,29 +448,63 @@ function parseJsonObject(raw: string) {
   }
 }
 
-async function loadWorkspace(clubId: string) {
-  const [clubName, clubCode, clubMetaRaw, cardsRaw, waterMetaRaw, waterCardAssignmentsRaw, waters, members] = await Promise.all([
+function defaultMemberDraft(input: Partial<MemberDraftState> = {}): MemberDraftState {
+  return {
+    first_name: "",
+    last_name: "",
+    status: "active",
+    is_youth: false,
+    membership_kind: "standard",
+    city: "",
+    phone: "",
+    birthdate: "",
+    fishing_card_type: "-",
+    auto_assign_skipped: false,
+    auto_assign_skip_reason: null,
+    auto_assign_hint: "",
+    ...input,
+  };
+}
+
+function defaultCardsDraft(input: Partial<CardDraftState> = {}): CardDraftState {
+  const groupRules = buildGroupRules(input.group_rules || {}, true);
+  return {
+    title: txt(input.title),
+    kind: validCardKind(input.kind),
+    is_active: input.is_active === undefined ? true : asBool(input.is_active),
+    group_rules: groupRules,
+  };
+}
+
+function autoAssignHint(reason: string | null) {
+  if (reason === "multiple_defaults_for_group") {
+    return "Mehrere Standardkarten vorhanden – bitte Kartenart manuell waehlen.";
+  }
+  if (reason === "no_default_for_group") {
+    return "Keine Standardkarte fuer diese Gruppe vorhanden – bitte Kartenart manuell waehlen.";
+  }
+  return "";
+}
+
+async function loadWorkspace(clubId: string, drafts: { member_draft?: Partial<MemberDraftState> } = {}) {
+  const [clubName, clubCode, clubMetaRaw, cardsRaw, waterMetaRaw, waterCardAssignmentsRaw, workHoursRaw, waters, members] = await Promise.all([
     readSetting(`club_name:${clubId}`),
     findClubCode(clubId),
     readSetting(`club_meta:${clubId}`),
     readSetting(`club_cards:${clubId}`),
     readSetting(`club_water_meta:${clubId}`),
     readSetting(`club_water_card_assignments:${clubId}`),
+    callRpc<Record<string, unknown>>("get_work_hours_config", { p_club_id: clubId }).catch(() => ({ enabled: false })),
     loadJson(`/rest/v1/water_bodies?select=id,name,area_kind,is_active&club_id=eq.${encodeURIComponent(clubId)}&order=name.asc`),
     loadJson(`/rest/v1/club_members?select=member_no,first_name,last_name,status,fishing_card_type&club_id=eq.${encodeURIComponent(clubId)}&order=member_no.asc`),
   ]);
 
   const meta = parseJsonObject(clubMetaRaw);
-  let cardNames: string[] = [];
-  try {
-    cardNames = toList(JSON.parse(cardsRaw || "[]"));
-  } catch {
-    cardNames = [];
-  }
-  const cards = toCardRecords(cardNames);
-  const cardIdByLegacyName = new Map(cards.map((card) => [card.name, card.id]));
+  const cards = await normalizeCardsFromSettingValue(cardsRaw);
+  const cardIdByLegacyName = new Map(cards.map((card) => [card.title, card.id]));
   const waterMeta = parseJsonObject(waterMetaRaw);
   const waterCardAssignments = parseJsonObject(waterCardAssignmentsRaw);
+  const workHoursConfig = defaultWorkHoursConfig(workHoursRaw);
 
   return {
     club_data: {
@@ -261,7 +534,10 @@ async function loadWorkspace(clubId: string) {
       };
     }),
     cards,
+    cards_draft: defaultCardsDraft(),
+    work_hours_config: workHoursConfig,
     members: Array.isArray(members) ? members : [],
+    member_draft: defaultMemberDraft(drafts.member_draft || {}),
   };
 }
 
@@ -311,9 +587,55 @@ Deno.serve(async (req: Request) => {
       await upsertSetting(`club_name:${clubId}`, clubName);
       await upsertSetting(`club_meta:${clubId}`, JSON.stringify(clubMeta));
     } else if (action === "save_cards") {
-      const cards = toList(body.cards);
+      const currentCards = await normalizeCardsFromSettingValue(await readSetting(`club_cards:${clubId}`));
+      const incomingCards = Array.isArray(body.cards)
+        ? toNormalizedCardRecords(body.cards)
+        : toNormalizedCardRecords([{
+            id: txt(body.id) || slugify(body.title) || `card-${currentCards.length + 1}`,
+            title: body.title,
+            kind: body.kind,
+            is_active: body.is_active !== false,
+            group_rules: {
+              standard: {
+                label: "Mitglied",
+                is_default: asBool(body.standard_is_default ?? true),
+                price: parseNullableNumber(body.standard_price),
+              },
+              youth: {
+                label: "Jugend",
+                is_default: asBool(body.youth_is_default ?? true),
+                price: parseNullableNumber(body.youth_price),
+              },
+              honorary: {
+                label: "Ehren",
+                is_default: asBool(body.honorary_is_default ?? true),
+                price: parseNullableNumber(body.honorary_price),
+              },
+            },
+          }]);
+      const cards = mergeCardsById(currentCards, incomingCards);
       if (!cards.length) throw new Error("cards_required");
-      await upsertSetting(`club_cards:${clubId}`, JSON.stringify(cards));
+      await upsertSetting(`club_cards:${clubId}`, JSON.stringify(toStoredCardPayload(cards)));
+      await callUserScopedRpc(req, supabaseUrl, "upsert_club_onboarding_progress", {
+        p_club_id: clubId,
+        p_cards_complete: true,
+      });
+    } else if (action === "save_work_hours") {
+      await upsertSetting(`club_work_hours_config:${clubId}`, JSON.stringify({
+        enabled: asBool(body.enabled),
+        default_hours: Number.isFinite(Number(body.default_hours)) ? Number(body.default_hours) : 0,
+        youth_exempt: asBool(body.youth_exempt),
+        honorary_exempt: asBool(body.honorary_exempt),
+        note: txt(body.note) || null,
+        configured_at: new Date().toISOString(),
+        configured: true,
+      }));
+      await callUserScopedRpc(req, supabaseUrl, "upsert_club_onboarding_progress", {
+        p_club_id: clubId,
+        p_notes: {
+          work_hours_configured: true,
+        },
+      });
     } else if (action === "create_water") {
       const name = txt(body.name);
       if (!name) throw new Error("water_name_required");
@@ -394,19 +716,47 @@ Deno.serve(async (req: Request) => {
     } else if (action === "create_member") {
       const clubCode = await findClubCode(clubId);
       if (!clubCode) throw new Error("club_code_missing");
+      const memberGroupKey = inferMemberGroupKey(body);
+      const cards = await normalizeCardsFromSettingValue(await readSetting(`club_cards:${clubId}`));
+      const autoAssign = resolveDefaultCardTitle(cards, memberGroupKey);
       await callRpc("admin_member_registry_create", {
         p_club_id: clubId,
         p_club_code: clubCode,
         p_first_name: txt(body.first_name),
         p_last_name: txt(body.last_name),
         p_status: txt(body.status) || "active",
-        p_fishing_card_type: txt(body.fishing_card_type) || "-",
+        p_fishing_card_type: autoAssign.title || txt(body.fishing_card_type) || "-",
         p_street: txt(body.street),
         p_zip: txt(body.zip),
         p_city: txt(body.city),
         p_phone: txt(body.phone),
         p_mobile: txt(body.mobile),
         p_birthdate: txt(body.birthdate) || null,
+      });
+      await callUserScopedRpc(req, supabaseUrl, "upsert_club_onboarding_progress", {
+        p_club_id: clubId,
+        p_members_mode: "imported",
+      });
+
+      const workspace = await loadWorkspace(clubId, {
+        member_draft: {
+          first_name: txt(body.first_name),
+          last_name: txt(body.last_name),
+          status: txt(body.status) || "active",
+          is_youth: asBool(body.is_youth),
+          membership_kind: txt(body.membership_kind) || "standard",
+          city: txt(body.city),
+          phone: txt(body.phone),
+          birthdate: txt(body.birthdate),
+          fishing_card_type: autoAssign.title || txt(body.fishing_card_type) || "-",
+          auto_assign_skipped: autoAssign.skipped,
+          auto_assign_skip_reason: autoAssign.reason,
+          auto_assign_hint: autoAssignHint(autoAssign.reason),
+        },
+      });
+      return new Response(JSON.stringify({ ok: true, workspace }), {
+        status: 200,
+        headers: { ...headers, "Content-Type": "application/json" },
       });
     } else if (action !== "get") {
       throw new Error("action_invalid");

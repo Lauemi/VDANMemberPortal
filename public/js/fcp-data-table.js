@@ -152,6 +152,8 @@
     }
 
     const filterPanel = config?.filterPanel instanceof HTMLElement ? config.filterPanel : null;
+    const utilityActions = Array.isArray(config?.utilityActions) ? config.utilityActions : [];
+    const showToolbar = config?.showToolbar === true || utilityActions.length > 0 || config?.showResetButton === true;
     const rowKey = typeof config?.rowKey === "function" ? config.rowKey : (row) => row?.id;
     const gridTemplateColumns = String(config?.gridTemplateColumns || "").trim();
     const initialSortKey = columns.some((column) => column.key === config?.initialState?.sortKey)
@@ -163,6 +165,7 @@
       filters: cloneFilters(columns, config?.initialState?.filters || {}),
       selectedRowId: String(config?.initialState?.selectedRowId || "").trim() || null,
       viewMode: String(config?.viewMode || config?.initialState?.viewMode || "table").trim() || "table",
+      openUtilityMenuKey: "",
     };
 
     let rows = [];
@@ -267,17 +270,65 @@
       filterPanel.dataset.fcpComponentId = String(config?.componentId || "").trim();
     }
 
+    function utilityActionHtml(action) {
+      const key = String(action?.key || "").trim();
+      if (!key) return "";
+      const kind = String(action?.kind || "button").trim();
+      const label = String(action?.label || "").trim();
+      const icon = String(action?.icon || "").trim();
+      const title = String(action?.title || label || "").trim();
+      const classes = kind === "icon" || kind === "menu"
+        ? "icon-utility"
+        : joinClasses("feed-btn", action?.variant === "primary" ? "" : "feed-btn--ghost");
+      if (kind === "menu") {
+        const items = Array.isArray(action?.items) ? action.items : [];
+        return `
+          <div class="data-table-utility-menu ${state.openUtilityMenuKey === key ? "is-open" : ""}" data-fcp-utility-menu="${esc(key)}">
+            <button type="button" class="${classes}" data-fcp-utility-action="${esc(key)}" ${title ? `title="${esc(title)}" aria-label="${esc(title)}"` : ""}>${icon || "⋮"}</button>
+            <div class="data-table-utility-menu__panel" role="menu" aria-label="${esc(title || label || key)}">
+              ${items.map((item) => `
+                <button
+                  type="button"
+                  class="data-table-utility-menu__item"
+                  data-fcp-utility-menu-item="${esc(String(item?.key || "").trim())}"
+                  data-fcp-utility-parent="${esc(key)}"
+                  role="menuitem"
+                >${esc(String(item?.label || item?.key || "").trim())}</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <button type="button" class="${classes}" data-fcp-utility-action="${esc(key)}" ${title ? `title="${esc(title)}" aria-label="${esc(title)}"` : ""}>
+          ${icon ? `<span aria-hidden="true">${esc(icon)}</span>` : ""}
+          ${label ? `<span>${esc(label)}</span>` : ""}
+        </button>
+      `;
+    }
+
     function render() {
       lastRenderedRows = filteredRows();
       root.dataset.fcpComponent = COMPONENT_NAME;
       root.dataset.fcpComponentId = String(config?.componentId || "").trim();
       root.innerHTML = `
-        <div class="${esc(config?.wrapClassName || "")}">
+        <div class="data-table-shell data-table-shell--standard">
+          ${showToolbar ? `
+            <div class="data-table-shell__toolbar">
+              <div class="toolbar-left"></div>
+              <div class="toolbar-right">
+                ${utilityActions.map((action) => utilityActionHtml(action)).join("")}
+                ${config?.showResetButton === true ? `<button type="button" class="icon-utility" data-fcp-reset="true" aria-label="Reset">↺</button>` : ""}
+              </div>
+            </div>
+          ` : ""}
+          <div class="${esc(config?.wrapClassName || "")}">
           <div class="data-table ${esc(config?.tableClassName || "")}" role="table" aria-label="${esc(config?.ariaLabel || COMPONENT_NAME)}">
             <div class="data-table__head ${esc(config?.headClassName || "")}" role="row"${gridTemplateColumns ? ` style="grid-template-columns:${esc(gridTemplateColumns)}"` : ""}>
               ${columns.map(headerHtml).join("")}
             </div>
             ${lastRenderedRows.map(rowHtml).join("")}
+          </div>
           </div>
         </div>
       `;
@@ -339,6 +390,51 @@
     }
 
     root.addEventListener("click", (event) => {
+      const menuItemBtn = event.target?.closest?.("[data-fcp-utility-menu-item]");
+      if (menuItemBtn) {
+        const actionKey = String(menuItemBtn.getAttribute("data-fcp-utility-parent") || "").trim();
+        const itemKey = String(menuItemBtn.getAttribute("data-fcp-utility-menu-item") || "").trim();
+        state.openUtilityMenuKey = "";
+        render();
+        config?.onUtilityAction?.({
+          actionKey,
+          itemKey,
+          event,
+          rows: lastRenderedRows.slice(),
+        });
+        return;
+      }
+
+      const utilityBtn = event.target?.closest?.("[data-fcp-utility-action]");
+      if (utilityBtn) {
+        const actionKey = String(utilityBtn.getAttribute("data-fcp-utility-action") || "").trim();
+        const action = utilityActions.find((entry) => String(entry?.key || "").trim() === actionKey) || null;
+        if (String(action?.kind || "").trim() === "menu") {
+          state.openUtilityMenuKey = state.openUtilityMenuKey === actionKey ? "" : actionKey;
+          render();
+          return;
+        }
+        config?.onUtilityAction?.({
+          actionKey,
+          event,
+          rows: lastRenderedRows.slice(),
+        });
+        return;
+      }
+
+      const resetBtn = event.target?.closest?.("[data-fcp-reset]");
+      if (resetBtn) {
+        state.openUtilityMenuKey = "";
+        resetFilters({ render: true });
+        return;
+      }
+
+      if (state.openUtilityMenuKey && !event.target?.closest?.("[data-fcp-utility-menu]")) {
+        state.openUtilityMenuKey = "";
+        render();
+        return;
+      }
+
       const sortBtn = event.target?.closest?.("[data-fcp-sort-key]");
       if (sortBtn) {
         const key = String(sortBtn.getAttribute("data-fcp-sort-key") || "").trim();

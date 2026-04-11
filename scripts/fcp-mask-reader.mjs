@@ -965,6 +965,42 @@ function normalizeBlockRenderMode(value, componentType) {
 }
 
 function normalizeTableConfig(config, basePath, diagnostics, componentType, columns) {
+  const normalizeUtilityAction = (action, actionPath) => {
+    const normalizedAction = {
+      key: asText(action?.key),
+      kind: asText(action?.kind) || "button",
+      icon: asText(action?.icon),
+      title: asText(action?.title),
+      label: asText(action?.label),
+      variant: asText(action?.variant),
+      items: Array.isArray(action?.items)
+        ? action.items.map((item) => ({
+            key: asText(item?.key),
+            label: asText(item?.label),
+          })).filter((item) => item.key)
+        : [],
+    };
+
+    if (!normalizedAction.key) {
+      diagnostics.warnings.push({
+        code: "table_utility_action_key_missing",
+        path: `${actionPath}.key`,
+        message: "utilityActions-Eintrag ohne key wird ignoriert.",
+      });
+      return null;
+    }
+
+    if (normalizedAction.kind === "menu" && normalizedAction.items.length === 0) {
+      diagnostics.warnings.push({
+        code: "table_utility_menu_empty",
+        path: `${actionPath}.items`,
+        message: "Menu-Utility ohne items ist ungewoehnlich.",
+      });
+    }
+
+    return normalizedAction;
+  };
+
   const normalized = {
     tableId: asText(config?.tableId),
     rowKeyField: asText(config?.rowKeyField),
@@ -976,6 +1012,20 @@ function normalizeTableConfig(config, basePath, diagnostics, componentType, colu
     sortKey: asText(config?.sortKey),
     sortDir: asText(config?.sortDir),
     filterFields: Array.isArray(config?.filterFields) ? config.filterFields : [],
+    showToolbar: config?.showToolbar === true,
+    showResetButton: config?.showResetButton === true,
+    showCreateButton: config?.showCreateButton === true,
+    showSearch: config?.showSearch === true,
+    showViewSwitch: config?.showViewSwitch === true,
+    showFilterButton: config?.showFilterButton === true,
+    utilityHandler: asText(config?.utilityHandler),
+    searchPlaceholder: asText(config?.searchPlaceholder),
+    createLabel: asText(config?.createLabel),
+    utilityActions: Array.isArray(config?.utilityActions)
+      ? config.utilityActions
+          .map((action, index) => normalizeUtilityAction(action, `${basePath}.utilityActions[${index}]`))
+          .filter(Boolean)
+      : [],
   };
 
   if ((componentType === "data-table" || componentType === "inline-data-table") && normalized.sortKey) {

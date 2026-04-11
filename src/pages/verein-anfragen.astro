@@ -28,10 +28,12 @@ function toQuickFlowField(field) {
     value: field.defaultValue ?? "",
     placeholder: field.placeholder || "",
     help: field.helpText || "",
+    description: field.description || "",
     disabled: field.readonly === true,
     valuePath: field.valuePath || "",
     payloadKey: field.payloadKey || field.name,
     readonly: field.readonly === true,
+    required: field.required === true,
     defaultValue: field.defaultValue ?? "",
     autocomplete:
       field.autocomplete ||
@@ -122,6 +124,9 @@ const qfmPageConfig = {
   root: "#clubRequestQfmRoot",
   maskId: resolvedMask.maskId,
   maskFamily: resolvedMask.maskFamily || "QFM",
+  shellVariant: "public-entry",
+  ignorePersistedDraftOnInit: true,
+  ignoreDefaultValuesOnInit: true,
   maskType: resolvedMask.maskType,
   activeSectionId: resolvedMask.sections[0]?.id || null,
   autoLoadOnInit: false,
@@ -141,53 +146,17 @@ const qfmPageConfig = {
 };
 
 const qfmPageConfigJson = JSON.stringify(qfmPageConfig);
-
+const nextRaw = Astro.url.searchParams.get("next") ?? "/verein-anfragen/";
+const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/verein-anfragen/";
+const loginHref = `/login/?next=${encodeURIComponent(nextTarget)}`;
 ---
 
-<Site title={`Verein anfragen • ${APP.name}`} description="QFM-Einstieg fuer den Club-Request-Prozess." robots="noindex" appThemeOverride="fcp_tactical">
+<Site title={`Verein anfragen • ${APP.name}`} description="QFM-Einstieg für den Club-Request-Prozess." robots="noindex" appThemeOverride="fcp_tactical" density="compact">
   <Fragment slot="head">
     <link rel="stylesheet" href="/css/ofmMask.css" />
   </Fragment>
 
-  <section class="ofm-mask-stage">
-    <div id="clubRequestQfmRoot"></div>
-    <section id="clubRequestAuthBridge" class="qfp-card qfp-card--section-header qfp-companion-surface club-request-auth-bridge" hidden>
-      <div class="club-request-auth-bridge__header">
-        <div class="qfp-kicker">Zugang</div>
-        <h3 class="qfp-section-title">Anfrage speichern</h3>
-        <p class="qfp-description">Zum Absenden brauchst du einen Zugang. Dein Formularentwurf bleibt auf diesem Geraet erhalten und kann nach Login oder Registrierung direkt weiterverwendet werden.</p>
-      </div>
-      <div class="club-request-auth-bridge__switch">
-        <button id="clubRequestAuthLoginTab" class="qfp-btn qfp-btn--ghost is-active" type="button">Einloggen</button>
-        <button id="clubRequestAuthSignupTab" class="qfp-btn qfp-btn--ghost" type="button">Zugang anlegen</button>
-      </div>
-      <form id="clubRequestAuthForm" class="qfp-form-grid">
-        <label class="qfp-form-field">
-          <span class="qfp-field-label">E-Mail</span>
-          <input id="clubRequestAuthEmail" name="email" type="email" autocomplete="email" required />
-        </label>
-        <label class="qfp-form-field">
-          <span class="qfp-field-label">Passwort</span>
-          <input id="clubRequestAuthPassword" name="password" type="password" autocomplete="current-password" minlength="8" required />
-        </label>
-        <label id="clubRequestAuthPasswordRepeatField" class="qfp-form-field" hidden>
-          <span class="qfp-field-label">Passwort wiederholen</span>
-          <input id="clubRequestAuthPasswordRepeat" name="password_repeat" type="password" autocomplete="new-password" minlength="8" />
-        </label>
-        <label id="clubRequestAuthTermsField" class="qfp-form-field is-full" hidden>
-          <span class="qfp-toggle-row">
-            <input id="clubRequestAuthTerms" name="accept_terms" type="checkbox" />
-            <span class="qfp-toggle-label">Ich akzeptiere die <a href="/nutzungsbedingungen.html/" target="_blank" rel="noopener noreferrer">Nutzungsbedingungen</a> und die <a href="/datenschutz.html/" target="_blank" rel="noopener noreferrer">Datenschutzerklaerung</a>.</span>
-          </span>
-        </label>
-        <div class="qfp-action-bar">
-          <button id="clubRequestAuthSubmit" class="qfp-btn qfp-btn--primary" type="submit">Einloggen</button>
-        </div>
-      </form>
-      <p id="clubRequestAuthMsg" class="small club-request-auth-bridge__message" aria-live="polite"></p>
-    </section>
-    <p id="clubRequestQfmMsg" class="small ofm-mask-stage__status" aria-live="polite"></p>
-  </section>
+  <div id="clubRequestQfmRoot" data-login-href={loginHref}></div>
 
   <script is:inline src="/js/fcp-mask-process-state.js"></script>
   <script is:inline src="/js/fcp-adm-qfm-contract-hub.js"></script>
@@ -198,32 +167,10 @@ const qfmPageConfigJson = JSON.stringify(qfmPageConfig);
   <script is:inline src="/js/fcp-mask-page-loader.js"></script>
   <script id="clubRequestQfmConfig" type="application/json" set:html={qfmPageConfigJson}></script>
   <script is:inline>
-    const pageMsgEl = document.getElementById("clubRequestQfmMsg");
-    const authBridgeEl = document.getElementById("clubRequestAuthBridge");
-    const authForm = document.getElementById("clubRequestAuthForm");
-    const authMsgEl = document.getElementById("clubRequestAuthMsg");
-    const loginTabEl = document.getElementById("clubRequestAuthLoginTab");
-    const signupTabEl = document.getElementById("clubRequestAuthSignupTab");
-    const passwordRepeatFieldEl = document.getElementById("clubRequestAuthPasswordRepeatField");
-    const passwordRepeatInputEl = document.getElementById("clubRequestAuthPasswordRepeat");
-    const termsFieldEl = document.getElementById("clubRequestAuthTermsField");
-    const termsInputEl = document.getElementById("clubRequestAuthTerms");
-    const authSubmitEl = document.getElementById("clubRequestAuthSubmit");
-
-    let authMode = "login";
-    let pendingSubmitPayload = null;
-
-    function setPageMessage(text) {
-      if (pageMsgEl) pageMsgEl.textContent = text;
-    }
-
-    function setAuthMessage(text) {
-      if (authMsgEl) authMsgEl.textContent = text;
-    }
-
-    function getCurrentPathWithSearch() {
-      return `${window.location.pathname}${window.location.search}`;
-    }
+    const rootEl = document.getElementById("clubRequestQfmRoot");
+    const CLUB_REQUEST_DRAFT_KEY = "vdan_club_request_pending_v1";
+    const CLUB_REQUEST_RESUME_KEY = "vdan_club_request_resume_v1";
+    const loginHref = String(rootEl?.dataset?.loginHref || "/login/?next=%2Fverein-anfragen%2F");
 
     function resolveRouteTemplate(template, result) {
       const rawTemplate = String(template || "").trim();
@@ -249,184 +196,79 @@ const qfmPageConfigJson = JSON.stringify(qfmPageConfig);
 
     function getDraftFromStorage() {
       try {
-        const raw = localStorage.getItem("vdan_club_request_pending_v1");
+        const raw = localStorage.getItem(CLUB_REQUEST_DRAFT_KEY);
         return raw ? JSON.parse(raw) : null;
       } catch {
         return null;
       }
     }
 
-    function setAuthMode(mode) {
-      authMode = mode === "signup" ? "signup" : "login";
-      const isSignup = authMode === "signup";
-      loginTabEl?.classList.toggle("is-active", !isSignup);
-      signupTabEl?.classList.toggle("is-active", isSignup);
-      passwordRepeatFieldEl.hidden = !isSignup;
-      termsFieldEl.hidden = !isSignup;
-      if (passwordRepeatInputEl) {
-        passwordRepeatInputEl.required = isSignup;
-      }
-      if (termsInputEl) {
-        termsInputEl.required = isSignup;
-      }
-      if (authSubmitEl) {
-        authSubmitEl.textContent = isSignup ? "Zugang anlegen" : "Einloggen";
-      }
-      const passwordInput = document.getElementById("clubRequestAuthPassword");
-      if (passwordInput) {
-        passwordInput.setAttribute("autocomplete", isSignup ? "new-password" : "current-password");
+    function hasResumeIntent() {
+      try {
+        return Boolean(sessionStorage.getItem(CLUB_REQUEST_RESUME_KEY));
+      } catch {
+        return false;
       }
     }
 
-    function showAuthBridge(message = "") {
-      if (!authBridgeEl) return;
-      authBridgeEl.hidden = false;
-      if (message) setAuthMessage(message);
-      authBridgeEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    function markResumeIntent() {
+      try {
+        sessionStorage.setItem(CLUB_REQUEST_RESUME_KEY, String(Date.now()));
+      } catch {}
     }
 
-    function updateAuthBridgeVisibility() {
-      const hasSession = Boolean(window.VDAN_AUTH?.loadSession?.()?.access_token);
-      if (authBridgeEl) {
-        authBridgeEl.hidden = hasSession;
-      }
-      if (hasSession) {
-        setAuthMessage("");
-      }
+    function clearResumeIntent() {
+      try {
+        sessionStorage.removeItem(CLUB_REQUEST_RESUME_KEY);
+      } catch {}
     }
 
-    async function resumeClubRequestSubmit(payload = null) {
-      const draft = payload || pendingSubmitPayload || getDraftFromStorage();
+    function sanitizePublicDraft() {
+      if (hasResumeIntent()) return;
+      try {
+        localStorage.removeItem(CLUB_REQUEST_DRAFT_KEY);
+      } catch {}
+    }
+
+    async function resumeClubRequestSubmit() {
+      const draft = getDraftFromStorage();
       if (!draft || !window.__QFM_CLUB_REQUEST_PAGE__) return;
-      pendingSubmitPayload = draft;
       await window.__QFM_CLUB_REQUEST_PAGE__.savePanel("club_request_entry", "request_form", draft);
-      pendingSubmitPayload = null;
     }
-
-    loginTabEl?.addEventListener("click", () => setAuthMode("login"));
-    signupTabEl?.addEventListener("click", () => setAuthMode("signup"));
 
     window.addEventListener("fcp-mask:auth-required", (event) => {
       const detail = event?.detail || {};
-      pendingSubmitPayload = detail.payload || getDraftFromStorage();
-      setPageMessage(detail.message || "Zum Absenden bitte zuerst einloggen oder einen Zugang anlegen.");
-      showAuthBridge(detail.message || "Zum Absenden bitte zuerst einloggen oder einen Zugang anlegen.");
-      setAuthMode("signup");
-    });
-
-    document.addEventListener("vdan:session", () => {
-      updateAuthBridgeVisibility();
+      const payload = detail.payload || getDraftFromStorage();
+      markResumeIntent();
+      if (payload) {
+        try {
+          localStorage.setItem(CLUB_REQUEST_DRAFT_KEY, JSON.stringify(payload));
+        } catch {}
+      }
+      window.location.assign(loginHref);
     });
 
     window.addEventListener("fcp-mask:save-success", (event) => {
       const detail = event?.detail || {};
       if (detail?.panelId !== "request_form") return;
+      clearResumeIntent();
       navigateAfterSubmit(detail);
     });
 
-    authForm?.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      if (!window.VDAN_AUTH) {
-        setAuthMessage("Auth-Runtime ist nicht geladen.");
-        return;
-      }
-
-      const email = String(document.getElementById("clubRequestAuthEmail")?.value || "").trim().toLowerCase();
-      const password = String(document.getElementById("clubRequestAuthPassword")?.value || "");
-      const passwordRepeat = String(passwordRepeatInputEl?.value || "");
-      const acceptedTerms = Boolean(termsInputEl?.checked);
-      const draft = pendingSubmitPayload || getDraftFromStorage();
-
-      if (!email || !email.includes("@")) {
-        setAuthMessage("Bitte eine gueltige E-Mail eingeben.");
-        return;
-      }
-      if (password.length < 8) {
-        setAuthMessage("Das Passwort muss mindestens 8 Zeichen lang sein.");
-        return;
-      }
-
-      try {
-        setAuthMessage(authMode === "signup" ? "Zugang wird angelegt..." : "Login laeuft...");
-        if (authMode === "signup") {
-          if (password !== passwordRepeat) {
-            throw new Error("Die Passwoerter stimmen nicht ueberein.");
-          }
-          if (!acceptedTerms) {
-            throw new Error("Bitte Nutzungsbedingungen und Datenschutzerklaerung bestaetigen.");
-          }
-          const signUpMetadata = {
-            ...(draft || {}),
-            registration_mode: "club_request_pending",
-            onboarding_path: "club_request",
-            billing_status: "billing_pending",
-          };
-          const result = await window.VDAN_AUTH.signUpWithPassword(email, password, signUpMetadata);
-          const accessToken = String(result?.access_token || "").trim();
-          if (accessToken) {
-            await window.VDAN_AUTH.acceptCurrentLegal(accessToken).catch(() => null);
-            updateAuthBridgeVisibility();
-            setAuthMessage("Zugang erstellt. Deine Vereinsanfrage wird jetzt gespeichert...");
-            await resumeClubRequestSubmit(draft);
-            return;
-          }
-          setAuthMessage("Registrierung gespeichert. Bitte bestaetige zuerst deine E-Mail und kehre danach auf diese Seite zurueck.");
-          return;
-        }
-
-        const session = await window.VDAN_AUTH.loginWithPassword(email, password);
-        if (!session?.access_token) {
-          throw new Error("Login fehlgeschlagen.");
-        }
-        updateAuthBridgeVisibility();
-        setAuthMessage("Login erfolgreich. Deine Vereinsanfrage wird jetzt gespeichert...");
-        await resumeClubRequestSubmit(draft);
-      } catch (error) {
-        setAuthMessage(error instanceof Error ? error.message : String(error));
-      }
-    });
-
-    setAuthMode("login");
+    sanitizePublicDraft();
 
     window.FcpMaskPageLoader.boot({
       configScriptId: "clubRequestQfmConfig",
       patternGlobal: "__QFM_CLUB_REQUEST_PAGE__",
-      onMessage: setPageMessage,
+      onMessage: () => {},
       onReady: async () => {
-        updateAuthBridgeVisibility();
+        if (window.VDAN_AUTH?.loadSession?.()?.access_token && hasResumeIntent()) {
+          await resumeClubRequestSubmit().catch(() => {});
+        }
       },
     }).catch((error) => {
-      setPageMessage(error instanceof Error ? error.message : String(error));
+      console.error(error instanceof Error ? error.message : String(error));
     });
   </script>
 
-  <style>
-    .ofm-mask-stage {
-      display: grid;
-      gap: 10px;
-    }
-    #clubRequestQfmRoot {
-      min-height: 240px;
-    }
-    .ofm-mask-stage__status {
-      margin: 0;
-    }
-    .club-request-auth-bridge {
-      display: grid;
-      gap: 14px;
-    }
-    .club-request-auth-bridge__switch {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .club-request-auth-bridge__switch .qfp-btn.is-active {
-      border-color: rgba(245, 158, 11, 0.48);
-      background: linear-gradient(180deg, rgba(245, 158, 11, 0.24), rgba(245, 158, 11, 0.12));
-      color: var(--text);
-    }
-    .club-request-auth-bridge__message {
-      margin: 0;
-    }
-  </style>
 </Site>

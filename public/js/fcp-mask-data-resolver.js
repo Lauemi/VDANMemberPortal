@@ -18,18 +18,37 @@
     return window.VDAN_AUTH?.loadSession?.() || null;
   }
 
+  async function isUsableAccessToken(token) {
+    const value = String(token || "").trim();
+    if (!value) return false;
+    const { url, key } = cfg();
+    if (!url || !key) return false;
+    const res = await fetch(`${url}/auth/v1/user`, {
+      method: "GET",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${value}`,
+      },
+    }).catch(() => null);
+    return Boolean(res?.ok);
+  }
+
   async function ensureAccessToken({ forceRefresh = false } = {}) {
     const auth = window.VDAN_AUTH || {};
     if (forceRefresh && auth?.refreshSession) {
       const refreshed = await auth.refreshSession().catch(() => null);
       const refreshToken = String(refreshed?.access_token || "").trim();
-      if (refreshToken) return refreshToken;
+      if (refreshToken && await isUsableAccessToken(refreshToken)) return refreshToken;
+      return "";
     }
     const currentToken = String(session()?.access_token || "").trim();
-    if (currentToken) return currentToken;
+    if (currentToken && await isUsableAccessToken(currentToken)) return currentToken;
     if (auth?.refreshSession) {
       const refreshed = await auth.refreshSession().catch(() => null);
-      return String(refreshed?.access_token || session()?.access_token || "").trim();
+      const refreshedToken = String(refreshed?.access_token || "").trim();
+      if (refreshedToken && await isUsableAccessToken(refreshedToken)) return refreshedToken;
+      const latestToken = String(session()?.access_token || "").trim();
+      if (latestToken && await isUsableAccessToken(latestToken)) return latestToken;
     }
     return "";
   }
@@ -154,6 +173,7 @@
     }
     const valueFromPath = getByPath(model, field.valuePath);
     if (valueFromPath !== undefined && valueFromPath !== null) return valueFromPath;
+    if (model?.__ignoreDefaultValues === true) return "";
     return field.defaultValue ?? "";
   }
 
@@ -301,17 +321,25 @@
     return [...new Set(toArray(values).map((value) => String(value || "").trim()).filter(Boolean))];
   }
 
+  function collectFieldDefsFromPanel(panel, resolverMeta = {}) {
+    return toArray(
+      panel?.content?.fields?.length
+        ? panel.content.fields
+        : resolverMeta?.fieldDefs?.length
+          ? resolverMeta.fieldDefs
+          : panel?.meta?.form?.fieldDefs
+    );
+  }
+
   function collectPanelFields(panel, resolverMeta) {
     return uniqueStrings([
-      ...toArray(resolverMeta?.fieldDefs).map((field) => field?.name),
-      ...toArray(panel?.content?.fields).map((field) => field?.name),
+      ...collectFieldDefsFromPanel(panel, resolverMeta).map((field) => field?.name),
     ]);
   }
 
   function collectPanelValuePaths(panel, resolverMeta) {
     return uniqueStrings([
-      ...toArray(resolverMeta?.fieldDefs).map((field) => field?.valuePath),
-      ...toArray(panel?.content?.fields).map((field) => field?.valuePath),
+      ...collectFieldDefsFromPanel(panel, resolverMeta).map((field) => field?.valuePath),
     ]);
   }
 
@@ -323,6 +351,12 @@
   }
 
   function collectActualKeysForRecord(panel, resolverMeta, model) {
+    const fieldDefs = collectFieldDefsFromPanel(panel, resolverMeta);
+    const resolvedFromFields = fieldDefs
+      .filter((field) => hasByPath(model, field?.valuePath))
+      .map((field) => String(field?.payloadKey || field?.name || field?.id || "").trim())
+      .filter(Boolean);
+    if (resolvedFromFields.length) return uniqueStrings(resolvedFromFields);
     const valuePaths = collectPanelValuePaths(panel, resolverMeta);
     const resolvedFromPaths = valuePaths
       .filter((path) => hasByPath(model, path))
@@ -484,7 +518,7 @@
     const expectedColumns = uniqueStrings([
       ...candidates.flatMap((entry) => toArray(entry?.expectedColumns)),
       ...toArray(contract?.expectedColumns),
-    ]);
+    ]).filter((key) => String(key || "").trim() !== "actions");
     return {
       sqlFile: explicitFile || String(contract?.sqlFile || "").trim() || null,
       expectedColumns,
@@ -583,7 +617,7 @@
   }
 
   function buildPanelFieldContract(panel, resolverMeta = {}) {
-    const fieldDefs = toArray(panel?.content?.fields?.length ? panel.content.fields : resolverMeta?.fieldDefs);
+    const fieldDefs = collectFieldDefsFromPanel(panel, resolverMeta);
     return fieldDefs.map((field) => ({
       fieldName: String(field?.name || field?.id || "").trim() || null,
       valuePath: String(field?.valuePath || "").trim() || null,
@@ -796,6 +830,7 @@
       writeExpected: debug?.writeExpected === true,
       suspectedIssue: debug?.suspectedIssue || null,
       requiredSqlContract: sanitizeForExport(debug?.requiredSqlContract),
+      renderer: sanitizeForExport(debug?.renderer),
       write,
       chain: buildKescherChain(debug),
       updatedAt: new Date().toISOString(),
@@ -919,6 +954,7 @@
           additionalAvailableFields: trace.additionalAvailableFields,
           availableButUnusedColumns: trace.availableButUnusedColumns,
         },
+        renderer: sanitizeForExport(trace.renderer),
         actions: sanitizeForExport(trace.actions),
         fields: sanitizeForExport(trace.fields),
         write: {
@@ -1015,6 +1051,7 @@
     if (!window.__FCP_KESCHER_STORE__) {
       window.__FCP_KESCHER_STORE__ = {
         traces: new Map(),
+        rendererSnapshots: new Map(),
         selectedKey: "",
         selectedMaskId: "",
         open: false,
@@ -1148,6 +1185,15 @@
                 <div class="fcp-kescher__value">rowsPathExists: ${escapeHtml(selected.resolvedRowsPathExists == null ? "-" : String(selected.resolvedRowsPathExists))}</div>
               </div>
               <div class="fcp-kescher__card fcp-kescher__card--full">
+                <div class="fcp-kescher__label">Renderer / DOM</div>
+                <div class="fcp-kescher__value">componentType: ${escapeHtml(selected.renderer?.componentType || selected.contract?.componentType || "-")}</div>
+                <div class="fcp-kescher__value">factory: ${escapeHtml(selected.renderer?.factoryName || "-")}</div>
+                <div class="fcp-kescher__value">rootClass: ${escapeHtml(selected.renderer?.rootClassName || "-")}</div>
+                <div class="fcp-kescher__value">expectedUi: toolbar=${escapeHtml(String(Boolean(selected.renderer?.expectedUi?.showToolbar)))} reset=${escapeHtml(String(Boolean(selected.renderer?.expectedUi?.showResetButton)))} utilityKeys=${escapeHtml(joinValues(selected.renderer?.expectedUi?.utilityActionKeys))}</div>
+                <div class="fcp-kescher__value">domFlags: toolbar=${escapeHtml(String(Boolean(selected.renderer?.dom?.hasToolbar)))} search=${escapeHtml(String(Boolean(selected.renderer?.dom?.hasSearch)))} create=${escapeHtml(String(Boolean(selected.renderer?.dom?.hasCreateButton)))} reset=${escapeHtml(String(Boolean(selected.renderer?.dom?.hasResetButton)))} utility=${escapeHtml(String(Boolean(selected.renderer?.dom?.hasUtilityButton)))} menu=${escapeHtml(String(Boolean(selected.renderer?.dom?.hasUtilityMenu)))} viewToggle=${escapeHtml(String(Boolean(selected.renderer?.dom?.hasViewToggle)))} filterPanel=${escapeHtml(String(Boolean(selected.renderer?.dom?.hasFilterPanel)))}</div>
+                <div class="fcp-kescher__value">domSnippet: ${escapeHtml(selected.renderer?.dom?.htmlSnippet || "-")}</div>
+              </div>
+              <div class="fcp-kescher__card fcp-kescher__card--full">
                 <div class="fcp-kescher__label">Benötigter SQL-Vertrag</div>
                 ${selected.requiredSqlContract ? `
                   <div class="fcp-kescher__value">expectedColumns: ${escapeHtml(joinValues(selected.requiredSqlContract.expectedColumns))}</div>
@@ -1276,6 +1322,7 @@
       clear() {
         const store = getKescherStore();
         store.traces.clear();
+        store.rendererSnapshots.clear();
         store.selectedKey = "";
         renderKescher();
       },
@@ -1301,11 +1348,22 @@
     return window.FcpKescher;
   }
 
+  if (typeof window !== "undefined" && !window.__FCP_KESCHER_RENDERER_LISTENER__) {
+    window.__FCP_KESCHER_RENDERER_LISTENER__ = true;
+    window.addEventListener("fcp-mask:renderer-mounted", (event) => {
+      upsertKescherRendererSnapshot(event?.detail || null);
+    });
+  }
+
   function upsertKescherTrace(debug) {
     if (!debug || !isKescherEnabled()) return;
     const api = ensureKescherApi();
     const store = getKescherStore();
     const trace = buildKescherTrace(debug);
+    const rendererSnapshot = store.rendererSnapshots.get(trace.key);
+    if (rendererSnapshot) {
+      trace.renderer = sanitizeForExport(rendererSnapshot);
+    }
     store.traces.set(trace.key, trace);
     if (!store.selectedKey) store.selectedKey = trace.key;
     if (!store.selectedMaskId) store.selectedMaskId = trace.maskId;
@@ -1315,6 +1373,30 @@
       window.dispatchEvent(new CustomEvent("fcp-kescher:update", { detail: trace }));
     } catch {
       // ignore
+    }
+  }
+
+  function upsertKescherRendererSnapshot(snapshot) {
+    if (!snapshot) return;
+    const key = [
+      String(snapshot.maskId || "").trim() || "mask",
+      String(snapshot.sectionId || "").trim() || "section",
+      String(snapshot.panelId || "").trim() || "panel",
+    ].join("::");
+    const store = getKescherStore();
+    const sanitized = sanitizeForExport(snapshot);
+    store.rendererSnapshots.set(key, sanitized);
+    const trace = store.traces.get(key);
+    if (trace) {
+      trace.renderer = sanitized;
+      store.traces.set(key, trace);
+      if (isKescherEnabled()) {
+        try {
+          ensureKescherApi().render();
+        } catch {
+          // ignore
+        }
+      }
     }
   }
 
@@ -1332,7 +1414,8 @@
       sectionId: panel?.__fcpSectionId || "",
     });
     const sqlContractMeta = resolveSqlContractMeta(panel, contract);
-    const expectedColumns = uniqueStrings([...sqlContractMeta.expectedColumns, ...toArray(contract.expectedColumns)]);
+    const expectedColumns = uniqueStrings([...sqlContractMeta.expectedColumns, ...toArray(contract.expectedColumns)])
+      .filter((key) => String(key || "").trim() !== "actions");
     const rowsPath = String(contract.rowsPath || "").trim() || null;
     const valuePaths = toArray(contract.valuePaths);
     const runtimeSnapshot = resolveRuntimeReadSnapshot({
@@ -1593,6 +1676,15 @@
           rows: [],
         });
       }
+      if (target === "route_contract_snapshot") {
+        return normalizeBindingResult(binding, {
+          record: {
+            resume_route: "/registrieren",
+            adm_entry_route: "/app/mitgliederverwaltung",
+          },
+          rows: [],
+        });
+      }
       if (target === "check_update") {
         return normalizeBindingResult(binding, { record: { action: "check_update", ok: true }, rows: [] });
       }
@@ -1617,6 +1709,13 @@
 
       clubContextPromise = (async () => {
         await waitForAuthReady();
+        let requestedClubId = "";
+        try {
+          const params = new URLSearchParams(window.location.search || "");
+          requestedClubId = String(params.get("club_id") || "").trim();
+        } catch {
+          requestedClubId = "";
+        }
         const currentSession = session();
         const userId = String(currentSession?.user?.id || "").trim();
         const baseContext = {
@@ -1666,7 +1765,7 @@
           if (clubId && MANAGER_ROLES.has(roleKey)) managedClubIds.add(clubId);
         });
 
-        let clubId = String(profile?.club_id || "").trim();
+        let clubId = requestedClubId || String(profile?.club_id || "").trim();
         if (!clubId && managedClubIds.size === 1) {
           clubId = [...managedClubIds][0] || "";
         }
@@ -1826,7 +1925,7 @@
         emitPanelDebug(readDebug);
         return {
           content: panel.renderMode === "form"
-            ? { fields: hydrateFormContent(resolverMeta.fieldDefs, { record: {} }).fields, rows: [], actions: [], blocks: [] }
+            ? { fields: hydrateFormContent(collectFieldDefsFromPanel(panel, resolverMeta), { record: {} }).fields, rows: [], actions: [], blocks: [] }
             : panel.renderMode === "readonly"
               ? { fields: [], rows: [{ label: "Status", value: missingClubContextMessage, span: "full" }], actions: [], blocks: [] }
               : {},
@@ -1845,7 +1944,17 @@
       );
       const processLoad = processState ? processState.resolveLoad(panel, model) || {} : {};
       const sessionUser = session()?.user || null;
-      const pendingClubRequest = readLocalJson("vdan_club_request_pending_v1");
+      const isPublicEntry = String(panel?.__fcpShellVariant || panelContext?.shellVariant || "").trim() === "public-entry";
+      const hasClubRequestResume = (() => {
+        try {
+          return Boolean(sessionStorage.getItem("vdan_club_request_resume_v1"));
+        } catch {
+          return false;
+        }
+      })();
+      const ignorePersistedDraft = panel?.__fcpIgnorePersistedDraftOnInit === true && isPublicEntry && !hasClubRequestResume;
+      const ignoreDefaultValues = panel?.__fcpIgnoreDefaultValuesOnInit === true && isPublicEntry && !hasClubRequestResume;
+      const pendingClubRequest = ignorePersistedDraft ? null : readLocalJson("vdan_club_request_pending_v1");
       const mergedRecord = mergeRecordSources(
         clubContext,
         pendingClubRequest,
@@ -1854,12 +1963,12 @@
         model?.record
       );
       const resolvedModel = processLoad.model
-        ? { ...model, ...processLoad.model, record: mergedRecord }
-        : { ...model, record: mergedRecord };
+        ? { ...model, ...processLoad.model, record: mergedRecord, __ignoreDefaultValues: ignoreDefaultValues }
+        : { ...model, record: mergedRecord, __ignoreDefaultValues: ignoreDefaultValues };
       const resolvedState = processLoad.state;
 
       if (panel.renderMode === "form") {
-        const hydratedContent = hydrateFormContent(resolverMeta.fieldDefs, resolvedModel);
+        const hydratedContent = hydrateFormContent(collectFieldDefsFromPanel(panel, resolverMeta), resolvedModel);
         const readDebug = buildReadDebugSnapshot({
           panel,
           resolverMeta,
@@ -1889,7 +1998,7 @@
         panel.__fcpReadDebug = readDebug;
         emitPanelDebug(readDebug);
         return {
-          content: hydrateReadonlyContent(resolverMeta.fieldDefs, resolvedModel),
+          content: hydrateReadonlyContent(collectFieldDefsFromPanel(panel, resolverMeta), resolvedModel),
           state: resolvedState,
         };
       }
@@ -1960,6 +2069,9 @@
 
     function enhanceConfig(config) {
       const rootMaskId = String(config?.maskId || "").trim();
+      const rootShellVariant = String(config?.shellVariant || "").trim();
+      const rootIgnorePersistedDraft = config?.ignorePersistedDraftOnInit === true;
+      const rootIgnoreDefaultValues = config?.ignoreDefaultValuesOnInit === true;
       const next = {
         ...config,
         sections: toArray(config.sections).map((section) => ({
@@ -1969,10 +2081,14 @@
               ...panel,
               __fcpMaskId: rootMaskId,
               __fcpSectionId: section.id,
+              __fcpShellVariant: rootShellVariant,
+              __fcpIgnorePersistedDraftOnInit: rootIgnorePersistedDraft,
+              __fcpIgnoreDefaultValuesOnInit: rootIgnoreDefaultValues,
               __fcpSqlContractMeta: structuredCloneSafe(panel?.meta?.sqlContract || null),
               load: async () => loadPanelContent(nextPanel, {
                 maskId: rootMaskId,
                 sectionId: section.id,
+                shellVariant: rootShellVariant,
               }),
             };
             attachActionHandlers(section, nextPanel);

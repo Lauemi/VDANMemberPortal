@@ -84,6 +84,20 @@ function firstListValue(input: unknown) {
   return list.length ? list[0] : "";
 }
 
+function toCardObjects(input: unknown) {
+  return toList(input).map((title) => ({
+    id: txt(title).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "jahreskarte",
+    title,
+    kind: "annual",
+    is_active: true,
+    group_rules: {
+      standard: { label: "Standard", is_default: true, price: null },
+      youth: { label: "Jugend", is_default: true, price: null },
+      honorary: { label: "Ehrenmitglied", is_default: true, price: null },
+    },
+  }));
+}
+
 function objectOrEmpty(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -797,7 +811,10 @@ Deno.serve(async (req: Request) => {
     await upsertSetting(`club_meta:${clubId}`, JSON.stringify(meta));
     await upsertSetting(`club_name:${clubId}`, clubName);
     await upsertSetting(`club_code_map:${clubCode}`, clubId);
-    await upsertSetting(`club_cards:${clubId}`, JSON.stringify(cards));
+    await callRpc("admin_upsert_club_cards", {
+      p_club_id: clubId,
+      p_cards: toCardObjects(cards),
+    });
     const inviteRecord: InviteRecord = {
       version: 1,
       status: "active",

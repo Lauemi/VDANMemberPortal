@@ -1463,7 +1463,7 @@
     return cards
       .map((card) => ({
         value: String(card?.id || "").trim(),
-        label: String(card?.name || "").trim(),
+        label: String(card?.title || card?.name || "").trim(),
       }))
       .filter((card) => card.value && card.label);
   }

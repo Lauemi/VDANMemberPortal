@@ -400,6 +400,7 @@
           attrs: {
             "data-mask-family": String(this.config.maskFamily || "QFM"),
             "data-mask-type": String(this.config.maskType || "sectioned"),
+            "data-qfp-variant": this.config.shellVariant ? String(this.config.shellVariant) : undefined,
           },
         });
         this.refs.header = createElement("div", { className: "qfp-mask-header" });
@@ -858,9 +859,30 @@
       return form;
     }
 
-    fields.forEach((field) => {
+    const grouped = groupFormFields(fields);
+    grouped.forEach((group, groupIndex) => {
+      const visibleFields = group.fields.filter((field) => field?.hidden !== true);
+      if (!visibleFields.length) return;
+      const groupWrap = createElement("section", { className: "qfp-form-section" });
+      const groupTitle = resolveGroupTitle(group.key);
+      const groupHint = resolveGroupHint(group.key);
+      const head = createElement("div", { className: "qfp-form-section__head" });
+      head.append(
+        createElement("span", { className: "qfp-form-section__index", text: String(groupIndex + 1) }),
+        createElement("div", {
+          className: "qfp-form-section__title",
+          text: groupTitle,
+        })
+      );
+      if (groupHint) {
+        head.append(createElement("div", { className: "qfp-form-section__hint", text: groupHint }));
+      }
+      groupWrap.append(head);
+
+      const groupGrid = createElement("div", { className: "qfp-form-section__grid" });
+      visibleFields.forEach((field) => {
       const fieldWrap = createElement("label", {
-        className: `qfp-form-field${field.span === "full" ? " is-full" : ""}`,
+        className: `qfp-form-field${field.span === "full" ? " is-full" : ""}${field.readonly ? " is-readonly" : ""}`,
       });
       fieldWrap.append(createElement("span", { className: "qfp-field-label", text: field.label || field.name || "-" }));
 
@@ -900,19 +922,36 @@
           },
         });
       } else if (field.type === "toggle") {
-        const toggleWrap = createElement("div", { className: "qfp-toggle-row" });
-        control = createElement("input", {
-          attrs: {
-            type: "checkbox",
-            name: field.name,
-            checked: field.value ? "checked" : undefined,
-            disabled: disabled ? "disabled" : undefined,
-            required: field.required ? "required" : undefined,
-          },
-        });
-        toggleWrap.append(control, createElement("span", { className: "qfp-toggle-label", text: field.description || "" }));
+        const statusOnly = Boolean(field.readonly || field.disabled);
+        const toggleWrap = createElement("div", { className: statusOnly ? "qfp-status-field" : "qfp-toggle-row" });
+        if (statusOnly) {
+          toggleWrap.append(
+            createElement("span", {
+              className: `qfp-status-field__badge${field.value ? " is-positive" : " is-pending"}`,
+              text: field.value ? "Bestätigt" : "Noch offen",
+            }),
+            createElement("span", {
+              className: "qfp-status-field__copy",
+              text: field.description || field.help || "",
+            })
+          );
+        } else {
+          control = createElement("input", {
+            attrs: {
+              type: "checkbox",
+              name: field.name,
+              checked: field.value ? "checked" : undefined,
+              disabled: disabled ? "disabled" : undefined,
+              required: field.required ? "required" : undefined,
+            },
+          });
+          toggleWrap.append(control, createElement("span", { className: "qfp-toggle-label", text: field.description || "" }));
+        }
         fieldWrap.append(toggleWrap);
-        form.append(fieldWrap);
+        if (field.help && !statusOnly) {
+          fieldWrap.append(createElement("div", { className: "qfp-field-help", text: field.help }));
+        }
+        groupGrid.append(fieldWrap);
         return;
       } else {
         control = createElement("input", {
@@ -933,8 +972,15 @@
       if (field.help) {
         fieldWrap.append(createElement("div", { className: "qfp-field-help", text: field.help }));
       }
-      form.append(fieldWrap);
+      groupGrid.append(fieldWrap);
     });
+      groupWrap.append(groupGrid);
+      form.append(groupWrap);
+    });
+
+    if (panel.id === "club_settings_invite_create") {
+      form.append(renderInviteCreateResultCard(fields));
+    }
 
     form.append(
       renderActionBar(
@@ -1161,6 +1207,162 @@
       saveBinding: panel.saveBinding || null,
       render: panel.render,
     }));
+  }
+
+  function groupFormFields(fields) {
+    const groups = [];
+    const groupMap = new Map();
+    fields.forEach((field, index) => {
+      const rawKey = String(field.group || "main").trim() || "main";
+      if (!groupMap.has(rawKey)) {
+        const bucket = { key: rawKey, fields: [] };
+        groupMap.set(rawKey, bucket);
+        groups.push(bucket);
+      }
+      const normalized = {
+        ...field,
+        __order: Number.isFinite(field.order) ? field.order : index,
+      };
+      groupMap.get(rawKey).fields.push(normalized);
+    });
+    groups.forEach((group) => {
+      group.fields.sort((a, b) => a.__order - b.__order);
+    });
+    return groups;
+  }
+
+  function resolveGroupTitle(key = "") {
+    const map = {
+      club: "Stufe A · Vereinsdaten",
+      contact: "Stufe A · Verantwortliche Person",
+      confirmations: "Stufe A · Bestaetigungen",
+      auth: "Stufe B · Zugang",
+      main: "Stufe A · Angaben",
+    };
+    if (map[key]) return map[key];
+    return `Stufe A · ${humanizeKey(key)}`;
+  }
+
+  function resolveGroupHint(key = "") {
+    const map = {
+      club: "Basisdaten des anfragenden Vereins.",
+      contact: "Ansprechperson fuer Rueckfragen und Freigabe.",
+      confirmations: "Zwei kurze Bestaetigungen vor dem Absenden.",
+      auth: "Zugang erst nachgelagert, wenn zum Absenden eine Session fehlt.",
+      main: "",
+    };
+    return map[key] || "";
+  }
+
+  async function copyTextToClipboard(value) {
+    const text = String(value || "").trim();
+    if (!text) return false;
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {
+      // noop
+    }
+    try {
+      window.prompt("Bitte kopieren:", text);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function fieldValueByName(fields = [], name = "") {
+    const target = String(name || "").trim();
+    const match = (fields || []).find((field) => String(field?.name || "").trim() === target);
+    return match?.value ?? "";
+  }
+
+  function renderInviteCreateResultCard(fields = []) {
+    const inviteUrl = String(fieldValueByName(fields, "invite_register_url") || "").trim();
+    const inviteQrUrl = String(fieldValueByName(fields, "invite_qr_url") || "").trim();
+    const inviteExpiresAt = String(fieldValueByName(fields, "invite_expires_at") || "").trim();
+    const formattedExpiry = inviteExpiresAt
+      ? new Date(inviteExpiresAt).toLocaleString("de-DE")
+      : "-";
+
+    const card = createElement("section", { className: "qfp-form-section qfp-invite-result-card" });
+    const head = createElement("div", { className: "qfp-form-section__head" });
+    head.append(
+      createElement("span", { className: "qfp-form-section__index", text: "R" }),
+      createElement("div", {
+        className: "qfp-form-section__title",
+        text: "Einladung",
+      })
+    );
+    head.append(createElement("div", {
+      className: "qfp-form-section__hint",
+      text: inviteUrl || inviteQrUrl ? "QR und Link für den Versand an Mitglieder." : "Nach dem Speichern erscheinen QR und Invite-Link hier.",
+    }));
+    card.append(head);
+
+    const groupGrid = createElement("div", { className: "qfp-form-section__grid" });
+    if (inviteQrUrl) {
+      const qrWrap = createElement("label", { className: "qfp-form-field is-full is-readonly" });
+      qrWrap.append(
+        createElement("span", { className: "qfp-field-label", text: "QR-Code" }),
+        createElement("img", {
+          className: "qfp-invite-result-card__qr",
+          attrs: {
+            src: inviteQrUrl,
+            alt: "QR-Code für Einladungslink",
+            loading: "lazy",
+          },
+        })
+      );
+      groupGrid.append(qrWrap);
+    }
+
+    const expiryWrap = createElement("label", { className: "qfp-form-field is-full is-readonly" });
+    expiryWrap.append(
+      createElement("span", { className: "qfp-field-label", text: "Gültig bis" }),
+      createElement("input", {
+        attrs: {
+          type: "text",
+          value: formattedExpiry,
+          disabled: "disabled",
+        },
+      })
+    );
+    groupGrid.append(expiryWrap);
+    card.append(groupGrid);
+
+    const actions = createElement("div", { className: "qfp-action-bar" });
+    const copyButton = createElement("button", {
+      className: "qfp-btn qfp-btn--ghost",
+      text: "Invite-Link kopieren",
+      attrs: {
+        type: "button",
+        disabled: inviteUrl ? undefined : "disabled",
+      },
+      onClick: async () => {
+        const ok = await copyTextToClipboard(inviteUrl);
+        if (ok) {
+          copyButton.textContent = "Link kopiert";
+          window.setTimeout(() => {
+            copyButton.textContent = "Invite-Link kopieren";
+          }, 1200);
+        }
+      },
+    });
+    actions.append(copyButton);
+    card.append(actions);
+
+    return card;
+  }
+
+  function humanizeKey(key = "") {
+    return String(key)
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
   }
 
   function normalizePermissions(input) {

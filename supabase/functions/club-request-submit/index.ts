@@ -10,6 +10,8 @@ type SubmitBody = {
   club_location?: string;
   zip?: string;
   city?: string;
+  street?: string;
+  house_number?: string;
   club_address?: string;
   responsible_name?: string;
   responsible_role?: string;
@@ -105,7 +107,9 @@ Deno.serve(async (req: Request) => {
     const clubLocation = txt(body?.club_location);
     const clubZip = txt(body?.zip);
     const clubCity = txt(body?.city) || clubLocation;
-    const clubAddress = txt(body?.club_address);
+    const clubStreet = txt(body?.street);
+    const clubHouseNumber = txt(body?.house_number);
+    const clubAddress = txt(body?.club_address) || [clubStreet, clubHouseNumber].filter(Boolean).join(" ").trim();
     const responsibleName = txt(body?.responsible_name);
     const responsibleRole = txt(body?.responsible_role);
     const responsibleEmail = txt(body?.responsible_email).toLowerCase();
@@ -153,7 +157,7 @@ Deno.serve(async (req: Request) => {
     const insertRes = await sbServiceFetch("/rest/v1/club_registration_requests", {
       method: "POST",
       headers: { Prefer: "return=representation" },
-      body: JSON.stringify([{ requester_user_id: String(actor.id), requester_email: requesterEmail, status: "pending", club_name: clubName, club_address: clubAddress, responsible_name: responsibleName, responsible_email: responsibleEmail, club_size: clubSize, club_mail_confirmed: clubMailConfirmed, auto_approved: autoApprove, request_payload: { registration_mode: "club_request_pending", onboarding_path: "club_request", billing_status: "billing_pending", club_location: clubCity, zip: clubZip, city: clubCity, responsible_role: responsibleRole, legal_confirmed: legalConfirmed } }]),
+      body: JSON.stringify([{ requester_user_id: String(actor.id), requester_email: requesterEmail, status: "pending", club_name: clubName, club_address: clubAddress, responsible_name: responsibleName, responsible_email: responsibleEmail, club_size: clubSize, club_mail_confirmed: clubMailConfirmed, auto_approved: autoApprove, request_payload: { registration_mode: "club_request_pending", onboarding_path: "club_request", billing_status: "billing_pending", club_location: clubCity, zip: clubZip, city: clubCity, street: clubStreet, house_number: clubHouseNumber, responsible_role: responsibleRole, legal_confirmed: legalConfirmed } }]),
     });
     const rows = await insertRes.json().catch(() => []);
     const requestRow = Array.isArray(rows) && rows[0] ? rows[0] : null;

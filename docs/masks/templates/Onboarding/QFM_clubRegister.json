@@ -1,5 +1,5 @@
 {
-  "maskId": "QFM_CLUB_REQUEST_ENTRY",
+  "maskId": "QFM_CLUB_REGISTER",
   "maskFamily": "QFM",
   "maskType": "sectioned",
   "securityContext": {
@@ -11,9 +11,9 @@
     "serverValidated": true
   },
   "header": {
-    "kicker": "Vereinsanfrage",
-    "title": "Verein anfragen",
-    "description": "Neuer Verein? Erfasse zuerst die wichtigsten Angaben für deine Anfrage. Zugang oder Login folgen nur beim Absenden."
+    "kicker": "Vereinsregistrierung",
+    "title": "Verein registrieren",
+    "description": "Neuer Verein? Erfasse zuerst die wichtigsten Angaben für den Start. Zugang, Freischaltung und FCP-Vereinslizenz folgen im weiteren Registrierungsweg."
   },
   "metaPolicy": {
     "autoDetect": true,
@@ -40,9 +40,9 @@
   "sections": [
     {
       "id": "club_request_entry",
-      "label": "Anfrage",
-      "title": "Vereinsanfrage",
-      "description": "Erfasse die wichtigsten Vereinsdaten kompakt. Zugang oder Login werden erst beim Absenden nachgelagert eingefordert.",
+      "label": "Registrierung",
+      "title": "Vereinsregistrierung",
+      "description": "Erfasse die wichtigsten Vereinsdaten kompakt. Zugang und weitere Freischaltung werden erst beim Absenden nachgelagert eingefordert.",
       "permissions": {
         "view": true,
         "write": true,
@@ -63,7 +63,7 @@
       "panels": [
         {
           "id": "request_form",
-          "title": "Anfragedaten",
+          "title": "Registrierungsdaten",
           "renderMode": "form",
           "componentType": "FormPanel",
           "flowType": "standard",
@@ -119,16 +119,16 @@
             "ownership": "global_user",
             "metaDisplay": "auto",
             "resolver": {
-              "draftStorageKey": "vdan_club_request_pending_v1",
+              "draftStorageKey": "vdan_club_register_pending_v1",
               "savePayloadDefaults": {
                 "auto_approve": false
               },
               "draftPayloadDefaults": {
-                "registration_mode": "club_request_pending",
-                "onboarding_path": "club_request",
+                "registration_mode": "club_register_pending",
+                "onboarding_path": "club_register",
                 "billing_status": "billing_pending"
               },
-              "authRequiredMessage": "Zum Absenden brauchst du einen Zugang. Dein Formularentwurf bleibt erhalten.",
+              "authRequiredMessage": "Als Nächstes legst du den Zugang für die Vereinsregistrierung an. Dein Formularentwurf bleibt erhalten.",
               "postSubmitRouting": {
                 "pending": {
                   "target": "/app/anfrage-offen/"
@@ -137,7 +137,7 @@
                   "target": "/app/?club_id={club_id}"
                 },
                 "fallback": {
-                  "target": "/verein-anfragen/"
+                  "target": "/verein-registrieren/"
                 }
               }
             }
@@ -369,7 +369,7 @@
               },
               {
                 "name": "legal_confirmed",
-                "label": "Ich bin berechtigt, diese Vereinsanfrage für den Verein zu stellen",
+                "label": "Ich bin berechtigt, diese Vereinsregistrierung für den Verein zu starten",
                 "type": "toggle",
                 "componentType": "toggle",
                 "scope": "global_user",
@@ -399,7 +399,7 @@
             },
             {
               "id": "submit_request",
-              "label": "Vereinsanfrage absenden",
+              "label": "Registrierung starten",
               "variant": "primary",
               "action": "submit"
             }
@@ -550,14 +550,14 @@
       "type": "runtime_requirement",
       "domKey": "qfp-club-request-auth-required",
       "cssKey": "qfp-club-request-auth-required",
-      "reason": "Der Submit-Pfad nutzt die bestehende Edge Function club-request-submit und erfordert eine aktive Sitzung. Ohne Login bleibt die Form sichtbar, das Speichern wird aber serverseitig abgewiesen."
+      "reason": "Der aktuelle Submit-Pfad nutzt weiterhin die bestehende Edge Function club-request-submit und erfordert eine aktive Sitzung. Ohne Login bleibt die Form sichtbar, das Speichern wird aber serverseitig abgewiesen."
     },
     {
       "id": "club_request_entry_partial_read_contract",
       "type": "binding_assumption",
       "domKey": "qfp-club-request-partial-read",
       "cssKey": "qfp-club-request-partial-read",
-      "reason": "public.club_request_gate_state liefert nur Gate- und Statusdaten. Nicht enthaltene Formularfelder werden deshalb aus lokalem Pending-Draft oder Formdefaults vorbelegt."
+      "reason": "public.club_request_gate_state liefert nur Gate- und Statusdaten. Nicht enthaltene Formularfelder werden deshalb aus lokalem Pending-Draft oder Formdefaults vorbelegt, bis der echte Registrierungs-Folgepfad vollstaendig getrennt ist."
     },
     {
       "id": "club_request_entry_post_submit_routing_contract",

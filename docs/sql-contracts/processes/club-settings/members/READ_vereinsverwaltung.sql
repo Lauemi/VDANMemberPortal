@@ -1,5 +1,5 @@
 -- ZWECK
--- Mitgliederverzeichnis fuer ClubSettings dokumentieren.
+-- Vertragsdatei fuer die Vereinsverwaltung innerhalb von ClubSettings.
 --
 -- ERWARTETE SPALTEN
 -- club_id
@@ -32,7 +32,8 @@
 -- docs/masks/templates/Onboarding/ADM_clubSettings.json
 --
 -- HINWEIS:
--- Produktiver Read laeuft bereits ueber `public.admin_member_registry(p_club_id)`.
+-- Der produktive Read der Vereinsverwaltung laeuft aktuell ueber
+-- `public.admin_member_registry(p_club_id)`.
 
 select
   club_id,

@@ -28,7 +28,7 @@
       },
       {
         "id": "nav_club_settings_members",
-        "label": "Mitglieder",
+        "label": "Vereinsverwaltung",
         "targetSectionId": "club_settings_members",
         "icon": "users"
       },
@@ -76,6 +76,28 @@
       }
     ]
   },
+  "modes": {
+    "quickonboarding": {
+      "entryQueryParam": "mode",
+      "entryQueryValue": "quickonboarding",
+      "sectionQueryParam": "section",
+      "defaultSectionId": "club_settings_cards",
+      "sectionIds": [
+        "club_settings_cards",
+        "club_settings_work",
+        "club_settings_members"
+      ],
+      "resume": {
+        "sourcePanelId": "club_settings_onboarding_snapshot",
+        "sourceSectionId": "club_settings_overview",
+        "order": [
+          "club_settings_cards",
+          "club_settings_work",
+          "club_settings_members"
+        ]
+      }
+    }
+  },
   "securityContext": {
     "rlsKey": "tenant_id",
     "membershipKey": "canonical_membership_id",
@@ -91,7 +113,7 @@
   "header": {
     "kicker": "Onboarding Workspace",
     "title": "ClubSettings",
-    "description": "ADM-Workspace fuer den operativen ClubSettings-Bereich nach Billing oder Freigabe. Der Workspace nutzt bestehende RPCs und Edge Functions fuer Prozesskontext, Stammdaten, Einladungen, Mitglieder und Gewaesser."
+    "description": "ADM-Workspace fuer den operativen ClubSettings-Bereich nach Billing oder Freigabe. Der Workspace nutzt bestehende RPCs und Edge Functions fuer Prozesskontext, Stammdaten, Vereinsverwaltung und Gewaesser."
   },
   "toolbar": {
     "enabled": true,
@@ -156,9 +178,9 @@
           "flowType": "standard",
           "permissions": {
             "view": true,
-            "write": false,
-            "update": false,
-            "delete": false,
+            "write": true,
+            "update": true,
+            "delete": true,
             "roles": []
           },
           "securityContext": {
@@ -167,7 +189,7 @@
             "requiresTenantAccess": false,
             "requiresRoleCheck": false,
             "allowedRoles": [],
-            "serverValidated": false
+            "serverValidated": true
           },
           "meta": {
             "sourceTable": "public.get_onboarding_process_state",
@@ -186,9 +208,9 @@
             "scope": "global_user",
             "ownership": "global_user",
             "metaDisplay": "auto",
-            "panelState": "preview",
-            "panelStateLabel": "Vorschau",
-            "panelStateHint": "Der Prozessvertrag ist fachlich definiert, wird in ClubSettings aktuell aber bewusst nicht live ueber RPC geladen.",
+            "panelState": "live",
+            "panelStateLabel": "Live",
+            "panelStateHint": "Der Prozesskontext wird direkt ueber public.get_onboarding_process_state geladen.",
             "processAdapter": "club_settings_handoff",
             "resolver": {
               "entryRouteCurrent": "/app/mitgliederverwaltung/",
@@ -210,7 +232,7 @@
                   "componentType": "readonly",
                   "scope": "global_user",
                   "ownership": "global_user",
-                  "valuePath": "record.process_status",
+                  "valuePath": "record.process.status",
                   "payloadKey": "",
                   "group": "process",
                   "displaySpan": null,
@@ -230,7 +252,7 @@
                   "componentType": "readonly",
                   "scope": "global_user",
                   "ownership": "global_user",
-                  "valuePath": "record.current_step_id",
+                  "valuePath": "record.process.current_step_id",
                   "payloadKey": "",
                   "group": "process",
                   "displaySpan": null,
@@ -250,7 +272,7 @@
                   "componentType": "readonly",
                   "scope": "global_user",
                   "ownership": "global_user",
-                  "valuePath": "record.billing_status",
+                  "valuePath": "record.axes.billing_state",
                   "payloadKey": "",
                   "group": "process",
                   "displaySpan": null,
@@ -270,7 +292,7 @@
                   "componentType": "readonly",
                   "scope": "global_user",
                   "ownership": "global_user",
-                  "valuePath": "record.setup_state",
+                  "valuePath": "record.axes.club_state",
                   "payloadKey": "",
                   "group": "process",
                   "displaySpan": null,
@@ -290,7 +312,7 @@
                   "componentType": "readonly",
                   "scope": "global_user",
                   "ownership": "global_user",
-                  "valuePath": "record.approved_club_id",
+                  "valuePath": "record.context.resolved_club_id",
                   "payloadKey": "",
                   "group": "process",
                   "displaySpan": "full",
@@ -307,9 +329,9 @@
             }
           },
           "loadBinding": {
-            "kind": "local_only",
-            "target": "app_status",
-            "path": "local:app_status"
+            "kind": "rpc",
+            "target": "public.get_onboarding_process_state",
+            "path": "rpc:public.get_onboarding_process_state"
           },
           "saveBinding": {
             "kind": "none",
@@ -343,15 +365,16 @@
         {
           "id": "club_settings_request_audit",
           "title": "Vereinsanfrage und Audit",
+          "emptyStateText": "Keine Anfragedaten vorhanden.",
           "renderMode": "readonly",
           "componentType": "ReadonlyPanel",
           "contentArea": "main",
           "flowType": "standard",
           "permissions": {
             "view": true,
-            "write": false,
-            "update": false,
-            "delete": false,
+            "write": true,
+            "update": true,
+            "delete": true,
             "roles": []
           },
           "securityContext": {
@@ -527,9 +550,9 @@
           "flowType": "standard",
           "permissions": {
             "view": true,
-            "write": false,
-            "update": false,
-            "delete": false,
+            "write": true,
+            "update": true,
+            "delete": true,
             "roles": []
           },
           "securityContext": {
@@ -556,7 +579,7 @@
             "metaDisplay": "full",
             "panelState": "preview",
             "panelStateLabel": "Vorschau",
-            "panelStateHint": "Routing- und Resume-Infos bleiben in ClubSettings vorerst eine Vorschau, bis der Prozessvertrag serverseitig vollstaendig verifiziert ist.",
+            "panelStateHint": "Routing-Werte werden fuer den MVP stabil und bewusst lokal gespiegelt, bis ein echter serverseitiger Read-Pfad noetig wird.",
             "resolver": {
               "fieldDefs": [
                 {
@@ -575,7 +598,7 @@
                   "helpText": "",
                   "readonly": true,
                   "required": false,
-                  "defaultValue": "/verein-anfragen/",
+                  "defaultValue": "/registrieren",
                   "validationRules": [],
                   "options": []
                 },
@@ -595,7 +618,7 @@
                   "helpText": "",
                   "readonly": true,
                   "required": false,
-                  "defaultValue": "/app/mitgliederverwaltung/",
+                  "defaultValue": "/app/mitgliederverwaltung",
                   "validationRules": [],
                   "options": []
                 }
@@ -604,8 +627,8 @@
           },
           "loadBinding": {
             "kind": "local_only",
-            "target": "app_status",
-            "path": "local:app_status"
+            "target": "route_contract_snapshot",
+            "path": "local:route_contract_snapshot"
           },
           "saveBinding": {
             "kind": "none",
@@ -965,6 +988,10 @@
             "scope": "club_override",
             "ownership": "club_override",
             "metaDisplay": "auto",
+            "accordion": {
+              "enabled": true,
+              "defaultOpen": false
+            },
             "resolver": {
               "requiresClubContext": true,
               "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Vereinsdaten werden erst nach Billing oder Freigabe geladen.",
@@ -1132,136 +1159,7 @@
             "path": "edge:club-onboarding-workspace"
           },
           "content": {
-            "fields": [
-              {
-                "name": "club_name",
-                "label": "Vereinsname",
-                "type": "text",
-                "componentType": "input",
-                "scope": "club_override",
-                "ownership": "club_override",
-                "value": "",
-                "placeholder": "z. B. Angelsportverein Musterstadt",
-                "help": "",
-                "disabled": false,
-                "valuePath": "record.workspace.club_data.club_name",
-                "payloadKey": "club_name",
-                "readonly": false,
-                "defaultValue": "",
-                "options": [],
-                "span": "full",
-                "order": 10
-              },
-              {
-                "name": "street",
-                "label": "Strasse",
-                "type": "text",
-                "componentType": "input",
-                "scope": "club_override",
-                "ownership": "club_override",
-                "value": "",
-                "placeholder": "Strasse und Hausnummer",
-                "help": "",
-                "disabled": false,
-                "valuePath": "record.workspace.club_data.street",
-                "payloadKey": "street",
-                "readonly": false,
-                "defaultValue": "",
-                "options": [],
-                "order": 20
-              },
-              {
-                "name": "zip",
-                "label": "PLZ",
-                "type": "text",
-                "componentType": "input",
-                "scope": "club_override",
-                "ownership": "club_override",
-                "value": "",
-                "placeholder": "12345",
-                "help": "",
-                "disabled": false,
-                "valuePath": "record.workspace.club_data.zip",
-                "payloadKey": "zip",
-                "readonly": false,
-                "defaultValue": "",
-                "options": [],
-                "order": 30
-              },
-              {
-                "name": "city",
-                "label": "Ort",
-                "type": "text",
-                "componentType": "input",
-                "scope": "club_override",
-                "ownership": "club_override",
-                "value": "",
-                "placeholder": "Musterstadt",
-                "help": "",
-                "disabled": false,
-                "valuePath": "record.workspace.club_data.city",
-                "payloadKey": "city",
-                "readonly": false,
-                "defaultValue": "",
-                "options": [],
-                "order": 40
-              },
-              {
-                "name": "contact_name",
-                "label": "Kontaktperson",
-                "type": "text",
-                "componentType": "input",
-                "scope": "club_override",
-                "ownership": "club_override",
-                "value": "",
-                "placeholder": "Vor- und Nachname",
-                "help": "",
-                "disabled": false,
-                "valuePath": "record.workspace.club_data.contact_name",
-                "payloadKey": "contact_name",
-                "readonly": false,
-                "defaultValue": "",
-                "options": [],
-                "order": 50
-              },
-              {
-                "name": "contact_email",
-                "label": "Kontakt-E-Mail",
-                "type": "email",
-                "componentType": "email",
-                "scope": "club_override",
-                "ownership": "club_override",
-                "value": "",
-                "placeholder": "verein@beispiel.de",
-                "help": "",
-                "disabled": false,
-                "valuePath": "record.workspace.club_data.contact_email",
-                "payloadKey": "contact_email",
-                "readonly": false,
-                "defaultValue": "",
-                "options": [],
-                "order": 60
-              },
-              {
-                "name": "contact_phone",
-                "label": "Telefon",
-                "type": "text",
-                "componentType": "input",
-                "scope": "club_override",
-                "ownership": "club_override",
-                "value": "",
-                "placeholder": "+49 ...",
-                "help": "",
-                "disabled": false,
-                "valuePath": "record.workspace.club_data.contact_phone",
-                "payloadKey": "contact_phone",
-                "readonly": false,
-                "defaultValue": "",
-                "options": [],
-                "span": "full",
-                "order": 70
-              }
-            ],
+            "fields": [],
             "rows": [],
             "actions": []
           },
@@ -1282,7 +1180,7 @@
           "id": "club_settings_club_approvals_inline_preview",
           "title": "Freigaben im Vereinskontext",
           "renderMode": "table",
-          "componentType": "inline-data-table",
+          "componentType": "data-table",
           "contentArea": "main",
           "flowType": "standard",
           "permissions": {
@@ -1468,9 +1366,9 @@
             "serverValidated": true
           },
           "meta": {
-            "sourceTable": "club-invite-create",
-            "sourceKind": "process",
-            "sourceOfTruth": "edge",
+            "sourceTable": "public.club_invite_create_state",
+            "sourceKind": "record",
+            "sourceOfTruth": "sql",
             "sqlContract": {
               "sqlFile": "docs/sql-contracts/processes/club-settings/invites/READ_invite_create.sql",
               "expectedColumns": [
@@ -1487,13 +1385,15 @@
             "scope": "club_override",
             "ownership": "club_override",
             "metaDisplay": "auto",
-            "panelState": "partial",
-            "panelStateLabel": "Teilweise live",
-            "panelStateHint": "Der Write-Pfad existiert bereits, ein vollstaendiger Read-/History-Vertrag fuer Einladungen fehlt noch.",
+            "panelState": "live",
+            "panelStateLabel": "Live",
+            "panelStateHint": "Read und Write laufen jetzt ueber echte Laufzeitpfade im Club-Kontext.",
             "resolver": {
               "requiresClubContext": true,
               "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Einladungen werden erst im freigegebenen Club-Kontext erzeugt.",
-              "loadPayloadDefaults": {},
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              },
               "savePayloadDefaults": {
                 "club_id": "{club_id}",
                 "club_code": "{club_code}"
@@ -1520,6 +1420,7 @@
                   "order": 10,
                   "placeholder": "",
                   "helpText": "",
+                  "hidden": true,
                   "readonly": true,
                   "required": false,
                   "defaultValue": "",
@@ -1600,6 +1501,7 @@
                   "order": 50,
                   "placeholder": "",
                   "helpText": "",
+                  "hidden": true,
                   "readonly": true,
                   "required": false,
                   "defaultValue": "",
@@ -1620,6 +1522,7 @@
                   "order": 60,
                   "placeholder": "",
                   "helpText": "",
+                  "hidden": true,
                   "readonly": true,
                   "required": false,
                   "defaultValue": "",
@@ -1640,6 +1543,7 @@
                   "order": 70,
                   "placeholder": "",
                   "helpText": "",
+                  "hidden": true,
                   "readonly": true,
                   "required": false,
                   "defaultValue": "",
@@ -1660,6 +1564,7 @@
                   "order": 80,
                   "placeholder": "",
                   "helpText": "",
+                  "hidden": true,
                   "readonly": true,
                   "required": false,
                   "defaultValue": "",
@@ -1670,9 +1575,9 @@
             }
           },
           "loadBinding": {
-            "kind": "local_only",
-            "target": "app_status",
-            "path": "local:app_status"
+            "kind": "rpc",
+            "target": "public.club_invite_create_state",
+            "path": "rpc:public.club_invite_create_state"
           },
           "saveBinding": {
             "kind": "edge_function",
@@ -1698,10 +1603,111 @@
                 "defaultValue": 25,
                 "options": [],
                 "order": 30
+              },
+              {
+                "name": "expires_in_days",
+                "label": "Gueltig (Tage)",
+                "type": "number",
+                "componentType": "number",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "value": 14,
+                "placeholder": "",
+                "help": "",
+                "disabled": false,
+                "valuePath": "record.expires_in_days",
+                "payloadKey": "expires_in_days",
+                "readonly": false,
+                "defaultValue": 14,
+                "options": [],
+                "order": 40
+              },
+              {
+                "name": "invite_token",
+                "label": "Invite-Token",
+                "type": "text",
+                "componentType": "input",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "value": "",
+                "placeholder": "",
+                "help": "",
+                "hidden": true,
+                "disabled": true,
+                "valuePath": "record.invite_token",
+                "payloadKey": "",
+                "readonly": true,
+                "defaultValue": "",
+                "options": [],
+                "order": 50
+              },
+              {
+                "name": "invite_register_url",
+                "label": "Registrierungs-URL",
+                "type": "text",
+                "componentType": "input",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "value": "",
+                "placeholder": "",
+                "help": "",
+                "hidden": true,
+                "disabled": true,
+                "valuePath": "record.invite_register_url",
+                "payloadKey": "",
+                "readonly": true,
+                "defaultValue": "",
+                "options": [],
+                "order": 60
+              },
+              {
+                "name": "invite_qr_url",
+                "label": "QR-URL",
+                "type": "text",
+                "componentType": "input",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "value": "",
+                "placeholder": "",
+                "help": "",
+                "hidden": true,
+                "disabled": true,
+                "valuePath": "record.invite_qr_url",
+                "payloadKey": "",
+                "readonly": true,
+                "defaultValue": "",
+                "options": [],
+                "order": 70
+              },
+              {
+                "name": "invite_expires_at",
+                "label": "Gueltig bis",
+                "type": "text",
+                "componentType": "input",
+                "scope": "club_override",
+                "ownership": "club_override",
+                "value": "",
+                "placeholder": "",
+                "help": "",
+                "hidden": true,
+                "disabled": true,
+                "valuePath": "record.invite_expires_at",
+                "payloadKey": "",
+                "readonly": true,
+                "defaultValue": "",
+                "options": [],
+                "order": 80
               }
             ],
             "rows": [],
-            "actions": []
+            "actions": [
+              {
+                "id": "save",
+                "label": "Einladung erzeugen",
+                "variant": "primary",
+                "action": "submit"
+              }
+            ]
           },
           "rowsPath": "",
           "tableConfig": {
@@ -1720,8 +1726,8 @@
     },
     {
       "id": "club_settings_members",
-      "label": "Mitglieder",
-      "title": "Mitglieder",
+      "label": "Vereinsverwaltung",
+      "title": "Vereinsverwaltung",
       "description": "Mitgliederverzeichnis ueber den bestehenden Admin-Registry-RPC.",
       "workspaceSlot": "main",
       "sectionLayout": "stack",
@@ -1749,16 +1755,16 @@
       "panels": [
         {
           "id": "club_settings_members_registry",
-          "title": "Mitgliederverzeichnis",
+          "title": "Vereinsverwaltung",
           "renderMode": "table",
           "componentType": "inline-data-table",
           "contentArea": "main",
           "flowType": "standard",
           "permissions": {
             "view": true,
-            "write": false,
-            "update": false,
-            "delete": false,
+            "write": true,
+            "update": true,
+            "delete": true,
             "roles": []
           },
           "securityContext": {
@@ -1778,9 +1784,11 @@
             "sourceKind": "table",
             "sourceOfTruth": "sql",
             "sqlContract": {
-              "sqlFile": "docs/sql-contracts/processes/club-settings/members/READ_members_overview.sql",
+              "sqlFile": "docs/sql-contracts/processes/club-settings/members/READ_vereinsverwaltung.sql",
               "expectedColumns": [
+                "club_id",
                 "club_code",
+                "profile_user_id",
                 "club_member_no",
                 "member_no",
                 "last_name",
@@ -1788,6 +1796,7 @@
                 "role",
                 "status",
                 "fishing_card_type",
+                "has_login",
                 "last_sign_in_at",
                 "email",
                 "street",
@@ -1820,26 +1829,32 @@
             "path": "rpc:public.admin_member_registry"
           },
           "saveBinding": {
-            "kind": "none",
-            "target": null,
-            "path": "none"
+            "kind": "rpc",
+            "target": "public.admin_member_registry_update",
+            "path": "rpc:public.admin_member_registry_update"
           },
           "content": {
             "fields": [],
-            "rows": [
-              {
-                "label": "Vertragsstand",
-                "value": "ACL-Matrix bleibt readonly, bis ein serverseitiger Rollenvertrag belegt ist.",
-                "span": "full"
-              }
-            ],
+            "rows": [],
             "actions": []
           },
           "columns": [
             {
+              "key": "club_id",
+              "label": "Club-ID",
+              "type": "text",
+              "editable": false
+            },
+            {
               "key": "club_code",
               "label": "Club",
               "type": "text"
+            },
+            {
+              "key": "profile_user_id",
+              "label": "Profil",
+              "type": "text",
+              "editable": false
             },
             {
               "key": "club_member_no",
@@ -1864,12 +1879,46 @@
             {
               "key": "role",
               "label": "Rolle",
-              "type": "text"
+              "type": "text",
+              "editorType": "select",
+              "options": [
+                {
+                  "value": "member",
+                  "label": "member"
+                },
+                {
+                  "value": "vorstand",
+                  "label": "vorstand"
+                },
+                {
+                  "value": "admin",
+                  "label": "admin"
+                }
+              ]
             },
             {
               "key": "status",
               "label": "Status",
-              "type": "text"
+              "type": "text",
+              "editorType": "select",
+              "options": [
+                {
+                  "value": "Aktiv",
+                  "label": "Aktiv"
+                },
+                {
+                  "value": "Passiv",
+                  "label": "Passiv"
+                },
+                {
+                  "value": "active",
+                  "label": "active"
+                },
+                {
+                  "value": "inactive",
+                  "label": "inactive"
+                }
+              ]
             },
             {
               "key": "fishing_card_type",
@@ -1877,9 +1926,16 @@
               "type": "text"
             },
             {
+              "key": "has_login",
+              "label": "Login",
+              "type": "boolean",
+              "editable": false
+            },
+            {
               "key": "last_sign_in_at",
               "label": "Zuletzt angemeldet",
-              "type": "text"
+              "type": "text",
+              "editable": false
             },
             {
               "key": "email",
@@ -1924,12 +1980,34 @@
             {
               "key": "sepa_approved",
               "label": "SEPA",
-              "type": "boolean"
+              "type": "boolean",
+              "editorType": "select",
+              "options": [
+                {
+                  "value": "true",
+                  "label": "Ja"
+                },
+                {
+                  "value": "false",
+                  "label": "Nein"
+                }
+              ]
             },
             {
               "key": "iban_last4",
               "label": "IBAN (letzte 4)",
               "type": "text"
+            },
+            {
+              "key": "actions",
+              "label": "Aktionen",
+              "type": "actions",
+              "sortable": false,
+              "filterable": false,
+              "editable": false,
+              "persistWidth": false,
+              "draggable": false,
+              "width": "140px"
             }
           ],
           "rowsPath": "rows",
@@ -1937,11 +2015,40 @@
             "tableId": "adm-club-settings-members",
             "rowKeyField": "member_no",
             "gridTemplateColumns": "",
-            "rowInteractionMode": "dialog",
+            "rowInteractionMode": "inline",
             "selectionMode": "single",
             "viewMode": "table",
             "sortKey": "club_member_no",
             "sortDir": "asc",
+            "showToolbar": true,
+            "showCreateButton": true,
+            "showResetButton": true,
+            "createLabel": "Mitglied anlegen",
+            "rowActions": [
+              "edit",
+              "delete"
+            ],
+            "deleteConfirmMessage": "Diesen Mitgliedseintrag wirklich loeschen?",
+            "deleteConfirmLabel": "Loeschen",
+            "utilityHandler": "vereinsverwaltung_members",
+            "utilityActions": [
+              {
+                "key": "members_more",
+                "kind": "menu",
+                "icon": "⋮",
+                "title": "Mehr",
+                "items": [
+                  {
+                    "key": "import",
+                    "label": "Import"
+                  },
+                  {
+                    "key": "export",
+                    "label": "Export"
+                  }
+                ]
+              }
+            ],
             "filterFields": [
               {
                 "key": "status",
@@ -2363,7 +2470,7 @@
               "vorstand",
               "superadmin"
             ],
-            "serverValidated": false
+            "serverValidated": true
           },
           "meta": {
             "sourceTable": "regulations_contract_pending",
@@ -2489,6 +2596,422 @@
       "scope": "club_override",
       "panels": [
         {
+          "id": "club_settings_cards_quick_add",
+          "title": "Kartenbasis pflegen",
+          "renderMode": "form",
+          "componentType": "FormPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": true,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "club-onboarding-workspace",
+            "sourceKind": "record",
+            "sourceOfTruth": "edge",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/cards/READ_cards_quick_add.sql",
+              "expectedColumns": [
+                "title",
+                "kind",
+                "is_active",
+                "standard_is_default",
+                "standard_price",
+                "youth_is_default",
+                "youth_price",
+                "honorary_is_default",
+                "honorary_price"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Karten koennen erst im Club-Kontext gepflegt werden.",
+              "loadPayloadDefaults": {
+                "action": "get",
+                "club_id": "{club_id}"
+              },
+              "savePayloadDefaults": {
+                "action": "save_cards",
+                "club_id": "{club_id}",
+                "kind": "annual",
+                "is_active": true,
+                "standard_is_default": true,
+                "youth_is_default": true,
+                "honorary_is_default": true
+              },
+              "successMessage": "Karte gespeichert und dem QuickOnboarding hinzugefuegt.",
+              "groupDefs": [
+                {
+                  "key": "cards_basis",
+                  "title": "Basis",
+                  "hint": "Kartentitel, Intervall und Aktivstatus.",
+                  "defaultOpen": true
+                },
+                {
+                  "key": "cards_assignment",
+                  "title": "Zuweisung",
+                  "hint": "Vorbelegung fuer Standard-Mitglieder.",
+                  "defaultOpen": false
+                },
+                {
+                  "key": "cards_pricing",
+                  "title": "Preise",
+                  "hint": "Jugend und Ehren koennen den Standardpreis uebernehmen oder einen eigenen Preis erhalten.",
+                  "defaultOpen": false
+                }
+              ],
+              "fieldDefs": [
+                {
+                  "name": "title",
+                  "label": "Kartentitel",
+                  "type": "text",
+                  "componentType": "input",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.cards_draft.title",
+                  "payloadKey": "title",
+                  "group": "cards_basis",
+                  "displaySpan": "full",
+                  "order": 10,
+                  "placeholder": "z. B. Jahreskarte",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": true,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "kind",
+                  "label": "Gueltigkeitsintervall",
+                  "type": "select",
+                  "componentType": "select",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.cards_draft.kind",
+                  "payloadKey": "kind",
+                  "group": "cards_basis",
+                  "displaySpan": null,
+                  "order": 20,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": true,
+                  "defaultValue": "annual",
+                  "validationRules": [],
+                  "options": [
+                    { "value": "annual", "label": "Jaehrlich" },
+                    { "value": "daily", "label": "Taeglich" },
+                    { "value": "weekly", "label": "Woechentlich" },
+                    { "value": "monthly", "label": "Monatlich" }
+                  ]
+                },
+                {
+                  "name": "is_active",
+                  "label": "Kartenart aktiv",
+                  "type": "toggle",
+                  "componentType": "toggle",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.cards_draft.is_active",
+                  "payloadKey": "is_active",
+                  "group": "cards_basis",
+                  "displaySpan": "full",
+                  "order": 30,
+                  "placeholder": "",
+                  "helpText": "Die Kartenart bleibt zentral gepflegt, Gruppenregeln werden darunter automatisch vorbelegt.",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": true,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "standard_is_default",
+                  "label": "Mitglied automatisch zuweisen?",
+                  "type": "toggle",
+                  "componentType": "toggle",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.cards_draft.group_rules.standard.is_default",
+                  "payloadKey": "standard_is_default",
+                  "group": "cards_assignment",
+                  "displaySpan": null,
+                  "order": 40,
+                  "placeholder": "",
+                  "helpText": "Vorbelegt fuer neue Standard-Mitglieder.",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": true,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "standard_price",
+                  "label": "Preis Mitglied",
+                  "type": "number",
+                  "componentType": "number",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.cards_draft.group_rules.standard.price",
+                  "payloadKey": "standard_price",
+                  "group": "cards_pricing",
+                  "displaySpan": null,
+                  "order": 50,
+                  "placeholder": "z. B. 40",
+                  "helpText": "Basispreis fuer Mitglieder.",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "youth_is_default",
+                  "label": "Jugend uebernimmt Standardpreis",
+                  "type": "toggle",
+                  "componentType": "toggle",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.cards_draft.group_rules.youth.is_default",
+                  "payloadKey": "youth_is_default",
+                  "group": "cards_pricing",
+                  "displaySpan": null,
+                  "order": 60,
+                  "placeholder": "",
+                  "helpText": "Wenn aktiv, wird kein eigener Jugendpreis gepflegt.",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": true,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "youth_price",
+                  "label": "Eigener Jugendpreis",
+                  "type": "number",
+                  "componentType": "number",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.cards_draft.group_rules.youth.price",
+                  "payloadKey": "youth_price",
+                  "group": "cards_pricing",
+                  "displaySpan": null,
+                  "order": 70,
+                  "placeholder": "uebernimmt Standardpreis",
+                  "helpText": "Nur noetig, wenn Jugend einen abweichenden Preis haben soll.",
+                  "disabledWhenField": "youth_is_default",
+                  "fallbackFromField": "standard_price",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "honorary_is_default",
+                  "label": "Ehren uebernimmt Standardpreis",
+                  "type": "toggle",
+                  "componentType": "toggle",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.cards_draft.group_rules.honorary.is_default",
+                  "payloadKey": "honorary_is_default",
+                  "group": "cards_pricing",
+                  "displaySpan": null,
+                  "order": 80,
+                  "placeholder": "",
+                  "helpText": "Wenn aktiv, wird kein eigener Ehrenpreis gepflegt.",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": true,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "honorary_price",
+                  "label": "Eigener Ehrenpreis",
+                  "type": "number",
+                  "componentType": "number",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.cards_draft.group_rules.honorary.price",
+                  "payloadKey": "honorary_price",
+                  "group": "cards_pricing",
+                  "displaySpan": null,
+                  "order": 90,
+                  "placeholder": "uebernimmt Standardpreis",
+                  "helpText": "Nur noetig, wenn Ehren einen abweichenden Preis haben soll.",
+                  "disabledWhenField": "honorary_is_default",
+                  "fallbackFromField": "standard_price",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                }
+              ]
+            }
+          },
+          "loadBinding": {
+            "kind": "edge_function",
+            "target": "club-onboarding-workspace",
+            "path": "edge:club-onboarding-workspace"
+          },
+          "saveBinding": {
+            "kind": "edge_function",
+            "target": "club-onboarding-workspace",
+            "path": "edge:club-onboarding-workspace"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "rowsPath": "",
+          "tableConfig": {
+            "tableId": "",
+            "rowKeyField": "",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "",
+            "sortDir": "asc",
+            "filterFields": []
+          }
+        },
+        {
+          "id": "club_settings_cards_config_table",
+          "title": "Kartenmodell",
+          "renderMode": "table",
+          "componentType": "inline-data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": true,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "club-onboarding-workspace",
+            "sourceKind": "record",
+            "sourceOfTruth": "edge",
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/cards/READ_cards_config_table.sql",
+              "expectedColumns": [
+                "title",
+                "kind",
+                "standard_default",
+                "standard_price",
+                "youth_default",
+                "youth_price",
+                "honorary_default",
+                "honorary_price"
+              ]
+            },
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Kartenmodell wird erst im Club-Kontext geladen.",
+              "loadPayloadDefaults": {
+                "action": "get",
+                "club_id": "{club_id}"
+              },
+              "savePayloadDefaults": {
+                "action": "save_cards",
+                "club_id": "{club_id}"
+              },
+              "rowsPath": "record.workspace.cards"
+            }
+          },
+          "loadBinding": {
+            "kind": "edge_function",
+            "target": "club-onboarding-workspace",
+            "path": "edge:club-onboarding-workspace"
+          },
+          "saveBinding": {
+            "kind": "edge_function",
+            "target": "club-onboarding-workspace",
+            "path": "edge:club-onboarding-workspace"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            { "key": "title", "label": "Karte", "type": "text", "editable": true, "editorType": "text" },
+            { "key": "kind", "label": "Intervall", "type": "text", "editable": true, "editorType": "select", "options": [
+              { "value": "annual", "label": "Jaehrlich" },
+              { "value": "daily", "label": "Taeglich" },
+              { "value": "weekly", "label": "Woechentlich" },
+              { "value": "monthly", "label": "Monatlich" }
+            ] },
+            { "key": "standard_default", "label": "Standard Auto", "type": "boolean", "editable": true, "editorType": "checkbox" },
+            { "key": "standard_price", "label": "Standard Preis", "type": "number", "editable": true, "editorType": "number" },
+            { "key": "youth_default", "label": "Jugend Auto", "type": "boolean", "editable": true, "editorType": "checkbox" },
+            { "key": "youth_price", "label": "Jugend Preis", "type": "number", "editable": true, "editorType": "number", "disabledWhenKey": "youth_default", "fallbackFromKey": "standard_price", "placeholder": "Mitgliedspreis" },
+            { "key": "honorary_default", "label": "Ehren Auto", "type": "boolean", "editable": true, "editorType": "checkbox" },
+            { "key": "honorary_price", "label": "Ehren Preis", "type": "number", "editable": true, "editorType": "number", "disabledWhenKey": "honorary_default", "fallbackFromKey": "standard_price", "placeholder": "Mitgliedspreis" },
+            { "key": "actions", "label": "Aktionen", "type": "actions", "editable": false, "sortable": false, "filterable": false, "width": "140px" }
+          ],
+          "rowsPath": "record.workspace.cards",
+          "tableConfig": {
+            "tableId": "adm-club-settings-card-model",
+            "rowKeyField": "id",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "inline",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "title",
+            "sortDir": "asc",
+            "filterFields": [
+              {
+                "key": "title",
+                "label": "Karte",
+                "type": "text",
+                "placeholder": "Kartentitel"
+              }
+            ]
+          }
+        },
+        {
           "id": "club_settings_cards_table",
           "title": "Ausweise",
           "renderMode": "table",
@@ -2594,7 +3117,7 @@
           "rowsPath": "rows",
           "tableConfig": {
             "tableId": "adm-club-settings-cards",
-            "rowKeyField": "id",
+            "rowKeyField": "member_no",
             "gridTemplateColumns": "",
             "rowInteractionMode": "dialog",
             "selectionMode": "single",
@@ -2660,6 +3183,187 @@
       "ownership": "club_override",
       "scope": "club_override",
       "panels": [
+        {
+          "id": "club_settings_work_hours_config",
+          "title": "Pflichtstundenlogik",
+          "renderMode": "form",
+          "componentType": "FormPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": true,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "club-onboarding-workspace",
+            "sourceKind": "record",
+            "sourceOfTruth": "edge",
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Pflichtstunden koennen erst im Club-Kontext gepflegt werden.",
+              "loadPayloadDefaults": {
+                "action": "get",
+                "club_id": "{club_id}"
+              },
+              "savePayloadDefaults": {
+                "action": "save_work_hours",
+                "club_id": "{club_id}",
+                "enabled": false,
+                "default_hours": 0,
+                "youth_exempt": false,
+                "honorary_exempt": false
+              },
+              "successMessage": "Pflichtstunden-Konfiguration gespeichert.",
+              "fieldDefs": [
+                {
+                  "name": "enabled",
+                  "label": "Pflichtstunden aktiv",
+                  "type": "toggle",
+                  "componentType": "toggle",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.work_hours_config.enabled",
+                  "payloadKey": "enabled",
+                  "group": "work",
+                  "displaySpan": "full",
+                  "order": 10,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": false,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "default_hours",
+                  "label": "Stunden pro Jahr",
+                  "type": "number",
+                  "componentType": "number",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.work_hours_config.default_hours",
+                  "payloadKey": "default_hours",
+                  "group": "work",
+                  "displaySpan": null,
+                  "order": 20,
+                  "placeholder": "8",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": 0,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "youth_exempt",
+                  "label": "Jugend befreit",
+                  "type": "toggle",
+                  "componentType": "toggle",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.work_hours_config.youth_exempt",
+                  "payloadKey": "youth_exempt",
+                  "group": "work",
+                  "displaySpan": null,
+                  "order": 30,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": false,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "honorary_exempt",
+                  "label": "Ehrenmitglieder befreit",
+                  "type": "toggle",
+                  "componentType": "toggle",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.work_hours_config.honorary_exempt",
+                  "payloadKey": "honorary_exempt",
+                  "group": "work",
+                  "displaySpan": null,
+                  "order": 40,
+                  "placeholder": "",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": false,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "note",
+                  "label": "Hinweis",
+                  "type": "textarea",
+                  "componentType": "textarea",
+                  "scope": "club_override",
+                  "ownership": "club_override",
+                  "valuePath": "record.workspace.work_hours_config.note",
+                  "payloadKey": "note",
+                  "group": "work",
+                  "displaySpan": "full",
+                  "order": 50,
+                  "placeholder": "Optionaler Hinweis zur Satzung oder Auslegung",
+                  "helpText": "",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                }
+              ]
+            }
+          },
+          "loadBinding": {
+            "kind": "edge_function",
+            "target": "club-onboarding-workspace",
+            "path": "edge:club-onboarding-workspace"
+          },
+          "saveBinding": {
+            "kind": "edge_function",
+            "target": "club-onboarding-workspace",
+            "path": "edge:club-onboarding-workspace"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "rowsPath": "",
+          "tableConfig": {
+            "tableId": "",
+            "rowKeyField": "",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "dialog",
+            "selectionMode": "single",
+            "viewMode": "table",
+            "sortKey": "",
+            "sortDir": "asc",
+            "filterFields": []
+          }
+        },
         {
           "id": "club_settings_work_helpers_table",
           "title": "Helfer und Arbeitseinsaetze",

@@ -68,7 +68,12 @@
         confirmDialogBody: null,
         confirmDialogCancel: null,
         confirmDialogConfirm: null,
+        infoDialog: null,
+        infoDialogTitle: null,
+        infoDialogBody: null,
+        infoDialogClose: null,
       };
+      this.infoDialogTrigger = null;
     }
 
     async init() {
@@ -314,6 +319,105 @@
       this.refs.confirmDialogConfirm = confirmAction;
     }
 
+    ensureInfoDialog() {
+      if (this.refs.infoDialog) return;
+      const dialog = createElement("dialog", {
+        className: "catch-dialog catch-dialog--panel qfp-info-dialog",
+        attrs: {
+          id: `${String(this.config.maskId || "adm-mask").replace(/[^a-z0-9_-]/gi, "-")}--info-dialog`,
+          role: "dialog",
+          "aria-modal": "true",
+        },
+      });
+      const shell = createElement("form", {
+        className: "catch-dialog__form qfp-info-dialog__shell",
+        attrs: { method: "dialog" },
+      });
+      const header = createElement("div", { className: "qfp-info-dialog__header" });
+      const title = createElement("h3", { text: "Hinweis" });
+      const closeAction = createElement("button", {
+        className: "feed-btn feed-btn--ghost qfp-info-dialog__close",
+        text: "X",
+        attrs: { type: "submit", value: "close", "aria-label": "Hilfe schliessen" },
+        onClick: (event) => {
+          event.preventDefault();
+          closeDialog();
+        },
+      });
+      const body = createElement("div", { className: "catch-dialog__body qfp-info-dialog__body" });
+      header.append(title, closeAction);
+      shell.append(header, body);
+      dialog.append(shell);
+      document.body.append(dialog);
+      this.refs.infoDialog = dialog;
+      this.refs.infoDialogTitle = title;
+      this.refs.infoDialogBody = body;
+      this.refs.infoDialogClose = closeAction;
+      const closeDialog = () => {
+        if (dialog.open) dialog.close();
+      };
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) {
+          closeDialog();
+        }
+      });
+      dialog.addEventListener("cancel", () => {
+        this.infoDialogTrigger = this.infoDialogTrigger || document.activeElement;
+      });
+      dialog.addEventListener("close", () => {
+        const trigger = this.infoDialogTrigger;
+        this.infoDialogTrigger = null;
+        if (trigger && typeof trigger.focus === "function") {
+          trigger.focus();
+        }
+      });
+    }
+
+    openInfoDialog({ title, description, trigger } = {}) {
+      const text = String(description || "").trim();
+      if (!text) return;
+      this.ensureInfoDialog();
+      const dialog = this.refs.infoDialog;
+      const titleNode = this.refs.infoDialogTitle;
+      const body = this.refs.infoDialogBody;
+      const closeAction = this.refs.infoDialogClose;
+      if (!dialog || !titleNode || !body || !closeAction) return;
+      this.infoDialogTrigger = trigger || null;
+      titleNode.textContent = String(title || "Hinweis");
+      body.innerHTML = "";
+      body.append(createElement("p", {
+        className: "small",
+        text,
+      }));
+      if (!dialog.open) dialog.showModal();
+      closeAction.focus();
+    }
+
+    renderSectionTitleWithInfo(text, description) {
+      const wrap = createElement("div", { className: "qfp-section-heading" });
+      wrap.append(createElement("h2", { text: text || "-" }));
+      if (String(description || "").trim()) {
+        let button = null;
+        button = createElement("button", {
+          className: "qfp-info-trigger",
+          text: "i",
+          attrs: {
+            type: "button",
+            "aria-label": `${text || "Bereich"} Hinweise anzeigen`,
+          },
+          onClick: () => {
+            this.openInfoDialog({
+              title: text,
+              description,
+              trigger: button,
+            });
+          },
+        });
+        wrap.append(button);
+      }
+      return wrap;
+    }
+
     confirmAction({ title, message, confirmLabel, confirmVariant } = {}) {
       this.ensureConfirmDialog();
       const dialog = this.refs.confirmDialog;
@@ -447,46 +551,92 @@
     }
 
     renderSectionHeader(section) {
-      const card = createElement("article", { className: "admin-card" });
-      if (this.config.header?.title) {
-        card.append(createElement("div", { className: "qfp-kicker", text: this.config.header.kicker || "" }));
-        card.append(createElement("h1", { text: this.config.header.title }));
-        if (this.config.header?.description) {
-          card.append(createElement("p", { className: "small", text: this.config.header.description }));
-        }
-      }
+      const card = createElement("header", { className: "qfp-section-header-simple" });
       if (section.title) {
-        card.append(createElement("h2", { text: section.title }));
-      }
-      if (section.description) {
-        card.append(createElement("p", { className: "small", text: section.description }));
+        card.append(this.renderSectionTitleWithInfo(section.title, section.description));
       }
       return card;
     }
 
     renderPanel(section, panel) {
-      const card = createElement("article", { className: "admin-card" });
+      const accordionConfig = panel?.meta?.accordion && typeof panel.meta.accordion === "object"
+        ? panel.meta.accordion
+        : null;
+      const isAccordion = accordionConfig?.enabled === true;
+      const card = createElement("article", {
+        className: `admin-card${isAccordion ? " admin-card--accordion" : ""}`,
+        attrs: {
+          "data-section-id": section?.id || "",
+          "data-panel-id": panel?.id || "",
+        },
+      });
       const panelState = resolvePanelSurfaceState(panel);
-      const header = createElement("div", { className: "admin-card__header" });
+      const headerTag = isAccordion ? "summary" : "div";
+      const header = createElement(headerTag, {
+        className: `admin-card__header${isAccordion ? " admin-card__header--accordion" : ""}`,
+      });
       const titleWrap = createElement("div", { className: "admin-card__header-main" });
       titleWrap.append(createElement("h3", { text: panel.title || panel.id }));
-      if (panelState?.hint) {
-        titleWrap.append(createElement("p", { className: "small admin-card__status-hint", text: panelState.hint }));
-      }
       header.append(titleWrap);
+      const side = createElement("div", { className: "admin-card__header-side" });
       if (panelState?.label) {
-        header.append(
+        side.append(
           createElement("span", {
             className: `admin-state-badge is-${panelState.key}`,
             text: panelState.label,
           })
         );
       }
+      if (isAccordion) {
+        side.append(createElement("span", { className: "admin-card__chevron", text: accordionConfig?.defaultOpen ? "-" : "+" }));
+      }
+      header.append(side);
+
+      if (isAccordion) {
+        const details = createElement("details", {
+          className: "admin-card__accordion",
+          attrs: accordionConfig?.defaultOpen ? { open: "open" } : {},
+        });
+        details.addEventListener("toggle", () => {
+          const chevron = details.querySelector(".admin-card__chevron");
+          if (chevron) chevron.textContent = details.open ? "-" : "+";
+        });
+        details.append(header);
+        const body = createElement("div", {
+          className: "admin-card__accordion-body",
+          attrs: details.open ? {} : { hidden: "hidden" },
+        });
+        details.addEventListener("toggle", () => {
+          body.hidden = !details.open;
+        });
+        if (panel.state?.error) {
+          body.append(createElement("p", { className: "small", text: panel.state.error }));
+        }
+        const contentWrap = createElement("div", {
+          className: "admin-card__content",
+          attrs: {
+            "data-panel-content": panel?.id || "",
+          },
+        });
+        contentWrap.append(this.renderPanelContent(section, panel));
+        body.append(contentWrap);
+        details.append(body);
+        card.append(details);
+        return card;
+      }
+
       card.append(header);
       if (panel.state?.error) {
         card.append(createElement("p", { className: "small", text: panel.state.error }));
       }
-      card.append(this.renderPanelContent(section, panel));
+      const contentWrap = createElement("div", {
+        className: "admin-card__content",
+        attrs: {
+          "data-panel-content": panel?.id || "",
+        },
+      });
+      contentWrap.append(this.renderPanelContent(section, panel));
+      card.append(contentWrap);
       return card;
     }
 
@@ -578,12 +728,16 @@
   function renderReadonlyContent(panel, emptyText) {
     const content = panel.loadedContent || panel.content || {};
     const rows = Array.isArray(content.rows) ? content.rows : [];
+    const effectiveEmptyText = String(
+      panel?.emptyStateText || content?.emptyStateText || panel?.meta?.emptyStateText || emptyText
+    ).trim() || emptyText;
+    const visibleRows = rows.filter((row) => isMeaningfulReadonlyValue(row?.value));
     const wrap = createElement("div", { className: "qfp-readonly-grid" });
-    if (!rows.length) {
-      wrap.append(createElement("p", { className: "small", text: emptyText }));
+    if (!visibleRows.length) {
+      wrap.append(createElement("p", { className: "small", text: effectiveEmptyText }));
       return wrap;
     }
-    rows.forEach((row) => {
+    visibleRows.forEach((row) => {
       const item = createElement("div", {
         className: `qfp-readonly-item${row.span === "full" ? " is-full" : ""}`,
       });
@@ -645,26 +799,121 @@
   function renderFormContent(pattern, section, panel, emptyText) {
     const content = panel.loadedContent || panel.content || {};
     const fields = Array.isArray(content.fields) ? content.fields : [];
-    const form = createElement("form", {
-      className: "qfp-form-grid",
-      onSubmit: async (event) => {
-        event.preventDefault();
-        const payload = {};
-        fields.forEach((field) => {
-          if (field.type === "toggle") {
-            payload[field.name] = Boolean(form.querySelector(`[name="${CSS.escape(field.name)}"]`)?.checked);
-            return;
-          }
-          payload[field.name] = form.querySelector(`[name="${CSS.escape(field.name)}"]`)?.value ?? "";
-        });
-        await pattern.savePanel(section.id, panel.id, payload);
-      },
-    });
-    if (!fields.length) {
-      form.append(createElement("div", { className: "qfp-empty", text: emptyText }));
-      return form;
+    const visibleFields = fields.filter((field) => field?.hidden !== true);
+    const groupDefs = Array.isArray(panel?.meta?.resolver?.groupDefs)
+      ? panel.meta.resolver.groupDefs
+      : Array.isArray(panel?.meta?.form?.groupDefs)
+        ? panel.meta.form.groupDefs
+        : [];
+    function fieldValueMap() {
+      return fields.reduce((acc, field) => {
+        acc[String(field?.name || "").trim()] = field?.value;
+        return acc;
+      }, {});
     }
-    fields.forEach((field) => {
+    function isFieldEnabled(field, values) {
+      const enabledKey = String(field?.enabledWhenField || "").trim();
+      if (enabledKey && values?.[enabledKey] !== true) return false;
+      const disabledKey = String(field?.disabledWhenField || "").trim();
+      if (disabledKey && values?.[disabledKey] === true) return false;
+      return true;
+    }
+    function syncDependentFields(form) {
+      const values = {};
+      fields.forEach((field) => {
+        const name = String(field?.name || "").trim();
+        if (!name) return;
+        const input = form.querySelector(`[name="${CSS.escape(name)}"]`);
+        if (!input) return;
+        values[name] = input.type === "checkbox" ? Boolean(input.checked) : input.value;
+      });
+      fields.forEach((field) => {
+        const name = String(field?.name || "").trim();
+        if (!name) return;
+        const input = form.querySelector(`[name="${CSS.escape(name)}"]`);
+        if (!input) return;
+        const explicitlyDisabled = field.disabled === true || field.readonly === true;
+        const enabledByDependency = isFieldEnabled(field, values);
+        const disabled = explicitlyDisabled || !enabledByDependency;
+        input.disabled = disabled;
+        if (typeof input.placeholder === "string") {
+          const fallbackField = String(field?.fallbackFromField || "").trim();
+          if (disabled && fallbackField && values?.[fallbackField] != null && String(values[fallbackField]).trim() !== "") {
+            input.placeholder = String(values[fallbackField]);
+          } else {
+            input.placeholder = field.placeholder || "";
+          }
+        }
+        if (disabled && !explicitlyDisabled && input.type !== "checkbox") {
+          input.value = "";
+        }
+      });
+    }
+    function fieldHelpText(field) {
+      return String(field?.help || field?.helpText || field?.description || "").trim();
+    }
+    function findFieldValue(fieldName) {
+      const match = fields.find((field) => String(field?.name || "").trim() === String(fieldName || "").trim());
+      return match?.value;
+    }
+    function copyInviteLink(linkValue) {
+      const text = String(linkValue || "").trim();
+      if (!text) return Promise.resolve(false);
+      if (navigator?.clipboard?.writeText) {
+        return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+      }
+      return Promise.resolve(false);
+    }
+    function renderInviteCreateResultCard() {
+      if (panel?.id !== "club_settings_invite_create") return null;
+      const qrUrl = String(findFieldValue("invite_qr_url") || "").trim();
+      const inviteUrl = String(findFieldValue("invite_register_url") || "").trim();
+      const expiresAt = String(findFieldValue("invite_expires_at") || "").trim();
+      if (!qrUrl && !inviteUrl && !expiresAt) return null;
+      const card = createElement("section", { className: "qfp-form-group qfp-invite-result-card" });
+      const body = createElement("div", { className: "qfp-form-group__grid qfp-form-group__grid--ungrouped" });
+      if (qrUrl) {
+        const qrWrap = createElement("div", { className: "qfp-form-field is-full" });
+        qrWrap.append(createElement("span", { className: "qfp-field-label", text: "QR-Code" }));
+        qrWrap.append(createElement("img", {
+          className: "qfp-invite-result-card__qr",
+          attrs: { src: qrUrl, alt: "Einladungs-QR-Code", loading: "lazy" },
+        }));
+        body.append(qrWrap);
+      }
+      if (inviteUrl) {
+        const linkWrap = createElement("div", { className: "qfp-form-field is-full" });
+        linkWrap.append(createElement("span", { className: "qfp-field-label", text: "Invite-Link" }));
+        linkWrap.append(createElement("input", {
+          attrs: { type: "text", value: inviteUrl, readonly: "readonly" },
+        }));
+        linkWrap.append(createElement("button", {
+          className: "feed-btn",
+          text: "Invite-Link kopieren",
+          attrs: { type: "button" },
+          onClick: async () => {
+            const copied = await copyInviteLink(inviteUrl);
+            if (copied) {
+              pattern?.setMessage?.("Invite-Link in die Zwischenablage kopiert.");
+            } else {
+              pattern?.setMessage?.("Invite-Link konnte nicht kopiert werden.");
+            }
+          },
+        }));
+        body.append(linkWrap);
+      }
+      if (expiresAt) {
+        const expiresWrap = createElement("div", { className: "qfp-form-field is-full" });
+        expiresWrap.append(createElement("span", { className: "qfp-field-label", text: "Gueltig bis" }));
+        expiresWrap.append(createElement("input", {
+          attrs: { type: "text", value: expiresAt, readonly: "readonly" },
+        }));
+        body.append(expiresWrap);
+      }
+      card.append(body);
+      return card;
+    }
+    function createFieldNode(field, initialValues) {
       const label = createElement("label", {
         className: `qfp-form-field${field.span === "full" ? " is-full" : ""}`,
       });
@@ -672,7 +921,7 @@
         className: "qfp-field-label",
         text: field.label || field.name || "-",
       }));
-      const disabled = field.disabled === true || field.readonly === true;
+      const disabled = field.disabled === true || field.readonly === true || !isFieldEnabled(field, initialValues);
       if (field.type === "textarea") {
         label.append(
           createElement("textarea", {
@@ -718,7 +967,7 @@
               required: field.required ? "required" : undefined,
             },
           }),
-          createElement("span", { className: "qfp-toggle-label", text: field.help || field.description || "" })
+          createElement("span", { className: "qfp-toggle-label", text: fieldHelpText(field) })
         );
         label.append(toggleRow);
       } else {
@@ -737,23 +986,112 @@
           })
         );
       }
-      if (field.help && field.type !== "toggle") {
-        label.append(createElement("span", { className: "qfp-field-help", text: field.help }));
+      const helpText = fieldHelpText(field);
+      if (helpText && field.type !== "toggle") {
+        label.append(createElement("span", { className: "qfp-field-help", text: helpText }));
       }
-      form.append(label);
+      return label;
+    }
+    function renderFlatFields(target, initialValues) {
+      visibleFields.forEach((field) => {
+        target.append(createFieldNode(field, initialValues));
+      });
+    }
+    function renderGroupedFields(target, initialValues) {
+      const fieldsByGroup = visibleFields.reduce((acc, field) => {
+        const key = String(field?.group || "").trim() || "__ungrouped__";
+        if (!acc.has(key)) acc.set(key, []);
+        acc.get(key).push(field);
+        return acc;
+      }, new Map());
+      const orderedGroupDefs = groupDefs.length
+        ? groupDefs
+        : [...fieldsByGroup.keys()].map((groupKey) => ({ key: groupKey, title: groupKey }));
+      orderedGroupDefs.forEach((groupDef) => {
+        const key = String(groupDef?.key || "").trim();
+        const groupFields = fieldsByGroup.get(key) || [];
+        if (!groupFields.length) return;
+        const details = createElement("details", {
+          className: `qfp-form-group${groupDef?.defaultOpen ? " is-open" : ""}`,
+          attrs: groupDef?.defaultOpen ? { open: "open" } : {},
+        });
+        const summary = createElement("summary", { className: "qfp-form-group__summary" });
+        const summaryMain = createElement("div", { className: "qfp-form-group__summary-main" });
+        summaryMain.append(createElement("span", {
+          className: "qfp-form-group__title",
+          text: String(groupDef?.title || key || "Gruppe"),
+        }));
+        if (groupDef?.hint) {
+          summaryMain.append(createElement("span", {
+            className: "qfp-form-group__hint",
+            text: String(groupDef.hint),
+          }));
+        }
+        summary.append(summaryMain);
+        details.append(summary);
+        const groupGrid = createElement("div", { className: "qfp-form-group__grid" });
+        groupFields.forEach((field) => {
+          groupGrid.append(createFieldNode(field, initialValues));
+        });
+        details.append(groupGrid);
+        target.append(details);
+      });
+      const ungroupedFields = fieldsByGroup.get("__ungrouped__") || [];
+      if (ungroupedFields.length) {
+        const groupGrid = createElement("div", { className: "qfp-form-group__grid qfp-form-group__grid--ungrouped" });
+        ungroupedFields.forEach((field) => {
+          groupGrid.append(createFieldNode(field, initialValues));
+        });
+        target.append(groupGrid);
+      }
+    }
+    const form = createElement("form", {
+      className: "qfp-form-grid",
+      onSubmit: async (event) => {
+        event.preventDefault();
+        const payload = {};
+        fields.forEach((field) => {
+          if (field.type === "toggle") {
+            payload[field.name] = Boolean(form.querySelector(`[name="${CSS.escape(field.name)}"]`)?.checked);
+            return;
+          }
+          payload[field.name] = form.querySelector(`[name="${CSS.escape(field.name)}"]`)?.value ?? "";
+        });
+        await pattern.savePanel(section.id, panel.id, payload);
+      },
     });
-    const writeableFields = fields.filter((field) => field.readonly !== true && field.disabled !== true);
+    if (!fields.length) {
+      form.append(createElement("div", { className: "qfp-empty", text: emptyText }));
+      return form;
+    }
+    const initialValues = fieldValueMap();
+    if (groupDefs.length) {
+      renderGroupedFields(form, initialValues);
+    } else {
+      renderFlatFields(form, initialValues);
+    }
+    const inviteResultCard = renderInviteCreateResultCard();
+    if (inviteResultCard) {
+      form.append(inviteResultCard);
+    }
+    const writeableFields = visibleFields.filter((field) => field.readonly !== true && field.disabled !== true);
     if (writeableFields.length) {
       const actionBar = createElement("div", { className: "qfp-action-bar" });
+      const primaryAction = Array.isArray(content.actions)
+        ? content.actions.find((action) => String(action?.action || "").trim() === "submit")
+        : null;
       actionBar.append(
         createElement("button", {
           className: "qfp-btn qfp-btn--primary",
-          text: "Speichern",
+          text: primaryAction?.label || "Speichern",
           attrs: { type: "submit" },
         })
       );
       form.append(actionBar);
     }
+    form.addEventListener("input", () => syncDependentFields(form));
+    form.addEventListener("change", () => syncDependentFields(form));
+    syncDependentFields(form);
     return form;
   }
 
@@ -913,6 +1251,13 @@
     return String(value);
   }
 
+  function isMeaningfulReadonlyValue(value) {
+    if (value == null) return false;
+    if (typeof value === "boolean" || typeof value === "number") return true;
+    const text = String(value).trim();
+    return text !== "" && text !== "-";
+  }
+
   function createDialogReadonlyField(field) {
     const item = createElement("div", {
       className: "qfp-readonly-item",
@@ -1043,29 +1388,45 @@
             : null,
         })
       : null;
+    const tableRuntimeProps = {
+      root,
+      columns: runtimeOptions?.columns || columns,
+      rows: runtimeOptions?.rows || rows,
+      tableId: runtimeOptions?.runtime?.tableId || tableConfig?.tableId || panel.id,
+      rowKeyField: runtimeOptions?.runtime?.rowKeyField || tableConfig?.rowKeyField || undefined,
+      gridTemplateColumns: runtimeOptions?.runtime?.gridTemplateColumns || tableConfig?.gridTemplateColumns || undefined,
+      rowInteractionMode: runtimeOptions?.runtime?.rowInteractionMode || tableConfig?.rowInteractionMode || undefined,
+      selectionMode: runtimeOptions?.runtime?.selectionMode || tableConfig?.selectionMode || undefined,
+      viewMode: runtimeOptions?.runtime?.viewMode || tableConfig?.viewMode || undefined,
+      sortKey: runtimeOptions?.runtime?.sortKey || tableConfig?.sortKey || undefined,
+      sortDir: runtimeOptions?.runtime?.sortDir || tableConfig?.sortDir || undefined,
+      filterFields: runtimeOptions?.runtime?.filterFields || (Array.isArray(tableConfig?.filterFields) ? tableConfig.filterFields : []),
+      showToolbar: runtimeOptions?.runtime?.showToolbar,
+      showCreateButton: runtimeOptions?.runtime?.showCreateButton,
+      showResetButton: runtimeOptions?.runtime?.showResetButton,
+      createLabel: runtimeOptions?.runtime?.createLabel,
+      rowActions: runtimeOptions?.runtime?.rowActions || [],
+      utilityActions: runtimeOptions?.runtime?.utilityActions || [],
+      onUtilityAction: runtimeOptions?.runtime?.onUtilityAction,
+      onRowClick: runtimeOptions?.runtime?.onRowClick,
+      onRowAction: runtimeOptions?.runtime?.onRowAction,
+      onCreateSubmit: runtimeOptions?.runtime?.onCreateSubmit,
+      onEditSubmit: runtimeOptions?.runtime?.onEditSubmit,
+      onDuplicate: runtimeOptions?.runtime?.onDuplicate,
+      onDelete: runtimeOptions?.runtime?.onDelete,
+    };
     window.requestAnimationFrame(() => {
       if (!root.isConnected) return;
       root.innerHTML = "";
       try {
-        factory({
-          root,
-          columns: runtimeOptions?.columns || columns,
-          rows: runtimeOptions?.rows || rows,
-          tableId: runtimeOptions?.runtime?.tableId || tableConfig?.tableId || panel.id,
-          rowKeyField: runtimeOptions?.runtime?.rowKeyField || tableConfig?.rowKeyField || undefined,
-          gridTemplateColumns: runtimeOptions?.runtime?.gridTemplateColumns || tableConfig?.gridTemplateColumns || undefined,
-          rowInteractionMode: runtimeOptions?.runtime?.rowInteractionMode || tableConfig?.rowInteractionMode || undefined,
-          selectionMode: runtimeOptions?.runtime?.selectionMode || tableConfig?.selectionMode || undefined,
-          viewMode: runtimeOptions?.runtime?.viewMode || tableConfig?.viewMode || undefined,
-          sortKey: runtimeOptions?.runtime?.sortKey || tableConfig?.sortKey || undefined,
-          sortDir: runtimeOptions?.runtime?.sortDir || tableConfig?.sortDir || undefined,
-          filterFields: runtimeOptions?.runtime?.filterFields || (Array.isArray(tableConfig?.filterFields) ? tableConfig.filterFields : []),
-          onRowClick: runtimeOptions?.runtime?.onRowClick,
-          onRowAction: runtimeOptions?.runtime?.onRowAction,
-          onCreateSubmit: runtimeOptions?.runtime?.onCreateSubmit,
-          onEditSubmit: runtimeOptions?.runtime?.onEditSubmit,
-          onDuplicate: runtimeOptions?.runtime?.onDuplicate,
-          onDelete: runtimeOptions?.runtime?.onDelete,
+        factory(tableRuntimeProps);
+        emitTableRendererSnapshot(root, {
+          componentType,
+          factoryName: componentType === "inline-data-table" ? "FCPInlineDataTable.createStandardV2" : "FCPDataTable.createStandardV1",
+          panelId: panel?.id || "",
+          sectionId: section?.id || "",
+          maskId: pattern?.config?.maskId || "",
+          runtimeProps: tableRuntimeProps,
         });
       } catch (error) {
         root.innerHTML = "";
@@ -1075,6 +1436,53 @@
         }));
       }
     });
+  }
+
+  function emitTableRendererSnapshot(root, meta = {}) {
+    if (!(root instanceof HTMLElement) || typeof window === "undefined") return;
+    const normalizedHtml = String(root.innerHTML || "")
+      .replace(/\s+/g, " ")
+      .trim();
+    const snapshot = {
+      maskId: String(meta.maskId || "").trim(),
+      sectionId: String(meta.sectionId || "").trim(),
+      panelId: String(meta.panelId || "").trim(),
+      componentType: String(meta.componentType || "").trim() || null,
+      factoryName: String(meta.factoryName || "").trim() || null,
+      rootClassName: root.className || "",
+      expectedUi: {
+        showToolbar: meta.runtimeProps?.showToolbar === true,
+        showResetButton: meta.runtimeProps?.showResetButton === true,
+        utilityActionKeys: Array.isArray(meta.runtimeProps?.utilityActions)
+          ? meta.runtimeProps.utilityActions.map((entry) => String(entry?.key || "").trim()).filter(Boolean)
+          : [],
+        filterFieldCount: Array.isArray(meta.runtimeProps?.filterFields) ? meta.runtimeProps.filterFields.length : 0,
+        viewMode: meta.runtimeProps?.viewMode || null,
+      },
+      dom: {
+        hasToolbar: Boolean(root.querySelector(".data-table-shell__toolbar")),
+        hasToolbarRight: Boolean(root.querySelector(".toolbar-right")),
+        hasSearch: Boolean(root.querySelector("input[type='search']")),
+        hasCreateButton: Boolean(root.querySelector("[data-inline-create-toggle], [data-fcp-create]")),
+        hasResetButton: Boolean(root.querySelector("[data-inline-reset], [data-fcp-reset]")),
+        hasUtilityButton: Boolean(root.querySelector("[data-utility-action], [data-fcp-utility-action]")),
+        hasUtilityMenu: Boolean(root.querySelector(".data-table-utility-menu")),
+        utilityMenuItemCount: root.querySelectorAll("[data-utility-menu-item], [data-fcp-utility-menu-item]").length,
+        hasViewToggle: Boolean(root.querySelector(".view-toggle")),
+        hasFilterPanel: Boolean(root.querySelector(".filter-panel")),
+        hasTableHead: Boolean(root.querySelector(".data-table__head")),
+        htmlSnippet: normalizedHtml.slice(0, 4000),
+      },
+      updatedAt: new Date().toISOString(),
+    };
+    root.dataset.fcpRenderer = snapshot.factoryName || "";
+    root.dataset.fcpComponentType = snapshot.componentType || "";
+    root.dataset.fcpToolbarPresent = snapshot.dom.hasToolbar ? "true" : "false";
+    try {
+      window.dispatchEvent(new CustomEvent("fcp-mask:renderer-mounted", { detail: snapshot }));
+    } catch {
+      // ignore
+    }
   }
 
   function normalizeErrorMessage(error, fallback) {

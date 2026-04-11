@@ -1,5 +1,5 @@
 -- ZWECK
--- Einladungsprozess und Rueckgabefelder fuer ClubSettings referenzieren.
+-- Letzten aktiven Club-Invite fuer ClubSettings lesen.
 --
 -- ERWARTETE SPALTEN
 -- club_name
@@ -19,15 +19,15 @@
 --
 -- HINWEIS:
 -- Produktiver Write laeuft ueber Edge `club-invite-create`.
--- Ein vollstaendiger Read-/History-Vertrag fehlt noch.
+-- Der Read laeuft ueber die club-gescopte RPC `public.club_invite_create_state`.
 
 select
-  :club_name::text as club_name,
-  :club_code::text as club_code,
-  25::integer as max_uses,
-  14::integer as expires_in_days,
-  null::text as invite_token,
-  null::text as invite_register_url,
-  null::text as invite_qr_url,
-  null::text as invite_expires_at;
-
+  club_name,
+  club_code,
+  max_uses,
+  expires_in_days,
+  invite_token,
+  invite_register_url,
+  invite_qr_url,
+  invite_expires_at
+from public.club_invite_create_state(:p_club_id::uuid);

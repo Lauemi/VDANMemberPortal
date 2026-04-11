@@ -88,6 +88,7 @@
       search: "",
       filters: Object.fromEntries(filterFields.map((field) => [field.key, field.defaultValue ?? ""])),
       createOpen: false,
+      openUtilityMenuKey: "",
       openEditorRowId: "",
       draftCreate: typeof config?.getCreateDefaults === "function" ? cloneRow(config.getCreateDefaults()) : {},
       draftEdit: {},
@@ -100,6 +101,29 @@
     };
     let dragColumnKey = "";
     let lastTableScrollLeft = 0;
+
+    function configuredRowActions() {
+      const raw = Array.isArray(config?.rowActions) ? config.rowActions : ["edit", "duplicate", "delete"];
+      const allowed = new Set(["edit", "duplicate", "delete"]);
+      const filtered = raw.map((entry) => String(entry || "").trim().toLowerCase()).filter((entry) => allowed.has(entry));
+      return filtered.length ? filtered : ["edit", "duplicate", "delete"];
+    }
+
+    function rowActionsHtml() {
+      const actions = configuredRowActions();
+      return actions.map((action) => {
+        if (action === "edit") {
+          return `<button type="button" class="feed-btn feed-btn--ghost row-action-btn" data-row-action="edit" aria-label="Bearbeiten">✎</button>`;
+        }
+        if (action === "duplicate") {
+          return `<button type="button" class="feed-btn feed-btn--ghost row-action-btn" data-row-action="duplicate" aria-label="Duplizieren">⧉</button>`;
+        }
+        if (action === "delete") {
+          return `<button type="button" class="feed-btn feed-btn--ghost row-action-btn row-action-btn--danger" data-row-action="delete" aria-label="Löschen">🗑</button>`;
+        }
+        return "";
+      }).join("");
+    }
 
     try {
       const persisted = JSON.parse(localStorage.getItem(storageKey) || "{}");
@@ -236,10 +260,28 @@
     function setDraftValue(mode, key, value) {
       const target = mode === "create" ? state.draftCreate : state.draftEdit;
       target[key] = value;
+      orderedColumns().forEach((column) => {
+        if (String(column?.enabledWhenKey || "").trim() === String(key || "").trim() && !value) {
+          target[column.key] = "";
+          return;
+        }
+        if (String(column?.disabledWhenKey || "").trim() === String(key || "").trim() && value) {
+          target[column.key] = "";
+        }
+      });
+    }
+
+    function isColumnEnabled(column, draft) {
+      const enabledKey = String(column?.enabledWhenKey || "").trim();
+      if (enabledKey && !draft?.[enabledKey]) return false;
+      const disabledKey = String(column?.disabledWhenKey || "").trim();
+      if (disabledKey && draft?.[disabledKey]) return false;
+      return true;
     }
 
     function editorControl(column, draft, mode) {
       const current = draft?.[column.key];
+      const enabled = isColumnEnabled(column, draft);
       if (column.editable === false || column.type === "actions" || column.editorType === "readonly") {
         return `<div class="data-table__editor-readonly">${renderDisplayValue(column, draft)}</div>`;
       }
@@ -247,7 +289,7 @@
       if (column.editorType === "select") {
         const options = Array.isArray(column.options) ? column.options : [];
         return `
-          <select class="data-table__editor-control" data-editor-mode="${esc(mode)}" data-editor-key="${esc(column.key)}">
+          <select class="data-table__editor-control" data-editor-mode="${esc(mode)}" data-editor-key="${esc(column.key)}" ${enabled ? "" : "disabled"}>
             ${options.map((option) => `
               <option value="${esc(option.value)}" ${String(option.value) === String(current ?? column.defaultValue ?? "") ? "selected" : ""}>${esc(option.label)}</option>
             `).join("")}
@@ -280,6 +322,10 @@
       }
 
       const type = column.editorType === "number" ? "number" : (column.editorType === "date" ? "date" : "text");
+      const fallbackKey = String(column?.fallbackFromKey || "").trim();
+      const placeholder = !enabled && fallbackKey && draft?.[fallbackKey] != null && String(draft[fallbackKey]).trim() !== ""
+        ? String(draft[fallbackKey])
+        : String(column.placeholder || "");
       return `
         <input
           class="data-table__editor-control"
@@ -287,7 +333,8 @@
           data-editor-key="${esc(column.key)}"
           type="${esc(type)}"
           value="${esc(current ?? column.defaultValue ?? "")}"
-          placeholder="${esc(column.placeholder || "")}"
+          placeholder="${esc(placeholder)}"
+          ${enabled ? "" : "disabled"}
         />
       `;
     }
@@ -306,9 +353,7 @@
         return `
           <div class="${classes}" data-label="${esc(column.label)}">
             <div class="row-actions">
-              <button type="button" class="feed-btn feed-btn--ghost row-action-btn" data-row-action="edit" aria-label="Bearbeiten">✎</button>
-              <button type="button" class="feed-btn feed-btn--ghost row-action-btn" data-row-action="duplicate" aria-label="Duplizieren">⧉</button>
-              <button type="button" class="feed-btn feed-btn--ghost row-action-btn row-action-btn--danger" data-row-action="delete" aria-label="Löschen">🗑</button>
+              ${rowActionsHtml()}
             </div>
           </div>
         `;
@@ -393,9 +438,7 @@
           <div class="inline-card__head">
             <strong>${renderDisplayValue(titleColumn, row)}</strong>
             <div class="row-actions">
-              <button type="button" class="feed-btn feed-btn--ghost row-action-btn" data-row-action="edit" aria-label="Bearbeiten">✎</button>
-              <button type="button" class="feed-btn feed-btn--ghost row-action-btn" data-row-action="duplicate" aria-label="Duplizieren">⧉</button>
-              <button type="button" class="feed-btn feed-btn--ghost row-action-btn row-action-btn--danger" data-row-action="delete" aria-label="Löschen">🗑</button>
+              ${rowActionsHtml()}
             </div>
           </div>
           <div class="inline-card__body">
@@ -491,7 +534,26 @@
                 const label = String(action?.label || "").trim();
                 const icon = String(action?.icon || "").trim();
                 const titleAttr = String(action?.title || label || "").trim();
-                const classes = kind === "icon" ? "icon-utility" : `feed-btn ${action?.variant === "primary" ? "" : "feed-btn--ghost"}`;
+                const classes = kind === "icon" || kind === "menu" ? "icon-utility" : `feed-btn ${action?.variant === "primary" ? "" : "feed-btn--ghost"}`;
+                if (kind === "menu") {
+                  const items = Array.isArray(action?.items) ? action.items : [];
+                  return `
+                    <div class="data-table-utility-menu ${state.openUtilityMenuKey === key ? "is-open" : ""}" data-inline-utility-menu="${esc(key)}">
+                      <button type="button" class="${classes}" data-utility-action="${esc(key)}" ${titleAttr ? `title="${esc(titleAttr)}" aria-label="${esc(titleAttr)}"` : ""}>${icon ? `<span aria-hidden="true">${esc(icon)}</span>` : ""}${label ? `<span>${esc(label)}</span>` : ""}</button>
+                      <div class="data-table-utility-menu__panel" role="menu" aria-label="${esc(titleAttr || key)}">
+                        ${items.map((item) => `
+                          <button
+                            type="button"
+                            class="data-table-utility-menu__item"
+                            role="menuitem"
+                            data-utility-menu-item="${esc(String(item?.key || "").trim())}"
+                            data-utility-parent="${esc(key)}"
+                          >${esc(String(item?.label || item?.key || "").trim())}</button>
+                        `).join("")}
+                      </div>
+                    </div>
+                  `;
+                }
                 return `<button type="button" class="${classes}" data-utility-action="${esc(key)}" ${titleAttr ? `title="${esc(titleAttr)}" aria-label="${esc(titleAttr)}"` : ""}>${icon ? `<span aria-hidden="true">${esc(icon)}</span>` : ""}${label ? `<span>${esc(label)}</span>` : ""}</button>`;
               }).join("")}
               ${config.showFilterButton ? `<button type="button" class="icon-utility" data-inline-filter-toggle="true" aria-label="Filter">☰</button>` : ""}
@@ -583,6 +645,7 @@
         } else {
           setDraftValue(mode, key, target.value);
         }
+        render();
       }
     });
 
@@ -594,6 +657,7 @@
         if (mode && key) {
           const values = [...multiWrap.querySelectorAll("input[type='checkbox']:checked")].map((input) => String(input.value || ""));
           setDraftValue(mode, key, values);
+          render();
         }
       }
     });
@@ -604,6 +668,7 @@
       const actionBtn = target?.closest?.("[data-row-action]");
       const sortBtn = target?.closest?.("[data-sort-key]");
       const rowClickOpensEditor = config?.rowClickOpensEditor !== false;
+      const utilityActions = Array.isArray(config?.utilityActions) ? config.utilityActions : [];
 
       if (target?.closest?.("[data-inline-create-toggle]")) {
         if (String(config?.rowInteractionMode || "").trim() === "dialog" && typeof config?.onCreateOpen === "function") {
@@ -617,6 +682,7 @@
       if (target?.closest?.("[data-inline-reset]")) {
         state.search = "";
         state.createOpen = false;
+        state.openUtilityMenuKey = "";
         state.openEditorRowId = "";
         state.draftCreate = typeof config?.getCreateDefaults === "function" ? cloneRow(config.getCreateDefaults()) : {};
         render();
@@ -624,13 +690,37 @@
         return;
       }
 
+      const utilityMenuItem = target?.closest?.("[data-utility-menu-item]");
+      if (utilityMenuItem) {
+        const actionKey = String(utilityMenuItem.getAttribute("data-utility-parent") || "");
+        const itemKey = String(utilityMenuItem.getAttribute("data-utility-menu-item") || "");
+        state.openUtilityMenuKey = "";
+        render();
+        if (actionKey && itemKey) {
+          await config?.onUtilityAction?.({ actionKey, itemKey });
+        }
+        return;
+      }
+
       const utilityBtn = target?.closest?.("[data-utility-action]");
       if (utilityBtn) {
         const key = String(utilityBtn.getAttribute("data-utility-action") || "");
         if (key) {
-          await config?.onUtilityAction?.(key);
+          const utilityAction = utilityActions.find((entry) => String(entry?.key || "").trim() === key) || null;
+          if (String(utilityAction?.kind || "") === "menu") {
+            state.openUtilityMenuKey = state.openUtilityMenuKey === key ? "" : key;
+            render();
+          } else {
+            state.openUtilityMenuKey = "";
+            await config?.onUtilityAction?.({ actionKey: key, itemKey: "" });
+          }
         }
         return;
+      }
+
+      if (state.openUtilityMenuKey && !target?.closest?.("[data-inline-utility-menu]")) {
+        state.openUtilityMenuKey = "";
+        render();
       }
 
       const viewBtn = target?.closest?.("[data-view-mode]");

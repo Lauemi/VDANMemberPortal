@@ -65,6 +65,28 @@ async function upsertSetting(settingKey: string, settingValue: string) {
   });
 }
 
+async function callRpc<T = unknown>(fn: string, payload: Record<string, unknown>) {
+  const res = await sbServiceFetch(`/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    body: JSON.stringify(payload || {}),
+  });
+  return await res.json().catch(() => null) as T;
+}
+
+async function queueNotificationEmail(params: {
+  templateKey: string;
+  recipientEmail: string;
+  clubId: string;
+  payload: Record<string, unknown>;
+}) {
+  await callRpc("queue_notification_email", {
+    p_template_key: params.templateKey,
+    p_recipient_email: params.recipientEmail,
+    p_club_id: params.clubId,
+    p_payload: params.payload,
+  });
+}
+
 async function loadSetting(settingKey: string) {
   const res = await sbServiceFetch(
     `/rest/v1/app_secure_settings?select=setting_value&setting_key=eq.${encodeURIComponent(settingKey)}&limit=1`,
@@ -208,6 +230,7 @@ Deno.serve(async (req: Request) => {
     const clubName = await resolveClubName(clubId, clubCode);
     const createdAt = new Date().toISOString();
     const inviteExpiresAt = new Date(Date.now() + (expiresInDays * 24 * 60 * 60 * 1000)).toISOString();
+    const actorEmail = txt((actor as { email?: string })?.email).toLowerCase();
 
     const inviteToken = generateInviteToken();
     const inviteTokenHash = await sha256Hex(inviteToken);
@@ -240,6 +263,50 @@ Deno.serve(async (req: Request) => {
       ? `${reqOrigin.replace(/\/+$/, "")}/registrieren/?${registerQuery.toString()}`
       : `/registrieren/?${registerQuery.toString()}`;
     const inviteQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(registerUrl)}`;
+    await upsertSetting(`club_invite_snapshot:${clubId}`, JSON.stringify({
+      club_id: clubId,
+      club_code: safeClubCode,
+      club_name: clubName,
+      invite_token: inviteToken,
+      invite_register_url: registerUrl,
+      invite_qr_url: inviteQrUrl,
+      invite_expires_at: inviteExpiresAt,
+      max_uses: maxUses,
+      expires_in_days: expiresInDays,
+      created_at: createdAt,
+      created_by: userId,
+      updated_at: createdAt,
+      status: "active",
+    }));
+
+    if (actorEmail) {
+      try {
+        await queueNotificationEmail({
+          templateKey: "invite",
+          recipientEmail: actorEmail,
+          clubId,
+          payload: {
+            club_name: clubName,
+            club_code: safeClubCode,
+            invite_token: inviteToken,
+            invite_register_url: registerUrl,
+            invite_qr_url: inviteQrUrl,
+            invite_expires_at: inviteExpiresAt,
+            max_uses: maxUses,
+            subject: `Einladungslink fuer ${clubName}`,
+            html: `
+              <h2>Einladungslink erstellt</h2>
+              <p>Fuer den Verein <strong>${clubName}</strong> wurde ein Einladungslink erstellt.</p>
+              <p><a href="${registerUrl}">Einladung oeffnen</a></p>
+              <p>Gueltig bis: ${inviteExpiresAt}</p>
+              <p>Maximale Nutzungen: ${maxUses}</p>
+            `,
+          },
+        });
+      } catch {
+        // Invite creation itself must stay available even if queueing fails.
+      }
+    }
 
     return new Response(
       JSON.stringify({

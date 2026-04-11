@@ -46,6 +46,34 @@
   gap: var(--ofm-gap-lg);
 }
 
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] {
+  --ofm-maxw: 980px;
+  --ofm-gap-lg: 14px;
+  --ofm-gap-md: 10px;
+  --ofm-public-shell: color-mix(in srgb, var(--ofm-surface) 90%, #f3ead4 10%);
+  --ofm-public-card: color-mix(in srgb, var(--ofm-surface) 82%, #f1e4bf 18%);
+  --ofm-public-section: color-mix(in srgb, var(--ofm-surface-2) 90%, #10130f 10%);
+  --ofm-public-field: color-mix(in srgb, var(--ofm-surface) 70%, #f3ead4 30%);
+  --ofm-public-field-strong: color-mix(in srgb, var(--ofm-surface) 62%, #f6edd8 38%);
+  --ofm-public-status: color-mix(in srgb, var(--ofm-surface) 76%, #ebe0bd 24%);
+  --ofm-public-line: color-mix(in srgb, var(--ofm-line) 50%, #e4d0a2 50%);
+  --ofm-public-line-strong: color-mix(in srgb, var(--ofm-line) 28%, #ebd9af 72%);
+  --ofm-public-label: color-mix(in srgb, var(--ofm-text) 86%, #f6edd9 14%);
+  --ofm-public-muted: color-mix(in srgb, var(--ofm-muted) 72%, #f1e6cb 28%);
+  --ofm-public-accent: color-mix(in srgb, var(--ofm-accent) 70%, #758147 30%);
+  --ofm-public-accent-strong: color-mix(in srgb, var(--ofm-accent-strong) 72%, #627038 28%);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-card--header,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-card--section-header {
+  padding: 18px 20px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-title {
+  margin-top: 6px;
+  font-size: clamp(1.8rem, 2.4vw, 2.45rem);
+}
+
 .qfp-companion-surface {
   --ofm-bg: var(--panel, #181d18);
   --ofm-surface: var(--surface, #181d18);
@@ -64,6 +92,78 @@
   --ofm-radius-md: 16px;
   --ofm-radius-sm: 12px;
   color: var(--ofm-text);
+}
+
+.qfp-public-entry-stage {
+  display: grid;
+  gap: 10px;
+}
+
+.qfp-public-entry-card {
+  display: grid;
+  gap: 10px;
+}
+
+.qfp-public-entry-card.qfp-card--section-header {
+  padding: 16px 18px;
+}
+
+.qfp-public-entry-card--secondary.qfp-companion-surface.qfp-card {
+  border-color: var(--ofm-public-line);
+  background:
+    linear-gradient(180deg, var(--ofm-public-card), color-mix(in srgb, var(--ofm-public-shell) 92%, black 8%));
+  box-shadow: 0 12px 30px rgba(0,0,0,.24);
+}
+
+.qfp-public-entry-stage__status,
+.club-request-auth-bridge__message {
+  margin: 0;
+}
+
+.club-request-auth-bridge {
+  display: grid;
+  gap: 14px;
+}
+
+.club-request-auth-bridge__switch {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.qfp-public-entry-steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.qfp-public-entry-step {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--ofm-radius-md);
+  border: 1px solid var(--ofm-public-line);
+  background: linear-gradient(180deg, var(--ofm-public-field-strong), var(--ofm-public-field));
+}
+
+.qfp-public-entry-step__index {
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ofm-public-muted) 56%, var(--ofm-accent-warm) 44%);
+}
+
+.qfp-public-entry-step__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ofm-text);
+}
+
+.qfp-public-entry-step__copy {
+  color: var(--ofm-public-muted);
+  font-size: .92rem;
+  line-height: 1.42;
 }
 
 :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) *,
@@ -89,6 +189,17 @@
     radial-gradient(circle at top right, color-mix(in srgb, var(--ofm-accent) 12%, transparent), transparent 30%),
     linear-gradient(180deg, color-mix(in srgb, var(--ofm-surface) 94%, black 6%), color-mix(in srgb, var(--ofm-bg) 96%, black 4%));
   box-shadow: var(--ofm-shadow);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-card,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-companion-surface.qfp-card {
+  border-color: var(--ofm-public-line);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--ofm-public-accent) 10%, transparent), transparent 32%),
+    linear-gradient(180deg, var(--ofm-public-card), var(--ofm-public-shell));
+  box-shadow:
+    0 18px 40px rgba(0,0,0,.30),
+    inset 0 1px 0 rgba(255,255,255,.04);
 }
 
 .qfp-companion-surface.qfp-card {
@@ -136,6 +247,31 @@
   color: var(--ofm-text);
 }
 
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"], .qfp-shell[data-mask-family="ADM"]) .qfp-section-header-simple {
+  display: grid;
+  gap: 0;
+  padding: 2px 4px 8px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"], .qfp-shell[data-mask-family="ADM"]) .qfp-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"], .qfp-shell[data-mask-family="ADM"]) .qfp-section-heading > h2 {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"], .qfp-shell[data-mask-family="ADM"]) .qfp-section-heading > .qfp-info-trigger {
+  margin-left: auto;
+  align-self: center;
+}
+
 .qfp-shell[data-mask-family="OFM"] .qfp-section-title,
 .qfp-shell[data-mask-family="OFM"] .qfp-panel-title,
 .qfp-shell[data-mask-family="OFM"] .qfp-subtitle,
@@ -149,6 +285,105 @@
 .qfp-companion-surface .qfp-panel-title,
 .qfp-companion-surface .qfp-subtitle {
   color: var(--ofm-text);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"], .qfp-shell[data-mask-family="ADM"]) .admin-card--accordion {
+  overflow: hidden;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"], .qfp-shell[data-mask-family="ADM"]) .admin-card__accordion {
+  display: block;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"], .qfp-shell[data-mask-family="ADM"]) .admin-card__header--accordion {
+  list-style: none;
+  cursor: pointer;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"], .qfp-shell[data-mask-family="ADM"]) .admin-card__header--accordion::-webkit-details-marker {
+  display: none;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"], .qfp-shell[data-mask-family="ADM"]) .admin-card__header-side {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"], .qfp-shell[data-mask-family="ADM"]) .admin-card__chevron {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,.05);
+  color: var(--ofm-accent-warm);
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"], .qfp-shell[data-mask-family="ADM"]) .admin-card__accordion-body {
+  padding-top: 0;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"], .qfp-shell[data-mask-family="ADM"]) .qfp-info-trigger {
+  appearance: none;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  margin: 0;
+  border-radius: 999px;
+  border: 0;
+  background: color-mix(in srgb, var(--ofm-text) 8%, transparent);
+  color: color-mix(in srgb, var(--ofm-text) 46%, transparent);
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"], .qfp-shell[data-mask-family="ADM"]) .qfp-info-trigger:hover,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"], .qfp-shell[data-mask-family="ADM"]) .qfp-info-trigger:focus-visible {
+  color: var(--ofm-text);
+  background: color-mix(in srgb, var(--ofm-text) 14%, transparent);
+  outline: none;
+}
+
+.qfp-info-dialog::backdrop {
+  background: rgba(13, 18, 22, 0.58);
+}
+
+.qfp-info-dialog__shell {
+  display: grid;
+  gap: 16px;
+}
+
+.qfp-info-dialog__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.qfp-info-dialog__close {
+  min-width: 42px;
+}
+
+.qfp-info-dialog__body {
+  padding-top: 0;
+}
+
+.qfp-info-dialog[open] {
+  margin: auto;
 }
 
 :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-section-title {
@@ -389,13 +624,144 @@
 
 :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-grid {
   display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-section {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  border: 1px solid var(--ofm-line);
+  border-radius: var(--ofm-radius-md);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ofm-surface) 96%, white 4%),
+      color-mix(in srgb, var(--ofm-surface-2) 94%, black 6%)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.03),
+    0 10px 24px rgba(0,0,0,.12);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-form-section {
+  border-color: var(--ofm-public-line);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ofm-public-section) 90%, white 10%),
+      color-mix(in srgb, var(--ofm-public-section) 96%, black 4%)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.03),
+    0 8px 18px rgba(0,0,0,.18);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-section__head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 12px;
+  align-items: start;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-section__index {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--ofm-accent) 72%, white 28%);
+  color: var(--ofm-accent-warm);
+  font-size: .75rem;
+  font-weight: 800;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-section__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ofm-text);
+  line-height: 1.25;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-form-section__title {
+  color: var(--ofm-public-label);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-section__hint {
+  grid-column: 2;
+  color: var(--ofm-muted);
+  font-size: .9rem;
+  line-height: 1.5;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-form-section__hint {
+  color: var(--ofm-public-muted);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-section__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-group {
+  grid-column: 1 / -1;
+  border: 1px solid var(--ofm-line);
+  border-radius: var(--ofm-radius-md);
+  background: color-mix(in srgb, var(--ofm-surface) 82%, white 18%);
+  overflow: hidden;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-group__summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 16px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-group__summary::-webkit-details-marker {
+  display: none;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-group__summary-main {
+  display: grid;
+  gap: 4px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-group__title {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--ofm-text);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-group__hint {
+  font-size: .82rem;
+  color: var(--ofm-muted);
+  line-height: 1.45;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-group__grid {
+  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  padding: 0 16px 16px;
+  border-top: 1px solid color-mix(in srgb, var(--ofm-line) 72%, transparent);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-group__grid--ungrouped {
+  grid-column: 1 / -1;
+  padding: 0;
+  border-top: 0;
 }
 
 :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-field {
   display: grid;
-  gap: 8px;
+  gap: 6px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-field-label {
+  color: var(--ofm-public-label);
 }
 
 .qfp-companion-surface .qfp-form-field {
@@ -405,7 +771,7 @@
 
 :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-field :where(input, select, textarea) {
   width: 100%;
-  min-height: 50px;
+  min-height: 46px;
   border-radius: var(--ofm-radius-sm);
   border: 1px solid var(--ofm-line);
   background: color-mix(in srgb, var(--ofm-surface) 78%, white 22%);
@@ -413,6 +779,15 @@
   font: inherit;
   padding: 0 14px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-form-field :where(input, select, textarea) {
+  border-color: var(--ofm-public-line-strong);
+  background: linear-gradient(180deg, var(--ofm-public-field-strong), var(--ofm-public-field));
+  color: var(--ofm-public-label);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.06),
+    0 1px 0 rgba(0,0,0,.08);
 }
 
 .qfp-companion-surface .qfp-form-field :where(input, select, textarea) {
@@ -428,8 +803,8 @@
 }
 
 :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-field textarea {
-  min-height: 112px;
-  padding: 12px 14px;
+  min-height: 96px;
+  padding: 10px 14px;
   resize: vertical;
 }
 
@@ -443,6 +818,10 @@
   color: color-mix(in srgb, var(--ofm-muted) 85%, transparent);
 }
 
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-form-field :where(input, select, textarea)::placeholder {
+  color: color-mix(in srgb, var(--ofm-public-muted) 80%, transparent);
+}
+
 .qfp-companion-surface .qfp-form-field :where(input, select, textarea)::placeholder {
   color: color-mix(in srgb, var(--ofm-muted) 85%, transparent);
 }
@@ -450,6 +829,11 @@
 :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-field :where(input, select, textarea):focus-visible {
   outline: 2px solid color-mix(in srgb, var(--ofm-accent) 70%, white 30%);
   outline-offset: 1px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-form-field :where(input, select, textarea):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ofm-public-accent) 72%, #d7c48d 28%);
+  border-color: var(--ofm-public-accent);
 }
 
 .qfp-companion-surface .qfp-form-field :where(input, select, textarea):focus-visible {
@@ -466,8 +850,25 @@
 
 :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-toggle-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 12px;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid var(--ofm-line);
+  border-radius: var(--ofm-radius-sm);
+  background: color-mix(in srgb, var(--ofm-surface) 78%, white 22%);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-toggle-row {
+  border-color: var(--ofm-public-line-strong);
+  background: linear-gradient(180deg, var(--ofm-public-field-strong), var(--ofm-public-status));
+}
+
+.qfp-companion-surface .qfp-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: 12px;
   min-height: 50px;
   padding: 10px 14px;
@@ -476,16 +877,114 @@
   background: color-mix(in srgb, var(--ofm-surface) 78%, white 22%);
 }
 
-.qfp-companion-surface .qfp-toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 50px;
-  padding: 10px 14px;
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-toggle-row input[type="checkbox"],
+.qfp-companion-surface .qfp-toggle-row input[type="checkbox"] {
+  margin-top: 3px;
+  flex: 0 0 auto;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-toggle-row input[type="checkbox"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 6px;
+  border: 1.5px solid var(--ofm-public-accent-strong);
+  background: color-mix(in srgb, var(--ofm-public-field) 86%, white 14%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+  position: relative;
+  cursor: pointer;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-toggle-row input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border-right: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+  transform: rotate(45deg);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-toggle-row input[type="checkbox"]:checked {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ofm-public-accent) 82%, white 18%), var(--ofm-public-accent-strong));
+  border-color: var(--ofm-public-accent-strong);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-toggle-row input[type="checkbox"]:checked::after {
+  border-right-color: #f8f1df;
+  border-bottom-color: #f8f1df;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-toggle-row input[type="checkbox"]:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ofm-public-accent) 70%, #dcca9a 30%);
+  outline-offset: 2px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-toggle-label,
+.qfp-companion-surface .qfp-toggle-label {
+  flex: 1 1 auto;
+  line-height: 1.5;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-toggle-label {
+  color: var(--ofm-public-label);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-status-field {
+  display: grid;
+  gap: 8px;
+  min-height: 46px;
+  padding: 11px 14px;
   border: 1px solid var(--ofm-line);
   border-radius: var(--ofm-radius-sm);
-  background: color-mix(in srgb, var(--ofm-surface) 78%, white 22%);
+  background: color-mix(in srgb, var(--ofm-surface) 82%, white 18%);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-status-field {
+  border-color: var(--ofm-public-line-strong);
+  background: linear-gradient(180deg, var(--ofm-public-field-strong), var(--ofm-public-status));
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-status-field__badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--ofm-line);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  background: rgba(255,255,255,.04);
+  color: var(--ofm-muted);
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-status-field__badge.is-positive {
+  border-color: color-mix(in srgb, #5fbf7f 36%, var(--ofm-line));
+  background: color-mix(in srgb, #5fbf7f 18%, transparent);
+  color: #dff6e7;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-status-field__badge.is-pending {
+  border-color: color-mix(in srgb, #d5b45c 36%, var(--ofm-line));
+  background: color-mix(in srgb, #d5b45c 14%, transparent);
+  color: #f3e2ae;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-status-field__copy {
+  color: var(--ofm-muted);
+  line-height: 1.5;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-status-field__copy,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-field-help,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-description,
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"])[data-qfp-variant="public-entry"] .qfp-public-entry-stage__status {
+  color: var(--ofm-public-muted);
 }
 
 .qfp-companion-surface .qfp-toggle-label,
@@ -498,6 +997,17 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 14px;
+}
+
+:where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-invite-result-card__qr {
+  display: block;
+  width: min(220px, 100%);
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  padding: 10px;
+  border: 1px solid rgba(120, 129, 148, 0.24);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .qfp-companion-surface .qfp-action-bar {
@@ -554,6 +1064,12 @@
 }
 
 .qfp-companion-surface .qfp-btn--primary {
+  border-color: color-mix(in srgb, var(--ofm-accent) 70%, white 30%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ofm-accent) 86%, white 14%), color-mix(in srgb, var(--ofm-accent-strong) 94%, black 6%));
+  color: var(--ofm-accent-warm);
+}
+
+.qfp-companion-surface .qfp-btn.is-active {
   border-color: color-mix(in srgb, var(--ofm-accent) 70%, white 30%);
   background: linear-gradient(180deg, color-mix(in srgb, var(--ofm-accent) 86%, white 14%), color-mix(in srgb, var(--ofm-accent-strong) 94%, black 6%));
   color: var(--ofm-accent-warm);
@@ -632,6 +1148,15 @@
 
   :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-readonly-grid,
   :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-group__grid {
+    grid-template-columns: 1fr;
+  }
+
+  :where(.qfp-shell[data-mask-family="OFM"], .qfp-shell[data-mask-family="QFM"]) .qfp-form-section__grid,
+  .qfp-public-entry-steps {
     grid-template-columns: 1fr;
   }
 

@@ -27,6 +27,16 @@
     return [...new Set(toArray(values).map((value) => String(value || "").trim()).filter(Boolean))];
   }
 
+  function collectFieldDefs(panel) {
+    return toArray(
+      panel?.content?.fields?.length
+        ? panel.content.fields
+        : panel?.meta?.resolver?.fieldDefs?.length
+          ? panel.meta.resolver.fieldDefs
+          : panel?.meta?.form?.fieldDefs
+    );
+  }
+
   function normalizeBindingResult(binding, result) {
     if (Array.isArray(result)) {
       return {
@@ -56,6 +66,58 @@
     if (typeof error === "string") return error;
     if (error instanceof Error && error.message) return error.message;
     return fallback;
+  }
+
+  function authSession() {
+    try {
+      if (window.VDAN_AUTH?.loadSession) return window.VDAN_AUTH.loadSession();
+    } catch {
+      // noop
+    }
+    return null;
+  }
+
+  async function authToken() {
+    let current = String(authSession()?.access_token || "").trim();
+    if (current) return current;
+    try {
+      if (window.VDAN_AUTH?.refreshSession) {
+        const refreshed = await window.VDAN_AUTH.refreshSession();
+        current = String(refreshed?.access_token || authSession()?.access_token || "").trim();
+      }
+    } catch {
+      // noop
+    }
+    return current;
+  }
+
+  async function rpcPost(path, payload, withAuth = false) {
+    const baseUrl = String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, "");
+    if (!baseUrl) throw new Error("Supabase-URL fehlt.");
+    const headers = new Headers({
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    });
+    if (withAuth) {
+      const token = await authToken();
+      if (!token) throw new Error("Keine aktive Sitzung gefunden.");
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+    const response = await fetch(`${baseUrl}${path}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload || {}),
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      throw new Error(text || `RPC fehlgeschlagen (${response.status})`);
+    }
+    if (!text) return null;
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
   }
 
   function buildFieldValue(field, model) {
@@ -258,27 +320,22 @@
     const sqlExpected = toArray(panel?.meta?.sqlContract?.expectedColumns);
     if (sqlExpected.length) return uniqueStrings(sqlExpected);
     if (String(panel?.renderMode || "").trim() === "table") {
-      return uniqueStrings(toArray(panel?.columns).map((column) => column?.key));
+      return uniqueStrings(
+        toArray(panel?.columns)
+          .filter((column) => column?.type !== "actions")
+          .map((column) => column?.key)
+      );
     }
-    return uniqueStrings([
-      ...toArray(panel?.meta?.resolver?.fieldDefs).map((field) => field?.name),
-      ...toArray(panel?.content?.fields).map((field) => field?.name),
-    ]);
+    return uniqueStrings(collectFieldDefs(panel).map((field) => field?.name));
   }
 
   function collectValuePaths(panel, fields = null) {
-    const fieldList = fields ? toArray(fields) : [
-      ...toArray(panel?.meta?.resolver?.fieldDefs),
-      ...toArray(panel?.content?.fields),
-    ];
+    const fieldList = fields ? toArray(fields) : collectFieldDefs(panel);
     return uniqueStrings(fieldList.map((field) => field?.valuePath));
   }
 
   function collectPayloadKeys(fields = null, panel = null) {
-    const fieldList = fields ? toArray(fields) : [
-      ...toArray(panel?.meta?.resolver?.fieldDefs),
-      ...toArray(panel?.content?.fields),
-    ];
+    const fieldList = fields ? toArray(fields) : collectFieldDefs(panel);
     return uniqueStrings(
       fieldList
         .filter((field) => field?.readonly !== true)
@@ -451,6 +508,103 @@
       ? runtimeContext.confirmAction
       : null;
     const panelId = String(panel?.id || "").trim();
+    const utilityActions = Array.isArray(tableConfig?.utilityActions) ? tableConfig.utilityActions : [];
+    const utilityHandler = String(tableConfig?.utilityHandler || "").trim();
+
+    function normalizedRows() {
+      return Array.isArray(rows) ? rows : [];
+    }
+
+    function currentClubId(row, draft) {
+      return String(
+        draft?.club_id
+        || row?.club_id
+        || normalizedRows().find((entry) => String(entry?.club_id || "").trim())?.club_id
+        || new URLSearchParams(window.location.search || "").get("club_id")
+        || ""
+      ).trim();
+    }
+
+    function currentClubCode(row, draft) {
+      return String(
+        draft?.club_code
+        || row?.club_code
+        || normalizedRows().find((entry) => String(entry?.club_code || "").trim())?.club_code
+        || ""
+      ).trim();
+    }
+
+    async function createMemberRegistryRow(draft) {
+      const clubId = currentClubId(null, draft);
+      const clubCode = currentClubCode(null, draft);
+      if (!clubId) throw new Error("club_id fehlt fuer das Anlegen.");
+      if (!clubCode) throw new Error("club_code fehlt fuer das Anlegen.");
+      await rpcPost("/rest/v1/rpc/admin_member_registry_create", {
+        p_club_id: clubId,
+        p_club_code: clubCode,
+        p_club_member_no: String(draft?.club_member_no || "").trim().toUpperCase() || null,
+        p_first_name: String(draft?.first_name || "").trim() || null,
+        p_last_name: String(draft?.last_name || "").trim() || null,
+        p_role: String(draft?.role || "member").trim().toLowerCase() || "member",
+        p_status: String(draft?.status || "Aktiv").trim() || null,
+        p_fishing_card_type: String(draft?.fishing_card_type || "").trim() || null,
+        p_street: String(draft?.street || "").trim() || null,
+        p_email: String(draft?.email || "").trim().toLowerCase() || null,
+        p_zip: String(draft?.zip || "").trim() || null,
+        p_city: String(draft?.city || "").trim() || null,
+        p_phone: String(draft?.phone || "").trim() || null,
+        p_mobile: String(draft?.mobile || "").trim() || null,
+        p_birthdate: String(draft?.birthdate || "").trim() || null,
+        p_guardian_member_no: String(draft?.guardian_member_no || "").trim() || null,
+        p_sepa_approved: String(draft?.sepa_approved || "false") === "true" || draft?.sepa_approved === true,
+      }, true);
+      if (typeof pattern?.loadPanel === "function") {
+        await pattern.loadPanel(section.id, panelId).catch(() => null);
+      }
+      return true;
+    }
+
+    async function updateMemberRegistryRow(row, draft) {
+      const memberNo = String(row?.member_no || draft?.member_no || "").trim();
+      if (!memberNo) throw new Error("member_no fehlt fuer das Speichern.");
+      await rpcPost("/rest/v1/rpc/admin_member_registry_update", {
+        p_member_no: memberNo,
+        p_club_member_no: String(draft?.club_member_no || "").trim().toUpperCase() || null,
+        p_first_name: String(draft?.first_name || "").trim() || null,
+        p_last_name: String(draft?.last_name || "").trim() || null,
+        p_role: String(draft?.role || "member").trim().toLowerCase() || "member",
+        p_status: String(draft?.status || "").trim() || null,
+        p_fishing_card_type: String(draft?.fishing_card_type || "").trim() || null,
+        p_street: String(draft?.street || "").trim() || null,
+        p_email: String(draft?.email || "").trim().toLowerCase() || null,
+        p_zip: String(draft?.zip || "").trim() || null,
+        p_city: String(draft?.city || "").trim() || null,
+        p_phone: String(draft?.phone || "").trim() || null,
+        p_mobile: String(draft?.mobile || "").trim() || null,
+        p_birthdate: String(draft?.birthdate || "").trim() || null,
+        p_guardian_member_no: String(draft?.guardian_member_no || "").trim() || null,
+        p_sepa_approved: String(draft?.sepa_approved || "false") === "true" || draft?.sepa_approved === true,
+      }, true);
+      if (typeof pattern?.loadPanel === "function") {
+        await pattern.loadPanel(section.id, panelId).catch(() => null);
+      }
+      return true;
+    }
+
+    async function deleteMemberRegistryRow(row) {
+      const clubId = currentClubId(row, null);
+      const memberNo = String(row?.member_no || "").trim();
+      if (!clubId) throw new Error("club_id fehlt fuer das Loeschen.");
+      if (!memberNo) throw new Error("member_no fehlt fuer das Loeschen.");
+      await rpcPost("/rest/v1/rpc/admin_member_registry_delete", {
+        p_club_id: clubId,
+        p_member_no: memberNo,
+      }, true);
+      if (typeof pattern?.loadPanel === "function") {
+        await pattern.loadPanel(section.id, panelId).catch(() => null);
+      }
+      return true;
+    }
 
     async function saveThroughPanel(payload) {
       if (!pattern || !section?.id || !panelId || typeof pattern.savePanel !== "function") {
@@ -462,6 +616,29 @@
         await pattern.loadPanel(section.id, panelId).catch(() => null);
       }
       return result?.ok === true;
+    }
+
+    async function handleUtilityAction(detail = {}) {
+      if (!utilityHandler) return;
+      if (utilityHandler === "vereinsverwaltung_members") {
+        const tools = window.VereinsverwaltungAdmTools || null;
+        if (!tools || typeof tools.handleMembersUtilityAction !== "function") {
+          message("Import/Export-Werkzeuge wurden nicht geladen.");
+          return;
+        }
+        await tools.handleMembersUtilityAction({
+          ...detail,
+          panel,
+          section,
+          rows,
+          onMessage: message,
+          reload: async () => {
+            if (typeof pattern?.loadPanel === "function") {
+              await pattern.loadPanel(section.id, panelId).catch(() => null);
+            }
+          },
+        });
+      }
     }
 
     return {
@@ -479,6 +656,13 @@
         sortKey: tableConfig?.sortKey || undefined,
         sortDir: tableConfig?.sortDir || undefined,
         filterFields: Array.isArray(tableConfig?.filterFields) ? tableConfig.filterFields : [],
+        showCreateButton: tableConfig?.showCreateButton !== false,
+        createLabel: tableConfig?.createLabel || undefined,
+        showToolbar: tableConfig?.showToolbar === true || utilityActions.length > 0,
+        showResetButton: tableConfig?.showResetButton === true,
+        rowActions: Array.isArray(tableConfig?.rowActions) ? tableConfig.rowActions : [],
+        utilityActions,
+        onUtilityAction: utilityHandler ? handleUtilityAction : undefined,
         dialogMode: interactionMode === "dialog",
         onRowClick: (row, event) => {
           if (interactionMode === "dialog" && openTableDialog) {
@@ -550,6 +734,17 @@
         },
         onCreateSubmit: writable
           ? async (draft) => {
+              if (utilityHandler === "vereinsverwaltung_members") {
+                const ok = await createMemberRegistryRow(draft);
+                if (ok) {
+                  dispatchTableContractEvent("fcp-mask:table-row-create", {
+                    panelId,
+                    sectionId: section?.id || "",
+                    payload: draft,
+                  });
+                }
+                return ok;
+              }
               const ok = await saveThroughPanel(draft);
               if (ok) {
                 dispatchTableContractEvent("fcp-mask:table-row-create", {
@@ -563,6 +758,18 @@
           : undefined,
         onEditSubmit: writable
           ? async (row, draft) => {
+              if (utilityHandler === "vereinsverwaltung_members") {
+                const ok = await updateMemberRegistryRow(row, draft);
+                if (ok) {
+                  dispatchTableContractEvent("fcp-mask:table-row-save", {
+                    panelId,
+                    sectionId: section?.id || "",
+                    row,
+                    payload: buildTableRowSavePayload(row, draft),
+                  });
+                }
+                return ok;
+              }
               const payload = buildTableRowSavePayload(row, draft);
               const ok = await saveThroughPanel(payload);
               if (ok) {
@@ -613,6 +820,10 @@
             sectionId: section?.id || "",
             row,
           });
+          if (utilityHandler === "vereinsverwaltung_members") {
+            await deleteMemberRegistryRow(row);
+            return;
+          }
           if (actionContract?.actionDefaults?.payloadDefaults && writable) {
             const payload = {
               ...(row && typeof row === "object" ? row : {}),

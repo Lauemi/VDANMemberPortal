@@ -7,144 +7,64 @@ import { readMaskJsonFile } from "../../../../scripts/fcp-mask-reader.mjs";
 const maskFilePath = path.resolve(process.cwd(), "docs/masks/templates/Onboarding/ADM_clubSettings.json");
 const resolvedMask = await readMaskJsonFile(maskFilePath);
 
-function toAdminPanelField(field) {
-  const typeMap = {
-    input: field.type === "email" ? "email" : field.type === "date" ? "date" : "text",
-    textarea: "textarea",
-    select: "select",
-    toggle: "toggle",
-    date: "date",
-    email: "email",
-    phone: "text",
-    number: "number",
-    readonly: "text",
-    custom: "text",
-  };
-
-  return {
-    name: field.name,
-    label: field.label,
-    type: typeMap[field.componentType] || field.type || "text",
-    value: field.defaultValue ?? "",
-    placeholder: field.placeholder || "",
-    help: field.helpText || "",
-    disabled: field.readonly === true,
-    valuePath: field.valuePath || "",
-    payloadKey: field.payloadKey || field.name,
-    readonly: field.readonly === true,
-    defaultValue: field.defaultValue ?? "",
-    options: Array.isArray(field.options) ? field.options : [],
-    span: field.displaySpan || undefined,
-  };
-}
-
-function toAdminPanelPanel(panel) {
-  const content = panel.content || {};
-  return {
-    id: panel.id,
-    title: panel.title,
-    renderMode: panel.renderMode,
-    componentType: panel.componentType || null,
-    contentArea: panel.contentArea || "main",
-    flowType: panel.flowType || "standard",
-    permissions: panel.permissions,
-    securityContext: panel.securityContext,
-    meta: {
-      ...(panel.meta || {}),
-      resolver: {
-        ...(panel.meta?.resolver || {}),
-        fieldDefs: panel.meta?.resolver?.fieldDefs || content.fields || [],
-        blockDefs: panel.meta?.resolver?.blockDefs || content.blocks || [],
-      },
-    },
-    loadBinding: panel.loadBinding,
-    saveBinding: panel.saveBinding,
-    content: {
-      fields: (content.fields || []).map(toAdminPanelField),
-      rows: [],
-      actions: content.actions || [],
-      blocks: content.blocks || [],
-    },
-    actions: content.actions || [],
-    columns: panel.columns || [],
-    rows: panel.rows || [],
-    rowsPath: panel.rowsPath || "",
-    tableConfig: panel.tableConfig || null,
-  };
-}
-
-function toAdminPanelSection(section) {
-  return {
-    id: section.id,
-    label: section.label,
-    title: section.title,
-    description: section.description,
-    workspaceSlot: section.workspaceSlot || "main",
-    sectionLayout: section.sectionLayout || "stack",
-    permissions: section.permissions,
-    securityContext: section.securityContext,
-    ownership: section.ownership,
-    scope: section.scope,
-    panels: (section.panels || []).map(toAdminPanelPanel),
-  };
-}
-
-const admPageConfig = {
+const admConfig = {
+  ...resolvedMask,
   root: "#clubSettingsAdmRoot",
-  maskId: resolvedMask.maskId,
-  maskFamily: resolvedMask.maskFamily || "ADM",
-  maskType: resolvedMask.maskType,
-  workspaceMode: resolvedMask.workspaceMode,
-  workspaceNav: resolvedMask.workspaceNav,
-  currentRoles: [],
+  currentRoles: ["admin", "vorstand", "superadmin"],
   currentScopes: {
     globalUser: true,
     authSystem: true,
     clubReadonly: true,
     clubOverride: true,
     billingSnapshot: true,
-    consentAppendOnly: true,
+    consentAppendOnly: false,
   },
-  header: resolvedMask.header,
-  sections: resolvedMask.sections.map(toAdminPanelSection),
 };
 
-const admPageConfigJson = JSON.stringify(admPageConfig);
+const admConfigJson = JSON.stringify(admConfig);
 ---
 
-<Site title={`ClubSettings • ${APP.name}`} description="ADM-basierter ClubSettings-Onboardingbereich." robots="noindex" containerClass="container container--admin-wide">
-  <Fragment slot="head">
-    <link rel="stylesheet" href="/css/ofmMask.css" />
-  </Fragment>
-
+<Site title={`Vereinsverwaltung • ${APP.name}`} description="ADM: Vereinsverwaltung" robots="noindex" containerClass="container container--admin-wide">
   <section class="card">
     <div class="card__body">
       <div id="clubSettingsAdmRoot"></div>
-      <p id="clubSettingsAdmMsg" class="small" aria-live="polite"></p>
+      <p id="clubSettingsAdmMsg" class="small ofm-mask-stage__status" aria-live="polite"></p>
     </div>
   </section>
 
   <script is:inline src="/js/fcp-mask-process-state.js"></script>
   <script is:inline src="/js/fcp-adm-qfm-contract-hub.js"></script>
   <script is:inline src="/js/fcp-mask-data-resolver.js"></script>
+  <script is:inline src="/js/fcp-data-table.js"></script>
   <script is:inline src="/js/fcp-inline-data-table-v2.js"></script>
+  <script is:inline src="/js/vereinsverwaltung-adm.js"></script>
   <script is:inline src="/js/admin-panel-mask.js"></script>
   <script is:inline src="/js/fcp-mask-page-loader.js"></script>
-  <script id="clubSettingsAdmConfig" type="application/json" set:html={admPageConfigJson}></script>
+  <script id="clubSettingsAdmConfig" type="application/json" set:html={admConfigJson}></script>
   <script is:inline>
     const admMsgEl = document.getElementById("clubSettingsAdmMsg");
 
     function setAdmMessage(text) {
-      if (admMsgEl) admMsgEl.textContent = text;
+      if (admMsgEl) admMsgEl.textContent = text || "";
     }
 
     window.FcpMaskPageLoader.boot({
       configScriptId: "clubSettingsAdmConfig",
-      rendererFamily: "ADM",
       patternGlobal: "__ADM_CLUB_SETTINGS__",
+      rendererFamily: "ADM",
       onMessage: setAdmMessage,
     }).catch((error) => {
       setAdmMessage(error instanceof Error ? error.message : String(error));
     });
   </script>
+
+  <style>
+    #clubSettingsAdmRoot {
+      min-height: 420px;
+    }
+
+    .ofm-mask-stage__status {
+      margin: 10px 0 0;
+    }
+  </style>
 </Site>

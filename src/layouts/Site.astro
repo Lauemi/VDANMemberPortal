@@ -69,9 +69,16 @@ if (staticPageBlocked) {
 }
 const runtimeSiteName = isFcpMode ? "Fishing-Club-Portal" : "VDAN Ottenheim";
 const resolvedAppThemeOverride = String(appThemeOverride || "").trim();
-const effectiveAppTheme = resolvedAppThemeOverride || (isFcpMode
-  ? (APP.theme === "fcp_brand" && isAppPath ? "fcp_tactical" : (APP.theme || "fcp_tactical"))
-  : "vdan_default");
+// App routes always use the FCP workspace styling. This keeps the
+// operational portal UI consistent even when static/public VDAN pages use
+// a different brand presentation.
+const effectiveAppTheme = resolvedAppThemeOverride || (
+  isAppPath
+    ? "fcp_tactical"
+    : isFcpMode
+      ? (APP.theme || "fcp_tactical")
+      : "vdan_default"
+);
 const themeColor = isFcpMode ? "#2f352a" : "#0b1220";
 const normalizedTitle = String(title || runtimeSiteName).replace(APP.name, runtimeSiteName);
 const displayTitle = isBetaChannel && !String(title).toLowerCase().includes("beta")

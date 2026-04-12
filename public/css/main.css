@@ -211,6 +211,53 @@ body[data-app-theme="fcp_tactical"] .home-hero-slider{
   box-shadow:var(--shadow);
 }
 
+/*
+  Optional escape hatch for VDAN-colored feed surfaces inside an otherwise
+  FCP-themed portal. The portal stays tactical/FCP by default; only feed
+  blocks wrapped in .portal-feed-zone opt back into the cooler VDAN look.
+*/
+.portal-feed-zone{
+  --portal-feed-line: rgba(220,228,241,.14);
+  --portal-feed-text: #e8eaf0;
+  --portal-feed-muted: rgba(232,234,240,.7);
+  --portal-feed-shadow: 0 14px 36px rgba(0,0,0,.38);
+}
+
+.portal-feed-zone .feed-shell,
+.portal-feed-zone .feed-post,
+.portal-feed-zone .home-hero-slider{
+  border-color:var(--portal-feed-line);
+  background:linear-gradient(180deg, rgba(21,30,48,.92), rgba(16,23,38,.9));
+  box-shadow:var(--portal-feed-shadow);
+  color:var(--portal-feed-text);
+}
+
+.portal-feed-zone .feed-toolbar p,
+.portal-feed-zone .feed-post__time,
+.portal-feed-zone .feed-post__meta,
+.portal-feed-zone .feed-post p{
+  color:var(--portal-feed-muted);
+}
+
+.portal-feed-zone .feed-chip{
+  background:rgba(78,161,255,.2);
+  border-color:rgba(126,194,255,.45);
+  color:#fff;
+}
+
+.portal-feed-zone .feed-btn{
+  border-color:rgba(95,153,220,.55);
+  background:linear-gradient(180deg, rgba(95,153,220,.28), rgba(255,255,255,.04));
+  color:var(--portal-feed-text);
+  box-shadow:none;
+}
+
+.portal-feed-zone .feed-btn--ghost{
+  border-color:rgba(95,153,220,.28);
+  background:rgba(95,153,220,.16);
+  color:var(--portal-feed-text);
+}
+
 body[data-app-theme="fcp_tactical"] .burger-toggle{
   border:1px solid rgba(221,212,194,.55);
   background:rgba(89,90,61,.5);

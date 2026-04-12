@@ -6879,10 +6879,10 @@ body[data-portal-rail-side="left"] .feedback-fab{
 }
 
 /* FCP Tactical final overrides (keep at file end for precedence) */
-body[data-app-theme="fcp_tactical"] p,
+/* body[data-app-theme="fcp_tactical"] p,
 body[data-app-theme="fcp_tactical"] .small{
   color: var(--accent-warm);
-}
+} */
 
 body[data-app-theme="fcp_tactical"] .card,
 body[data-app-theme="fcp_tactical"] .feed-shell,

@@ -1366,9 +1366,9 @@
             "serverValidated": true
           },
           "meta": {
-            "sourceTable": "public.club_invite_create_state",
-            "sourceKind": "record",
-            "sourceOfTruth": "sql",
+            "sourceTable": "club-invite-create",
+            "sourceKind": "process",
+            "sourceOfTruth": "edge",
             "sqlContract": {
               "sqlFile": "docs/sql-contracts/processes/club-settings/invites/READ_invite_create.sql",
               "expectedColumns": [
@@ -1385,9 +1385,9 @@
             "scope": "club_override",
             "ownership": "club_override",
             "metaDisplay": "auto",
-            "panelState": "live",
-            "panelStateLabel": "Live",
-            "panelStateHint": "Read und Write laufen jetzt ueber echte Laufzeitpfade im Club-Kontext.",
+            "panelState": "partial",
+            "panelStateLabel": "Teilweise live",
+            "panelStateHint": "Der Write-Pfad ist live. Der Read fuer den zuletzt erzeugten Invite bleibt bis zum ausgerollten RPC-Fallback lokal, damit Live-Deploys keine 404 erzeugen.",
             "resolver": {
               "requiresClubContext": true,
               "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Einladungen werden erst im freigegebenen Club-Kontext erzeugt.",
@@ -1575,9 +1575,9 @@
             }
           },
           "loadBinding": {
-            "kind": "rpc",
-            "target": "public.club_invite_create_state",
-            "path": "rpc:public.club_invite_create_state"
+            "kind": "local_only",
+            "target": "app_status",
+            "path": "local:app_status"
           },
           "saveBinding": {
             "kind": "edge_function",

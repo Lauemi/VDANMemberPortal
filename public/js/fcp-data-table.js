@@ -88,15 +88,27 @@
     });
   }
 
+  const STABLE_ROW_KEY_CANDIDATES = [
+    "id",
+    "uuid",
+    "row_id",
+    "source_id",
+    "detail_id",
+    "request_id",
+    "member_no",
+    "club_member_no",
+    "profile_user_id",
+    "club_id",
+  ];
+
   function inferRowKey(config) {
     if (typeof config?.rowKey === "function") return config.rowKey;
 
     const rowKeyField = String(config?.rowKeyField || "").trim();
     if (rowKeyField) return (row) => row?.[rowKeyField];
 
-    const candidates = ["id", "uuid", "row_id", "source_id"];
     return (row) => {
-      for (const candidate of candidates) {
+      for (const candidate of STABLE_ROW_KEY_CANDIDATES) {
         const value = row?.[candidate];
         if (value !== undefined && value !== null && String(value).trim()) return value;
       }
@@ -109,7 +121,7 @@
     if (!rows.length) return;
     const sample = rows.find(Boolean);
     if (!sample) return;
-    const inferred = ["id", "uuid", "row_id", "source_id"].some((key) => sample?.[key] !== undefined && sample?.[key] !== null);
+    const inferred = STABLE_ROW_KEY_CANDIDATES.some((key) => sample?.[key] !== undefined && sample?.[key] !== null && String(sample?.[key]).trim());
     if (!inferred) {
       console.warn(`${COMPONENT_NAME}: Kein stabiler rowKey erkannt. Bitte rowKey oder rowKeyField aus der SQL mitgeben.`);
     }

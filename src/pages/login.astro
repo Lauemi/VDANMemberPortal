@@ -30,8 +30,8 @@ const clubSignInHref = `/vereinssignin/?next=${encodeURIComponent(nextTarget)}`;
         ) : (
           <>
             <h1>Login</h1>
-            <p class="small login-shell__legacy-note">
-              WICHTIG: Zugänge wie Mitgliedsnummer  <code>001</code> + Passwort funktionieren nur noch kurzzeitig. In den kommenden Wochen werden alle Accounts auf die neue Auth-E-Mail umgestellt. Danach erfolgt der Login nur noch über Auth-E-Mail.
+            <p class="small">
+              Melde dich mit der bei deinem Zugang hinterlegten E-Mail-Adresse und deinem Passwort an.
             </p>
           </>
         )}
@@ -72,7 +72,7 @@ const clubSignInHref = `/vereinssignin/?next=${encodeURIComponent(nextTarget)}`;
           </div>
         )}
         <label class="ui-field">
-          <span>{isFcpMode ? "E-Mail" : "Mitgliedsnummer oder E-Mail"}</span>
+          <span>E-Mail</span>
           <input
             id="loginMemberNo"
             name="identifier"

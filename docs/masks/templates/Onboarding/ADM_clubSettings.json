@@ -178,9 +178,9 @@
           "flowType": "standard",
           "permissions": {
             "view": true,
-            "write": true,
-            "update": true,
-            "delete": true,
+            "write": false,
+            "update": false,
+            "delete": false,
             "roles": []
           },
           "securityContext": {
@@ -372,9 +372,9 @@
           "flowType": "standard",
           "permissions": {
             "view": true,
-            "write": true,
-            "update": true,
-            "delete": true,
+            "write": false,
+            "update": false,
+            "delete": false,
             "roles": []
           },
           "securityContext": {
@@ -1186,8 +1186,8 @@
           "permissions": {
             "view": true,
             "write": false,
-            "update": false,
-            "delete": false,
+            "update": true,
+            "delete": true,
             "roles": []
           },
           "securityContext": {
@@ -1230,9 +1230,9 @@
             }
           },
           "loadBinding": {
-            "kind": "local_only",
-            "target": "app_status",
-            "path": "local:app_status"
+            "kind": "none",
+            "target": null,
+            "path": "none"
           },
           "saveBinding": {
             "kind": "none",
@@ -1575,9 +1575,9 @@
             }
           },
           "loadBinding": {
-            "kind": "local_only",
-            "target": "app_status",
-            "path": "local:app_status"
+            "kind": "none",
+            "target": null,
+            "path": "none"
           },
           "saveBinding": {
             "kind": "edge_function",
@@ -1796,6 +1796,7 @@
                 "role",
                 "status",
                 "fishing_card_type",
+                "card_assignments",
                 "has_login",
                 "last_sign_in_at",
                 "email",
@@ -1903,6 +1904,14 @@
               "editorType": "select",
               "options": [
                 {
+                  "value": "invited",
+                  "label": "invited"
+                },
+                {
+                  "value": "blocked",
+                  "label": "blocked"
+                },
+                {
                   "value": "Aktiv",
                   "label": "Aktiv"
                 },
@@ -1922,8 +1931,43 @@
             },
             {
               "key": "fishing_card_type",
+              "label": "Ausweistyp",
+              "type": "text",
+              "editorType": "select",
+              "options": [
+                {
+                  "value": "Innenwasser",
+                  "label": "Innenwasser"
+                },
+                {
+                  "value": "Innenwasser + Rheinlos",
+                  "label": "Innenwasser + Rheinlos"
+                },
+                {
+                  "value": "Rheinlos",
+                  "label": "Rheinlos"
+                },
+                {
+                  "value": "-",
+                  "label": "-"
+                }
+              ]
+            },
+            {
+              "key": "card_assignments",
               "label": "Angelkarte",
-              "type": "text"
+              "type": "json-display",
+              "editorType": "select-multi",
+              "options": [
+                {
+                  "value": "innenwasser",
+                  "label": "Innenwasser"
+                },
+                {
+                  "value": "rheinlos39",
+                  "label": "Rheinlos"
+                }
+              ]
             },
             {
               "key": "has_login",
@@ -1934,7 +1978,7 @@
             {
               "key": "last_sign_in_at",
               "label": "Zuletzt angemeldet",
-              "type": "text",
+              "type": "datetime",
               "editable": false
             },
             {
@@ -1970,7 +2014,7 @@
             {
               "key": "birthdate",
               "label": "Geburtstag",
-              "type": "text"
+              "type": "date"
             },
             {
               "key": "guardian_member_no",
@@ -1981,22 +2025,12 @@
               "key": "sepa_approved",
               "label": "SEPA",
               "type": "boolean",
-              "editorType": "select",
-              "options": [
-                {
-                  "value": "true",
-                  "label": "Ja"
-                },
-                {
-                  "value": "false",
-                  "label": "Nein"
-                }
-              ]
+              "editorType": "checkbox"
             },
             {
               "key": "iban_last4",
               "label": "IBAN (letzte 4)",
-              "type": "text"
+              "type": "masked-text"
             },
             {
               "key": "actions",
@@ -2218,9 +2252,9 @@
             }
           },
           "loadBinding": {
-            "kind": "local_only",
-            "target": "app_status",
-            "path": "local:app_status"
+            "kind": "none",
+            "target": null,
+            "path": "none"
           },
           "saveBinding": {
             "kind": "none",
@@ -2292,8 +2326,8 @@
           "permissions": {
             "view": true,
             "write": false,
-            "update": false,
-            "delete": false,
+            "update": true,
+            "delete": true,
             "roles": []
           },
           "securityContext": {
@@ -2333,6 +2367,10 @@
                 "action": "get",
                 "club_id": "{club_id}"
               },
+              "savePayloadDefaults": {
+                "action": "update_water",
+                "club_id": "{club_id}"
+              },
               "rowsPath": "record.workspace.waters"
             }
           },
@@ -2342,9 +2380,9 @@
             "path": "edge:club-onboarding-workspace"
           },
           "saveBinding": {
-            "kind": "none",
-            "target": null,
-            "path": "none"
+            "kind": "edge_function",
+            "target": "club-onboarding-workspace",
+            "path": "edge:club-onboarding-workspace"
           },
           "content": {
             "fields": [],
@@ -2355,32 +2393,68 @@
             {
               "key": "name",
               "label": "Gewaesser",
-              "type": "text"
+              "type": "text",
+              "editable": true,
+              "editorType": "text"
             },
             {
               "key": "water_type",
               "label": "Typ",
-              "type": "text"
+              "type": "text",
+              "editable": true,
+              "editorType": "select",
+              "options": [
+                { "value": "", "label": "Keine Auswahl" },
+                { "value": "see", "label": "See" },
+                { "value": "fluss", "label": "Fluss" },
+                { "value": "kanal", "label": "Kanal" },
+                { "value": "weiher", "label": "Weiher" }
+              ]
             },
             {
               "key": "water_status",
               "label": "Status",
-              "type": "text"
+              "type": "text",
+              "editable": true,
+              "editorType": "select",
+              "options": [
+                { "value": "active", "label": "Aktiv" },
+                { "value": "inactive", "label": "Inaktiv" }
+              ]
             },
             {
               "key": "is_youth_allowed",
               "label": "Jugend",
-              "type": "boolean"
+              "type": "boolean",
+              "editable": true,
+              "editorType": "checkbox"
             },
             {
               "key": "requires_board_approval",
               "label": "Vorstand",
-              "type": "boolean"
+              "type": "boolean",
+              "editable": true,
+              "editorType": "checkbox"
             },
             {
               "key": "water_cards",
               "label": "Angelkarten",
-              "type": "text"
+              "type": "text",
+              "editable": true,
+              "editorType": "select-multi",
+              "options": [
+                { "value": "innenwasser", "label": "Innenwasser" },
+                { "value": "rheinlos39", "label": "Rheinlos" }
+              ]
+            },
+            {
+              "key": "actions",
+              "label": "Aktionen",
+              "type": "actions",
+              "editable": false,
+              "sortable": false,
+              "filterable": false,
+              "width": "140px"
             }
           ],
           "rowsPath": "record.workspace.waters",
@@ -2388,11 +2462,22 @@
             "tableId": "adm-club-settings-waters",
             "rowKeyField": "id",
             "gridTemplateColumns": "",
-            "rowInteractionMode": "dialog",
+            "rowInteractionMode": "inline",
             "selectionMode": "single",
             "viewMode": "table",
             "sortKey": "name",
             "sortDir": "asc",
+            "showCreateButton": false,
+            "rowActions": [
+              "edit",
+              "delete"
+            ],
+            "deletePayloadDefaults": {
+              "action": "delete_water",
+              "club_id": "{club_id}"
+            },
+            "deleteConfirmMessage": "Dieses Gewaesser wirklich loeschen?",
+            "deleteConfirmLabel": "Gewaesser loeschen",
             "filterFields": [
               {
                 "key": "name",
@@ -2497,9 +2582,9 @@
             }
           },
           "loadBinding": {
-            "kind": "local_only",
-            "target": "app_status",
-            "path": "local:app_status"
+            "kind": "none",
+            "target": null,
+            "path": "none"
           },
           "saveBinding": {
             "kind": "none",
@@ -3055,8 +3140,8 @@
             "scope": "club_override",
             "ownership": "club_override",
             "metaDisplay": "full",
-            "panelState": "partial",
-            "panelStateLabel": "Teilweise live",
+            "panelState": "live",
+            "panelStateLabel": "Live",
             "panelStateHint": "Die erste Ausweise-Uebersicht laeuft auf bestehender Mitglieder-/Profilwahrheit. Scanner-, PDF- und spaetere Claim-/Preislogik bleiben getrennte Ausbaupfade.",
             "resolver": {
               "requiresClubContext": true,
@@ -3111,7 +3196,7 @@
             {
               "key": "updated_at",
               "label": "Zuletzt aktualisiert",
-              "type": "text"
+              "type": "datetime"
             }
           ],
           "rowsPath": "rows",
@@ -3213,6 +3298,16 @@
             "sourceTable": "club-onboarding-workspace",
             "sourceKind": "record",
             "sourceOfTruth": "edge",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/club-settings/work/READ_work_hours_config.sql",
+              "expectedColumns": [
+                "enabled",
+                "default_hours",
+                "youth_exempt",
+                "honorary_exempt",
+                "note"
+              ]
+            },
             "scope": "club_override",
             "ownership": "club_override",
             "metaDisplay": "auto",
@@ -3416,9 +3511,9 @@
             }
           },
           "loadBinding": {
-            "kind": "local_only",
-            "target": "app_status",
-            "path": "local:app_status"
+            "kind": "none",
+            "target": null,
+            "path": "none"
           },
           "saveBinding": {
             "kind": "none",
@@ -3571,9 +3666,9 @@
             }
           },
           "loadBinding": {
-            "kind": "local_only",
-            "target": "app_status",
-            "path": "local:app_status"
+            "kind": "none",
+            "target": null,
+            "path": "none"
           },
           "saveBinding": {
             "kind": "none",
@@ -3741,7 +3836,7 @@
                   "order": 10,
                   "placeholder": "",
                   "helpText": "Zielbild fuer die kuenftige QFM-Blockstruktur innerhalb von ADM. Backend-Vertrag fuer die echten Einstellungen fehlt noch.",
-                  "readonly": false,
+                  "readonly": true,
                   "required": false,
                   "defaultValue": "club_only",
                   "validationRules": [],
@@ -3774,7 +3869,7 @@
                   "order": 20,
                   "placeholder": "",
                   "helpText": "",
-                  "readonly": false,
+                  "readonly": true,
                   "required": false,
                   "defaultValue": "manual",
                   "validationRules": [],
@@ -3803,7 +3898,7 @@
                   "order": 30,
                   "placeholder": "",
                   "helpText": "",
-                  "readonly": false,
+                  "readonly": true,
                   "required": false,
                   "defaultValue": "structured",
                   "validationRules": [],
@@ -3832,7 +3927,7 @@
                   "order": 40,
                   "placeholder": "Welche Betriebsoptionen sollen spaeter wirklich serverseitig gespeichert werden?",
                   "helpText": "Dieser Block dient aktuell als QFM-Zielform innerhalb von ADM, noch nicht als finaler Write-Vertrag.",
-                  "readonly": false,
+                  "readonly": true,
                   "required": false,
                   "defaultValue": "",
                   "validationRules": [],
@@ -3842,9 +3937,9 @@
             }
           },
           "loadBinding": {
-            "kind": "local_only",
-            "target": "app_status",
-            "path": "local:app_status"
+            "kind": "none",
+            "target": null,
+            "path": "none"
           },
           "saveBinding": {
             "kind": "none",
@@ -3866,7 +3961,7 @@
                 "disabled": false,
                 "valuePath": "record.club_visibility_mode",
                 "payloadKey": "club_visibility_mode",
-                "readonly": false,
+                "readonly": true,
                 "defaultValue": "club_only",
                 "options": [
                   {

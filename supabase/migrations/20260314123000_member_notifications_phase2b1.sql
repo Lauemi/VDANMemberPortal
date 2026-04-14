@@ -1,5 +1,4 @@
 begin;
-
 create table if not exists public.member_notifications (
   id uuid primary key default gen_random_uuid(),
   club_id uuid not null,
@@ -16,21 +15,16 @@ create table if not exists public.member_notifications (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create index if not exists idx_member_notifications_user_created
   on public.member_notifications(user_id, created_at desc);
-
 create index if not exists idx_member_notifications_user_unread
   on public.member_notifications(user_id, is_read, created_at desc);
-
 create index if not exists idx_member_notifications_club_created
   on public.member_notifications(club_id, created_at desc);
-
 drop trigger if exists trg_member_notifications_touch on public.member_notifications;
 create trigger trg_member_notifications_touch
 before update on public.member_notifications
 for each row execute function public.touch_updated_at();
-
 create or replace function public.create_member_notification(
   p_club_id uuid,
   p_user_id uuid,
@@ -80,7 +74,6 @@ begin
   return v_row;
 end;
 $$;
-
 create or replace function public.member_notification_mark_read(p_notification_id uuid)
 returns public.member_notifications
 language plpgsql
@@ -105,7 +98,6 @@ begin
   return v_row;
 end;
 $$;
-
 create or replace function public.member_notification_mark_all_read()
 returns integer
 language plpgsql
@@ -126,7 +118,6 @@ begin
   return v_count;
 end;
 $$;
-
 create or replace function public.event_planner_notify_registration_users(
   p_planner_config_id uuid,
   p_slot_id uuid default null,
@@ -191,7 +182,6 @@ begin
   return v_count;
 end;
 $$;
-
 create or replace function public.event_planner_slot_notification_guard()
 returns trigger
 language plpgsql
@@ -241,17 +231,14 @@ begin
   return old;
 end;
 $$;
-
 drop trigger if exists trg_event_planner_slot_notifications_update on public.event_planner_slots;
 create trigger trg_event_planner_slot_notifications_update
 after update of starts_at, ends_at on public.event_planner_slots
 for each row execute function public.event_planner_slot_notification_guard();
-
 drop trigger if exists trg_event_planner_slot_notifications_delete on public.event_planner_slots;
 create trigger trg_event_planner_slot_notifications_delete
 before delete on public.event_planner_slots
 for each row execute function public.event_planner_slot_notification_guard();
-
 create or replace function public.event_planner_base_event_notification_guard()
 returns trigger
 language plpgsql
@@ -318,17 +305,14 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists trg_club_events_event_planner_notifications on public.club_events;
 create trigger trg_club_events_event_planner_notifications
 after update of starts_at, ends_at, status on public.club_events
 for each row execute function public.event_planner_base_event_notification_guard();
-
 drop trigger if exists trg_work_events_event_planner_notifications on public.work_events;
 create trigger trg_work_events_event_planner_notifications
 after update of starts_at, ends_at, status on public.work_events
 for each row execute function public.event_planner_base_event_notification_guard();
-
 create or replace function public.event_planner_registration_notification_guard()
 returns trigger
 language plpgsql
@@ -376,14 +360,11 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists trg_event_planner_registration_notifications on public.event_planner_registrations;
 create trigger trg_event_planner_registration_notifications
 after insert or update of status on public.event_planner_registrations
 for each row execute function public.event_planner_registration_notification_guard();
-
 alter table public.member_notifications enable row level security;
-
 grant select on public.member_notifications to authenticated;
 revoke insert, update, delete on public.member_notifications from authenticated;
 revoke execute on function public.create_member_notification(uuid, uuid, text, text, text, text, text, uuid, text) from public, anon, authenticated;
@@ -393,15 +374,12 @@ revoke execute on function public.event_planner_base_event_notification_guard() 
 revoke execute on function public.event_planner_registration_notification_guard() from public, anon, authenticated;
 revoke execute on function public.member_notification_mark_read(uuid) from public, anon;
 revoke execute on function public.member_notification_mark_all_read() from public, anon;
-
 drop policy if exists "member_notifications_select_own" on public.member_notifications;
 create policy "member_notifications_select_own"
 on public.member_notifications
 for select
 to authenticated
 using (user_id = auth.uid());
-
 grant execute on function public.member_notification_mark_read(uuid) to authenticated;
 grant execute on function public.member_notification_mark_all_read() to authenticated;
-
 commit;

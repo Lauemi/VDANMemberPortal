@@ -1,5 +1,7 @@
 ;(() => {
   const COMPONENT_NAME = "FCP Inline Data Table v2";
+  const contractHub = window.FcpAdmQfmContractHub || {};
+  const fieldContracts = contractHub.field || {};
 
   function esc(value) {
     return String(value ?? "")
@@ -42,12 +44,14 @@
   function renderDisplayValue(column, row) {
     const raw = readValue(column, row);
     if (typeof column?.renderHtml === "function") return column.renderHtml(row, raw);
-    if (Array.isArray(raw)) {
+    if (column?.type === "json-display" && Array.isArray(raw)) {
       return raw.length
         ? raw.map((item) => `<span class="inline-token">${esc(item?.label || item?.name || item)}</span>`).join("")
         : esc(defaultEmptyValue(column));
     }
-    if (column?.type === "boolean") return raw ? "Ja" : "Nein";
+    if (typeof fieldContracts.formatFieldDisplayValue === "function") {
+      return esc(fieldContracts.formatFieldDisplayValue(column, raw));
+    }
     return esc(raw ?? defaultEmptyValue(column));
   }
 
@@ -87,6 +91,7 @@
       rows: initialRows.slice(),
       search: "",
       filters: Object.fromEntries(filterFields.map((field) => [field.key, field.defaultValue ?? ""])),
+      filterPanelOpen: true,
       createOpen: false,
       openUtilityMenuKey: "",
       openEditorRowId: "",
@@ -98,9 +103,11 @@
       columnOrder: initialColumns.slice(),
       columnWidths: Object.fromEntries(columns.map((column) => [column.key, column.width || "minmax(120px, 1fr)"])),
       layoutDirty: false,
+      feedback: null,
     };
     let dragColumnKey = "";
     let lastTableScrollLeft = 0;
+    let feedbackTimer = 0;
 
     function configuredRowActions() {
       const raw = Array.isArray(config?.rowActions) ? config.rowActions : ["edit", "duplicate", "delete"];
@@ -189,6 +196,24 @@
         || row?.profile_user_id
         || ""
       );
+    }
+
+    function setFeedback(type, text) {
+      state.feedback = text ? { type: String(type || "info"), text: String(text || "") } : null;
+      if (feedbackTimer) window.clearTimeout(feedbackTimer);
+      if (state.feedback) {
+        feedbackTimer = window.setTimeout(() => {
+          state.feedback = null;
+          render();
+        }, 2400);
+      }
+    }
+
+    function applyOptimisticEdit(rowId, draft = {}) {
+      state.rows = state.rows.map((entry) => {
+        if (rowKey(entry) !== rowId) return entry;
+        return { ...entry, ...cloneRow(draft) };
+      });
     }
 
     function filteredRows() {
@@ -282,61 +307,28 @@
     function editorControl(column, draft, mode) {
       const current = draft?.[column.key];
       const enabled = isColumnEnabled(column, draft);
-      if (column.editable === false || column.type === "actions" || column.editorType === "readonly") {
-        return `<div class="data-table__editor-readonly">${renderDisplayValue(column, draft)}</div>`;
-      }
-
-      if (column.editorType === "select") {
-        const options = Array.isArray(column.options) ? column.options : [];
-        return `
-          <select class="data-table__editor-control" data-editor-mode="${esc(mode)}" data-editor-key="${esc(column.key)}" ${enabled ? "" : "disabled"}>
-            ${options.map((option) => `
-              <option value="${esc(option.value)}" ${String(option.value) === String(current ?? column.defaultValue ?? "") ? "selected" : ""}>${esc(option.label)}</option>
-            `).join("")}
-          </select>
-        `;
-      }
-
-      if (column.editorType === "select-multi") {
-        const selected = new Set(Array.isArray(current) ? current.map((entry) => String(entry)) : []);
-        const options = Array.isArray(column.options) ? column.options : [];
-        return `
-          <div class="data-table__multi-select" data-editor-mode="${esc(mode)}" data-editor-key="${esc(column.key)}">
-            ${options.map((option) => `
-              <label class="inline-check">
-                <input type="checkbox" value="${esc(option.value)}" ${selected.has(String(option.value)) ? "checked" : ""} />
-                <span>${esc(option.label)}</span>
-              </label>
-            `).join("")}
-          </div>
-        `;
-      }
-
-      if (column.editorType === "checkbox") {
-        return `
-          <label class="inline-check inline-check--single">
-            <input type="checkbox" data-editor-mode="${esc(mode)}" data-editor-key="${esc(column.key)}" ${current ? "checked" : ""} />
-            <span>${esc(column.label)}</span>
-          </label>
-        `;
-      }
-
-      const type = column.editorType === "number" ? "number" : (column.editorType === "date" ? "date" : "text");
       const fallbackKey = String(column?.fallbackFromKey || "").trim();
       const placeholder = !enabled && fallbackKey && draft?.[fallbackKey] != null && String(draft[fallbackKey]).trim() !== ""
         ? String(draft[fallbackKey])
         : String(column.placeholder || "");
-      return `
-        <input
-          class="data-table__editor-control"
-          data-editor-mode="${esc(mode)}"
-          data-editor-key="${esc(column.key)}"
-          type="${esc(type)}"
-          value="${esc(current ?? column.defaultValue ?? "")}"
-          placeholder="${esc(placeholder)}"
-          ${enabled ? "" : "disabled"}
-        />
-      `;
+      const normalizedField = typeof fieldContracts.normalizeColumnField === "function"
+        ? fieldContracts.normalizeColumnField({
+            ...column,
+            value: current ?? column.defaultValue ?? "",
+            editable: column.editable !== false,
+            readonly: column.editable === false || column.editorType === "readonly",
+            disabled: !enabled,
+            placeholder,
+          }, draft, { surface: "inline" })
+        : null;
+      if (normalizedField && typeof fieldContracts.renderFieldControlHtml === "function") {
+        return fieldContracts.renderFieldControlHtml(normalizedField, {
+          esc,
+          mode,
+          surface: "inline",
+        });
+      }
+      return `<div class="data-table__editor-readonly">${renderDisplayValue(column, draft)}</div>`;
     }
 
     function dataCellHtml(column, row) {
@@ -465,7 +457,7 @@
       const showViewSwitch = config?.showViewSwitch !== false;
       const showResetButton = config?.showResetButton !== false;
       const showMetaBar = config?.showMetaBar === true;
-      const showFilterPanel = filterFields.length > 0;
+      const showFilterPanel = filterFields.length > 0 && state.filterPanelOpen !== false;
       const title = String(config?.title || "").trim();
       const description = String(config?.description || "").trim();
       const emptyTitle = String(config?.emptyStateTitle || "Noch keine Datensaetze vorhanden.").trim();
@@ -499,6 +491,7 @@
 
       root.innerHTML = `
         <div class="data-table-shell data-table-shell--inline-v2">
+          ${state.feedback ? `<div class="data-table-feedback is-${esc(state.feedback.type)}">${esc(state.feedback.text)}</div>` : ""}
           ${(title || (showViewSwitch && !showToolbar)) ? `
           <div class="title-row">
             <div>
@@ -681,12 +674,21 @@
 
       if (target?.closest?.("[data-inline-reset]")) {
         state.search = "";
+        state.filterPanelOpen = true;
         state.createOpen = false;
         state.openUtilityMenuKey = "";
         state.openEditorRowId = "";
         state.draftCreate = typeof config?.getCreateDefaults === "function" ? cloneRow(config.getCreateDefaults()) : {};
         render();
         config?.onReset?.();
+        return;
+      }
+
+      if (target?.closest?.("[data-inline-filter-toggle]")) {
+        if (filterFields.length) {
+          state.filterPanelOpen = state.filterPanelOpen === false;
+          render();
+        }
         return;
       }
 
@@ -756,15 +758,22 @@
             if (created) {
               state.createOpen = false;
               state.draftCreate = typeof config?.getCreateDefaults === "function" ? cloneRow(config.getCreateDefaults()) : {};
+              setFeedback("success", "Eintrag gespeichert.");
             }
           } else if (mode === "edit" && state.openEditorRowId) {
             const row = state.rows.find((entry) => rowKey(entry) === state.openEditorRowId);
             const saved = await config?.onEditSubmit?.(row, cloneRow(state.draftEdit));
             if (saved) {
+              applyOptimisticEdit(state.openEditorRowId, state.draftEdit);
               state.openEditorRowId = "";
               state.draftEdit = {};
+              setFeedback("success", "Änderungen gespeichert.");
             }
           }
+        } catch (error) {
+          const text = error instanceof Error && error.message ? error.message : "Speichern fehlgeschlagen.";
+          setFeedback("error", text);
+          throw error;
         } finally {
           render();
         }

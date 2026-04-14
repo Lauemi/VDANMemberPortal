@@ -4,8 +4,17 @@
 
 CREATE SCHEMA IF NOT EXISTS internal;
 
+CREATE TABLE IF NOT EXISTS internal.club_member_sequences (
+  club_id uuid PRIMARY KEY,
+  member_number_seq integer NOT NULL DEFAULT 0
+);
+
 ALTER TABLE public.club_members
   ADD COLUMN IF NOT EXISTS member_number     integer,
+  ADD COLUMN IF NOT EXISTS email             text,
+  ADD COLUMN IF NOT EXISTS phone             text,
+  ADD COLUMN IF NOT EXISTS city              text,
+  ADD COLUMN IF NOT EXISTS birthdate         date,
   ADD COLUMN IF NOT EXISTS source            text CHECK (source IN ('manual', 'csv_import', 'application')),
   ADD COLUMN IF NOT EXISTS invite_token      text,
   ADD COLUMN IF NOT EXISTS invite_sent_at    timestamptz,
@@ -36,21 +45,22 @@ CREATE INDEX IF NOT EXISTS idx_club_members_auth_user_id
   ON public.club_members (auth_user_id)
   WHERE auth_user_id IS NOT NULL;
 
-ALTER TABLE public.clubs
-  ADD COLUMN IF NOT EXISTS member_number_seq integer NOT NULL DEFAULT 0;
-
-UPDATE public.clubs c
-SET member_number_seq = COALESCE(
-  (SELECT MAX(cm.member_number)
-   FROM public.club_members cm
-   WHERE cm.club_id = c.id
-     AND cm.member_number IS NOT NULL),
-  0
+INSERT INTO internal.club_member_sequences (club_id, member_number_seq)
+SELECT
+  cm.club_id,
+  COALESCE(MAX(cm.member_number), 0) AS member_number_seq
+FROM public.club_members cm
+WHERE cm.club_id IS NOT NULL
+GROUP BY cm.club_id
+ON CONFLICT (club_id) DO UPDATE
+SET member_number_seq = GREATEST(
+  internal.club_member_sequences.member_number_seq,
+  EXCLUDED.member_number_seq
 );
 
 CREATE TABLE IF NOT EXISTS public.applications (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  club_id             uuid NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,
+  club_id             uuid NOT NULL,
   status              text NOT NULL DEFAULT 'pending'
                         CHECK (status IN ('pending', 'accepted', 'rejected')),
   first_name          text NOT NULL,
@@ -60,7 +70,7 @@ CREATE TABLE IF NOT EXISTS public.applications (
   birthdate           date,
   city                text,
   notes               text,
-  converted_member_id uuid REFERENCES public.club_members(id) ON DELETE SET NULL,
+  converted_member_no text,
   created_at          timestamptz NOT NULL DEFAULT now(),
   updated_at          timestamptz NOT NULL DEFAULT now()
 );
@@ -75,7 +85,7 @@ ALTER TABLE public.applications
 ALTER TABLE public.applications
   ADD CONSTRAINT applications_accepted_requires_member
   CHECK (
-    status != 'accepted' OR converted_member_id IS NOT NULL
+    status != 'accepted' OR converted_member_no IS NOT NULL
   );
 
 CREATE OR REPLACE FUNCTION internal.next_member_number(p_club_id uuid)
@@ -85,9 +95,22 @@ AS $$
 DECLARE
   v_next integer;
 BEGIN
-  UPDATE public.clubs
+  INSERT INTO internal.club_member_sequences (club_id, member_number_seq)
+  VALUES (
+    p_club_id,
+    COALESCE(
+      (SELECT MAX(cm.member_number)
+       FROM public.club_members cm
+       WHERE cm.club_id = p_club_id
+         AND cm.member_number IS NOT NULL),
+      0
+    )
+  )
+  ON CONFLICT (club_id) DO NOTHING;
+
+  UPDATE internal.club_member_sequences
   SET member_number_seq = member_number_seq + 1
-  WHERE id = p_club_id
+  WHERE club_id = p_club_id
   RETURNING member_number_seq INTO v_next;
 
   IF v_next IS NULL THEN
@@ -104,9 +127,24 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 AS $$
+  WITH seed AS (
+    INSERT INTO internal.club_member_sequences (club_id, member_number_seq)
+    VALUES (
+      p_club_id,
+      COALESCE(
+        (SELECT MAX(cm.member_number)
+         FROM public.club_members cm
+         WHERE cm.club_id = p_club_id
+           AND cm.member_number IS NOT NULL),
+        0
+      )
+    )
+    ON CONFLICT (club_id) DO NOTHING
+    RETURNING member_number_seq
+  )
   SELECT member_number_seq + 1
-  FROM public.clubs
-  WHERE id = p_club_id;
+  FROM internal.club_member_sequences
+  WHERE club_id = p_club_id;
 $$;
 
 CREATE OR REPLACE FUNCTION public.create_member(
@@ -274,9 +312,22 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized';
   END IF;
 
+  INSERT INTO internal.club_member_sequences (club_id, member_number_seq)
+  VALUES (
+    p_club_id,
+    COALESCE(
+      (SELECT MAX(cm.member_number)
+       FROM public.club_members cm
+       WHERE cm.club_id = p_club_id
+         AND cm.member_number IS NOT NULL),
+      0
+    )
+  )
+  ON CONFLICT (club_id) DO NOTHING;
+
   SELECT member_number_seq INTO v_existing_seq
-  FROM public.clubs
-  WHERE id = p_club_id
+  FROM internal.club_member_sequences
+  WHERE club_id = p_club_id
   FOR UPDATE;
 
   FOR v_row IN SELECT * FROM jsonb_array_elements(p_rows) LOOP
@@ -289,9 +340,9 @@ BEGIN
     END IF;
 
     IF v_member_number IS NULL THEN
-      UPDATE public.clubs
+      UPDATE internal.club_member_sequences
       SET member_number_seq = member_number_seq + 1
-      WHERE id = p_club_id
+      WHERE club_id = p_club_id
       RETURNING member_number_seq INTO v_member_number;
     END IF;
 
@@ -327,9 +378,9 @@ BEGIN
     END;
   END LOOP;
 
-  UPDATE public.clubs
+  UPDATE internal.club_member_sequences
   SET member_number_seq = GREATEST(member_number_seq, v_max_seen)
-  WHERE id = p_club_id;
+  WHERE club_id = p_club_id;
 
   RETURN jsonb_build_object('imported', v_imported, 'skipped', v_skipped);
 END;
@@ -388,7 +439,7 @@ BEGIN
 
   UPDATE public.applications
   SET status = 'accepted',
-      converted_member_id = v_member.id,
+      converted_member_no = v_member.member_no,
       updated_at = now()
   WHERE id = p_application_id;
 
@@ -397,7 +448,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.invite_member(
-  p_member_id      uuid,
+  p_member_no      text,
   p_expires_days   integer DEFAULT 14
 )
 RETURNS jsonb
@@ -410,10 +461,10 @@ DECLARE
 BEGIN
   SELECT * INTO v_member
   FROM public.club_members
-  WHERE id = p_member_id;
+  WHERE member_no = p_member_no;
 
   IF v_member IS NULL THEN
-    RAISE EXCEPTION 'Member not found: %', p_member_id;
+    RAISE EXCEPTION 'Member not found: %', p_member_no;
   END IF;
 
   IF NOT EXISTS (
@@ -437,7 +488,7 @@ BEGIN
       invite_expires_at = now() + (p_expires_days || ' days')::interval,
       invite_claimed_at = NULL,
       updated_at        = now()
-  WHERE id = p_member_id;
+  WHERE member_no = p_member_no;
 
   RETURN jsonb_build_object(
     'invite_token', v_token,
@@ -482,7 +533,7 @@ BEGIN
   SET auth_user_id      = p_auth_user_id,
       invite_claimed_at = now(),
       updated_at        = now()
-  WHERE id = v_member.id
+  WHERE member_no = v_member.member_no
   RETURNING * INTO v_member;
 
   RETURN v_member;
@@ -491,7 +542,7 @@ $$;
 
 CREATE OR REPLACE VIEW public.club_members_safe AS
   SELECT
-    id, club_id, member_number, source,
+    member_no, club_id, member_number, source,
     first_name, last_name, email,
     status, is_youth, membership_kind,
     birthdate, phone, city,

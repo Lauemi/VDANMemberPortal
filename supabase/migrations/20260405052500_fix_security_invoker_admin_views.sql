@@ -1,8 +1,6 @@
 begin;
-
 alter view if exists public.admin_member_cards_overview_v
   set (security_invoker = true);
-
 do $$
 begin
   if exists (
@@ -15,5 +13,4 @@ begin
   end if;
 end
 $$;
-
 commit;

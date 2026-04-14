@@ -12,7 +12,6 @@
 --   docs/supabase/83_club_module_governance_persistence_and_access_audit.sql
 
 begin;
-
 create table if not exists public.module_catalog (
   module_key text primary key,
   label text not null,
@@ -22,7 +21,6 @@ create table if not exists public.module_catalog (
   updated_at timestamptz not null default now(),
   check (module_key ~ '^[a-z0-9_]{2,60}$')
 );
-
 create table if not exists public.module_usecases (
   module_key text not null,
   usecase_key text not null,
@@ -37,7 +35,6 @@ create table if not exists public.module_usecases (
     on delete cascade,
   check (usecase_key ~ '^[a-z0-9_]{2,60}$')
 );
-
 create table if not exists public.club_module_usecases (
   club_id uuid not null,
   module_key text not null,
@@ -50,28 +47,22 @@ create table if not exists public.club_module_usecases (
     references public.module_usecases (module_key, usecase_key)
     on delete cascade
 );
-
 create index if not exists idx_club_module_usecases_club
   on public.club_module_usecases (club_id);
-
 create index if not exists idx_club_module_usecases_usecase
   on public.club_module_usecases (usecase_key);
-
 drop trigger if exists trg_module_catalog_updated_at on public.module_catalog;
 create trigger trg_module_catalog_updated_at
 before update on public.module_catalog
 for each row execute function public.tg_set_updated_at();
-
 drop trigger if exists trg_module_usecases_updated_at on public.module_usecases;
 create trigger trg_module_usecases_updated_at
 before update on public.module_usecases
 for each row execute function public.tg_set_updated_at();
-
 drop trigger if exists trg_club_module_usecases_updated_at on public.club_module_usecases;
 create trigger trg_club_module_usecases_updated_at
 before update on public.club_module_usecases
 for each row execute function public.tg_set_updated_at();
-
 create or replace function public.is_admin_in_any_club()
 returns boolean
 language sql
@@ -86,7 +77,6 @@ as $$
       and cur.role_key = 'admin'
   )
 $$;
-
 create or replace function public.has_usecase_access(
   p_club_id uuid,
   p_usecase_key text,
@@ -123,7 +113,6 @@ as $$
       )
   )
 $$;
-
 insert into public.module_catalog (module_key, label, is_active, sort_order)
 values
   ('fishing', 'Fishing', true, 10),
@@ -137,7 +126,6 @@ on conflict (module_key) do update
 set label = excluded.label,
     is_active = excluded.is_active,
     sort_order = excluded.sort_order;
-
 insert into public.module_usecases (module_key, usecase_key, label, is_active, sort_order)
 values
   ('fishing', 'fangliste', 'Fangliste', true, 10),
@@ -155,7 +143,6 @@ on conflict (module_key, usecase_key) do update
 set label = excluded.label,
     is_active = excluded.is_active,
     sort_order = excluded.sort_order;
-
 insert into public.club_module_usecases (club_id, module_key, usecase_key, is_enabled)
 select
   c.club_id,
@@ -172,7 +159,6 @@ join public.module_catalog mc
   on mc.module_key = mu.module_key
  and mc.is_active = true
 on conflict (club_id, module_key, usecase_key) do nothing;
-
 with defaults as (
   select * from (values
     ('member',   'fangliste',               true,  true,  false, false, false),
@@ -229,18 +215,15 @@ join defaults d
   on d.role_key = cr.role_key
 where cr.role_key in ('member', 'vorstand', 'admin')
 on conflict (club_id, role_key, module_key) do nothing;
-
 alter table public.module_catalog enable row level security;
 alter table public.module_usecases enable row level security;
 alter table public.club_module_usecases enable row level security;
-
 drop policy if exists "module_catalog_select_authenticated" on public.module_catalog;
 create policy "module_catalog_select_authenticated"
 on public.module_catalog
 for select
 to authenticated
 using (true);
-
 drop policy if exists "module_catalog_admin_any_club_all" on public.module_catalog;
 create policy "module_catalog_admin_any_club_all"
 on public.module_catalog
@@ -248,14 +231,12 @@ for all
 to authenticated
 using (public.is_admin_in_any_club())
 with check (public.is_admin_in_any_club());
-
 drop policy if exists "module_usecases_select_authenticated" on public.module_usecases;
 create policy "module_usecases_select_authenticated"
 on public.module_usecases
 for select
 to authenticated
 using (true);
-
 drop policy if exists "module_usecases_admin_any_club_all" on public.module_usecases;
 create policy "module_usecases_admin_any_club_all"
 on public.module_usecases
@@ -263,14 +244,12 @@ for all
 to authenticated
 using (public.is_admin_in_any_club())
 with check (public.is_admin_in_any_club());
-
 drop policy if exists "club_module_usecases_select_same_club_or_admin" on public.club_module_usecases;
 create policy "club_module_usecases_select_same_club_or_admin"
 on public.club_module_usecases
 for select
 to authenticated
 using (public.is_same_club(club_id) or public.is_admin_in_any_club());
-
 drop policy if exists "club_module_usecases_admin_same_club_or_admin" on public.club_module_usecases;
 create policy "club_module_usecases_admin_same_club_or_admin"
 on public.club_module_usecases
@@ -278,5 +257,4 @@ for all
 to authenticated
 using (public.is_admin_in_club(club_id) or public.is_admin_in_any_club())
 with check (public.is_admin_in_club(club_id) or public.is_admin_in_any_club());
-
 commit;

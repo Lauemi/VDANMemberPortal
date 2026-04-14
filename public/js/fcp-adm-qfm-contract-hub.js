@@ -68,6 +68,431 @@
     return fallback;
   }
 
+  function normalizeFieldType(rawType, fallback = "text") {
+    const value = String(rawType || "").trim().toLowerCase();
+    if (!value) return fallback;
+    if (["toggle-nullable", "boolean-nullable"].includes(value)) return "boolean-nullable";
+    if (["toggle", "checkbox", "boolean"].includes(value)) return "boolean";
+    if (["text", "email", "password", "tel", "url", "search"].includes(value)) return "text";
+    if (["number", "numeric"].includes(value)) return "number";
+    if (value === "select") return "select";
+    if (value === "date") return "date";
+    if (["datetime", "datetime-local", "timestamptz", "timestamp"].includes(value)) return "datetime";
+    if (value === "textarea") return "textarea";
+    if (["json", "jsonb", "json-display"].includes(value)) return "json-display";
+    if (["masked-text", "masked"].includes(value)) return "masked-text";
+    if (value === "readonly") return "readonly";
+    if (value === "select-multi") return "special";
+    return fallback;
+  }
+
+  function normalizeFieldOptions(options) {
+    return toArray(options)
+      .map((option) => {
+        if (option && typeof option === "object") {
+          const value = option.value ?? option.id ?? option.key ?? "";
+          return {
+            value,
+            label: option.label ?? value,
+          };
+        }
+        return {
+          value: option,
+          label: option,
+        };
+      })
+      .filter((option) => String(option.value ?? "").trim() !== "");
+  }
+
+  function fieldHelpText(field) {
+    return String(field?.help || field?.helpText || field?.description || "").trim();
+  }
+
+  function fieldBindingKey(field) {
+    return String(field?.name || field?.payloadKey || field?.key || "").trim();
+  }
+
+  function normalizeFieldDefinition(field, options = {}) {
+    const source = field && typeof field === "object" ? field : {};
+    const surface = String(options.surface || "form").trim() || "form";
+    const explicitSpecial = String(source.specialComponent || "").trim();
+    const rawType = source.editorType || source.inputType || source.type || source.componentType || "";
+    const normalizedType = explicitSpecial
+      ? "special"
+      : normalizeFieldType(rawType, surface === "readonly" ? "readonly" : "text");
+    const name = fieldBindingKey(source);
+    const readonly = source.readonly === true || source.editable === false || normalizedType === "readonly";
+    const normalized = {
+      ...source,
+      surface,
+      name,
+      payloadKey: String(source.payloadKey || name).trim() || null,
+      label: String(source.label || source.name || source.key || "").trim() || "-",
+      componentType: normalizedType,
+      editorType: normalizedType,
+      inputType: normalizedType === "boolean"
+        ? "checkbox"
+        : normalizedType === "readonly"
+          ? "text"
+          : normalizedType,
+      options: normalizeFieldOptions(source.options),
+      help: fieldHelpText(source),
+      readonly,
+      disabled: source.disabled === true || readonly,
+      required: source.required === true,
+      span: source.span || source.displaySpan || null,
+      rows: Number(source.rows) > 0 ? Number(source.rows) : 4,
+      value: source.value ?? source.defaultValue ?? (normalizedType === "boolean" ? false : ""),
+      specialComponent: explicitSpecial || (rawType === "select-multi" ? "select-multi" : ""),
+    };
+    if (normalized.componentType === "special") {
+      normalized.editorType = normalized.specialComponent || "special";
+    }
+    return normalized;
+  }
+
+  function normalizeFieldCollection(fields, options = {}) {
+    return toArray(fields).map((field) => normalizeFieldDefinition(field, options));
+  }
+
+  function valueToText(value) {
+    if (value == null || value === "") return "-";
+    if (Array.isArray(value)) {
+      return value.length ? value.map((entry) => valueToText(entry)).join(", ") : "-";
+    }
+    if (value && typeof value === "object") {
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return "[object]";
+      }
+    }
+    if (typeof value === "boolean") return value ? "Ja" : "Nein";
+    return String(value);
+  }
+
+  function formatDateValue(value, mode = "date") {
+    const text = String(value || "").trim();
+    if (!text) return "-";
+    const parsed = new Date(text);
+    if (Number.isNaN(parsed.getTime())) return text;
+    if (mode === "datetime") {
+      return parsed.toLocaleString("de-DE", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+    return parsed.toLocaleDateString("de-DE", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  }
+
+  function maskDisplayValue(value, options = {}) {
+    const text = String(value || "").trim();
+    if (!text) return "-";
+    const keep = Number(options.keepLast ?? 4);
+    if (text.length <= keep) return text;
+    return `${"•".repeat(Math.max(0, text.length - keep))}${text.slice(-keep)}`;
+  }
+
+  function formatFieldDisplayValue(field, value) {
+    const normalized = normalizeFieldDefinition({
+      ...(field && typeof field === "object" ? field : {}),
+      value,
+    }, { surface: "readonly" });
+    if (normalized.componentType === "boolean" || normalized.componentType === "boolean-nullable") {
+      if (value == null && normalized.componentType === "boolean-nullable") return "-";
+      return valueToText(Boolean(value));
+    }
+    if (normalized.componentType === "date") {
+      return formatDateValue(value, "date");
+    }
+    if (normalized.componentType === "datetime") {
+      return formatDateValue(value, "datetime");
+    }
+    if (normalized.componentType === "masked-text") {
+      return maskDisplayValue(value, normalized.maskOptions || {});
+    }
+    if (normalized.componentType === "json-display") {
+      if (value == null || value === "") return "-";
+      try {
+        return typeof value === "string" ? value : JSON.stringify(value);
+      } catch {
+        return valueToText(value);
+      }
+    }
+    return valueToText(value);
+  }
+
+  function renderReadonlyFieldNode(field, runtime = {}) {
+    const createElement = runtime.createElement;
+    if (typeof createElement !== "function") {
+      throw new Error("renderReadonlyFieldNode braucht createElement.");
+    }
+    const normalized = normalizeFieldDefinition(field, { surface: "readonly" });
+    const item = createElement("div", {
+      className: `qfp-readonly-item${normalized.span === "full" ? " is-full" : ""}`,
+    });
+    item.append(
+      createElement("div", { className: "qfp-field-label", text: normalized.label }),
+      createElement("div", { className: "qfp-field-value", text: formatFieldDisplayValue(normalized, normalized.value) })
+    );
+    return item;
+  }
+
+  function renderFieldNode(field, runtime = {}) {
+    const createElement = runtime.createElement;
+    const fieldClassName = String(runtime.fieldClassName || "qfp-form-field").trim() || "qfp-form-field";
+    const nameAttr = String(runtime.nameAttr || "name").trim() || "name";
+    const dataAttr = String(runtime.dataFieldAttr || "").trim();
+    const controlClassName = String(runtime.controlClassName || "").trim();
+    if (typeof createElement !== "function") {
+      throw new Error("renderFieldNode braucht createElement.");
+    }
+
+    const normalized = normalizeFieldDefinition(field, { surface: runtime.surface || "form" });
+    if (normalized.specialComponent) return null;
+    const label = createElement("label", {
+      className: `${fieldClassName}${normalized.span === "full" ? " is-full" : ""}${normalized.readonly ? " is-readonly" : ""}`,
+    });
+    label.append(createElement("span", {
+      className: "qfp-field-label",
+      text: normalized.label,
+    }));
+
+    const controlAttrs = {
+      [nameAttr]: normalized.name || undefined,
+      disabled: normalized.disabled ? "disabled" : undefined,
+      required: normalized.required ? "required" : undefined,
+    };
+    if (dataAttr) controlAttrs[dataAttr] = normalized.payloadKey || normalized.name || undefined;
+    if (normalized.placeholder) controlAttrs.placeholder = normalized.placeholder;
+    if (normalized.autocomplete) controlAttrs.autocomplete = normalized.autocomplete;
+    if (normalized.inputMode) controlAttrs.inputmode = normalized.inputMode;
+
+    if (normalized.componentType === "textarea") {
+      label.append(
+        createElement("textarea", {
+          className: controlClassName || undefined,
+          attrs: {
+            ...controlAttrs,
+            rows: normalized.rows || 4,
+          },
+          text: String(normalized.value ?? ""),
+        })
+      );
+    } else if (normalized.componentType === "select") {
+      const select = createElement("select", {
+        className: controlClassName || undefined,
+        attrs: controlAttrs,
+      });
+      normalized.options.forEach((option) => {
+        select.append(
+          createElement("option", {
+            text: option.label || option.value,
+            attrs: {
+              value: option.value,
+              selected: String(option.value ?? "") === String(normalized.value ?? "") ? "selected" : undefined,
+            },
+          })
+        );
+      });
+      label.append(select);
+    } else if (normalized.componentType === "boolean" || normalized.componentType === "boolean-nullable") {
+      const toggleRow = createElement("div", { className: "qfp-toggle-row" });
+      toggleRow.append(
+        createElement("input", {
+          className: controlClassName || undefined,
+          attrs: {
+            ...controlAttrs,
+            type: "checkbox",
+            checked: normalized.value ? "checked" : undefined,
+          },
+        }),
+        createElement("span", {
+          className: "qfp-toggle-label",
+          text: normalized.help || normalized.label,
+        })
+      );
+      label.append(toggleRow);
+    } else if (normalized.componentType === "json-display") {
+      label.append(
+        createElement("textarea", {
+          className: controlClassName || undefined,
+          attrs: {
+            ...controlAttrs,
+            rows: normalized.rows || 4,
+            readonly: "readonly",
+          },
+          text: formatFieldDisplayValue(normalized, normalized.value),
+        })
+      );
+    } else {
+      const inputType = normalized.componentType === "number"
+        ? "number"
+        : normalized.componentType === "date"
+          ? "date"
+          : normalized.componentType === "datetime"
+            ? "datetime-local"
+          : "text";
+      label.append(
+        createElement("input", {
+          className: controlClassName || undefined,
+          attrs: {
+            ...controlAttrs,
+            type: inputType,
+            value: normalized.componentType === "masked-text"
+              ? formatFieldDisplayValue(normalized, normalized.value)
+              : (normalized.value ?? ""),
+          },
+        })
+      );
+    }
+
+    if (normalized.help && normalized.componentType !== "boolean") {
+      label.append(createElement("span", { className: "qfp-field-help", text: normalized.help }));
+    }
+    return label;
+  }
+
+  function readFieldValue(root, field, options = {}) {
+    if (!(root instanceof HTMLElement)) return undefined;
+    const normalized = normalizeFieldDefinition(field, { surface: options.surface || "form" });
+    if (normalized.specialComponent || !normalized.payloadKey) return undefined;
+    const selectorAttr = String(options.selectorAttr || "name").trim() || "name";
+    const selectorValue = selectorAttr === "name" ? normalized.name : normalized.payloadKey;
+    if (!selectorValue) return undefined;
+    const node = root.querySelector(`[${selectorAttr}="${CSS.escape(selectorValue)}"]`);
+    if (!node) return undefined;
+    if (node instanceof HTMLInputElement && node.type === "checkbox") {
+      return Boolean(node.checked);
+    }
+    const rawValue = "value" in node ? node.value : "";
+    if (options.emptyAsNull && rawValue === "") return null;
+    return rawValue;
+  }
+
+  function collectFieldPayload(root, fields, options = {}) {
+    return normalizeFieldCollection(fields, { surface: options.surface || "form" }).reduce((acc, field) => {
+      if (!field.payloadKey || (field.readonly && options.includeReadonly !== true) || field.specialComponent) {
+        return acc;
+      }
+      const value = readFieldValue(root, field, options);
+      if (value === undefined) return acc;
+      acc[field.payloadKey] = value;
+      return acc;
+    }, {});
+  }
+
+  function normalizeColumnField(column, row, options = {}) {
+    const source = column && typeof column === "object" ? column : {};
+    const value = source?.key ? row?.[source.key] : null;
+    return normalizeFieldDefinition({
+      key: source.key,
+      name: source.key,
+      label: source.label || source.key,
+      value: source.type === "boolean" ? Boolean(value) : (value ?? ""),
+      editable: source.editable !== false,
+      readonly: source.editable === false || source.editorType === "readonly",
+      payloadKey: String(source.payloadKey || source.key || "").trim(),
+      options: Array.isArray(source.options) ? source.options : [],
+      editorType: source.editorType || (source.type === "boolean" ? "checkbox" : "text"),
+      type: source.editorType || source.type || "text",
+      placeholder: source.placeholder || "",
+      specialComponent: source.editorType === "select-multi" ? "select-multi" : "",
+    }, { surface: options.surface || "dialog" });
+  }
+
+  function renderFieldControlHtml(field, runtime = {}) {
+    const esc = typeof runtime.esc === "function" ? runtime.esc : (value) => String(value ?? "");
+    const mode = String(runtime.mode || "edit").trim() || "edit";
+    const normalized = normalizeFieldDefinition(field, { surface: runtime.surface || "inline" });
+
+    if (normalized.specialComponent === "select-multi") {
+      const currentValues = Array.isArray(normalized.value)
+        ? normalized.value
+            .map((entry) => {
+              if (entry && typeof entry === "object") {
+                return String(entry.id || entry.value || entry.key || "").trim();
+              }
+              return String(entry || "").trim();
+            })
+            .filter(Boolean)
+        : [];
+      const selected = new Set(currentValues);
+      return `
+        <div class="data-table__multi-select" data-editor-mode="${esc(mode)}" data-editor-key="${esc(normalized.payloadKey || normalized.name)}">
+          ${normalized.options.map((option) => `
+            <label class="inline-check">
+              <input type="checkbox" value="${esc(option.value)}" ${selected.has(String(option.value)) ? "checked" : ""} />
+              <span>${esc(option.label)}</span>
+            </label>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    if (normalized.readonly || normalized.componentType === "readonly" || normalized.componentType === "json-display") {
+      return `<div class="data-table__editor-readonly">${esc(formatFieldDisplayValue(normalized, normalized.value))}</div>`;
+    }
+
+    if (normalized.componentType === "select") {
+      return `
+        <select class="data-table__editor-control" data-editor-mode="${esc(mode)}" data-editor-key="${esc(normalized.payloadKey || normalized.name)}" ${normalized.disabled ? "disabled" : ""}>
+          ${normalized.options.map((option) => `
+            <option value="${esc(option.value)}" ${String(option.value) === String(normalized.value ?? "") ? "selected" : ""}>${esc(option.label)}</option>
+          `).join("")}
+        </select>
+      `;
+    }
+
+    if (normalized.componentType === "boolean" || normalized.componentType === "boolean-nullable") {
+      return `
+        <label class="inline-check inline-check--single">
+          <input type="checkbox" data-editor-mode="${esc(mode)}" data-editor-key="${esc(normalized.payloadKey || normalized.name)}" ${normalized.value ? "checked" : ""} ${normalized.disabled ? "disabled" : ""} />
+          <span>${esc(normalized.label)}</span>
+        </label>
+      `;
+    }
+
+    if (normalized.componentType === "textarea") {
+      return `
+        <textarea
+          class="data-table__editor-control"
+          data-editor-mode="${esc(mode)}"
+          data-editor-key="${esc(normalized.payloadKey || normalized.name)}"
+          rows="${esc(normalized.rows || 4)}"
+          placeholder="${esc(normalized.placeholder || "")}"
+          ${normalized.disabled ? "disabled" : ""}
+        >${esc(normalized.value ?? "")}</textarea>
+      `;
+    }
+
+    const inputType = normalized.componentType === "number"
+      ? "number"
+      : normalized.componentType === "date"
+        ? "date"
+        : normalized.componentType === "datetime"
+          ? "datetime-local"
+        : "text";
+    return `
+      <input
+        class="data-table__editor-control"
+        data-editor-mode="${esc(mode)}"
+        data-editor-key="${esc(normalized.payloadKey || normalized.name)}"
+        type="${esc(inputType)}"
+        value="${esc(normalized.componentType === "masked-text" ? formatFieldDisplayValue(normalized, normalized.value) : (normalized.value ?? ""))}"
+        placeholder="${esc(normalized.placeholder || "")}"
+        ${normalized.disabled ? "disabled" : ""}
+      />
+    `;
+  }
+
   function authSession() {
     try {
       if (window.VDAN_AUTH?.loadSession) return window.VDAN_AUTH.loadSession();
@@ -93,11 +518,14 @@
 
   async function rpcPost(path, payload, withAuth = false) {
     const baseUrl = String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, "");
+    const apiKey = String(window.__APP_SUPABASE_KEY || "").trim();
     if (!baseUrl) throw new Error("Supabase-URL fehlt.");
+    if (!apiKey) throw new Error("Supabase-API-Key fehlt.");
     const headers = new Headers({
       "Content-Type": "application/json",
       Accept: "application/json",
     });
+    headers.set("apikey", apiKey);
     if (withAuth) {
       const token = await authToken();
       if (!token) throw new Error("Keine aktive Sitzung gefunden.");
@@ -120,6 +548,81 @@
     }
   }
 
+  async function edgePost(functionName, payload) {
+    const baseUrl = String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, "");
+    const apiKey = String(window.__APP_SUPABASE_KEY || "").trim();
+    if (!baseUrl) throw new Error("Supabase-URL fehlt.");
+    if (!apiKey) throw new Error("Supabase-API-Key fehlt.");
+
+    const requestBody = JSON.stringify(payload || {});
+
+    async function runRequest({ forceRefresh = false, useCustomTokenHeader = false } = {}) {
+      const token = await authToken(forceRefresh);
+      if (!token) throw new Error("Keine aktive Sitzung gefunden.");
+      const headers = new Headers({
+        apikey: apiKey,
+        "Content-Type": "application/json",
+        Authorization: useCustomTokenHeader ? `Bearer ${apiKey}` : `Bearer ${token}`,
+      });
+      if (useCustomTokenHeader) headers.set("x-vdan-access-token", token);
+
+      const response = await fetch(`${baseUrl}/functions/v1/${functionName}`, {
+        method: "POST",
+        headers,
+        body: requestBody,
+      });
+      const data = await response.json().catch(() => ({}));
+      return { response, data };
+    }
+
+    let { response, data } = await runRequest({ forceRefresh: false, useCustomTokenHeader: false });
+    if (response.status === 401) {
+      ({ response, data } = await runRequest({ forceRefresh: true, useCustomTokenHeader: false }));
+    }
+    if (response.status === 401) {
+      ({ response, data } = await runRequest({ forceRefresh: true, useCustomTokenHeader: true }));
+    }
+
+    if (!response.ok || data?.ok === false) {
+      throw new Error(String(data?.error || data?.message || `Edge Function fehlgeschlagen (${response.status})`));
+    }
+    return data;
+  }
+
+  async function authJson(path, { method = "GET", body = null } = {}) {
+    const baseUrl = String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, "");
+    const apiKey = String(window.__APP_SUPABASE_KEY || "").trim();
+    if (!baseUrl) throw new Error("Supabase-URL fehlt.");
+    if (!apiKey) throw new Error("Supabase-API-Key fehlt.");
+
+    async function runRequest({ forceRefresh = false } = {}) {
+      const token = await authToken(forceRefresh);
+      if (!token) throw new Error("Keine aktive Sitzung gefunden.");
+      const headers = new Headers({
+        apikey: apiKey,
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      });
+      if (body != null) headers.set("Content-Type", "application/json");
+      const response = await fetch(`${baseUrl}${path}`, {
+        method,
+        headers,
+        body: body != null ? JSON.stringify(body) : undefined,
+      });
+      const data = await response.json().catch(() => ([]));
+      return { response, data };
+    }
+
+    let { response, data } = await runRequest({ forceRefresh: false });
+    if (response.status === 401) {
+      ({ response, data } = await runRequest({ forceRefresh: true }));
+    }
+    if (!response.ok) {
+      throw new Error(String(data?.message || `Request fehlgeschlagen (${response.status})`));
+    }
+    return data;
+  }
+
   function buildFieldValue(field, model) {
     const valueFromPath = getByPath(model, field.valuePath);
     if (valueFromPath !== undefined && valueFromPath !== null) return valueFromPath;
@@ -128,10 +631,10 @@
 
   function hydrateFormContent(fieldDefs, model) {
     return {
-      fields: toArray(fieldDefs).map((field) => ({
+      fields: normalizeFieldCollection(toArray(fieldDefs).map((field) => ({
         ...field,
         value: buildFieldValue(field, model),
-      })),
+      })), { surface: "form" }),
       rows: [],
       actions: [],
       blocks: [],
@@ -291,6 +794,19 @@
     return null;
   }
 
+  function resolvePanelClass(panel) {
+    const explicit = String(panel?.meta?.panelClass || "").trim();
+    if (explicit) return explicit;
+    const state = resolvePanelSurfaceState(panel)?.key || "live";
+    if (state === "gap") return "gap";
+    if (state === "preview") return "preview-only";
+    const loadKind = String(panel?.loadBinding?.kind || "none").trim();
+    const saveKind = String(panel?.saveBinding?.kind || "none").trim();
+    if (loadKind === "none" && saveKind !== "none") return "write-first";
+    if (loadKind === "local_only" && saveKind === "none") return "static";
+    return "read-first";
+  }
+
   function panelStateLabel(key) {
     switch (key) {
       case "live":
@@ -359,6 +875,7 @@
       saveBinding: normalizeBinding(panel?.saveBinding, panelId),
       securityContext: panel?.securityContext || null,
       panelState: String(surfaceState?.key || panel?.meta?.panelState || "live").trim() || "live",
+      panelClass: resolvePanelClass(panel),
       tableConfig: panel?.tableConfig || null,
       componentType: normalizeTableComponentType(panel?.componentType) || String(panel?.componentType || "").trim() || null,
       renderMode: String(panel?.renderMode || "").trim() || null,
@@ -483,15 +1000,10 @@
   function buildTableDialogFields(panel, row) {
     return toArray(panel?.columns)
       .filter((column) => column?.key && column.type !== "actions")
-      .map((column) => ({
-        key: column.key,
-        label: column.label || column.key,
-        editable: column.editable !== false,
-        editorType: column.editorType || (column.type === "boolean" ? "checkbox" : "text"),
-        payloadKey: String(column.payloadKey || column.key || "").trim(),
-        options: Array.isArray(column.options) ? column.options : [],
+      .map((column) => normalizeColumnField({
+        ...column,
         value: normalizeDialogFieldValue(column, row),
-      }));
+      }, row, { surface: "dialog" }));
   }
 
   function buildTableRuntimeOptions(panel, columns, rows, runtimeContext = {}) {
@@ -510,6 +1022,7 @@
     const panelId = String(panel?.id || "").trim();
     const utilityActions = Array.isArray(tableConfig?.utilityActions) ? tableConfig.utilityActions : [];
     const utilityHandler = String(tableConfig?.utilityHandler || "").trim();
+    let clubContextPromise = null;
 
     function normalizedRows() {
       return Array.isArray(rows) ? rows : [];
@@ -534,12 +1047,119 @@
       ).trim();
     }
 
+    async function resolveRuntimeClubContext() {
+      if (clubContextPromise) return clubContextPromise;
+
+      clubContextPromise = (async () => {
+        let requestedClubId = "";
+        try {
+          const params = new URLSearchParams(window.location.search || "");
+          requestedClubId = String(params.get("club_id") || "").trim();
+        } catch {
+          requestedClubId = "";
+        }
+
+        const session = authSession();
+        const userId = String(session?.user?.id || "").trim();
+        const baseContext = {
+          club_id: "",
+          club_code: "",
+        };
+        if (!userId) return baseContext;
+
+        const [profileRows, aclRows, legacyRows, identityRows] = await Promise.all([
+          authJson(`/rest/v1/profiles?select=club_id&id=eq.${encodeURIComponent(userId)}&limit=1`, { method: "GET" }).catch(() => []),
+          authJson(`/rest/v1/club_user_roles?select=club_id,role_key&user_id=eq.${encodeURIComponent(userId)}`, { method: "GET" }).catch(() => []),
+          authJson(`/rest/v1/user_roles?select=club_id,role&user_id=eq.${encodeURIComponent(userId)}`, { method: "GET" }).catch(() => []),
+          authJson("/rest/v1/rpc/get_club_identity_map", { method: "POST", body: {} }).catch(() => []),
+        ]);
+
+        const managedClubIds = new Set();
+        toArray(aclRows).forEach((entry) => {
+          const clubId = String(entry?.club_id || "").trim();
+          const roleKey = String(entry?.role_key || "").trim().toLowerCase();
+          if (clubId && ["admin", "vorstand", "superadmin"].includes(roleKey)) managedClubIds.add(clubId);
+        });
+        toArray(legacyRows).forEach((entry) => {
+          const clubId = String(entry?.club_id || "").trim();
+          const roleKey = String(entry?.role || "").trim().toLowerCase();
+          if (clubId && ["admin", "vorstand", "superadmin"].includes(roleKey)) managedClubIds.add(clubId);
+        });
+
+        const profile = Array.isArray(profileRows) && profileRows.length ? profileRows[0] : {};
+        let clubId = requestedClubId || String(profile?.club_id || "").trim();
+        if (!clubId && managedClubIds.size === 1) clubId = [...managedClubIds][0] || "";
+        if (!clubId && managedClubIds.size > 1) clubId = [...managedClubIds].sort((a, b) => a.localeCompare(b, "de"))[0] || "";
+
+        const identity = toArray(identityRows).find((entry) => String(entry?.club_id || "").trim() === clubId) || {};
+        return {
+          club_id: clubId,
+          club_code: String(identity?.club_code || "").trim(),
+        };
+      })();
+
+      return clubContextPromise;
+    }
+
+    async function currentClubIdAsync(row, draft) {
+      const direct = currentClubId(row, draft);
+      if (direct) return direct;
+      const context = await resolveRuntimeClubContext().catch(() => ({ club_id: "" }));
+      return String(context?.club_id || "").trim();
+    }
+
+    function normalizedCardAssignments(value, fallbackLabel = "") {
+      if (Array.isArray(value)) {
+        const next = value
+          .map((entry) => {
+            if (entry && typeof entry === "object") {
+              return String(entry.id || entry.value || entry.key || "").trim().toLowerCase();
+            }
+            return String(entry || "").trim().toLowerCase();
+          })
+          .filter(Boolean);
+        return [...new Set(next)].filter((entry) => entry === "innenwasser" || entry === "rheinlos39");
+      }
+
+      const legacy = String(value || fallbackLabel || "").toLowerCase();
+      const next = [];
+      if (legacy.includes("innenwasser") || legacy.includes("innewasser")) next.push("innenwasser");
+      if (legacy.includes("rheinlos") || legacy.includes("rhein")) next.push("rheinlos39");
+      return [...new Set(next)];
+    }
+
+    function canonicalFishingCardType(cardAssignments) {
+      const ids = normalizedCardAssignments(cardAssignments);
+      const hasInnen = ids.includes("innenwasser");
+      const hasRhein = ids.includes("rheinlos39");
+      if (hasInnen && hasRhein) return "Innenwasser + Rheinlos";
+      if (hasInnen) return "Innenwasser";
+      if (hasRhein) return "Rheinlos";
+      return "-";
+    }
+
+    async function assignMemberCards(clubId, memberNo, draft, row = null) {
+      const cardIds = normalizedCardAssignments(
+        draft?.card_assignments,
+        draft?.fishing_card_type || row?.fishing_card_type || ""
+      );
+      if (!clubId) throw new Error("club_id fehlt fuer die Kartenzuordnung.");
+      if (!memberNo) throw new Error("member_no fehlt fuer die Kartenzuordnung.");
+      await rpcPost("/rest/v1/rpc/admin_member_assign_cards", {
+        p_club_id: clubId,
+        p_member_no: memberNo,
+        p_card_ids: cardIds,
+      }, true);
+      return canonicalFishingCardType(cardIds);
+    }
+
     async function createMemberRegistryRow(draft) {
       const clubId = currentClubId(null, draft);
       const clubCode = currentClubCode(null, draft);
       if (!clubId) throw new Error("club_id fehlt fuer das Anlegen.");
       if (!clubCode) throw new Error("club_code fehlt fuer das Anlegen.");
-      await rpcPost("/rest/v1/rpc/admin_member_registry_create", {
+      const legacyFishingCardType = canonicalFishingCardType(draft?.card_assignments || draft?.fishing_card_type);
+      const createdRows = await rpcPost("/rest/v1/rpc/admin_member_registry_create", {
         p_club_id: clubId,
         p_club_code: clubCode,
         p_club_member_no: String(draft?.club_member_no || "").trim().toUpperCase() || null,
@@ -547,7 +1167,7 @@
         p_last_name: String(draft?.last_name || "").trim() || null,
         p_role: String(draft?.role || "member").trim().toLowerCase() || "member",
         p_status: String(draft?.status || "Aktiv").trim() || null,
-        p_fishing_card_type: String(draft?.fishing_card_type || "").trim() || null,
+        p_fishing_card_type: legacyFishingCardType === "-" ? null : legacyFishingCardType,
         p_street: String(draft?.street || "").trim() || null,
         p_email: String(draft?.email || "").trim().toLowerCase() || null,
         p_zip: String(draft?.zip || "").trim() || null,
@@ -558,15 +1178,29 @@
         p_guardian_member_no: String(draft?.guardian_member_no || "").trim() || null,
         p_sepa_approved: String(draft?.sepa_approved || "false") === "true" || draft?.sepa_approved === true,
       }, true);
+      const createdMemberNo = String(
+        (Array.isArray(createdRows) && createdRows[0]?.member_no)
+        || draft?.member_no
+        || ""
+      ).trim();
+      if (createdMemberNo) {
+        await assignMemberCards(clubId, createdMemberNo, draft, null);
+      }
       if (typeof pattern?.loadPanel === "function") {
         await pattern.loadPanel(section.id, panelId).catch(() => null);
       }
+      message("Mitglied gespeichert.");
       return true;
     }
 
     async function updateMemberRegistryRow(row, draft) {
       const memberNo = String(row?.member_no || draft?.member_no || "").trim();
+      const clubId = currentClubId(row, draft);
       if (!memberNo) throw new Error("member_no fehlt fuer das Speichern.");
+      if (!clubId) throw new Error("club_id fehlt fuer das Speichern.");
+      const legacyFishingCardType = canonicalFishingCardType(
+        draft?.card_assignments || draft?.fishing_card_type || row?.fishing_card_type
+      );
       await rpcPost("/rest/v1/rpc/admin_member_registry_update", {
         p_member_no: memberNo,
         p_club_member_no: String(draft?.club_member_no || "").trim().toUpperCase() || null,
@@ -574,7 +1208,7 @@
         p_last_name: String(draft?.last_name || "").trim() || null,
         p_role: String(draft?.role || "member").trim().toLowerCase() || "member",
         p_status: String(draft?.status || "").trim() || null,
-        p_fishing_card_type: String(draft?.fishing_card_type || "").trim() || null,
+        p_fishing_card_type: legacyFishingCardType === "-" ? null : legacyFishingCardType,
         p_street: String(draft?.street || "").trim() || null,
         p_email: String(draft?.email || "").trim().toLowerCase() || null,
         p_zip: String(draft?.zip || "").trim() || null,
@@ -585,9 +1219,11 @@
         p_guardian_member_no: String(draft?.guardian_member_no || "").trim() || null,
         p_sepa_approved: String(draft?.sepa_approved || "false") === "true" || draft?.sepa_approved === true,
       }, true);
+      await assignMemberCards(clubId, memberNo, draft, row);
       if (typeof pattern?.loadPanel === "function") {
         await pattern.loadPanel(section.id, panelId).catch(() => null);
       }
+      message("Änderungen gespeichert.");
       return true;
     }
 
@@ -606,12 +1242,63 @@
       return true;
     }
 
+    async function saveWaterRow(row, draft) {
+      const clubId = await currentClubIdAsync(row, draft);
+      const waterId = String(draft?.water_id || row?.water_id || row?.id || "").trim();
+      const name = String(draft?.name ?? row?.name ?? "").trim();
+      if (!clubId) throw new Error("club_id fehlt fuer das Gewaesser.");
+      if (!waterId) throw new Error("water_id fehlt fuer das Gewaesser.");
+      if (!name) throw new Error("Name fehlt fuer das Gewaesser.");
+
+      await edgePost("club-onboarding-workspace", {
+        action: "update_water",
+        club_id: clubId,
+        water_id: waterId,
+        name,
+        water_type: String(draft?.water_type ?? row?.water_type ?? "").trim(),
+        water_status: String(draft?.water_status ?? row?.water_status ?? "active").trim() || "active",
+        is_youth_allowed: Boolean(draft?.is_youth_allowed ?? row?.is_youth_allowed),
+        requires_board_approval: Boolean(draft?.requires_board_approval ?? row?.requires_board_approval),
+        water_cards: normalizedCardAssignments(draft?.water_cards ?? row?.water_cards),
+      });
+
+      if (typeof pattern?.loadPanel === "function") {
+        await pattern.loadPanel(section.id, panelId).catch(() => null);
+      }
+      message("Gewaesser gespeichert.");
+      return true;
+    }
+
+    async function deleteWaterRow(row) {
+      const clubId = await currentClubIdAsync(row, null);
+      const waterId = String(row?.water_id || row?.id || "").trim();
+      if (!clubId) throw new Error("club_id fehlt fuer das Loeschen.");
+      if (!waterId) throw new Error("water_id fehlt fuer das Loeschen.");
+
+      await edgePost("club-onboarding-workspace", {
+        action: "delete_water",
+        club_id: clubId,
+        water_id: waterId,
+      });
+
+      if (typeof pattern?.loadPanel === "function") {
+        await pattern.loadPanel(section.id, panelId).catch(() => null);
+      }
+      message("Gewaesser geloescht.");
+      return true;
+    }
+
     async function saveThroughPanel(payload) {
       if (!pattern || !section?.id || !panelId || typeof pattern.savePanel !== "function") {
         message("Table-Vertrag ist noch nicht vollstaendig angeschlossen.");
         return false;
       }
-      const result = await pattern.savePanel(section.id, panelId, payload);
+      const normalizedPayload = payload && typeof payload === "object" ? { ...payload } : {};
+      if (panelId === "club_settings_waters_table") {
+        const waterId = String(normalizedPayload.water_id || normalizedPayload.id || "").trim();
+        if (waterId) normalizedPayload.water_id = waterId;
+      }
+      const result = await pattern.savePanel(section.id, panelId, normalizedPayload);
       if (result?.ok === true && typeof pattern.loadPanel === "function") {
         await pattern.loadPanel(section.id, panelId).catch(() => null);
       }
@@ -770,6 +1457,18 @@
                 }
                 return ok;
               }
+              if (panelId === "club_settings_waters_table") {
+                const ok = await saveWaterRow(row, draft);
+                if (ok) {
+                  dispatchTableContractEvent("fcp-mask:table-row-save", {
+                    panelId,
+                    sectionId: section?.id || "",
+                    row,
+                    payload: buildTableRowSavePayload(row, draft),
+                  });
+                }
+                return ok;
+              }
               const payload = buildTableRowSavePayload(row, draft);
               const ok = await saveThroughPanel(payload);
               if (ok) {
@@ -824,6 +1523,10 @@
             await deleteMemberRegistryRow(row);
             return;
           }
+          if (panelId === "club_settings_waters_table") {
+            await deleteWaterRow(row);
+            return;
+          }
           if (actionContract?.actionDefaults?.payloadDefaults && writable) {
             const payload = {
               ...(row && typeof row === "object" ? row : {}),
@@ -859,6 +1562,22 @@
       mergeRecordSources,
       normalizeBindingResult,
       normalizeErrorMessage,
+      valueToText,
+    }),
+    field: Object.freeze({
+      normalizeFieldType,
+      normalizeFieldDefinition,
+      normalizeFieldCollection,
+      normalizeColumnField,
+      fieldHelpText,
+      renderFieldNode,
+      renderReadonlyFieldNode,
+      renderFieldControlHtml,
+      readFieldValue,
+      collectFieldPayload,
+      valueToText,
+      formatFieldDisplayValue,
+      maskDisplayValue,
     }),
     read: Object.freeze({
       buildFieldValue,
@@ -893,6 +1612,7 @@
     dialog: Object.freeze({
       panelStateLabel,
       resolvePanelSurfaceState,
+      resolvePanelClass,
     }),
     security: Object.freeze({
       requiresClubContext,

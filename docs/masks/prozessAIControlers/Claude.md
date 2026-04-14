@@ -33,6 +33,12 @@ Arbeite immer mit dieser Trennung:
 - Renderer = UI
 - CSS = Optik
 
+ADM-first-Zusatz:
+- fuer den aktiven Workspace-Standard ist `ADM_*.json` die Primaerquelle
+- wiederholte ADM-Muster sind als Standard zu lesen
+- Runtime-Sonderlogik ist sichtbar zu benennen, aber nicht automatisch JSON-Standard
+- Referenz: `docs/masks/standards/ADM_STANDARDMATRIX_V1.md`
+
 Niemals:
 - Prozessfreigaben aus UI ableiten
 - Security aus Sichtbarkeit ableiten

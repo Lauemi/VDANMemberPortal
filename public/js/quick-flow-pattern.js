@@ -18,6 +18,11 @@
 */
 
 (function attachQuickFlowPattern(globalScope) {
+  const contractHub = globalScope.FcpAdmQfmContractHub || {};
+  const fieldContracts = contractHub.field || {};
+  const sharedContracts = contractHub.shared || {};
+  const tableContracts = contractHub.table || {};
+
   const DEFAULTS = {
     maskFamily: "QFM",
     maskType: "sectioned",
@@ -841,14 +846,13 @@
       className: "qfp-form-grid",
       onSubmit: async (event) => {
         event.preventDefault();
-        const formData = new FormData(form);
-        const payload = {};
-        formData.forEach((value, key) => {
-          payload[key] = value;
-        });
-        form.querySelectorAll('input[type="checkbox"][name]').forEach((checkbox) => {
-          payload[checkbox.name] = checkbox.checked;
-        });
+        const payload = typeof fieldContracts.collectFieldPayload === "function"
+          ? fieldContracts.collectFieldPayload(form, fields, {
+              surface: "form",
+              selectorAttr: "name",
+              emptyAsNull: false,
+            })
+          : {};
         await pattern.savePanel(section.id, panel.id, payload);
       },
     });
@@ -881,99 +885,19 @@
 
       const groupGrid = createElement("div", { className: "qfp-form-section__grid" });
       visibleFields.forEach((field) => {
-      const fieldWrap = createElement("label", {
-        className: `qfp-form-field${field.span === "full" ? " is-full" : ""}${field.readonly ? " is-readonly" : ""}`,
+        const canWrite = pattern.can("write", panel.permissions || section.permissions) && pattern.canFieldAccess(field, "write");
+        const node = typeof fieldContracts.renderFieldNode === "function"
+          ? fieldContracts.renderFieldNode({
+              ...field,
+              disabled: field.disabled || !canWrite,
+            }, {
+              createElement,
+              surface: "form",
+              fieldClassName: "qfp-form-field",
+            })
+          : null;
+        if (node) groupGrid.append(node);
       });
-      fieldWrap.append(createElement("span", { className: "qfp-field-label", text: field.label || field.name || "-" }));
-
-      let control;
-      const disabled =
-        field.disabled ||
-        !pattern.can("write", panel.permissions || section.permissions) ||
-        !pattern.canFieldAccess(field, "write");
-      if (field.type === "select") {
-        control = createElement("select", {
-          attrs: {
-            name: field.name,
-            disabled: disabled ? "disabled" : undefined,
-            required: field.required ? "required" : undefined,
-          },
-        });
-        (field.options || []).forEach((option) => {
-          control.append(
-            createElement("option", {
-              text: option.label || option.value,
-              attrs: {
-                value: option.value,
-                selected: option.value === field.value ? "selected" : undefined,
-              },
-            })
-          );
-        });
-      } else if (field.type === "textarea") {
-        control = createElement("textarea", {
-          text: field.value == null ? "" : String(field.value),
-          attrs: {
-            name: field.name,
-            rows: field.rows || 4,
-            placeholder: field.placeholder,
-            disabled: disabled ? "disabled" : undefined,
-            required: field.required ? "required" : undefined,
-          },
-        });
-      } else if (field.type === "toggle") {
-        const statusOnly = Boolean(field.readonly || field.disabled);
-        const toggleWrap = createElement("div", { className: statusOnly ? "qfp-status-field" : "qfp-toggle-row" });
-        if (statusOnly) {
-          toggleWrap.append(
-            createElement("span", {
-              className: `qfp-status-field__badge${field.value ? " is-positive" : " is-pending"}`,
-              text: field.value ? "Bestätigt" : "Noch offen",
-            }),
-            createElement("span", {
-              className: "qfp-status-field__copy",
-              text: field.description || field.help || "",
-            })
-          );
-        } else {
-          control = createElement("input", {
-            attrs: {
-              type: "checkbox",
-              name: field.name,
-              checked: field.value ? "checked" : undefined,
-              disabled: disabled ? "disabled" : undefined,
-              required: field.required ? "required" : undefined,
-            },
-          });
-          toggleWrap.append(control, createElement("span", { className: "qfp-toggle-label", text: field.description || "" }));
-        }
-        fieldWrap.append(toggleWrap);
-        if (field.help && !statusOnly) {
-          fieldWrap.append(createElement("div", { className: "qfp-field-help", text: field.help }));
-        }
-        groupGrid.append(fieldWrap);
-        return;
-      } else {
-        control = createElement("input", {
-          attrs: {
-            type: field.type || "text",
-            name: field.name,
-            value: field.value == null ? "" : String(field.value),
-            placeholder: field.placeholder,
-            disabled: disabled ? "disabled" : undefined,
-            autocomplete: field.autocomplete,
-            inputmode: field.inputMode,
-            required: field.required ? "required" : undefined,
-          },
-        });
-      }
-
-      fieldWrap.append(control);
-      if (field.help) {
-        fieldWrap.append(createElement("div", { className: "qfp-field-help", text: field.help }));
-      }
-      groupGrid.append(fieldWrap);
-    });
       groupWrap.append(groupGrid);
       form.append(groupWrap);
     });

@@ -50,7 +50,6 @@ left join public.profiles p
       or (p.tenant_id is null and p.club_id = cm.club_id)
  )
 where cm.club_id is not null;
-
 create or replace function public.admin_member_cards_overview(
   p_club_id uuid default null
 )
@@ -130,10 +129,8 @@ begin
   order by v.club_id asc, v.club_member_no asc, v.member_no asc;
 end;
 $$;
-
 grant select on public.admin_member_cards_overview_v to authenticated;
 grant execute on function public.admin_member_cards_overview(uuid) to authenticated;
-
 create or replace function public.admin_member_cards_overview_v2(
   p_club_id uuid default null
 )
@@ -175,5 +172,4 @@ begin
   from public.admin_member_cards_overview(p_club_id);
 end;
 $$;
-
 grant execute on function public.admin_member_cards_overview_v2(uuid) to authenticated;

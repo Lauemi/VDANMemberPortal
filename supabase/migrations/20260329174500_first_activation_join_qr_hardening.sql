@@ -1,11 +1,8 @@
 begin;
-
 alter table if exists public.profiles
   add column if not exists must_verify_identity boolean not null default false,
   add column if not exists identity_verified_at timestamptz;
-
 drop function if exists public.identity_dialog_gate_state();
-
 create or replace function public.identity_dialog_gate_state()
 returns table(
   dialog_enabled boolean,
@@ -123,12 +120,9 @@ as $$
   cross join settings s
   where a.uid is not null;
 $$;
-
 grant execute on function public.identity_dialog_gate_state() to authenticated;
-
 drop function if exists public.self_identity_verification_complete(boolean);
 drop function if exists public.self_identity_verification_complete(boolean, boolean);
-
 create or replace function public.self_identity_verification_complete(
   p_confirmed boolean default false,
   p_sepa_approved boolean default false
@@ -212,9 +206,6 @@ begin
   return next;
 end;
 $$;
-
 grant execute on function public.self_identity_verification_complete(boolean, boolean) to authenticated;
-
 notify pgrst, 'reload schema';
-
 commit;

@@ -12,6 +12,7 @@
 -- role
 -- status
 -- fishing_card_type
+-- card_assignments
 -- has_login
 -- last_sign_in_at
 -- email
@@ -45,6 +46,7 @@ select
   role,
   status,
   fishing_card_type,
+  card_assignments,
   has_login,
   last_sign_in_at,
   email,

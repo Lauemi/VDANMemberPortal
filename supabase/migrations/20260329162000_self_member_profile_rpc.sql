@@ -1,8 +1,6 @@
 begin;
-
 drop function if exists public.self_member_profile_get();
 drop function if exists public.self_member_profile_update(text, text, text, text, text, text, text);
-
 create or replace function public.self_member_profile_get()
 returns table(
   member_no text,
@@ -76,63 +74,47 @@ begin
     limit 1
   )
   select
-    resolved.resolved_member_no,
-    resolved.resolved_internal_member_no,
-    resolved.resolved_club_code,
-    resolved.resolved_first_name,
-    resolved.resolved_last_name,
-    resolved.resolved_email,
-    resolved.resolved_street,
-    resolved.resolved_zip,
-    resolved.resolved_city,
-    resolved.resolved_phone,
-    resolved.resolved_mobile
-  from (
-    select
-      coalesce(
-        nullif(trim((select club_member_no from member_row)), ''),
-        nullif(trim((select club_member_no from club_row)), ''),
-        nullif(trim((select member_no from club_row)), ''),
-        nullif(trim((select member_no from profile_row)), '')
-      ) as resolved_member_no,
-      coalesce(
-        nullif(trim((select member_no from club_row)), ''),
-        nullif(trim((select member_no from identity_row)), ''),
-        nullif(trim((select member_no from profile_row)), '')
-      ) as resolved_internal_member_no,
-      coalesce(nullif(trim((select club_code from club_row)), ''), '-') as resolved_club_code,
-      coalesce(
-        nullif(trim((select first_name from member_row)), ''),
-        nullif(trim((select first_name from club_row)), ''),
-        nullif(trim((select first_name from profile_row)), ''),
-        '-'
-      ) as resolved_first_name,
-      coalesce(
-        nullif(trim((select last_name from member_row)), ''),
-        nullif(trim((select last_name from club_row)), ''),
-        nullif(trim((select last_name from profile_row)), ''),
-        '-'
-      ) as resolved_last_name,
-      coalesce(
-        nullif(trim((select email from member_row)), ''),
-        nullif(trim((select email from profile_row)), ''),
-        '-'
-      ) as resolved_email,
-      coalesce(nullif(trim((select street from member_row)), ''), '-') as resolved_street,
-      coalesce(nullif(trim((select zip from member_row)), ''), '-') as resolved_zip,
-      coalesce(nullif(trim((select city from member_row)), ''), '-') as resolved_city,
-      coalesce(nullif(trim((select phone from member_row)), ''), '-') as resolved_phone,
-      coalesce(nullif(trim((select mobile from member_row)), ''), '-') as resolved_mobile
-  ) resolved
+    coalesce(
+      nullif(trim((select club_member_no from member_row)), ''),
+      nullif(trim((select club_member_no from club_row)), ''),
+      nullif(trim((select member_no from club_row)), ''),
+      nullif(trim((select member_no from profile_row)), '')
+    ) as member_no,
+    coalesce(
+      nullif(trim((select member_no from club_row)), ''),
+      nullif(trim((select member_no from identity_row)), ''),
+      nullif(trim((select member_no from profile_row)), '')
+    ) as internal_member_no,
+    coalesce(nullif(trim((select club_code from club_row)), ''), '-') as club_code,
+    coalesce(
+      nullif(trim((select first_name from member_row)), ''),
+      nullif(trim((select first_name from club_row)), ''),
+      nullif(trim((select first_name from profile_row)), ''),
+      '-'
+    ) as first_name,
+    coalesce(
+      nullif(trim((select last_name from member_row)), ''),
+      nullif(trim((select last_name from club_row)), ''),
+      nullif(trim((select last_name from profile_row)), ''),
+      '-'
+    ) as last_name,
+    coalesce(
+      nullif(trim((select email from member_row)), ''),
+      nullif(trim((select email from profile_row)), ''),
+      '-'
+    ) as email,
+    coalesce(nullif(trim((select street from member_row)), ''), '-') as street,
+    coalesce(nullif(trim((select zip from member_row)), ''), '-') as zip,
+    coalesce(nullif(trim((select city from member_row)), ''), '-') as city,
+    coalesce(nullif(trim((select phone from member_row)), ''), '-') as phone,
+    coalesce(nullif(trim((select mobile from member_row)), ''), '-') as mobile
   where exists (select 1 from profile_row)
      or exists (select 1 from identity_row)
      or exists (select 1 from club_row)
      or exists (select 1 from member_row);
 end;
 $$;
-
 grant execute on function public.self_member_profile_get() to authenticated;
-
 create or replace function public.self_member_profile_update(
   p_first_name text default null,
   p_last_name text default null,
@@ -262,9 +244,6 @@ begin
   select * from public.self_member_profile_get();
 end;
 $$;
-
 grant execute on function public.self_member_profile_update(text, text, text, text, text, text, text) to authenticated;
-
 notify pgrst, 'reload schema';
-
 commit;

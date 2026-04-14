@@ -1,5 +1,4 @@
 begin;
-
 insert into public.module_catalog (module_key, label, is_active, sort_order)
 values
   ('eventplaner', 'Eventplaner', true, 25)
@@ -7,7 +6,6 @@ on conflict (module_key) do update
 set label = excluded.label,
     is_active = excluded.is_active,
     sort_order = excluded.sort_order;
-
 insert into public.module_usecases (module_key, usecase_key, label, is_active, sort_order)
 values
   ('eventplaner', 'eventplaner', 'Eventplaner', true, 10),
@@ -16,7 +14,6 @@ on conflict (module_key, usecase_key) do update
 set label = excluded.label,
     is_active = excluded.is_active,
     sort_order = excluded.sort_order;
-
 insert into public.club_module_usecases (club_id, module_key, usecase_key, is_enabled)
 select
   c.club_id,
@@ -31,7 +28,6 @@ join public.module_usecases mu
   on mu.module_key = 'eventplaner'
  and mu.is_active = true
 on conflict (club_id, module_key, usecase_key) do nothing;
-
 with defaults as (
   select * from (values
     ('member',   'eventplaner',            false, false, false, false, false),
@@ -59,5 +55,4 @@ join defaults d
   on d.role_key = cr.role_key
 where cr.role_key in ('member', 'vorstand', 'admin')
 on conflict (club_id, role_key, module_key) do nothing;
-
 commit;

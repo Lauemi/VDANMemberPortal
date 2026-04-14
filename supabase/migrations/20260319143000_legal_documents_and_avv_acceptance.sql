@@ -1,5 +1,4 @@
 begin;
-
 create table if not exists public.legal_documents (
   id uuid primary key default gen_random_uuid(),
   document_key text not null check (document_key in ('terms', 'privacy', 'avv')),
@@ -14,11 +13,9 @@ create table if not exists public.legal_documents (
   created_at timestamptz not null default now(),
   unique (document_key, version)
 );
-
 create unique index if not exists idx_legal_documents_one_active_per_key
   on public.legal_documents(document_key)
   where is_active;
-
 create table if not exists public.legal_acceptance_events (
   id uuid primary key default gen_random_uuid(),
   document_key text not null check (document_key in ('terms', 'privacy', 'avv')),
@@ -40,25 +37,20 @@ create table if not exists public.legal_acceptance_events (
     or (accepted_scope = 'club' and club_id is not null)
   )
 );
-
 create unique index if not exists idx_legal_acceptance_user_once_per_version
   on public.legal_acceptance_events(accepted_by_user_id, document_key, document_version)
   where club_id is null;
-
 create unique index if not exists idx_legal_acceptance_club_per_signer_once_per_version
   on public.legal_acceptance_events(accepted_by_user_id, club_id, document_key, document_version)
   where club_id is not null;
-
 alter table public.legal_documents enable row level security;
 alter table public.legal_acceptance_events enable row level security;
-
 drop policy if exists "legal_documents_authenticated_select" on public.legal_documents;
 create policy "legal_documents_authenticated_select"
 on public.legal_documents
 for select
 to authenticated
 using (is_active);
-
 drop policy if exists "legal_acceptance_events_self_or_club_select" on public.legal_acceptance_events;
 create policy "legal_acceptance_events_self_or_club_select"
 on public.legal_acceptance_events
@@ -68,7 +60,6 @@ using (
   accepted_by_user_id = auth.uid()
   or (club_id is not null and public.is_admin_or_vorstand_in_club(club_id))
 );
-
 insert into public.legal_documents (
   document_key,
   applies_to,
@@ -122,12 +113,10 @@ set applies_to = excluded.applies_to,
     snapshot_sha256 = excluded.snapshot_sha256,
     is_active = excluded.is_active,
     published_at = excluded.published_at;
-
 update public.legal_documents
 set is_active = false
 where document_key in ('terms', 'privacy', 'avv')
   and version <> '2026-03-19-v1';
-
 insert into public.app_secure_settings(setting_key, setting_value)
 values
   ('terms_version', '2026-03-19-v1'),
@@ -136,9 +125,7 @@ values
 on conflict (setting_key) do update
 set setting_value = excluded.setting_value,
     updated_at = now();
-
 drop function if exists public.legal_acceptance_state();
-
 create or replace function public.legal_acceptance_state()
 returns table(
   club_id uuid,
@@ -241,12 +228,9 @@ begin
   return next;
 end;
 $$;
-
 grant execute on function public.legal_acceptance_state() to authenticated;
-
 drop function if exists public.accept_current_legal(boolean, boolean, text);
 drop function if exists public.accept_current_legal(boolean, boolean, boolean, text, boolean, text, text, text);
-
 create or replace function public.accept_current_legal(
   p_terms boolean default false,
   p_privacy boolean default false,
@@ -420,7 +404,5 @@ begin
   return next;
 end;
 $$;
-
 grant execute on function public.accept_current_legal(boolean, boolean, boolean, text, boolean, text, text, text) to authenticated;
-
 commit;

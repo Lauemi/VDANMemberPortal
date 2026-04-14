@@ -1,11 +1,8 @@
 begin;
-
 alter table public.event_planner_configs
   add column if not exists max_participants_enabled boolean not null default false;
-
 alter table public.event_planner_slots
   add column if not exists leaders_count_towards_capacity boolean not null default false;
-
 drop function if exists public.event_planner_upsert_for_base(
   public.event_planner_base_kind,
   uuid,
@@ -14,7 +11,6 @@ drop function if exists public.event_planner_upsert_for_base(
   integer,
   text
 );
-
 create or replace function public.event_planner_upsert_for_base(
   p_base_kind public.event_planner_base_kind,
   p_base_id uuid,
@@ -118,7 +114,6 @@ begin
   return v_row;
 end;
 $$;
-
 drop function if exists public.event_planner_slot_upsert(
   uuid,
   uuid,
@@ -129,7 +124,6 @@ drop function if exists public.event_planner_slot_upsert(
   integer,
   integer
 );
-
 create or replace function public.event_planner_slot_upsert(
   p_planner_config_id uuid,
   p_slot_id uuid default null,
@@ -218,7 +212,6 @@ begin
   return v_row;
 end;
 $$;
-
 create or replace function public.event_planner_register(
   p_planner_config_id uuid,
   p_slot_id uuid default null,
@@ -377,7 +370,6 @@ begin
   return v_row;
 end;
 $$;
-
 grant execute on function public.event_planner_upsert_for_base(
   public.event_planner_base_kind,
   uuid,
@@ -387,7 +379,6 @@ grant execute on function public.event_planner_upsert_for_base(
   text,
   boolean
 ) to authenticated;
-
 grant execute on function public.event_planner_slot_upsert(
   uuid,
   uuid,
@@ -399,6 +390,4 @@ grant execute on function public.event_planner_slot_upsert(
   integer,
   boolean
 ) to authenticated;
-
 commit;
-

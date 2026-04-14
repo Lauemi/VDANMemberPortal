@@ -1,7 +1,5 @@
 begin;
-
 drop function if exists public.admin_member_registry();
-
 create or replace function public.admin_member_registry(
   p_club_id uuid default null
 )
@@ -86,9 +84,6 @@ begin
   order by coalesce(nullif(trim(cm.club_member_no), ''), cm.member_no) asc, cm.member_no asc;
 end;
 $$;
-
 grant execute on function public.admin_member_registry(uuid) to authenticated;
-
 notify pgrst, 'reload schema';
-
 commit;

@@ -1,5 +1,4 @@
 begin;
-
 create table if not exists public.club_onboarding_state (
   club_id uuid primary key,
   setup_state text not null default 'pending_setup'
@@ -22,7 +21,6 @@ create table if not exists public.club_onboarding_state (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create table if not exists public.club_onboarding_audit (
   id uuid primary key default gen_random_uuid(),
   club_id uuid not null,
@@ -32,10 +30,8 @@ create table if not exists public.club_onboarding_audit (
   created_at timestamptz not null default now(),
   check (event_key ~ '^[a-z0-9_\\.:-]{3,80}$')
 );
-
 create index if not exists idx_club_onboarding_audit_club_created
   on public.club_onboarding_audit (club_id, created_at desc);
-
 create table if not exists public.club_billing_subscriptions (
   club_id uuid primary key,
   provider text not null default 'stripe'
@@ -57,10 +53,8 @@ create table if not exists public.club_billing_subscriptions (
   unique (provider, stripe_subscription_id),
   unique (provider, stripe_checkout_session_id)
 );
-
 create index if not exists idx_club_billing_subscriptions_state
   on public.club_billing_subscriptions (billing_state, updated_at desc);
-
 create table if not exists public.club_billing_webhook_events (
   id uuid primary key default gen_random_uuid(),
   provider text not null default 'stripe'
@@ -72,25 +66,20 @@ create table if not exists public.club_billing_webhook_events (
   payload jsonb not null default '{}'::jsonb,
   unique (provider, event_id)
 );
-
 create index if not exists idx_club_billing_webhook_events_club
   on public.club_billing_webhook_events (club_id, processed_at desc);
-
 drop trigger if exists trg_club_onboarding_state_updated_at on public.club_onboarding_state;
 create trigger trg_club_onboarding_state_updated_at
 before update on public.club_onboarding_state
 for each row execute function public.tg_set_updated_at();
-
 drop trigger if exists trg_club_billing_subscriptions_updated_at on public.club_billing_subscriptions;
 create trigger trg_club_billing_subscriptions_updated_at
 before update on public.club_billing_subscriptions
 for each row execute function public.tg_set_updated_at();
-
 alter table public.club_onboarding_state enable row level security;
 alter table public.club_onboarding_audit enable row level security;
 alter table public.club_billing_subscriptions enable row level security;
 alter table public.club_billing_webhook_events enable row level security;
-
 drop policy if exists "club_onboarding_state_select_manager_same_club" on public.club_onboarding_state;
 create policy "club_onboarding_state_select_manager_same_club"
 on public.club_onboarding_state
@@ -100,7 +89,6 @@ using (
   public.is_admin_or_vorstand_in_club(club_id)
   or public.is_admin_in_any_club()
 );
-
 drop policy if exists "club_onboarding_state_manage_manager_same_club" on public.club_onboarding_state;
 create policy "club_onboarding_state_manage_manager_same_club"
 on public.club_onboarding_state
@@ -114,7 +102,6 @@ with check (
   public.is_admin_or_vorstand_in_club(club_id)
   or public.is_admin_in_any_club()
 );
-
 drop policy if exists "club_onboarding_audit_select_manager_same_club" on public.club_onboarding_audit;
 create policy "club_onboarding_audit_select_manager_same_club"
 on public.club_onboarding_audit
@@ -124,7 +111,6 @@ using (
   public.is_admin_or_vorstand_in_club(club_id)
   or public.is_admin_in_any_club()
 );
-
 drop policy if exists "club_onboarding_audit_insert_manager_same_club" on public.club_onboarding_audit;
 create policy "club_onboarding_audit_insert_manager_same_club"
 on public.club_onboarding_audit
@@ -134,7 +120,6 @@ with check (
   public.is_admin_or_vorstand_in_club(club_id)
   or public.is_admin_in_any_club()
 );
-
 drop policy if exists "club_billing_subscriptions_select_manager_same_club" on public.club_billing_subscriptions;
 create policy "club_billing_subscriptions_select_manager_same_club"
 on public.club_billing_subscriptions
@@ -144,7 +129,6 @@ using (
   public.is_admin_or_vorstand_in_club(club_id)
   or public.is_admin_in_any_club()
 );
-
 drop policy if exists "club_billing_subscriptions_admin_any_club_all" on public.club_billing_subscriptions;
 create policy "club_billing_subscriptions_admin_any_club_all"
 on public.club_billing_subscriptions
@@ -152,7 +136,6 @@ for all
 to authenticated
 using (public.is_admin_in_any_club())
 with check (public.is_admin_in_any_club());
-
 drop policy if exists "club_billing_webhook_events_select_manager_same_club" on public.club_billing_webhook_events;
 create policy "club_billing_webhook_events_select_manager_same_club"
 on public.club_billing_webhook_events
@@ -162,7 +145,6 @@ using (
   (club_id is not null and public.is_admin_or_vorstand_in_club(club_id))
   or public.is_admin_in_any_club()
 );
-
 drop policy if exists "club_billing_webhook_events_admin_any_club_all" on public.club_billing_webhook_events;
 create policy "club_billing_webhook_events_admin_any_club_all"
 on public.club_billing_webhook_events
@@ -170,7 +152,6 @@ for all
 to authenticated
 using (public.is_admin_in_any_club())
 with check (public.is_admin_in_any_club());
-
 create or replace function public.is_service_role_request()
 returns boolean
 language sql
@@ -180,7 +161,6 @@ set search_path = pg_catalog
 as $$
   select coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role'
 $$;
-
 create or replace function public.ensure_club_onboarding_state(p_club_id uuid)
 returns public.club_onboarding_state
 language plpgsql
@@ -211,7 +191,6 @@ begin
   return v_row;
 end;
 $$;
-
 create or replace function public.club_onboarding_requirements(p_club_id uuid)
 returns table(
   club_id uuid,
@@ -312,7 +291,6 @@ as $$
   left join identity_src ids on true
   left join manager_src mgs on true;
 $$;
-
 create or replace function public.club_onboarding_snapshot(p_club_id uuid)
 returns table(
   club_id uuid,
@@ -334,25 +312,11 @@ returns table(
   manager_count bigint,
   setup_ready boolean
 )
-language plpgsql
+language sql
 security definer
 stable
 set search_path = public, auth, pg_catalog
 as $$
-begin
-  if p_club_id is null then
-    raise exception 'club_id_required';
-  end if;
-
-  if not (
-    public.is_service_role_request()
-    or public.is_admin_or_vorstand_in_club(p_club_id)
-    or public.is_admin_in_any_club()
-  ) then
-    raise exception 'forbidden_club_scope';
-  end if;
-
-  return query
   with state_src as (
     select *
     from public.club_onboarding_state
@@ -398,9 +362,7 @@ begin
     ) as setup_ready
   from req
   left join state_src ss on true;
-end;
 $$;
-
 create or replace function public.upsert_club_onboarding_progress(
   p_club_id uuid,
   p_club_data_complete boolean default null,
@@ -494,7 +456,6 @@ begin
   return v_row;
 end;
 $$;
-
 create or replace function public.set_club_billing_state(
   p_club_id uuid,
   p_billing_state text,
@@ -639,11 +600,9 @@ begin
   return v_row;
 end;
 $$;
-
 grant execute on function public.ensure_club_onboarding_state(uuid) to authenticated;
 grant execute on function public.club_onboarding_requirements(uuid) to authenticated;
 grant execute on function public.club_onboarding_snapshot(uuid) to authenticated;
 grant execute on function public.upsert_club_onboarding_progress(uuid, boolean, boolean, boolean, text, jsonb) to authenticated;
 grant execute on function public.set_club_billing_state(uuid, text, text, text, text, text, text, text, text, jsonb, timestamptz, timestamptz) to authenticated;
-
 commit;

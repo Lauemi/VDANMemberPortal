@@ -1,5 +1,4 @@
 begin;
-
 -- Hardening patch for work_* functions.
 -- Source basis:
 -- - live DB function bodies pulled on 2026-04-04
@@ -62,7 +61,6 @@ begin
   return v_row;
 end;
 $function$;
-
 create or replace function public.work_reject(
   p_participation_id uuid,
   p_note_admin text default null::text
@@ -111,7 +109,6 @@ begin
   return v_row;
 end;
 $function$;
-
 create or replace function public.work_participation_admin_update(
   p_participation_id uuid,
   p_checkin_at timestamp with time zone default null::timestamp with time zone,
@@ -161,7 +158,6 @@ begin
   return v_row;
 end;
 $function$;
-
 create or replace function public.work_event_publish(p_event_id uuid)
 returns work_events
 language plpgsql
@@ -197,7 +193,6 @@ begin
   return v_row;
 end;
 $function$;
-
 create or replace function public.work_event_create(
   p_title text,
   p_description text default null::text,
@@ -252,7 +247,6 @@ begin
   return v_row;
 end;
 $function$;
-
 create or replace function public.work_event_create(
   p_title text,
   p_description text default null::text,
@@ -310,5 +304,4 @@ begin
   return v_row;
 end;
 $function$;
-
 commit;

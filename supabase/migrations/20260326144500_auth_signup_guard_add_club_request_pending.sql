@@ -1,5 +1,4 @@
 begin;
-
 create or replace function public.enforce_auth_signup_guard()
 returns trigger
 language plpgsql
@@ -89,5 +88,4 @@ begin
   raise exception 'signup_guard_registration_mode_required';
 end;
 $$;
-
 commit;

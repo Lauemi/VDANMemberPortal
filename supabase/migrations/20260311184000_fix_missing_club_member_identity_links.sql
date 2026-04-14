@@ -1,5 +1,4 @@
 begin;
-
 -- Repair pass: link core role users to club_members rows when identity mapping is missing.
 -- Strategy:
 -- - per club, take users from club_user_roles (member/vorstand/admin) without identity row
@@ -49,5 +48,4 @@ select
   p.member_no
 from paired p
 on conflict do nothing;
-
 commit;

@@ -1,5 +1,7 @@
 ;(() => {
   const COMPONENT_NAME = "FCP Data Table v1";
+  const contractHub = window.FcpAdmQfmContractHub || {};
+  const fieldContracts = contractHub.field || {};
   const STANDARD_WRAP_CLASS = "fangliste-table-wrap";
   const STANDARD_TABLE_CLASS = "data-table--fangliste";
   const STANDARD_HEAD_CLASS = "data-table__head--fangliste";
@@ -38,6 +40,14 @@
   function readSortValue(column, row) {
     if (typeof column.sortValue === "function") return column.sortValue(row);
     return readValue(column, row);
+  }
+
+  function formatDisplayValue(column, value) {
+    if (typeof fieldContracts.formatFieldDisplayValue === "function") {
+      return fieldContracts.formatFieldDisplayValue(column, value);
+    }
+    if (column?.type === "boolean") return value ? "Ja" : "Nein";
+    return value ?? column?.emptyValue ?? "-";
   }
 
   function compareValues(a, b, column) {
@@ -235,7 +245,7 @@
           "data-table__cell",
           column.cellClass || "",
         ].filter(Boolean).join(" ");
-        const rendered = value ?? column.emptyValue ?? "-";
+        const rendered = formatDisplayValue(column, value);
         if (typeof column.renderHtml === "function") {
           return `<span class="${cellClasses}" data-label="${esc(column.label)}">${column.renderHtml(row, rendered)}</span>`;
         }

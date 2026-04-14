@@ -1,5 +1,4 @@
 begin;
-
 -- =========================================================
 -- MASTERBOARD UPDATE – 2026-04-07
 -- =========================================================
@@ -54,7 +53,6 @@ on conflict (node_id) do update
       decisions_open = excluded.decisions_open,
       refs = excluded.refs,
       last_verified_at = excluded.last_verified_at;
-
 -- members-ops: RLS club_members gesetzt
 update public.system_board_nodes
 set
@@ -62,14 +60,12 @@ set
   refs = refs || '["supabase/migrations/20260407_club_members_rls_fix.sql"]'::jsonb,
   last_verified_at = '2026-04-07'
 where node_id = 'members-ops';
-
 -- multi: club_members RLS hinzugefügt
 update public.system_board_nodes
 set
   progress_invisible = progress_invisible || '["club_members RLS nachgehärtet: fehlerhafte UUID-Policy durch rollenbasierte Policy ersetzt"]'::jsonb,
   last_verified_at = '2026-04-07'
 where node_id = 'multi';
-
 -- roles: current_user_has_role_in_club in Migrations nachgezogen
 update public.system_board_nodes
 set
@@ -82,7 +78,6 @@ set
   refs = refs || '["supabase/migrations/20260407103100_fix_current_user_has_role_in_club.sql"]'::jsonb,
   last_verified_at = '2026-04-07'
 where node_id = 'roles';
-
 -- backstage-clean: neue operative Werkzeuge
 update public.system_board_nodes
 set
@@ -96,12 +91,10 @@ set
   refs = refs || '["supabase/functions/club-onboarding-status/index.ts", "scripts/audit-panel-status.mjs", "supabase/migrations/20260407103000_fix_club_onboarding_snapshot_ambiguous_club_id.sql"]'::jsonb,
   last_verified_at = '2026-04-07'
 where node_id = 'backstage-clean';
-
 -- auth-profiles: Consent-Versionscheck gehärtet
 update public.system_board_nodes
 set
   progress_invisible = progress_invisible || '["Consent-State in get_onboarding_process_state gegen aktive Policy-Versionen gehärtet (legal_acceptance_events + legal_documents.is_active)"]'::jsonb,
   last_verified_at = '2026-04-07'
 where node_id = 'auth-profiles';
-
 commit;

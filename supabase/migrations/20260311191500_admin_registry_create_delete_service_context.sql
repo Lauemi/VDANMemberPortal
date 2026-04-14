@@ -1,12 +1,10 @@
 begin;
-
 -- Allow SQL-editor/service-context execution while keeping app-level admin gate.
 -- App traffic (authenticated role) still requires public.is_admin().
 
 drop function if exists public.admin_member_registry_create(
   uuid, text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date
 );
-
 create or replace function public.admin_member_registry_create(
   p_club_id uuid,
   p_club_code text,
@@ -197,13 +195,10 @@ begin
   return query select v_member_no;
 end;
 $$;
-
 grant execute on function public.admin_member_registry_create(
   uuid, text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date
 ) to authenticated;
-
 drop function if exists public.admin_member_registry_delete(uuid, text);
-
 create or replace function public.admin_member_registry_delete(
   p_club_id uuid,
   p_member_no text
@@ -239,7 +234,5 @@ begin
      and m.membership_number = p_member_no;
 end;
 $$;
-
 grant execute on function public.admin_member_registry_delete(uuid, text) to authenticated;
-
 commit;

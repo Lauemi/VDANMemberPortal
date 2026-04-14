@@ -1,5 +1,4 @@
 begin;
-
 -- Second-wave mechanical RLS initplan fixes.
 -- Scope:
 -- - Only helper functions that are reused by many RLS policies.
@@ -40,7 +39,6 @@ begin
   return null;
 end;
 $$;
-
 create or replace function public.is_admin_in_club(p_club_id uuid)
 returns boolean
 language sql
@@ -56,7 +54,6 @@ as $$
       and ur.role_key = 'admin'
   )
 $$;
-
 create or replace function public.is_admin_or_vorstand_in_club(p_club_id uuid)
 returns boolean
 language sql
@@ -72,7 +69,6 @@ as $$
       and ur.role_key in ('admin','vorstand')
   )
 $$;
-
 create or replace function public.is_admin_in_any_club()
 returns boolean
 language sql
@@ -87,7 +83,6 @@ as $$
       and cur.role_key = 'admin'
   )
 $$;
-
 create or replace function public.has_usecase_access(
   p_club_id uuid,
   p_usecase_key text,
@@ -124,5 +119,4 @@ as $$
       )
   )
 $$;
-
 commit;

@@ -1,5 +1,4 @@
 begin;
-
 create or replace function public.generate_internal_member_no()
 returns text
 language plpgsql
@@ -27,7 +26,6 @@ begin
   return v_candidate;
 end;
 $$;
-
 create or replace function public.next_club_member_no(p_club_id uuid)
 returns text
 language plpgsql
@@ -62,11 +60,9 @@ begin
   return lpad((v_max_suffix + 1)::text, 4, '0');
 end;
 $$;
-
 drop function if exists public.admin_member_registry_create(
   uuid, text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date, text, text
 );
-
 create or replace function public.admin_member_registry_create(
   p_club_id uuid,
   p_club_code text default null,
@@ -269,15 +265,12 @@ begin
   return query select v_member_no;
 end;
 $$;
-
 grant execute on function public.admin_member_registry_create(
   uuid, text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date, text, text
 ) to authenticated;
-
 drop function if exists public.admin_member_registry_update(
   text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date, text
 );
-
 create or replace function public.admin_member_registry_update(
   p_member_no text,
   p_first_name text default null,
@@ -449,9 +442,7 @@ begin
   end if;
 end;
 $$;
-
 grant execute on function public.admin_member_registry_update(
   text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date, text
 ) to authenticated;
-
 commit;

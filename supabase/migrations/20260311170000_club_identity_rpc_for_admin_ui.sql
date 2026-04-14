@@ -1,5 +1,4 @@
 begin;
-
 create or replace function public.get_club_identity_map()
 returns table (
   club_id uuid,
@@ -52,9 +51,7 @@ as $$
     )
   order by c.club_code nulls last, i.club_id;
 $$;
-
 revoke all on function public.get_club_identity_map() from public, anon, authenticated;
 grant execute on function public.get_club_identity_map() to authenticated;
 grant execute on function public.get_club_identity_map() to service_role;
-
 commit;

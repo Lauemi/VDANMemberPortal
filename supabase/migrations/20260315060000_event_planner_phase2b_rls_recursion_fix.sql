@@ -1,10 +1,7 @@
 begin;
-
 drop policy if exists "event_planner_slots_select_same_club_or_manager" on public.event_planner_slots;
 drop policy if exists "event_planner_configs_select_same_club_or_manager" on public.event_planner_configs;
-
 drop function if exists public.event_planner_config_is_published(uuid);
-
 create or replace function public.event_planner_config_is_published(
   p_base_kind public.event_planner_base_kind,
   p_base_club_event_id uuid default null,
@@ -32,7 +29,6 @@ as $$
     else false
   end
 $$;
-
 create policy "event_planner_configs_select_same_club_or_manager"
 on public.event_planner_configs
 for select
@@ -44,7 +40,6 @@ using (
   )
   or public.is_admin_or_vorstand_in_club(club_id)
 );
-
 create policy "event_planner_slots_select_same_club_or_manager"
 on public.event_planner_slots
 for select
@@ -63,11 +58,8 @@ using (
       )
   )
 );
-
 revoke execute on function public.event_planner_config_is_published(public.event_planner_base_kind, uuid, uuid) from public, anon;
 grant execute on function public.event_planner_config_is_published(public.event_planner_base_kind, uuid, uuid) to authenticated;
-
 comment on function public.event_planner_config_is_published(public.event_planner_base_kind, uuid, uuid)
 is 'Security definer helper for planner select policies. Avoids recursive RLS by evaluating published state directly from club_events/work_events.';
-
 commit;

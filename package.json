@@ -18,6 +18,10 @@
     "check:xss-guard": "node scripts/check-xss-guard.mjs",
     "check:studio-contract": "node scripts/check-studio-contract.mjs",
     "check:governance-health": "node scripts/governance-health-gate.mjs",
+    "deploy:vercel": "gh workflow run deploy-vercel.yml --ref main",
+    "deploy:ionos": "gh workflow run deploy-ionos.yml --ref main",
+    "deploy": "npm run deploy:vercel && npm run deploy:ionos",
+    "deploy:status": "gh run list --workflow=deploy-vercel.yml --workflow=deploy-ionos.yml --limit 10",
     "report:role-matrix": "node scripts/generate-role-page-matrix-report.mjs",
     "security:fcp-prelaunch-hash": "node scripts/fcp-prelaunch-hash.mjs"
   },

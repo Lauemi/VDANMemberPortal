@@ -1,5 +1,4 @@
 begin;
-
 create table if not exists public.club_registration_requests (
   id uuid primary key default gen_random_uuid(),
   requester_user_id uuid not null references auth.users(id) on delete cascade,
@@ -23,24 +22,18 @@ create table if not exists public.club_registration_requests (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create unique index if not exists uq_club_registration_requests_pending_user
   on public.club_registration_requests (requester_user_id)
   where status = 'pending';
-
 create index if not exists idx_club_registration_requests_status_created
   on public.club_registration_requests (status, created_at desc);
-
 create index if not exists idx_club_registration_requests_requester
   on public.club_registration_requests (requester_user_id, created_at desc);
-
 drop trigger if exists trg_club_registration_requests_touch on public.club_registration_requests;
 create trigger trg_club_registration_requests_touch
 before update on public.club_registration_requests
 for each row execute function public.touch_updated_at();
-
 alter table public.club_registration_requests enable row level security;
-
 drop policy if exists "club_registration_requests_select_own_or_admin" on public.club_registration_requests;
 create policy "club_registration_requests_select_own_or_admin"
 on public.club_registration_requests
@@ -50,7 +43,6 @@ using (
   requester_user_id = auth.uid()
   or public.is_admin_in_any_club()
 );
-
 create or replace function public.club_request_gate_state()
 returns table(
   request_id uuid,
@@ -82,9 +74,7 @@ as $$
   order by r.created_at desc
   limit 1
 $$;
-
 grant execute on function public.club_request_gate_state() to authenticated;
-
 create or replace function public.create_club_request_from_signup()
 returns trigger
 language plpgsql
@@ -152,11 +142,9 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists trg_auth_create_club_request on auth.users;
 create trigger trg_auth_create_club_request
 after insert on auth.users
 for each row
 execute function public.create_club_request_from_signup();
-
 commit;

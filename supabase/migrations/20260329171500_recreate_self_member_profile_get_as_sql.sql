@@ -1,7 +1,5 @@
 begin;
-
 drop function if exists public.self_member_profile_get();
-
 create or replace function public.self_member_profile_get()
 returns table(
   member_no text,
@@ -117,9 +115,6 @@ as $$
       or mr.membership_number is not null
     );
 $$;
-
 grant execute on function public.self_member_profile_get() to authenticated;
-
 notify pgrst, 'reload schema';
-
 commit;

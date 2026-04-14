@@ -6,7 +6,6 @@
 --   B) Backfill profiles.club_id for role users with deterministic single-club mapping.
 
 begin;
-
 -- -------------------------------------------------------------------
 -- A) Deterministic profile club backfill (only unambiguous users)
 -- -------------------------------------------------------------------
@@ -25,7 +24,6 @@ set club_id = o.club_id,
 from one_club_role o
 where p.id = o.user_id
   and p.club_id is null;
-
 -- -------------------------------------------------------------------
 -- B) Auto-harden policy expressions on club-scoped tables
 -- -------------------------------------------------------------------
@@ -127,9 +125,7 @@ begin
   end loop;
 end
 $$;
-
 commit;
-
 -- -------------------------------------------------------------------
 -- Post-check snippets
 -- -------------------------------------------------------------------
@@ -153,4 +149,4 @@ commit;
 --   and (coalesce(p.qual, '') || ' ' || coalesce(p.with_check, '')) ilike '%is_admin_or_vorstand()%'
 --   and (coalesce(p.qual, '') || ' ' || coalesce(p.with_check, '')) not ilike '%is_same_club(%'
 --   and (coalesce(p.qual, '') || ' ' || coalesce(p.with_check, '')) not ilike '%is_admin_or_vorstand_in_club(%'
--- order by p.tablename, p.policyname;
+-- order by p.tablename, p.policyname;;

@@ -1,5 +1,4 @@
 begin;
-
 -- =========================================================
 -- FIX: public.current_user_has_role_in_club fehlt in Migrations
 -- =========================================================
@@ -40,7 +39,5 @@ as $$
       and ur.role_key = any(p_roles)
   )
 $$;
-
 grant execute on function public.current_user_has_role_in_club(uuid, text[]) to authenticated;
-
 commit;

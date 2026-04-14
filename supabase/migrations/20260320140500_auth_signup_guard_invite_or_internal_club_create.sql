@@ -1,12 +1,10 @@
 begin;
-
 insert into public.app_secure_settings (setting_key, setting_value)
 values
   ('club_creation_admin_emails', 'm.lauenroth@lauemi.de')
 on conflict (setting_key) do update
 set setting_value = excluded.setting_value,
     updated_at = now();
-
 create or replace function public.email_in_csv_list(p_email text, p_csv text)
 returns boolean
 language sql
@@ -20,7 +18,6 @@ as $$
       and trim(value) <> ''
   );
 $$;
-
 create or replace function public.enforce_auth_signup_guard()
 returns trigger
 language plpgsql
@@ -88,11 +85,9 @@ begin
   raise exception 'signup_guard_registration_mode_required';
 end;
 $$;
-
 drop trigger if exists trg_auth_signup_guard on auth.users;
 create trigger trg_auth_signup_guard
 before insert on auth.users
 for each row
 execute function public.enforce_auth_signup_guard();
-
 commit;

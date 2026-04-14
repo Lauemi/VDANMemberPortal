@@ -1,16 +1,12 @@
 begin;
-
 alter table public.club_members
   add column if not exists club_member_no text;
-
 alter table public.members
   add column if not exists club_member_no text;
-
 update public.club_members
 set club_member_no = coalesce(nullif(trim(club_member_no), ''), member_no)
 where coalesce(nullif(trim(club_member_no), ''), '') = ''
   and coalesce(nullif(trim(member_no), ''), '') <> '';
-
 update public.members m
 set club_member_no = coalesce(
   nullif(trim(m.club_member_no), ''),
@@ -21,16 +17,12 @@ from public.club_members cm
 where cm.member_no = m.membership_number
   and (m.club_id is null or m.club_id = cm.club_id)
   and coalesce(nullif(trim(m.club_member_no), ''), '') = '';
-
 create unique index if not exists idx_club_members_club_member_no_unique
   on public.club_members (club_id, club_member_no)
   where nullif(trim(club_member_no), '') is not null;
-
 create index if not exists idx_members_club_member_no
   on public.members (club_id, club_member_no);
-
 drop function if exists public.admin_member_registry();
-
 create or replace function public.admin_member_registry()
 returns table(
   club_id uuid,
@@ -102,17 +94,13 @@ begin
   order by cm.club_code asc, coalesce(nullif(trim(cm.club_member_no), ''), cm.member_no) asc, cm.member_no asc;
 end;
 $$;
-
 grant execute on function public.admin_member_registry() to authenticated;
-
 drop function if exists public.admin_member_registry_create(
   uuid, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date, text
 );
-
 drop function if exists public.admin_member_registry_create(
   uuid, text, text, text, text, text, text, text, text, text, text, boolean, text, date, text
 );
-
 create or replace function public.admin_member_registry_create(
   p_club_id uuid default null,
   p_club_code text default null,
@@ -321,15 +309,12 @@ begin
   return query select v_member_no;
 end;
 $$;
-
 grant execute on function public.admin_member_registry_create(
   uuid, text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date, text, text
 ) to authenticated;
-
 drop function if exists public.admin_member_registry_update(
   text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date, text
 );
-
 create or replace function public.admin_member_registry_update(
   p_member_no text,
   p_first_name text default null,
@@ -498,9 +483,7 @@ begin
   end if;
 end;
 $$;
-
 grant execute on function public.admin_member_registry_update(
   text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date, text
 ) to authenticated;
-
 commit;

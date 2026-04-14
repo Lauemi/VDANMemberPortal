@@ -1,14 +1,10 @@
 begin;
-
 alter table if exists public.members
   add column if not exists email text;
-
 create index if not exists idx_members_club_id_email
   on public.members (club_id, lower(email))
   where email is not null;
-
 drop function if exists public.admin_member_registry();
-
 create or replace function public.admin_member_registry()
 returns table(
   club_id uuid,
@@ -80,17 +76,13 @@ begin
   order by cm.club_code asc, cm.member_no asc;
 end;
 $$;
-
 grant execute on function public.admin_member_registry() to authenticated;
-
 drop function if exists public.admin_member_registry_create(
   uuid, text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date
 );
-
 drop function if exists public.admin_member_registry_create(
   uuid, text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date, text
 );
-
 create or replace function public.admin_member_registry_create(
   p_club_id uuid,
   p_club_code text,
@@ -288,23 +280,18 @@ begin
   return query select v_member_no;
 end;
 $$;
-
 grant execute on function public.admin_member_registry_create(
   uuid, text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date, text
 ) to authenticated;
-
 drop function if exists public.admin_member_registry_update(
   text, text, text, text, text, text, text, text, text, text, boolean, text, date
 );
-
 drop function if exists public.admin_member_registry_update(
   text, text, text, text, text, text, text, text, text, text, text, boolean, text, date
 );
-
 drop function if exists public.admin_member_registry_update(
   text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date
 );
-
 create or replace function public.admin_member_registry_update(
   p_member_no text,
   p_first_name text default null,
@@ -449,9 +436,7 @@ begin
   end if;
 end;
 $$;
-
 grant execute on function public.admin_member_registry_update(
   text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date
 ) to authenticated;
-
 commit;

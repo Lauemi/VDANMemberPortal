@@ -16,7 +16,6 @@
 -- - No deletion/refactor of public.user_roles
 
 begin;
-
 create table if not exists public.club_roles (
   id uuid primary key default gen_random_uuid(),
   club_id uuid not null,
@@ -29,7 +28,6 @@ create table if not exists public.club_roles (
   unique (club_id, role_key),
   check (role_key ~ '^[a-z0-9_]{2,40}$')
 );
-
 create table if not exists public.club_role_permissions (
   club_id uuid not null,
   role_key text not null,
@@ -46,7 +44,6 @@ create table if not exists public.club_role_permissions (
     on delete cascade,
   check (module_key ~ '^[a-z0-9_]{2,60}$')
 );
-
 create table if not exists public.club_user_roles (
   user_id uuid not null,
   club_id uuid not null,
@@ -57,7 +54,6 @@ create table if not exists public.club_user_roles (
     references public.club_roles (club_id, role_key)
     on delete cascade
 );
-
 create or replace function public.tg_set_updated_at()
 returns trigger
 language plpgsql
@@ -67,17 +63,14 @@ begin
   return new;
 end
 $$;
-
 drop trigger if exists trg_club_roles_updated_at on public.club_roles;
 create trigger trg_club_roles_updated_at
 before update on public.club_roles
 for each row execute function public.tg_set_updated_at();
-
 drop trigger if exists trg_club_role_permissions_updated_at on public.club_role_permissions;
 create trigger trg_club_role_permissions_updated_at
 before update on public.club_role_permissions
 for each row execute function public.tg_set_updated_at();
-
 create or replace function public.tg_protect_core_roles()
 returns trigger
 language plpgsql
@@ -94,17 +87,14 @@ begin
   return case when tg_op = 'DELETE' then old else new end;
 end
 $$;
-
 drop trigger if exists trg_protect_core_roles_upd on public.club_roles;
 create trigger trg_protect_core_roles_upd
 before update on public.club_roles
 for each row execute function public.tg_protect_core_roles();
-
 drop trigger if exists trg_protect_core_roles_del on public.club_roles;
 create trigger trg_protect_core_roles_del
 before delete on public.club_roles
 for each row execute function public.tg_protect_core_roles();
-
 -- Ensure core roles for every known club.
 insert into public.club_roles (club_id, role_key, label, is_core)
 select c.club_id, r.role_key, r.label, true
@@ -121,7 +111,6 @@ cross join (
 ) as r(role_key, label)
 on conflict (club_id, role_key) do update
 set label = excluded.label;
-
 -- Backfill existing assignments.
 insert into public.club_user_roles (user_id, club_id, role_key)
 select distinct ur.user_id, ur.club_id, lower(ur.role)
@@ -129,5 +118,4 @@ from public.user_roles ur
 where ur.club_id is not null
   and lower(ur.role) in ('member','vorstand','admin')
 on conflict do nothing;
-
 commit;

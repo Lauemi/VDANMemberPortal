@@ -13,10 +13,8 @@
 --   docs/supabase/80_club_governance_acl_add_can_view_audit.sql
 
 begin;
-
 alter table public.club_role_permissions
   add column if not exists can_view boolean not null default false;
-
 -- Backfill can_view from legacy right set.
 update public.club_role_permissions
 set can_view = (
@@ -26,7 +24,6 @@ set can_view = (
   or coalesce(can_update, false)
   or coalesce(can_delete, false)
 );
-
 -- Normalize existing rows to match new semantics.
 update public.club_role_permissions
 set
@@ -34,7 +31,6 @@ set
   can_write  = case when can_view then coalesce(can_write, false) else false end,
   can_update = case when can_view then coalesce(can_update, false) else false end,
   can_delete = case when can_view then coalesce(can_delete, false) else false end;
-
 create or replace function public.tg_club_role_permissions_sanitize()
 returns trigger
 language plpgsql
@@ -56,15 +52,12 @@ begin
   return new;
 end
 $$;
-
 drop trigger if exists trg_club_role_permissions_sanitize on public.club_role_permissions;
 create trigger trg_club_role_permissions_sanitize
 before insert or update on public.club_role_permissions
 for each row execute function public.tg_club_role_permissions_sanitize();
-
 alter table public.club_role_permissions
   drop constraint if exists club_role_permissions_view_gate_chk;
-
 alter table public.club_role_permissions
   add constraint club_role_permissions_view_gate_chk
   check (
@@ -72,5 +65,4 @@ alter table public.club_role_permissions
     or
     (can_view = true and can_read = true)
   );
-
 commit;

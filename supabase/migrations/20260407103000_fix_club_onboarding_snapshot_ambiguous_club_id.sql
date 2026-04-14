@@ -1,5 +1,4 @@
 begin;
-
 -- =========================================================
 -- FIX: public.club_onboarding_snapshot – 42702 ambiguous column reference
 -- =========================================================
@@ -105,5 +104,4 @@ begin
   left join state_src ss on true;
 end;
 $$;
-
 commit;

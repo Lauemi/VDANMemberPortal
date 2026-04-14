@@ -11,7 +11,6 @@
 --   docs/supabase/81_club_governance_acl_seed_defaults_and_rls_audit.sql
 
 begin;
-
 -- -------------------------------------------------------------------
 -- 1) Seed defaults for core roles
 -- -------------------------------------------------------------------
@@ -69,14 +68,12 @@ join module_defaults md
   on md.role_key = cr.role_key
 where cr.role_key in ('member','vorstand','admin')
 on conflict (club_id, role_key, module_key) do nothing;
-
 -- -------------------------------------------------------------------
 -- 2) RLS enablement
 -- -------------------------------------------------------------------
 alter table public.club_roles enable row level security;
 alter table public.club_role_permissions enable row level security;
 alter table public.club_user_roles enable row level security;
-
 -- -------------------------------------------------------------------
 -- 3) Policies - club_roles
 -- -------------------------------------------------------------------
@@ -86,7 +83,6 @@ on public.club_roles
 for select
 to authenticated
 using (public.is_same_club(club_id));
-
 drop policy if exists "club_roles_admin_same_club_all" on public.club_roles;
 create policy "club_roles_admin_same_club_all"
 on public.club_roles
@@ -94,7 +90,6 @@ for all
 to authenticated
 using (public.is_admin_in_club(club_id))
 with check (public.is_admin_in_club(club_id));
-
 -- -------------------------------------------------------------------
 -- 4) Policies - club_role_permissions
 -- -------------------------------------------------------------------
@@ -104,7 +99,6 @@ on public.club_role_permissions
 for select
 to authenticated
 using (public.is_same_club(club_id));
-
 drop policy if exists "club_role_permissions_admin_same_club_all" on public.club_role_permissions;
 create policy "club_role_permissions_admin_same_club_all"
 on public.club_role_permissions
@@ -112,7 +106,6 @@ for all
 to authenticated
 using (public.is_admin_in_club(club_id))
 with check (public.is_admin_in_club(club_id));
-
 -- -------------------------------------------------------------------
 -- 5) Policies - club_user_roles
 -- -------------------------------------------------------------------
@@ -122,7 +115,6 @@ on public.club_user_roles
 for select
 to authenticated
 using (public.is_admin_or_vorstand_in_club(club_id));
-
 drop policy if exists "club_user_roles_admin_same_club_all" on public.club_user_roles;
 create policy "club_user_roles_admin_same_club_all"
 on public.club_user_roles
@@ -130,5 +122,4 @@ for all
 to authenticated
 using (public.is_admin_in_club(club_id))
 with check (public.is_admin_in_club(club_id));
-
 commit;

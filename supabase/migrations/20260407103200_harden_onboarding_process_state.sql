@@ -1,7 +1,5 @@
 begin;
-
 create extension if not exists pgcrypto with schema extensions;
-
 -- =========================================================
 -- HARDEN: public.get_onboarding_process_state
 -- =========================================================
@@ -667,7 +665,5 @@ select jsonb_build_object(
     end
 );
 $$;
-
 grant execute on function public.get_onboarding_process_state(uuid, text, boolean) to authenticated;
-
 commit;

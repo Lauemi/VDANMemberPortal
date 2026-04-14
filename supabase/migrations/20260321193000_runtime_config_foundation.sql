@@ -2,7 +2,6 @@
 -- Guard stays in code/policies. DB stores only runtime/template/theme state.
 
 create extension if not exists pgcrypto;
-
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -12,7 +11,6 @@ begin
   return new;
 end;
 $$;
-
 create table if not exists public.app_runtime_configs (
   id uuid primary key default gen_random_uuid(),
   scope_type text not null check (scope_type in ('global', 'site_mode', 'club')),
@@ -32,22 +30,17 @@ create table if not exists public.app_runtime_configs (
   rollback_of uuid null references public.app_runtime_configs(id) on delete set null,
   supersedes_version integer null check (supersedes_version is null or supersedes_version >= 1)
 );
-
 create unique index if not exists app_runtime_configs_scope_version_idx
   on public.app_runtime_configs(scope_type, scope_key, config_key, version);
-
 create unique index if not exists app_runtime_configs_one_active_idx
   on public.app_runtime_configs(scope_type, scope_key, config_key)
   where is_active = true and status = 'published';
-
 create index if not exists app_runtime_configs_scope_lookup_idx
   on public.app_runtime_configs(scope_type, scope_key, config_key, is_active, status, version desc);
-
 drop trigger if exists app_runtime_configs_set_updated_at on public.app_runtime_configs;
 create trigger app_runtime_configs_set_updated_at
 before update on public.app_runtime_configs
 for each row execute function public.set_updated_at();
-
 create table if not exists public.app_template_library (
   id uuid primary key default gen_random_uuid(),
   template_key text not null,
@@ -66,18 +59,14 @@ create table if not exists public.app_template_library (
   supersedes_version integer null check (supersedes_version is null or supersedes_version >= 1),
   rollback_of uuid null references public.app_template_library(id) on delete set null
 );
-
 create unique index if not exists app_template_library_key_version_idx
   on public.app_template_library(template_key, version);
-
 create index if not exists app_template_library_lookup_idx
   on public.app_template_library(template_key, status, brand_scope, template_type, version desc);
-
 drop trigger if exists app_template_library_set_updated_at on public.app_template_library;
 create trigger app_template_library_set_updated_at
 before update on public.app_template_library
 for each row execute function public.set_updated_at();
-
 create table if not exists public.app_route_catalog (
   route_key text primary key,
   route_path text not null unique,
@@ -88,12 +77,10 @@ create table if not exists public.app_route_catalog (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 drop trigger if exists app_route_catalog_set_updated_at on public.app_route_catalog;
 create trigger app_route_catalog_set_updated_at
 before update on public.app_route_catalog
 for each row execute function public.set_updated_at();
-
 create table if not exists public.app_template_bindings (
   id uuid primary key default gen_random_uuid(),
   scope_type text not null check (scope_type in ('global', 'site_mode', 'club')),
@@ -108,16 +95,13 @@ create table if not exists public.app_template_bindings (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create unique index if not exists app_template_bindings_active_idx
   on public.app_template_bindings(scope_type, scope_key, route_key)
   where is_active = true;
-
 drop trigger if exists app_template_bindings_set_updated_at on public.app_template_bindings;
 create trigger app_template_bindings_set_updated_at
 before update on public.app_template_bindings
 for each row execute function public.set_updated_at();
-
 create table if not exists public.app_theme_tokens (
   id uuid primary key default gen_random_uuid(),
   scope_type text not null check (scope_type in ('global', 'site_mode', 'club')),
@@ -133,19 +117,15 @@ create table if not exists public.app_theme_tokens (
   updated_at timestamptz not null default now(),
   published_at timestamptz null
 );
-
 create unique index if not exists app_theme_tokens_scope_version_idx
   on public.app_theme_tokens(scope_type, scope_key, theme_key, version);
-
 create unique index if not exists app_theme_tokens_one_active_idx
   on public.app_theme_tokens(scope_type, scope_key, theme_key)
   where is_active = true and status = 'published';
-
 drop trigger if exists app_theme_tokens_set_updated_at on public.app_theme_tokens;
 create trigger app_theme_tokens_set_updated_at
 before update on public.app_theme_tokens
 for each row execute function public.set_updated_at();
-
 create table if not exists public.app_runtime_releases (
   id uuid primary key default gen_random_uuid(),
   release_key text not null unique,
@@ -158,10 +138,8 @@ create table if not exists public.app_runtime_releases (
   notes text null,
   payload_json jsonb not null default '{}'::jsonb
 );
-
 create index if not exists app_runtime_releases_scope_idx
   on public.app_runtime_releases(scope_type, scope_key, release_type, published_at desc);
-
 create table if not exists public.app_runtime_audit_log (
   id uuid primary key default gen_random_uuid(),
   actor_id uuid null,
@@ -174,10 +152,8 @@ create table if not exists public.app_runtime_audit_log (
   after_json jsonb null,
   created_at timestamptz not null default now()
 );
-
 create index if not exists app_runtime_audit_log_scope_idx
   on public.app_runtime_audit_log(scope_type, scope_key, entity_type, created_at desc);
-
 alter table public.app_runtime_configs enable row level security;
 alter table public.app_template_library enable row level security;
 alter table public.app_route_catalog enable row level security;
@@ -185,7 +161,6 @@ alter table public.app_template_bindings enable row level security;
 alter table public.app_theme_tokens enable row level security;
 alter table public.app_runtime_releases enable row level security;
 alter table public.app_runtime_audit_log enable row level security;
-
 revoke all on public.app_runtime_configs from public, anon, authenticated;
 revoke all on public.app_template_library from public, anon, authenticated;
 revoke all on public.app_route_catalog from public, anon, authenticated;
@@ -193,24 +168,17 @@ revoke all on public.app_template_bindings from public, anon, authenticated;
 revoke all on public.app_theme_tokens from public, anon, authenticated;
 revoke all on public.app_runtime_releases from public, anon, authenticated;
 revoke all on public.app_runtime_audit_log from public, anon, authenticated;
-
 drop policy if exists app_runtime_configs_deny_all on public.app_runtime_configs;
 create policy app_runtime_configs_deny_all on public.app_runtime_configs for all using (false) with check (false);
-
 drop policy if exists app_template_library_deny_all on public.app_template_library;
 create policy app_template_library_deny_all on public.app_template_library for all using (false) with check (false);
-
 drop policy if exists app_route_catalog_deny_all on public.app_route_catalog;
 create policy app_route_catalog_deny_all on public.app_route_catalog for all using (false) with check (false);
-
 drop policy if exists app_template_bindings_deny_all on public.app_template_bindings;
 create policy app_template_bindings_deny_all on public.app_template_bindings for all using (false) with check (false);
-
 drop policy if exists app_theme_tokens_deny_all on public.app_theme_tokens;
 create policy app_theme_tokens_deny_all on public.app_theme_tokens for all using (false) with check (false);
-
 drop policy if exists app_runtime_releases_deny_all on public.app_runtime_releases;
 create policy app_runtime_releases_deny_all on public.app_runtime_releases for all using (false) with check (false);
-
 drop policy if exists app_runtime_audit_log_deny_all on public.app_runtime_audit_log;
 create policy app_runtime_audit_log_deny_all on public.app_runtime_audit_log for all using (false) with check (false);

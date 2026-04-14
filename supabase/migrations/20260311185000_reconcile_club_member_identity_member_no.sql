@@ -1,5 +1,4 @@
 begin;
-
 -- Reconcile pass for clubs where club_members rows exist without identity-link.
 -- For affected clubs, rebuild identity mapping for core-role users deterministically
 -- (user_id asc <-> member_no asc).
@@ -61,5 +60,4 @@ on conflict (club_id, user_id)
 do update set
   member_no = excluded.member_no,
   updated_at = now();
-
 commit;

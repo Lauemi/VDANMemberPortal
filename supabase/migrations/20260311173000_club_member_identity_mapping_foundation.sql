@@ -1,5 +1,4 @@
 begin;
-
 create table if not exists public.club_member_identities (
   club_id uuid not null,
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -9,20 +8,15 @@ create table if not exists public.club_member_identities (
   primary key (club_id, user_id),
   unique (club_id, member_no)
 );
-
 create index if not exists idx_club_member_identities_user
   on public.club_member_identities (user_id);
-
 create index if not exists idx_club_member_identities_member
   on public.club_member_identities (member_no);
-
 drop trigger if exists trg_club_member_identities_updated_at on public.club_member_identities;
 create trigger trg_club_member_identities_updated_at
 before update on public.club_member_identities
 for each row execute function public.tg_set_updated_at();
-
 alter table public.club_member_identities enable row level security;
-
 drop policy if exists "club_member_identities_select_self_or_admin" on public.club_member_identities;
 create policy "club_member_identities_select_self_or_admin"
 on public.club_member_identities
@@ -33,7 +27,6 @@ using (
   or public.is_admin_in_club(club_id)
   or public.is_admin_in_any_club()
 );
-
 drop policy if exists "club_member_identities_admin_manage" on public.club_member_identities;
 create policy "club_member_identities_admin_manage"
 on public.club_member_identities
@@ -41,7 +34,6 @@ for all
 to authenticated
 using (public.is_admin_in_club(club_id) or public.is_admin_in_any_club())
 with check (public.is_admin_in_club(club_id) or public.is_admin_in_any_club());
-
 insert into public.club_member_identities (club_id, user_id, member_no)
 select distinct
   cm.club_id,
@@ -55,7 +47,6 @@ where p.id is not null
   and cm.club_id is not null
   and nullif(trim(coalesce(cm.member_no, '')), '') is not null
 on conflict do nothing;
-
 create temporary table tmp_generated_member_identity (
   club_id uuid not null,
   user_id uuid not null,
@@ -64,7 +55,6 @@ create temporary table tmp_generated_member_identity (
   first_name text not null,
   last_name text not null
 ) on commit drop;
-
 insert into tmp_generated_member_identity (club_id, user_id, club_code, member_no, first_name, last_name)
 with code_map as (
   select
@@ -146,7 +136,6 @@ from numbered n
 left join existing_max em
   on em.club_id = n.club_id
  and em.club_code = n.club_code;
-
 insert into public.club_members (
   club_id,
   club_code,
@@ -172,7 +161,6 @@ select
   null
 from tmp_generated_member_identity t
 on conflict do nothing;
-
 insert into public.club_member_identities (club_id, user_id, member_no)
 select
   t.club_id,
@@ -180,7 +168,6 @@ select
   t.member_no
 from tmp_generated_member_identity t
 on conflict do nothing;
-
 create or replace function public.admin_member_registry()
 returns table(
   club_id uuid,
@@ -248,7 +235,5 @@ begin
   order by cm.club_code asc, cm.member_no asc;
 end;
 $$;
-
 grant execute on function public.admin_member_registry() to authenticated;
-
 commit;

@@ -15,7 +15,6 @@
 --   See runbook for manual Supabase Auth setting step.
 
 begin;
-
 do $$
 declare
   fn record;
@@ -42,6 +41,4 @@ begin
     );
   end loop;
 end $$;
-
 commit;
-

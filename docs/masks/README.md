@@ -7,6 +7,7 @@ Dieser Ordner ist der feste Ablageort fuer alle maskensteuernden JSON-Dateien de
 ```txt
 docs/masks/
   README.md
+  standards/
   qfm/
   adm/
   templates/
@@ -16,6 +17,7 @@ docs/masks/
 
 - Echte Quickflow-Masken liegen in `docs/masks/qfm/`
 - Echte Admin-Panel-Masken liegen in `docs/masks/adm/`
+- Standarddefinitionen fuer das Maskensystem liegen in `docs/masks/standards/`
 - Vorlagen und Authoring-Schablonen liegen in `docs/masks/templates/`
 
 ## Namenskonvention
@@ -74,6 +76,18 @@ Diese Templates enthalten:
 - normierte Feldwerte
 - Hinweise fuer Fehler / Warnung / Feedback bei der spaeteren Validierung
 - standardisierte `securityContext`-Bloecke fuer Tenant-, Membership- und Rollenbezug
+
+## Standards
+
+Die aktuelle Primaerreferenz fuer den Workspace-Standard liegt in:
+
+- `docs/masks/standards/ADM_STANDARDMATRIX_V1.md`
+
+Diese Matrix definiert:
+- was im aktiven ADM-Bestand bereits Standard ist
+- was neu als Standard einzufuehren ist
+- was Altlast / deprecated bleibt
+- was nur Baustelle und nicht offizieller Standard ist
 
 ## Reader
 

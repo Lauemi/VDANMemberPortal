@@ -1,5 +1,4 @@
 begin;
-
 create or replace function public.event_planner_block_invalid_base_window_changes()
 returns trigger
 language plpgsql
@@ -33,22 +32,16 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists trg_club_events_block_invalid_planner_window on public.club_events;
 create trigger trg_club_events_block_invalid_planner_window
 before update of starts_at, ends_at on public.club_events
 for each row execute function public.event_planner_block_invalid_base_window_changes();
-
 drop trigger if exists trg_work_events_block_invalid_planner_window on public.work_events;
 create trigger trg_work_events_block_invalid_planner_window
 before update of starts_at, ends_at on public.work_events
 for each row execute function public.event_planner_block_invalid_base_window_changes();
-
 revoke insert, update, delete on public.event_planner_registrations from authenticated;
-
 drop policy if exists "event_planner_registrations_manager_all" on public.event_planner_registrations;
-
 comment on function public.event_planner_block_invalid_base_window_changes()
 is 'Blocks starts_at/ends_at changes on club_events/work_events when existing planner slots would lie outside the new base window.';
-
 commit;

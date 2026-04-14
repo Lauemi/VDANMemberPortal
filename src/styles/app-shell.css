@@ -867,6 +867,36 @@
   color: color-mix(in srgb, var(--text) 82%, rgba(92, 145, 222, .95));
 }
 
+.qfp-shell[data-mask-family="ADM"] .qfp-status-line.is-error,
+.qfp-shell[data-mask-family="ADM"] .qfp-inline-error,
+.fcp-adm-shell + .qfp-mask-status .qfp-status-line.is-error,
+.admin-card .qfp-inline-error {
+  padding: 12px 14px;
+  border: 1px solid rgba(168, 72, 52, .24);
+  border-radius: 12px;
+  background: rgba(168, 72, 52, .12);
+  color: #8e2f20;
+}
+
+.qfp-shell[data-mask-family="ADM"] .qfp-status-line.is-info,
+.fcp-adm-shell + .qfp-mask-status .qfp-status-line.is-info,
+.admin-card .qfp-status-line.is-info {
+  padding: 12px 14px;
+  border: 1px solid rgba(108, 112, 91, .18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .05);
+  color: var(--text-soft);
+}
+
+.qfp-shell[data-mask-family="ADM"] .qfp-empty,
+.admin-card .qfp-empty {
+  padding: 14px 16px;
+  border: 1px dashed rgba(108, 112, 91, .18);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .03);
+  color: var(--text-soft);
+}
+
 .admin-card.is-missing {
   border-color: rgba(196, 64, 64, .45);
 }

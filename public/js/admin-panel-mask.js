@@ -3,6 +3,7 @@
 ;(() => {
   const contractHub = window.FcpAdmQfmContractHub || {};
   const sharedContracts = contractHub.shared || {};
+  const fieldContracts = contractHub.field || {};
   const tableContracts = contractHub.table || {};
   const dialogContracts = contractHub.dialog || {};
 
@@ -609,9 +610,8 @@
         details.addEventListener("toggle", () => {
           body.hidden = !details.open;
         });
-        if (panel.state?.error) {
-          body.append(createElement("p", { className: "small", text: panel.state.error }));
-        }
+        const feedback = renderPanelFeedback(panel);
+        if (feedback) body.append(feedback);
         const contentWrap = createElement("div", {
           className: "admin-card__content",
           attrs: {
@@ -626,9 +626,8 @@
       }
 
       card.append(header);
-      if (panel.state?.error) {
-        card.append(createElement("p", { className: "small", text: panel.state.error }));
-      }
+      const feedback = renderPanelFeedback(panel);
+      if (feedback) card.append(feedback);
       const contentWrap = createElement("div", {
         className: "admin-card__content",
         attrs: {
@@ -660,6 +659,16 @@
 
     renderStatus() {
       this.refs.status.innerHTML = "";
+      if (this.state.maskStatus === "loading") {
+        this.refs.status.hidden = false;
+        this.refs.status.append(
+          createElement("div", {
+            className: "qfp-status-line is-info",
+            text: "Loading...",
+          })
+        );
+        return;
+      }
       if (!this.state.maskError) {
         this.refs.status.hidden = true;
         return;
@@ -753,6 +762,35 @@
   function resolvePanelSurfaceState(panel) {
     if (typeof dialogContracts.resolvePanelSurfaceState === "function") {
       return dialogContracts.resolvePanelSurfaceState(panel);
+    }
+    return null;
+  }
+
+  function renderPanelFeedback(panel) {
+    const state = panel?.state || {};
+    if (state?.error) {
+      return createElement("div", {
+        className: "qfp-inline-error",
+        text: String(state.error || ""),
+      });
+    }
+    if (state?.saveState === "saving") {
+      return createElement("div", {
+        className: "qfp-status-line is-info",
+        text: "Saving...",
+      });
+    }
+    if (state?.message) {
+      return createElement("div", {
+        className: "qfp-status-line is-info",
+        text: String(state.message || ""),
+      });
+    }
+    if (state?.dirty) {
+      return createElement("div", {
+        className: "qfp-status-line is-info",
+        text: "Unsaved",
+      });
     }
     return null;
   }
@@ -914,83 +952,18 @@
       return card;
     }
     function createFieldNode(field, initialValues) {
-      const label = createElement("label", {
-        className: `qfp-form-field${field.span === "full" ? " is-full" : ""}`,
-      });
-      label.append(createElement("span", {
-        className: "qfp-field-label",
-        text: field.label || field.name || "-",
-      }));
       const disabled = field.disabled === true || field.readonly === true || !isFieldEnabled(field, initialValues);
-      if (field.type === "textarea") {
-        label.append(
-          createElement("textarea", {
-            attrs: {
-              name: field.name,
-              rows: field.rows || 4,
-              placeholder: field.placeholder || undefined,
-              disabled: disabled ? "disabled" : undefined,
-              required: field.required ? "required" : undefined,
-            },
-            text: String(field.value ?? ""),
+      return typeof fieldContracts.renderFieldNode === "function"
+        ? fieldContracts.renderFieldNode({
+            ...field,
+            disabled,
+            help: fieldHelpText(field),
+          }, {
+            createElement,
+            surface: "form",
+            fieldClassName: "qfp-form-field",
           })
-        );
-      } else if (field.type === "select") {
-        const select = createElement("select", {
-          attrs: {
-            name: field.name,
-            disabled: disabled ? "disabled" : undefined,
-            required: field.required ? "required" : undefined,
-          },
-        });
-        (field.options || []).forEach((option) => {
-          select.append(
-            createElement("option", {
-              text: option.label || option.value,
-              attrs: {
-                value: option.value,
-                selected: option.value === field.value ? "selected" : undefined,
-              },
-            })
-          );
-        });
-        label.append(select);
-      } else if (field.type === "toggle") {
-        const toggleRow = createElement("div", { className: "qfp-toggle-row" });
-        toggleRow.append(
-          createElement("input", {
-            attrs: {
-              type: "checkbox",
-              name: field.name,
-              checked: field.value ? "checked" : undefined,
-              disabled: disabled ? "disabled" : undefined,
-              required: field.required ? "required" : undefined,
-            },
-          }),
-          createElement("span", { className: "qfp-toggle-label", text: fieldHelpText(field) })
-        );
-        label.append(toggleRow);
-      } else {
-        label.append(
-          createElement("input", {
-            attrs: {
-              type: field.type || "text",
-              name: field.name,
-              value: field.value ?? "",
-              placeholder: field.placeholder || undefined,
-              disabled: disabled ? "disabled" : undefined,
-              required: field.required ? "required" : undefined,
-              autocomplete: field.autocomplete || undefined,
-              inputmode: field.inputMode || undefined,
-            },
-          })
-        );
-      }
-      const helpText = fieldHelpText(field);
-      if (helpText && field.type !== "toggle") {
-        label.append(createElement("span", { className: "qfp-field-help", text: helpText }));
-      }
-      return label;
+        : createElement("div");
     }
     function renderFlatFields(target, initialValues) {
       visibleFields.forEach((field) => {
@@ -1049,14 +1022,13 @@
       className: "qfp-form-grid",
       onSubmit: async (event) => {
         event.preventDefault();
-        const payload = {};
-        fields.forEach((field) => {
-          if (field.type === "toggle") {
-            payload[field.name] = Boolean(form.querySelector(`[name="${CSS.escape(field.name)}"]`)?.checked);
-            return;
-          }
-          payload[field.name] = form.querySelector(`[name="${CSS.escape(field.name)}"]`)?.value ?? "";
-        });
+        const payload = typeof fieldContracts.collectFieldPayload === "function"
+          ? fieldContracts.collectFieldPayload(form, fields, {
+              surface: "form",
+              selectorAttr: "name",
+              emptyAsNull: false,
+            })
+          : {};
         await pattern.savePanel(section.id, panel.id, payload);
       },
     });
@@ -1259,95 +1231,30 @@
   }
 
   function createDialogReadonlyField(field) {
-    const item = createElement("div", {
-      className: "qfp-readonly-item",
-    });
-    item.append(
-      createElement("div", { className: "qfp-field-label", text: field?.label || field?.key || "-" }),
-      createElement("div", { className: "qfp-field-value", text: valueToText(field?.value) })
-    );
-    return item;
+    return typeof fieldContracts.renderReadonlyFieldNode === "function"
+      ? fieldContracts.renderReadonlyFieldNode(field, { createElement })
+      : createElement("div");
   }
 
   function createDialogEditorField(field) {
-    const label = createElement("label", { className: "qfp-form-field is-full" });
-    const inputName = String(field?.payloadKey || field?.key || "").trim();
-    label.append(createElement("span", {
-      className: "qfp-field-label",
-      text: field?.label || field?.key || "-",
-    }));
-
-    if (field?.editorType === "select") {
-      const select = createElement("select", {
-        attrs: {
-          name: inputName,
-          "data-dialog-field": inputName,
-        },
-      });
-      (Array.isArray(field?.options) ? field.options : []).forEach((option) => {
-        select.append(
-          createElement("option", {
-            text: option?.label || option?.value || "",
-            attrs: {
-              value: option?.value ?? "",
-              selected: String(option?.value ?? "") === String(field?.value ?? "") ? "selected" : undefined,
-            },
-          })
-        );
-      });
-      label.append(select);
-      return label;
-    }
-
-    if (field?.editorType === "checkbox") {
-      const toggleRow = createElement("div", { className: "qfp-toggle-row" });
-      toggleRow.append(
-        createElement("input", {
-          attrs: {
-            type: "checkbox",
-            name: inputName,
-            "data-dialog-field": inputName,
-            checked: field?.value ? "checked" : undefined,
-          },
-        }),
-        createElement("span", { className: "qfp-toggle-label", text: field?.label || inputName || "" })
-      );
-      label.append(toggleRow);
-      return label;
-    }
-
-    const inputType = field?.editorType === "number"
-      ? "number"
-      : field?.editorType === "date"
-        ? "date"
-        : "text";
-    label.append(
-      createElement("input", {
-        attrs: {
-          type: inputType,
-          name: inputName,
-          "data-dialog-field": inputName,
-          value: field?.value ?? "",
-        },
-      })
-    );
-    return label;
+    return typeof fieldContracts.renderFieldNode === "function"
+      ? fieldContracts.renderFieldNode(field, {
+          createElement,
+          surface: "dialog",
+          fieldClassName: "qfp-form-field",
+          dataFieldAttr: "data-dialog-field",
+        })
+      : createElement("div");
   }
 
   function collectDialogDraft(root, fields) {
-    if (!(root instanceof HTMLElement)) return {};
-    return (Array.isArray(fields) ? fields : []).reduce((acc, field) => {
-      const payloadKey = String(field?.payloadKey || field?.key || "").trim();
-      if (!payloadKey || field?.editable === false) return acc;
-      const input = root.querySelector(`[data-dialog-field="${CSS.escape(payloadKey)}"]`);
-      if (!input) return acc;
-      if (input instanceof HTMLInputElement && input.type === "checkbox") {
-        acc[payloadKey] = Boolean(input.checked);
-        return acc;
-      }
-      acc[payloadKey] = input.value === "" ? null : input.value;
-      return acc;
-    }, {});
+    return typeof fieldContracts.collectFieldPayload === "function"
+      ? fieldContracts.collectFieldPayload(root, fields, {
+          surface: "dialog",
+          selectorAttr: "data-dialog-field",
+          emptyAsNull: true,
+        })
+      : {};
   }
 
   function normalizeTableComponentType(value) {
@@ -1388,10 +1295,20 @@
             : null,
         })
       : null;
+    const resolvedRows = runtimeOptions?.rows || rows;
+    const isStandardTable = componentType === "data-table";
+    let renderRoot = root;
+    let filterPanel = null;
+
+    if (isStandardTable) {
+      renderRoot = createElement("div", { className: "qfp-data-table-root" });
+      filterPanel = createElement("div", { className: "filter-panel" });
+    }
+
     const tableRuntimeProps = {
-      root,
+      root: renderRoot,
       columns: runtimeOptions?.columns || columns,
-      rows: runtimeOptions?.rows || rows,
+      rows: resolvedRows,
       tableId: runtimeOptions?.runtime?.tableId || tableConfig?.tableId || panel.id,
       rowKeyField: runtimeOptions?.runtime?.rowKeyField || tableConfig?.rowKeyField || undefined,
       gridTemplateColumns: runtimeOptions?.runtime?.gridTemplateColumns || tableConfig?.gridTemplateColumns || undefined,
@@ -1405,6 +1322,7 @@
       showCreateButton: runtimeOptions?.runtime?.showCreateButton,
       showResetButton: runtimeOptions?.runtime?.showResetButton,
       createLabel: runtimeOptions?.runtime?.createLabel,
+      filterPanel,
       rowActions: runtimeOptions?.runtime?.rowActions || [],
       utilityActions: runtimeOptions?.runtime?.utilityActions || [],
       onUtilityAction: runtimeOptions?.runtime?.onUtilityAction,
@@ -1419,7 +1337,16 @@
       if (!root.isConnected) return;
       root.innerHTML = "";
       try {
-        factory(tableRuntimeProps);
+        if (isStandardTable) {
+          if (Array.isArray(tableRuntimeProps.filterFields) && tableRuntimeProps.filterFields.length) {
+            root.append(filterPanel);
+          }
+          root.append(renderRoot);
+        }
+        const instance = factory(tableRuntimeProps);
+        if (isStandardTable && instance && typeof instance.setRows === "function") {
+          instance.setRows(Array.isArray(resolvedRows) ? resolvedRows : []);
+        }
         emitTableRendererSnapshot(root, {
           componentType,
           factoryName: componentType === "inline-data-table" ? "FCPInlineDataTable.createStandardV2" : "FCPDataTable.createStandardV1",

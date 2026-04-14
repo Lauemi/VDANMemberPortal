@@ -144,5 +144,4 @@ begin
     v_now;
 end;
 $$;
-
 revoke all on function public.admin_publish_runtime_config(text, text, jsonb, uuid) from public, anon, authenticated;

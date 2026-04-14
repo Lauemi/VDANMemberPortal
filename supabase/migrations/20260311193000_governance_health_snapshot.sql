@@ -1,5 +1,4 @@
 begin;
-
 create or replace function public.governance_health_snapshot()
 returns table (
   club_id uuid,
@@ -172,7 +171,6 @@ as $$
     cm.club_code nulls last,
     c.club_id;
 $$;
-
 create or replace function public.governance_health_issues(p_club_id uuid default null)
 returns table (
   rule_key text,
@@ -336,13 +334,10 @@ as $$
   left join name_map nm on nm.club_id = x.club_id
   order by x.club_id, x.rule_key, x.ref_1 nulls last, x.ref_2 nulls last;
 $$;
-
 revoke all on function public.governance_health_snapshot() from public, anon, authenticated;
 grant execute on function public.governance_health_snapshot() to authenticated;
 grant execute on function public.governance_health_snapshot() to service_role;
-
 revoke all on function public.governance_health_issues(uuid) from public, anon, authenticated;
 grant execute on function public.governance_health_issues(uuid) to authenticated;
 grant execute on function public.governance_health_issues(uuid) to service_role;
-
 commit;

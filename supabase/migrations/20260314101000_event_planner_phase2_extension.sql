@@ -1,33 +1,28 @@
 begin;
-
 do $$
 begin
   if not exists (select 1 from pg_type where typname = 'event_planner_base_kind') then
     create type public.event_planner_base_kind as enum ('club_event', 'work_event');
   end if;
 end $$;
-
 do $$
 begin
   if not exists (select 1 from pg_type where typname = 'event_planner_approval_mode') then
     create type public.event_planner_approval_mode as enum ('auto', 'manual');
   end if;
 end $$;
-
 do $$
 begin
   if not exists (select 1 from pg_type where typname = 'event_planner_mode') then
     create type public.event_planner_mode as enum ('simple', 'structured');
   end if;
 end $$;
-
 do $$
 begin
   if not exists (select 1 from pg_type where typname = 'event_planner_registration_status') then
     create type public.event_planner_registration_status as enum ('pending', 'approved', 'rejected', 'cancelled');
   end if;
 end $$;
-
 create table if not exists public.event_planner_configs (
   id uuid primary key default gen_random_uuid(),
   club_id uuid not null,
@@ -47,18 +42,14 @@ create table if not exists public.event_planner_configs (
     (base_kind = 'work_event' and base_work_event_id is not null and base_club_event_id is null)
   )
 );
-
 create index if not exists idx_event_planner_configs_club_id
   on public.event_planner_configs(club_id);
-
 create index if not exists idx_event_planner_configs_kind
   on public.event_planner_configs(base_kind, created_at desc);
-
 drop trigger if exists trg_event_planner_configs_touch on public.event_planner_configs;
 create trigger trg_event_planner_configs_touch
 before update on public.event_planner_configs
 for each row execute function public.touch_updated_at();
-
 create table if not exists public.event_planner_slots (
   id uuid primary key default gen_random_uuid(),
   club_id uuid not null,
@@ -74,18 +65,14 @@ create table if not exists public.event_planner_slots (
   updated_at timestamptz not null default now(),
   check (ends_at > starts_at)
 );
-
 create index if not exists idx_event_planner_slots_planner
   on public.event_planner_slots(planner_config_id, starts_at);
-
 create index if not exists idx_event_planner_slots_club
   on public.event_planner_slots(club_id, starts_at);
-
 drop trigger if exists trg_event_planner_slots_touch on public.event_planner_slots;
 create trigger trg_event_planner_slots_touch
 before update on public.event_planner_slots
 for each row execute function public.touch_updated_at();
-
 create table if not exists public.event_planner_registrations (
   id uuid primary key default gen_random_uuid(),
   club_id uuid not null,
@@ -100,29 +87,22 @@ create table if not exists public.event_planner_registrations (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create index if not exists idx_event_planner_registrations_planner
   on public.event_planner_registrations(planner_config_id, status, created_at desc);
-
 create index if not exists idx_event_planner_registrations_slot
   on public.event_planner_registrations(slot_id, status);
-
 create index if not exists idx_event_planner_registrations_auth
   on public.event_planner_registrations(auth_uid, created_at desc);
-
 create unique index if not exists uq_event_planner_registrations_simple
   on public.event_planner_registrations(planner_config_id, auth_uid)
   where slot_id is null;
-
 create unique index if not exists uq_event_planner_registrations_slot
   on public.event_planner_registrations(slot_id, auth_uid)
   where slot_id is not null;
-
 drop trigger if exists trg_event_planner_registrations_touch on public.event_planner_registrations;
 create trigger trg_event_planner_registrations_touch
 before update on public.event_planner_registrations
 for each row execute function public.touch_updated_at();
-
 create or replace function public.event_planner_config_guard()
 returns trigger
 language plpgsql
@@ -159,12 +139,10 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists trg_event_planner_config_guard on public.event_planner_configs;
 create trigger trg_event_planner_config_guard
 before insert or update on public.event_planner_configs
 for each row execute function public.event_planner_config_guard();
-
 create or replace function public.event_planner_slot_guard()
 returns trigger
 language plpgsql
@@ -206,12 +184,10 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists trg_event_planner_slot_guard on public.event_planner_slots;
 create trigger trg_event_planner_slot_guard
 before insert or update on public.event_planner_slots
 for each row execute function public.event_planner_slot_guard();
-
 create or replace function public.event_planner_registration_guard()
 returns trigger
 language plpgsql
@@ -267,12 +243,10 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists trg_event_planner_registration_guard on public.event_planner_registrations;
 create trigger trg_event_planner_registration_guard
 before insert or update on public.event_planner_registrations
 for each row execute function public.event_planner_registration_guard();
-
 create or replace function public.event_planner_config_is_published(p_config_id uuid)
 returns boolean
 language sql
@@ -297,18 +271,15 @@ as $$
   from public.event_planner_configs c
   where c.id = p_config_id
 $$;
-
 alter table public.event_planner_configs enable row level security;
 alter table public.event_planner_slots enable row level security;
 alter table public.event_planner_registrations enable row level security;
-
 grant select on public.event_planner_configs to authenticated;
 grant select on public.event_planner_slots to authenticated;
 grant select on public.event_planner_registrations to authenticated;
 grant insert, update, delete on public.event_planner_configs to authenticated;
 grant insert, update, delete on public.event_planner_slots to authenticated;
 grant insert, update, delete on public.event_planner_registrations to authenticated;
-
 drop policy if exists "event_planner_configs_select_same_club_or_manager" on public.event_planner_configs;
 create policy "event_planner_configs_select_same_club_or_manager"
 on public.event_planner_configs
@@ -321,7 +292,6 @@ using (
   )
   or public.is_admin_or_vorstand_in_club(club_id)
 );
-
 drop policy if exists "event_planner_configs_manager_all" on public.event_planner_configs;
 create policy "event_planner_configs_manager_all"
 on public.event_planner_configs
@@ -329,7 +299,6 @@ for all
 to authenticated
 using (public.is_admin_or_vorstand_in_club(club_id))
 with check (public.is_admin_or_vorstand_in_club(club_id));
-
 drop policy if exists "event_planner_slots_select_same_club_or_manager" on public.event_planner_slots;
 create policy "event_planner_slots_select_same_club_or_manager"
 on public.event_planner_slots
@@ -349,7 +318,6 @@ using (
       )
   )
 );
-
 drop policy if exists "event_planner_slots_manager_all" on public.event_planner_slots;
 create policy "event_planner_slots_manager_all"
 on public.event_planner_slots
@@ -357,7 +325,6 @@ for all
 to authenticated
 using (public.is_admin_or_vorstand_in_club(club_id))
 with check (public.is_admin_or_vorstand_in_club(club_id));
-
 drop policy if exists "event_planner_registrations_select_own_or_manager" on public.event_planner_registrations;
 create policy "event_planner_registrations_select_own_or_manager"
 on public.event_planner_registrations
@@ -367,7 +334,6 @@ using (
   auth_uid = auth.uid()
   or public.is_admin_or_vorstand_in_club(club_id)
 );
-
 drop policy if exists "event_planner_registrations_manager_all" on public.event_planner_registrations;
 create policy "event_planner_registrations_manager_all"
 on public.event_planner_registrations
@@ -375,7 +341,6 @@ for all
 to authenticated
 using (public.is_admin_or_vorstand_in_club(club_id))
 with check (public.is_admin_or_vorstand_in_club(club_id));
-
 create or replace function public.event_planner_upsert_for_base(
   p_base_kind public.event_planner_base_kind,
   p_base_id uuid,
@@ -472,7 +437,6 @@ begin
   return v_row;
 end;
 $$;
-
 create or replace function public.event_planner_slot_upsert(
   p_planner_config_id uuid,
   p_slot_id uuid default null,
@@ -557,7 +521,6 @@ begin
   return v_row;
 end;
 $$;
-
 create or replace function public.event_planner_slot_delete(p_slot_id uuid)
 returns void
 language plpgsql
@@ -583,7 +546,6 @@ begin
   where id = p_slot_id;
 end;
 $$;
-
 create or replace function public.event_planner_register(
   p_planner_config_id uuid,
   p_slot_id uuid default null,
@@ -735,7 +697,6 @@ begin
   return v_row;
 end;
 $$;
-
 create or replace function public.event_planner_unregister(p_registration_id uuid)
 returns void
 language plpgsql
@@ -761,7 +722,6 @@ begin
   where id = p_registration_id;
 end;
 $$;
-
 create or replace function public.event_planner_registration_approve(
   p_registration_id uuid,
   p_note_admin text default null
@@ -798,7 +758,6 @@ begin
   return v_row;
 end;
 $$;
-
 create or replace function public.event_planner_registration_reject(
   p_registration_id uuid,
   p_note_admin text default null
@@ -835,7 +794,6 @@ begin
   return v_row;
 end;
 $$;
-
 grant execute on function public.event_planner_upsert_for_base(public.event_planner_base_kind, uuid, public.event_planner_approval_mode, public.event_planner_mode, integer, text) to authenticated;
 grant execute on function public.event_planner_slot_upsert(uuid, uuid, text, text, timestamptz, timestamptz, integer, integer) to authenticated;
 grant execute on function public.event_planner_slot_delete(uuid) to authenticated;
@@ -843,5 +801,4 @@ grant execute on function public.event_planner_register(uuid, uuid, text) to aut
 grant execute on function public.event_planner_unregister(uuid) to authenticated;
 grant execute on function public.event_planner_registration_approve(uuid, text) to authenticated;
 grant execute on function public.event_planner_registration_reject(uuid, text) to authenticated;
-
 commit;

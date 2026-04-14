@@ -17,6 +17,12 @@ GRUNDLAGE
 - Renderer = UI
 - CSS = Optik
 
+ADM-first-Zusatz:
+- fuer den aktiven Workspace-Standard ist `ADM_*.json` die Primaerquelle
+- wiederholte ADM-Muster werden als Standard gelesen
+- Runtime-Sonderlogik ist sichtbar, aber nicht automatisch Standard
+- Referenz: `docs/masks/standards/ADM_STANDARDMATRIX_V1.md`
+
 Regeln:
 - Backend entscheidet Prozesszustaende, Rechte, Freigaben und Security
 - Renderer zeigt nur an und interpretiert nicht frei

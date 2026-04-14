@@ -11,7 +11,6 @@
 --   docs/supabase/82_acl_helper_cutover_to_club_user_roles_audit.sql
 
 begin;
-
 create or replace function public.is_admin_in_club(p_club_id uuid)
 returns boolean
 language sql
@@ -27,7 +26,6 @@ as $$
       and ur.role_key = 'admin'
   )
 $$;
-
 create or replace function public.is_admin_or_vorstand_in_club(p_club_id uuid)
 returns boolean
 language sql
@@ -43,5 +41,4 @@ as $$
       and ur.role_key in ('admin','vorstand')
   )
 $$;
-
 commit;

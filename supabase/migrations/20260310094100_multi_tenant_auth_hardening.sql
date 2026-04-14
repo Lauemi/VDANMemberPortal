@@ -6,7 +6,6 @@
 --   3) Remove legacy broad manager policies that can bypass club context.
 
 begin;
-
 -- -------------------------------------------------------------------
 -- 0) Feature flag: legacy single-club fallback (default OFF)
 -- -------------------------------------------------------------------
@@ -15,7 +14,6 @@ values ('legacy_single_club_fallback_enabled', 'false')
 on conflict (setting_key) do update
 set setting_value = excluded.setting_value,
     updated_at = now();
-
 create or replace function public.legacy_single_club_fallback_enabled()
 returns boolean
 language sql
@@ -33,7 +31,6 @@ as $$
     false
   )
 $$;
-
 -- -------------------------------------------------------------------
 -- 1) Harder tenant helpers
 -- -------------------------------------------------------------------
@@ -70,7 +67,6 @@ begin
   return null;
 end;
 $$;
-
 create or replace function public.is_same_club(p_club_id uuid)
 returns boolean
 language sql
@@ -80,7 +76,6 @@ set search_path = public, auth, pg_catalog
 as $$
   select p_club_id is not null and p_club_id = public.current_user_club_id()
 $$;
-
 create or replace function public.is_admin_in_club(p_club_id uuid)
 returns boolean
 language sql
@@ -96,7 +91,6 @@ as $$
       and ur.role = 'admin'
   )
 $$;
-
 create or replace function public.is_admin_or_vorstand_in_club(p_club_id uuid)
 returns boolean
 language sql
@@ -112,7 +106,6 @@ as $$
       and ur.role in ('admin','vorstand')
   )
 $$;
-
 -- -------------------------------------------------------------------
 -- 2) Drop broad legacy policies (global manager scope)
 -- -------------------------------------------------------------------
@@ -120,26 +113,20 @@ drop policy if exists "fishing_trips_select_own_or_manager" on public.fishing_tr
 drop policy if exists "fishing_trips_insert_own_or_manager" on public.fishing_trips;
 drop policy if exists "fishing_trips_update_own_or_manager" on public.fishing_trips;
 drop policy if exists "fishing_trips_delete_own_or_manager" on public.fishing_trips;
-
 drop policy if exists "catch_entries_select_own_or_manager" on public.catch_entries;
 drop policy if exists "catch_entries_insert_own_or_manager" on public.catch_entries;
 drop policy if exists "catch_entries_update_own_or_manager" on public.catch_entries;
 drop policy if exists "catch_entries_delete_own_or_manager" on public.catch_entries;
-
 drop policy if exists "work_events_member_select_published" on public.work_events;
 drop policy if exists "work_events_manager_all" on public.work_events;
-
 drop policy if exists "work_participations_member_select_own_or_manager" on public.work_participations;
 drop policy if exists "work_participations_member_insert_own_published" on public.work_participations;
 drop policy if exists "work_participations_member_update_own_or_manager" on public.work_participations;
 drop policy if exists "work_participations_manager_delete" on public.work_participations;
-
 drop policy if exists "work_checkins_select_own_or_manager" on public.work_checkins;
 drop policy if exists "work_checkins_insert_own_or_manager" on public.work_checkins;
-
 drop policy if exists "documents_write_manager" on public.documents;
 drop policy if exists "club_events_manager_all" on public.club_events;
-
 -- -------------------------------------------------------------------
 -- 3) Canonical club-scoped manager policies for core tables
 -- -------------------------------------------------------------------
@@ -150,7 +137,6 @@ for all
 to authenticated
 using (public.is_admin_or_vorstand_in_club(club_id))
 with check (public.is_admin_or_vorstand_in_club(club_id));
-
 drop policy if exists "club_events_manager_same_club_all_mt" on public.club_events;
 create policy "club_events_manager_same_club_all_mt"
 on public.club_events
@@ -158,5 +144,4 @@ for all
 to authenticated
 using (public.is_admin_or_vorstand_in_club(club_id))
 with check (public.is_admin_or_vorstand_in_club(club_id));
-
 commit;

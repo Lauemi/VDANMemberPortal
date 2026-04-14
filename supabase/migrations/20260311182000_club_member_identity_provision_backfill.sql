@@ -1,5 +1,4 @@
 begin;
-
 create table if not exists public.club_member_identities (
   club_id uuid not null,
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -9,13 +8,10 @@ create table if not exists public.club_member_identities (
   primary key (club_id, user_id),
   unique (club_id, member_no)
 );
-
 create index if not exists idx_club_member_identities_user
   on public.club_member_identities (user_id);
-
 create index if not exists idx_club_member_identities_member
   on public.club_member_identities (member_no);
-
 -- 1) Fast-path mapping from existing profile member_no + club_members.
 insert into public.club_member_identities (club_id, user_id, member_no)
 select distinct
@@ -30,7 +26,6 @@ where p.id is not null
   and cm.club_id is not null
   and nullif(trim(coalesce(cm.member_no, '')), '') is not null
 on conflict do nothing;
-
 create temporary table tmp_generated_member_identity (
   club_id uuid not null,
   user_id uuid not null,
@@ -39,7 +34,6 @@ create temporary table tmp_generated_member_identity (
   first_name text not null,
   last_name text not null
 ) on commit drop;
-
 -- 2) Provision missing per-club member numbers for core-role users without identity mapping.
 insert into tmp_generated_member_identity (club_id, user_id, club_code, member_no, first_name, last_name)
 with code_map as (
@@ -122,7 +116,6 @@ from numbered n
 left join existing_max em
   on em.club_id = n.club_id
  and em.club_code = n.club_code;
-
 insert into public.club_members (
   club_id,
   club_code,
@@ -148,7 +141,6 @@ select
   null
 from tmp_generated_member_identity t
 on conflict do nothing;
-
 -- 3) Persist identity mapping for all generated rows.
 insert into public.club_member_identities (club_id, user_id, member_no)
 select
@@ -157,5 +149,4 @@ select
   t.member_no
 from tmp_generated_member_identity t
 on conflict do nothing;
-
 commit;

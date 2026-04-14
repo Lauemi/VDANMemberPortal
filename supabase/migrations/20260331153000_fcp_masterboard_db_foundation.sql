@@ -1,5 +1,4 @@
 begin;
-
 create table if not exists public.system_superadmins (
   user_id uuid primary key,
   note text not null default '',
@@ -7,7 +6,6 @@ create table if not exists public.system_superadmins (
   created_at timestamptz not null default now(),
   created_by uuid
 );
-
 create table if not exists public.system_board_nodes (
   node_id text primary key,
   title text not null,
@@ -34,7 +32,6 @@ create table if not exists public.system_board_nodes (
   check (jsonb_typeof(decisions_open) = 'array'),
   check (jsonb_typeof(refs) = 'array')
 );
-
 create table if not exists public.system_process_controls (
   process_id text primary key,
   title text not null,
@@ -58,17 +55,14 @@ create table if not exists public.system_process_controls (
   check (jsonb_typeof(smoke_checks) = 'array'),
   check (jsonb_typeof(bugs) = 'array')
 );
-
 drop trigger if exists trg_system_board_nodes_updated_at on public.system_board_nodes;
 create trigger trg_system_board_nodes_updated_at
 before update on public.system_board_nodes
 for each row execute function public.tg_set_updated_at();
-
 drop trigger if exists trg_system_process_controls_updated_at on public.system_process_controls;
 create trigger trg_system_process_controls_updated_at
 before update on public.system_process_controls
 for each row execute function public.tg_set_updated_at();
-
 create or replace function public.fcp_is_superadmin()
 returns boolean
 language sql
@@ -100,34 +94,28 @@ as $$
       limit 1
     );
 $$;
-
 grant execute on function public.fcp_is_superadmin() to authenticated;
-
 alter table public.system_superadmins enable row level security;
 alter table public.system_board_nodes enable row level security;
 alter table public.system_process_controls enable row level security;
-
 drop policy if exists "system_superadmins_select_superadmin" on public.system_superadmins;
 create policy "system_superadmins_select_superadmin"
 on public.system_superadmins
 for select
 to authenticated
 using (public.fcp_is_superadmin());
-
 drop policy if exists "system_board_nodes_select_superadmin" on public.system_board_nodes;
 create policy "system_board_nodes_select_superadmin"
 on public.system_board_nodes
 for select
 to authenticated
 using (public.fcp_is_superadmin());
-
 drop policy if exists "system_board_nodes_insert_superadmin" on public.system_board_nodes;
 create policy "system_board_nodes_insert_superadmin"
 on public.system_board_nodes
 for insert
 to authenticated
 with check (public.fcp_is_superadmin());
-
 drop policy if exists "system_board_nodes_update_superadmin" on public.system_board_nodes;
 create policy "system_board_nodes_update_superadmin"
 on public.system_board_nodes
@@ -135,28 +123,24 @@ for update
 to authenticated
 using (public.fcp_is_superadmin())
 with check (public.fcp_is_superadmin());
-
 drop policy if exists "system_board_nodes_delete_superadmin" on public.system_board_nodes;
 create policy "system_board_nodes_delete_superadmin"
 on public.system_board_nodes
 for delete
 to authenticated
 using (public.fcp_is_superadmin());
-
 drop policy if exists "system_process_controls_select_superadmin" on public.system_process_controls;
 create policy "system_process_controls_select_superadmin"
 on public.system_process_controls
 for select
 to authenticated
 using (public.fcp_is_superadmin());
-
 drop policy if exists "system_process_controls_insert_superadmin" on public.system_process_controls;
 create policy "system_process_controls_insert_superadmin"
 on public.system_process_controls
 for insert
 to authenticated
 with check (public.fcp_is_superadmin());
-
 drop policy if exists "system_process_controls_update_superadmin" on public.system_process_controls;
 create policy "system_process_controls_update_superadmin"
 on public.system_process_controls
@@ -164,14 +148,12 @@ for update
 to authenticated
 using (public.fcp_is_superadmin())
 with check (public.fcp_is_superadmin());
-
 drop policy if exists "system_process_controls_delete_superadmin" on public.system_process_controls;
 create policy "system_process_controls_delete_superadmin"
 on public.system_process_controls
 for delete
 to authenticated
 using (public.fcp_is_superadmin());
-
 create or replace function public.fcp_masterboard_nodes_get()
 returns setof public.system_board_nodes
 language plpgsql
@@ -190,9 +172,7 @@ begin
   order by lane asc, title asc, node_id asc;
 end;
 $$;
-
 grant execute on function public.fcp_masterboard_nodes_get() to authenticated;
-
 create or replace function public.fcp_process_controls_get()
 returns setof public.system_process_controls
 language plpgsql
@@ -221,9 +201,7 @@ begin
     process_id asc;
 end;
 $$;
-
 grant execute on function public.fcp_process_controls_get() to authenticated;
-
 create or replace function public.fcp_masterboard_node_upsert(
   p_node_id text,
   p_title text,
@@ -299,11 +277,9 @@ begin
   return v_row;
 end;
 $$;
-
 grant execute on function public.fcp_masterboard_node_upsert(
   text, text, text, text, text, text, jsonb, jsonb, jsonb, jsonb, jsonb, date
 ) to authenticated;
-
 create or replace function public.fcp_process_control_upsert(
   p_process_id text,
   p_title text,
@@ -379,11 +355,9 @@ begin
   return v_row;
 end;
 $$;
-
 grant execute on function public.fcp_process_control_upsert(
   text, text, text, text, jsonb, text, text, jsonb, jsonb, jsonb, text, date
 ) to authenticated;
-
 create or replace function public.fcp_masterboard_seed(
   p_nodes jsonb default '[]'::jsonb,
   p_processes jsonb default '[]'::jsonb
@@ -480,9 +454,6 @@ begin
   );
 end;
 $$;
-
 grant execute on function public.fcp_masterboard_seed(jsonb, jsonb) to authenticated;
-
 notify pgrst, 'reload schema';
-
 commit;

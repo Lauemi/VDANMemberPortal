@@ -43,6 +43,26 @@ Standard-Inhaltstypen:
 - `data-table`
 - `inline-data-table`
 
+## 3a. ADM-first-Regel
+
+Fuer den aktiven Workspace-Standard gilt:
+- `ADM_*.json` ist die Primaerquelle fuer den Admin-/Workspace-Standard
+- wiederholte und aktive ADM-Muster werden als offizieller Standard gelesen
+- Runtime-Sonderlogik bleibt sichtbar, ist aber nicht automatisch JSON-Standard
+- `preview`, `gap` und `partial` sind Baustellenstatus, nicht Produktstandard
+
+Primaerreferenz:
+- `docs/masks/standards/ADM_STANDARDMATRIX_V1.md`
+
+Arbeitsregel:
+- erst ADM lesen
+- dann wiederholte Muster als Standard bestaetigen
+- erst danach neue Normen einfuehren
+
+Wichtig:
+- das ist kein Freibrief fuer freie Neuerfindung
+- und kein Zwang, jede Runtime-Sonderlogik sofort zur JSON-Pflicht zu machen
+
 ## 4. Dateinamenlogik
 
 - Prefix bestimmt die Renderer-Familie

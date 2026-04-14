@@ -1,8 +1,6 @@
 begin;
-
 create unique index if not exists idx_club_members_member_no_unique
   on public.club_members (member_no);
-
 create or replace function public.admin_member_registry_create(
   p_club_id uuid,
   p_club_code text default null,
@@ -216,9 +214,7 @@ begin
   return query select v_member_no;
 end;
 $$;
-
 grant execute on function public.admin_member_registry_create(
   uuid, text, text, text, text, text, text, text, text, text, text, text, text, boolean, text, date, text, text
 ) to authenticated;
-
 commit;

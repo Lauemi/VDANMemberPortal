@@ -1,5 +1,4 @@
 begin;
-
 create or replace function public.admin_member_registry()
 returns table(
   club_id uuid,
@@ -88,9 +87,6 @@ begin
   order by cm.club_code asc, coalesce(nullif(trim(cm.club_member_no), ''), cm.member_no) asc, cm.member_no asc;
 end;
 $$;
-
 grant execute on function public.admin_member_registry() to authenticated;
-
 notify pgrst, 'reload schema';
-
 commit;

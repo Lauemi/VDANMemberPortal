@@ -1,5 +1,4 @@
 begin;
-
 create or replace function public.governance_health_ci_gate(p_fail_on_yellow boolean default false)
 returns table (
   passed boolean,
@@ -164,10 +163,7 @@ as $$
     now() as evaluated_at
   from agg a;
 $$;
-
 revoke all on function public.governance_health_ci_gate(boolean) from public, anon, authenticated;
 grant execute on function public.governance_health_ci_gate(boolean) to service_role;
 grant execute on function public.governance_health_ci_gate(boolean) to postgres;
-
 commit;
-

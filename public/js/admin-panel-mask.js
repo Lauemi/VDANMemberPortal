@@ -640,7 +640,7 @@
     }
 
     renderPanelContent(section, panel) {
-      const mode = panel.renderMode || "readonly";
+      const mode = panel.contentRenderer || panel.renderMode || "readonly";
       switch (mode) {
         case "readonly":
           return renderReadonlyContent(panel, this.config.texts.empty);
@@ -714,6 +714,7 @@
         panel.state = { ...(panel.state || {}), ...payload.state };
       }
       if (payload.renderMode) panel.renderMode = payload.renderMode;
+      if (payload.contentRenderer) panel.contentRenderer = payload.contentRenderer;
       if (payload.componentType) panel.componentType = payload.componentType;
       if (payload.actions) panel.actions = payload.actions;
       if (payload.columns) panel.columns = payload.columns;

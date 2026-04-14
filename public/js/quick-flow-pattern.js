@@ -593,7 +593,7 @@
 
     renderContentSlot(section, panel) {
       const slot = createElement("div", { className: "qfp-content-slot" });
-      const mode = panel.renderMode || "readonly";
+      const mode = panel.contentRenderer || panel.renderMode || "readonly";
 
       switch (mode) {
         case "form":

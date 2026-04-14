@@ -2030,7 +2030,18 @@
             {
               "key": "iban_last4",
               "label": "IBAN (letzte 4)",
-              "type": "masked-text"
+              "type": "masked-text",
+              "editable": false
+            },
+            {
+              "key": "iban",
+              "label": "IBAN",
+              "type": "text",
+              "editable": true,
+              "editOnly": true,
+              "placeholder": "DE…",
+              "helpText": "Neue IBAN eingeben. Serverseitig gehasht. Leer lassen um bestehende IBAN zu behalten.",
+              "payloadKey": "p_iban"
             },
             {
               "key": "actions",
@@ -4006,76 +4017,5 @@
       ]
     }
   ],
-  "specialCases": [
-    {
-      "id": "club_settings_resume_before_adm",
-      "type": "routing_contract",
-      "domKey": "adm-club-settings-resume-before-adm",
-      "cssKey": "adm-club-settings-resume-before-adm",
-      "reason": "Wenn die E-Mail-Verifikation oder Identity-Klaerung noch nicht abgeschlossen ist, muss der Resume-Link zuerst wieder auf /verein-anfragen/ fuehren. Erst nach Billing oder Freigabe darf in diese ADM-Maske gewechselt werden."
-    },
-    {
-      "id": "club_settings_current_known_route",
-      "type": "route_note",
-      "domKey": "adm-club-settings-current-route",
-      "cssKey": "adm-club-settings-current-route",
-      "reason": "Aktuell ist der bekannte Einstieg noch /app/mitgliederverwaltung/. Diese Maske beschreibt denselben kuenftigen Bereich semantisch als ClubSettings, ohne die bestehende Route im Repo bereits hart umzubenennen."
-    },
-    {
-      "id": "club_settings_acl_backend_gap",
-      "type": "contract_gap",
-      "domKey": "adm-club-settings-acl-gap",
-      "cssKey": "adm-club-settings-acl-gap",
-      "reason": "Die alte ACL-Matrix war nur ein LocalStorage-Pilot. Fuer Rollen/Rechte wird erst dann ein editierbarer Panel-Block sauber, wenn ein serverseitiger Read-/Write-Vertrag fuer club_user_roles und Modulrechte explizit belegt ist."
-    },
-    {
-      "id": "club_settings_roles_matrix_renderer_gap",
-      "type": "renderer_gap",
-      "domKey": "adm-club-settings-roles-matrix-renderer-gap",
-      "cssKey": "adm-club-settings-roles-matrix-renderer-gap",
-      "reason": "Fuer Rollen/Rechte existiert fachlich eine Matrix, aber aktuell keine angeschlossene Rendererfunktion in ADM/QFM. Erst wenn DOM-, CSS-, Load-/Save- und Audit-Vertrag zusammen definiert sind, darf hier eine echte Rechte-Matrix live gehen."
-    },
-    {
-      "id": "club_settings_audit_auto_fields",
-      "type": "audit_contract",
-      "domKey": "adm-club-settings-audit-auto",
-      "cssKey": "adm-club-settings-audit-auto",
-      "reason": "Audit-Felder wie created_at, created_by, updated_at und updated_by werden serverseitig gepflegt. Die Maske darf sie anzeigen, aber nicht frei im Frontend setzen."
-    },
-    {
-      "id": "club_settings_snapshot_security_pending",
-      "type": "security_review_pending",
-      "domKey": "adm-club-settings-snapshot-security-pending",
-      "cssKey": "adm-club-settings-snapshot-security-pending",
-      "reason": "Snapshot- und Setup-Overview bleiben vorsichtig angebunden, bis public.club_onboarding_snapshot und public.get_onboarding_process_state gegen den echten Zielstand serverseitig verifiziert sind."
-    },
-    {
-      "id": "club_settings_edge_contracts_verified_locally",
-      "type": "security_note",
-      "domKey": "adm-club-settings-edge-contracts-verified-locally",
-      "cssKey": "adm-club-settings-edge-contracts-verified-locally",
-      "reason": "Die lokalen Edge-Functions club-onboarding-workspace und club-invite-create pruefen Club-Ownership serverseitig. Remote-Deploy und Laufzeit muessen trotzdem separat gegen den Zielstand verifiziert werden."
-    },
-    {
-      "id": "club_settings_dual_access_approvals_helpers",
-      "type": "ux_contract",
-      "domKey": "adm-club-settings-dual-access-approvals-helpers",
-      "cssKey": "adm-club-settings-dual-access-approvals-helpers",
-      "reason": "Freigaben und Helfer koennen bewusst an zwei Stellen auftauchen: einmal im fachlich richtigen Spezialbereich und einmal als Vergleichszugang innerhalb der Vereinsdaten. Die zweite Flaeche dient der Bedienpruefung und ersetzt den spaeteren Spezial-Workflow nicht automatisch."
-    },
-    {
-      "id": "club_settings_work_approvals_read_contract_pending",
-      "type": "contract_gap",
-      "domKey": "adm-club-settings-work-approvals-read-contract-pending",
-      "cssKey": "adm-club-settings-work-approvals-read-contract-pending",
-      "reason": "Fuer Helfer- und Freigabeflaechen existieren bereits Datenbausteine und Tabellen im Backend, aber noch kein finaler kombinierter Board-Read-Vertrag fuer ADM. Der aktuelle Vertragsstand ist in docs/contracts/ADM_CLUB_SETTINGS_WORK_APPROVALS_CONTRACT.md dokumentiert und darf erst nach echter Read-Anbindung live gehen."
-    },
-    {
-      "id": "club_settings_adm_qfm_inner_content_contract",
-      "type": "renderer_contract",
-      "domKey": "adm-club-settings-adm-qfm-inner-content-contract",
-      "cssKey": "adm-club-settings-adm-qfm-inner-content-contract",
-      "reason": "ADM bleibt die aeussere Maskenfamilie und der Workspace-Rahmen. Einzelne Inhaltsbloecke innerhalb von ADM duerfen bewusst im QFM-Stil gerendert werden. Dafuer wird keine dritte Maskenfamilie eingefuehrt, solange ADM den QFM-Inhalt ueber bestehende Form- und Content-Renderer sauber tragen kann."
-    }
-  ]
+  "specialCases": []
 }

@@ -68,6 +68,144 @@
       "scope": "global_user",
       "panels": [
         {
+          "id": "banking_profile",
+          "title": "Bankverbindung",
+          "renderMode": "form",
+          "contentRenderer": "form",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": true,
+            "delete": false,
+            "roles": ["member", "admin", "vorstand", "superadmin"]
+          },
+          "securityContext": {
+            "rlsKey": "identity_id",
+            "membershipKey": null,
+            "requiresTenantAccess": false,
+            "requiresRoleCheck": false,
+            "allowedRoles": [],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.member_bank_data",
+            "sourceKind": "process",
+            "sourceOfTruth": "sql",
+            "scope": "global_user",
+            "ownership": "global_user",
+            "metaDisplay": "compact",
+            "panelState": "live",
+            "panelStateHint": "Liest und schreibt ueber self_member_banking_get / self_member_banking_update. IBAN wird serverseitig gehasht, nie im Klartext gespeichert.",
+            "securityHints": ["self_service_function", "security_definer"],
+            "riskFlags": []
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.self_member_banking_get",
+            "path": "rpc:public.self_member_banking_get"
+          },
+          "saveBinding": {
+            "kind": "rpc",
+            "target": "public.self_member_banking_update",
+            "path": "rpc:public.self_member_banking_update"
+          },
+          "content": {
+            "fields": [
+              {
+                "name": "iban_last4",
+                "label": "IBAN (letzte 4 Stellen)",
+                "type": "masked-text",
+                "componentType": "readonly",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.iban_last4",
+                "payloadKey": "iban_last4",
+                "group": "banking",
+                "order": 10,
+                "readonly": true,
+                "required": false,
+                "helpText": "Nur die letzten 4 Stellen werden angezeigt.",
+                "defaultValue": null,
+                "validationRules": []
+              },
+              {
+                "name": "iban",
+                "label": "Neue IBAN",
+                "type": "text",
+                "componentType": "input",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": null,
+                "payloadKey": "p_iban",
+                "group": "banking",
+                "order": 20,
+                "readonly": false,
+                "required": false,
+                "placeholder": "DE…",
+                "helpText": "Neue IBAN eingeben. Wird serverseitig verschluesselt gespeichert. Leer lassen um bestehende IBAN zu behalten.",
+                "defaultValue": null,
+                "validationRules": []
+              },
+              {
+                "name": "bic",
+                "label": "BIC",
+                "type": "text",
+                "componentType": "input",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.bic",
+                "payloadKey": "p_bic",
+                "group": "banking",
+                "order": 30,
+                "readonly": false,
+                "required": false,
+                "placeholder": "XXXXXXXX",
+                "helpText": "BIC der Bank.",
+                "defaultValue": null,
+                "validationRules": []
+              },
+              {
+                "name": "account_holder",
+                "label": "Kontoinhaber",
+                "type": "text",
+                "componentType": "input",
+                "scope": "global_user",
+                "ownership": "global_user",
+                "valuePath": "record.account_holder",
+                "payloadKey": "p_account_holder",
+                "group": "banking",
+                "order": 40,
+                "readonly": false,
+                "required": false,
+                "placeholder": "Vorname Nachname",
+                "helpText": "Name des Kontoinhabers.",
+                "defaultValue": null,
+                "validationRules": []
+              },
+              {
+                "name": "sepa_approved",
+                "label": "SEPA-Mandat",
+                "type": "boolean",
+                "componentType": "readonly",
+                "scope": "club_scoped",
+                "ownership": "club_scoped",
+                "valuePath": "record.sepa_approved",
+                "payloadKey": "sepa_approved",
+                "group": "banking",
+                "order": 50,
+                "readonly": true,
+                "required": false,
+                "helpText": "Wird durch den Verein gepflegt.",
+                "defaultValue": false,
+                "validationRules": []
+              }
+            ],
+            "rows": [],
+            "actions": []
+          }
+        },
+        {
           "id": "global_profile",
           "title": "Globales Profil",
           "renderMode": "form",

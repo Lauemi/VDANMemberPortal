@@ -640,10 +640,10 @@
       if (mode && key) {
         if (target.type === "checkbox") {
           setDraftValue(mode, key, Boolean(target.checked));
+          render();
         } else {
           setDraftValue(mode, key, target.value);
         }
-        render();
       }
     });
 

@@ -252,15 +252,15 @@ Deno.serve(async (req: Request) => {
     await upsertSetting(`club_invite_token:${inviteTokenHash}`, JSON.stringify(inviteRecord));
     await upsertSetting(`club_invite_active:${clubId}`, inviteTokenHash);
 
-    const reqOrigin = txt(req.headers.get("origin"));
+    const registerBase = txt(Deno.env.get("REGISTER_BASE_URL")) || txt(req.headers.get("origin"));
     const registerQuery = new URLSearchParams({
       invite: inviteToken,
       club_id: clubId,
       club_code: safeClubCode,
       club_name: clubName,
     });
-    const registerUrl = reqOrigin
-      ? `${reqOrigin.replace(/\/+$/, "")}/registrieren/?${registerQuery.toString()}`
+    const registerUrl = registerBase
+      ? `${registerBase.replace(/\/+$/, "")}/registrieren/?${registerQuery.toString()}`
       : `/registrieren/?${registerQuery.toString()}`;
     const inviteQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(registerUrl)}`;
     await upsertSetting(`club_invite_snapshot:${clubId}`, JSON.stringify({

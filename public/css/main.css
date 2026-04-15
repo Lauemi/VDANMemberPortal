@@ -7062,6 +7062,11 @@ body[data-app-theme="fcp_tactical"] .header-notification-badge{
   max-width:48ch;
 }
 
+.register-flow__section-label{
+  margin:0;
+  color:var(--text);
+}
+
 .register-flow__form{
   display:grid;
   gap:var(--form-gap);

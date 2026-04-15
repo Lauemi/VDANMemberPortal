@@ -774,18 +774,18 @@
     return session;
   }
 
-  async function signUpWithPassword(emailRaw, password, metadata = {}) {
+  async function signUpWithPassword(emailRaw, password, metadata = {}, options = {}) {
     const email = String(emailRaw || "").trim().toLowerCase();
     if (!email || !email.includes("@")) throw new Error("Bitte eine gÃ¼ltige E-Mail eingeben.");
     if (String(password || "").length < 8) throw new Error("Passwort muss mindestens 8 Zeichen haben.");
 
+    const signupBody = { email, password, data: metadata || {} };
+    const emailRedirectTo = String(options?.emailRedirectTo || "").trim();
+    if (emailRedirectTo) signupBody.redirect_to = emailRedirectTo;
+
     const res = await sbFetch("/auth/v1/signup", {
       method: "POST",
-      body: JSON.stringify({
-        email,
-        password,
-        data: metadata || {},
-      }),
+      body: JSON.stringify(signupBody),
     });
 
     if (!res.ok) {
@@ -1368,12 +1368,13 @@
               first_name: firstName,
               last_name: lastName,
             };
+          const inviteConfirmUrl = `${window.location.origin}/auth/invite-confirm/?email=${encodeURIComponent(emailRaw)}`;
           const result = await signUpWithPassword(emailRaw, pass, {
               registration_mode: "join_club",
               ...claimPayload,
               club_code: clubCode,
               club_name: String(verify?.club_name || "").trim(),
-            });
+            }, { emailRedirectTo: inviteConfirmUrl });
             writePendingInvite(claimPayload);
             if (result?.access_token) {
               await acceptCurrentLegal(result.access_token);

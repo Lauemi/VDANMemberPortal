@@ -1,0 +1,93 @@
+---
+import Site from "../../layouts/Site.astro";
+import { APP } from "../../config/app";
+
+const emailParam = Astro.url.searchParams.get("email") ?? "";
+const safeEmail = emailParam.includes("@") ? emailParam : "";
+---
+
+<Site
+  title={`Registrierung fortsetzen • ${APP.name}`}
+  description="E-Mail bestätigt – bitte Passwort eingeben."
+  robots="noindex"
+  density="compact"
+>
+  <section class="card ui-card register-flow-card form-shell" style="max-width:480px;margin:0 auto;">
+    <div class="card__body ui-card__body register-flow">
+      <div class="register-flow__intro">
+        <h1>E-Mail bestätigt</h1>
+        <p class="small register-flow__lede">Gib dein Passwort ein, um die Registrierung abzuschließen.</p>
+      </div>
+
+      <form id="inviteConfirmForm" class="register-flow__form form-shell__section">
+        <label class="ui-field">
+          <span>E-Mail</span>
+          <input
+            id="inviteConfirmEmail"
+            type="email"
+            autocomplete="username"
+            value={safeEmail}
+            readonly
+            tabindex="-1"
+          />
+        </label>
+        <label class="ui-field">
+          <span>Passwort</span>
+          <input
+            id="inviteConfirmPass"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+            autofocus
+          />
+        </label>
+        <div class="register-flow__actions">
+          <button id="inviteConfirmBtn" class="feed-btn fcp-brand-btn--primary" type="submit">
+            Weiter zum Portal
+          </button>
+          <span id="inviteConfirmMsg" class="small" aria-live="polite"></span>
+        </div>
+      </form>
+    </div>
+  </section>
+</Site>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("inviteConfirmForm");
+    const emailInput = /** @type {HTMLInputElement|null} */ (document.getElementById("inviteConfirmEmail"));
+    const passInput = /** @type {HTMLInputElement|null} */ (document.getElementById("inviteConfirmPass"));
+    const msg = document.getElementById("inviteConfirmMsg");
+    const btn = /** @type {HTMLButtonElement|null} */ (document.getElementById("inviteConfirmBtn"));
+
+    if (!form) return;
+
+    const email = String(emailInput?.value || "").trim();
+    if (!email) {
+      if (msg) msg.textContent = "Kein E-Mail-Kontext. Bitte den Invite-Link erneut verwenden.";
+      if (btn) btn.disabled = true;
+      return;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const pass = String(passInput?.value || "");
+      if (!pass) return;
+
+      if (btn) btn.disabled = true;
+      if (msg) msg.textContent = "…";
+
+      try {
+        const auth = /** @type {any} */ (window["VDAN_AUTH"]);
+        if (!auth?.loginWithPassword) throw new Error("Auth-Modul nicht verfügbar.");
+
+        await auth.loginWithPassword(email, pass);
+        window.location.assign("/app/zugang-pruefen/?next=" + encodeURIComponent("/app/"));
+      } catch (/** @type {any} */ err) {
+        if (msg) msg.textContent = String(err?.message || "Anmeldung fehlgeschlagen.");
+        if (btn) btn.disabled = false;
+      }
+    });
+  });
+</script>

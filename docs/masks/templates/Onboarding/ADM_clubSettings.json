@@ -1372,8 +1372,6 @@
             "sqlContract": {
               "sqlFile": "docs/sql-contracts/processes/club-settings/invites/READ_invite_create.sql",
               "expectedColumns": [
-                "club_name",
-                "club_code",
                 "max_uses",
                 "expires_in_days",
                 "invite_token",
@@ -1403,47 +1401,6 @@
                 "invite_expires_at": "invite_expires_at"
               },
               "fieldDefs": [
-                {
-                  "name": "club_name",
-                  "label": "Verein",
-                  "type": "text",
-                  "componentType": "input",
-                  "scope": "club_override",
-                  "ownership": "club_override",
-                  "valuePath": "record.club_name",
-                  "payloadKey": "",
-                  "group": "invite",
-                  "displaySpan": "full",
-                  "order": 10,
-                  "placeholder": "",
-                  "helpText": "",
-                  "hidden": true,
-                  "readonly": true,
-                  "required": false,
-                  "defaultValue": "",
-                  "validationRules": [],
-                  "options": []
-                },
-                {
-                  "name": "club_code",
-                  "label": "Club-Code",
-                  "type": "text",
-                  "componentType": "input",
-                  "scope": "club_override",
-                  "ownership": "club_override",
-                  "valuePath": "record.club_code",
-                  "payloadKey": "",
-                  "group": "invite",
-                  "displaySpan": null,
-                  "order": 20,
-                  "placeholder": "",
-                  "helpText": "",
-                  "readonly": true,
-                  "required": false,
-                  "defaultValue": "",
-                  "validationRules": [],
-                  "options": []
-                },
                 {
                   "name": "max_uses",
                   "label": "Max. Nutzungen",
@@ -3581,9 +3538,9 @@
             "serverValidated": true
           },
           "meta": {
-            "sourceTable": "public.work_events + public.work_participations + public.event_planner_configs + public.event_planner_registrations",
+            "sourceTable": "public.work_events + public.event_planner_configs + public.event_planner_slots + public.event_planner_registrations",
             "sourceKind": "table",
-            "sourceOfTruth": "json",
+            "sourceOfTruth": "rpc",
             "sqlContract": {
               "sqlFile": "docs/sql-contracts/processes/club-settings/work/READ_work_overview.sql",
               "expectedColumns": [

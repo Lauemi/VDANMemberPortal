@@ -531,7 +531,7 @@
         ? "Ohne bestätigte Rechtstexte wird die Vereinsanfrage nicht gespeichert."
         : "Ohne bestätigte Rechtstexte wird der Vereinsbeitritt nicht abgeschlossen.";
     }
-    if (submitBtn) {
+    if (submitBtn && registerForm?.dataset?.hasInviteContext !== "true") {
       submitBtn.textContent = mode === "create_club" ? "Verein anfragen" : "VereinsSignIn starten";
     }
     if (emailInput) emailInput.required = mode === "create_club" ? !authBypass : true;

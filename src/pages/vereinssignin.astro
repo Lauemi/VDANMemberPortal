@@ -74,13 +74,17 @@ const clubDisplayName = inviteClubName || "Verein";
         )}
 
         <section id="registerAuthSection" class="register-step register-step--auth is-active">
-          <div class="register-step__head">
-            <span class="register-step__index">1</span>
-            <div>
-              <h2 id="registerAuthTitle">Zugang für den VereinsSignIn</h2>
-              <p id="registerAuthCopy">Zuerst legen wir den Zugang für den Vereinsbeitritt an. Danach prüfen wir Invite-Token und Vereins-Mitgliedsnummer.</p>
+          {!hasInviteContext ? (
+            <div class="register-step__head">
+              <span class="register-step__index">1</span>
+              <div>
+                <h2 id="registerAuthTitle">Zugang für den VereinsSignIn</h2>
+                <p id="registerAuthCopy">Zuerst legen wir den Zugang für den Vereinsbeitritt an. Danach prüfen wir Invite-Token und Vereins-Mitgliedsnummer.</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <p class="small register-flow__section-label"><strong>Dein Zugang</strong></p>
+          )}
           <div class="register-grid">
             <label id="registerEmailField">
               <span>E-Mail</span>
@@ -99,55 +103,74 @@ const clubDisplayName = inviteClubName || "Verein";
         </section>
 
         <section id="registerJoinSection" class="register-step register-step--join is-active">
-          <div class="register-step__head">
-            <span class="register-step__index">2</span>
-            <div>
-              <h2>VereinsSignIn</h2>
-              <p>Nutze Invite-Link oder Invite-Token zusammen mit deiner Vereins-Mitgliedsnummer.</p>
+          {!hasInviteContext && (
+            <div class="register-step__head">
+              <span class="register-step__index">2</span>
+              <div>
+                <h2>VereinsSignIn</h2>
+                <p>Nutze Invite-Link oder Invite-Token zusammen mit deiner Vereins-Mitgliedsnummer.</p>
+              </div>
             </div>
-          </div>
+          )}
           <div id="registerInviteContext" class="register-note small hidden" hidden>
-            <strong id="registerInviteContextTitle">Einladung erkannt</strong>
-            <span id="registerInviteContextCopy">Vereinskontext wird geladen ...</span>
+            {!hasInviteContext && <strong id="registerInviteContextTitle">Einladung erkannt</strong>}
+            <span id="registerInviteContextCopy"></span>
           </div>
-          <div class="register-note small">
-            Bitte verwende die E-Mail-Adresse, die deinem Verein bereits bekannt ist.
-          </div>
+          {!hasInviteContext && (
+            <div class="register-note small">
+              Bitte verwende die E-Mail-Adresse, die deinem Verein bereits bekannt ist.
+            </div>
+          )}
           <div class="register-grid">
             <label id="registerInviteTokenField">
               <span>Einladungs-Token</span>
               <input id="registerInviteToken" name="invite_token" type="text" value={inviteToken} autocomplete="off" />
             </label>
             <label>
-              <span>Vereins-Mitgliedsnummer</span>
+              <span>Mitgliedsnummer</span>
               <input id="registerMemberNo" name="member_no" type="text" inputmode="text" autocomplete="username" />
             </label>
           </div>
-          <div class="register-step__foot small">
-            Nach dem Auth-Abschluss und der Mailverifikation wirst du auf die Bestätigung deiner beim Verein hinterlegten Daten weitergeleitet, bevor du ins Portal gelangst.
-          </div>
+          {!hasInviteContext && (
+            <div class="register-step__foot small">
+              Nach dem Auth-Abschluss und der Mailverifikation wirst du auf die Bestätigung deiner beim Verein hinterlegten Daten weitergeleitet, bevor du ins Portal gelangst.
+            </div>
+          )}
         </section>
 
-        <section id="registerLegalSection" class="register-step register-step--legal is-active">
-          <div class="register-step__head">
-            <span class="register-step__index">3</span>
-            <div>
-              <h2 id="registerLegalTitle">Rechtstexte für den VereinsSignIn</h2>
-              <p id="registerLegalCopy">Ohne bestätigte Rechtstexte wird der Vereinsbeitritt nicht abgeschlossen.</p>
+        {!hasInviteContext ? (
+          <section id="registerLegalSection" class="register-step register-step--legal is-active">
+            <div class="register-step__head">
+              <span class="register-step__index">3</span>
+              <div>
+                <h2 id="registerLegalTitle">Rechtstexte für den VereinsSignIn</h2>
+                <p id="registerLegalCopy">Ohne bestätigte Rechtstexte wird der Vereinsbeitritt nicht abgeschlossen.</p>
+              </div>
             </div>
+            <label class="small register-check">
+              <input id="registerAccept" type="checkbox" required />
+              <span>Ich akzeptiere die <a href="/nutzungsbedingungen.html/" target="_blank" rel="noopener noreferrer">Nutzungsbedingungen</a> und die <a href="/datenschutz.html/" target="_blank" rel="noopener noreferrer">Datenschutzerklärung</a>.</span>
+            </label>
+          </section>
+        ) : (
+          <div class="register-step--legal-compact">
+            <label class="small register-check">
+              <input id="registerAccept" type="checkbox" required />
+              <span>Ich akzeptiere die <a href="/nutzungsbedingungen.html/" target="_blank" rel="noopener noreferrer">Nutzungsbedingungen</a> und die <a href="/datenschutz.html/" target="_blank" rel="noopener noreferrer">Datenschutzerklärung</a>.</span>
+            </label>
           </div>
-          <label class="small register-check">
-            <input id="registerAccept" type="checkbox" required />
-            <span>Ich akzeptiere die <a href="/nutzungsbedingungen.html/" target="_blank" rel="noopener noreferrer">Nutzungsbedingungen</a> und die <a href="/datenschutz.html/" target="_blank" rel="noopener noreferrer">Datenschutzerklärung</a>.</span>
-          </label>
-        </section>
+        )}
 
         <div class="register-flow__actions">
-          <button id="registerSubmitBtn" class="feed-btn fcp-brand-btn--primary" type="submit">VereinsSignIn starten</button>
+          <button id="registerSubmitBtn" class="feed-btn fcp-brand-btn--primary" type="submit">
+            {hasInviteContext ? "Jetzt beitreten" : "VereinsSignIn starten"}
+          </button>
           {!hasInviteContext && (
             <a class="feed-btn feed-btn--ghost" href={clubRequestHref}>Stattdessen Verein anfragen</a>
           )}
-          <a class="register-flow__secondary-link" href={`/login/?next=${encodeURIComponent(nextTarget)}`}>Zur Anmeldung</a>
+          {!hasInviteContext && (
+            <a class="register-flow__secondary-link" href={`/login/?next=${encodeURIComponent(nextTarget)}`}>Zur Anmeldung</a>
+          )}
           <span id="registerMsg" class="small" aria-live="polite"></span>
         </div>
       </form>

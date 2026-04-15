@@ -1568,16 +1568,16 @@
                   "validationRules": [],
                   "options": []
                 }
-              ]
+              ],
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              }
             }
           },
           "loadBinding": {
             "kind": "rpc",
             "target": "public.club_invite_create_state",
-            "path": "rpc:public.club_invite_create_state",
-            "params": {
-              "p_club_id": "{club_id}"
-            }
+            "path": "rpc:public.club_invite_create_state"
           },
           "saveBinding": {
             "kind": "edge_function",
@@ -2200,15 +2200,16 @@
             "panelState": "live",
             "panelStateLabel": "Live",
             "panelStateHint": "Read via RPC public.admin_club_roles_read. Quellen: club_roles + club_user_roles + club_role_permissions. Write-Vertrag fuer Rollen-Editor ist noch offen.",
-            "resolver": {}
+            "resolver": {
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              }
+            }
           },
           "loadBinding": {
             "kind": "rpc",
             "target": "public.admin_club_roles_read",
-            "path": "rpc:public.admin_club_roles_read",
-            "params": {
-              "p_club_id": "{club_id}"
-            }
+            "path": "rpc:public.admin_club_roles_read"
           },
           "saveBinding": {
             "kind": "none",
@@ -3601,16 +3602,16 @@
             "panelStateLabel": "Live",
             "panelStateHint": "Read via RPC public.admin_work_overview. Quellen: work_events + event_planner_configs + event_planner_slots + event_planner_registrations.",
             "resolver": {
-              "rowsPath": "rows"
+              "rowsPath": "rows",
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              }
             }
           },
           "loadBinding": {
             "kind": "rpc",
             "target": "public.admin_work_overview",
-            "path": "rpc:public.admin_work_overview",
-            "params": {
-              "p_club_id": "{club_id}"
-            }
+            "path": "rpc:public.admin_work_overview"
           },
           "saveBinding": {
             "kind": "none",

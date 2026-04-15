@@ -359,24 +359,15 @@
     const tokenField = document.getElementById("registerInviteTokenField");
     const tokenInput = document.getElementById("registerInviteToken");
     const clubName = String(payload?.club_name || "").trim();
-    const clubCode = String(payload?.club_code || "").trim().toUpperCase();
-    const expiresAt = String(payload?.expires_at || "").trim();
     if (wrap && copy) {
-      const parts = [];
-      if (clubName) parts.push(clubName);
-      if (clubCode) parts.push(`(${clubCode})`);
-      if (expiresAt) {
-        const dt = new Date(expiresAt);
-        if (Number.isFinite(dt.getTime())) parts.push(`gültig bis ${dt.toLocaleString("de-DE")}`);
-      }
-      if (parts.length) {
+      if (clubName) {
         wrap.hidden = false;
         wrap.classList.remove("hidden");
-        copy.textContent = `Die Join-Seite ist bereits mit deiner Einladung für ${parts.join(" ")} vorbelegt.`;
+        copy.textContent = `Du trittst dem Verein ${clubName} bei.`;
       } else {
         wrap.hidden = true;
         wrap.classList.add("hidden");
-        copy.textContent = "Vereinskontext wird geladen ...";
+        copy.textContent = "";
       }
     }
     if (tokenField && tokenInput && String(tokenInput.value || "").trim()) {

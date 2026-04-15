@@ -481,6 +481,8 @@
         ? {
             id: String(activeEl.id || "").trim(),
             filterKey: String(activeEl.getAttribute?.("data-filter-key") || "").trim(),
+            editorMode: String(activeEl.getAttribute?.("data-editor-mode") || "").trim(),
+            editorKey: String(activeEl.getAttribute?.("data-editor-key") || "").trim(),
             selectionStart: typeof activeEl.selectionStart === "number" ? activeEl.selectionStart : null,
             selectionEnd: typeof activeEl.selectionEnd === "number" ? activeEl.selectionEnd : null,
           }
@@ -604,6 +606,9 @@
         }
         if (!nextFocus && focusState.filterKey) {
           nextFocus = root.querySelector(`[data-filter-key="${CSS.escape(focusState.filterKey)}"]`);
+        }
+        if (!nextFocus && focusState.editorMode && focusState.editorKey) {
+          nextFocus = root.querySelector(`[data-editor-mode="${CSS.escape(focusState.editorMode)}"][data-editor-key="${CSS.escape(focusState.editorKey)}"]`);
         }
         if (nextFocus instanceof HTMLElement) {
           nextFocus.focus();

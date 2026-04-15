@@ -402,6 +402,9 @@
             "scope": "global_user",
             "ownership": "global_user",
             "metaDisplay": "auto",
+            "panelState": "live",
+            "panelStateLabel": "Live",
+            "panelStateHint": "Read via RPC public.club_request_gate_state. Leerzustand fachlich korrekt (keine offene Anfrage).",
             "resolver": {
               "fieldDefs": [
                 {
@@ -1534,7 +1537,10 @@
           "loadBinding": {
             "kind": "rpc",
             "target": "public.club_invite_create_state",
-            "path": "rpc:public.club_invite_create_state"
+            "path": "rpc:public.club_invite_create_state",
+            "params": {
+              "p_club_id": "{club_id}"
+            }
           },
           "saveBinding": {
             "kind": "edge_function",
@@ -2114,7 +2120,7 @@
           "id": "club_settings_roles_backend_contract",
           "title": "Rollen- und Rechtevertrag",
           "renderMode": "table",
-          "componentType": "InlineDataTablePanel",
+          "componentType": "inline-data-table",
           "contentArea": "main",
           "flowType": "standard",
           "permissions": {

@@ -1200,7 +1200,7 @@
               "vorstand",
               "superadmin"
             ],
-            "serverValidated": true
+            "serverValidated": false
           },
           "meta": {
             "sourceTable": "public.work_participations + public.event_planner_registrations",
@@ -1220,9 +1220,9 @@
             "scope": "club_override",
             "ownership": "club_override",
             "metaDisplay": "full",
-            "panelState": "preview",
-            "panelStateLabel": "Vorschau",
-            "panelStateHint": "Die Vergleichsflaeche ist sichtbar, aber der kombinierte Live-Read-Vertrag fehlt noch.",
+            "panelState": "gap",
+            "panelStateLabel": "Vertrag offen",
+            "panelStateHint": "Kombinierter Live-Read-Vertrag fehlt. Keine dedizierte Fangfreigaben-Tabelle in DB. Datenquelle muss erst modelliert werden, bevor dieser Panel angebunden werden kann.",
             "resolver": {
               "requiresClubContext": true,
               "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Die Vergleichsflaeche fuer Helfer und Freigaben kann erst im Club-Kontext beurteilt werden.",
@@ -1385,15 +1385,12 @@
             "scope": "club_override",
             "ownership": "club_override",
             "metaDisplay": "auto",
-            "panelState": "partial",
-            "panelStateLabel": "Teilweise live",
-            "panelStateHint": "Der Write-Pfad ist live. Der Read fuer den zuletzt erzeugten Invite bleibt bis zum ausgerollten RPC-Fallback lokal, damit Live-Deploys keine 404 erzeugen.",
+            "panelState": "live",
+            "panelStateLabel": "Live",
+            "panelStateHint": "Read via RPC public.club_invite_create_state (club-scoped). Write via Edge club-invite-create. Beide Pfade live und server-validiert.",
             "resolver": {
               "requiresClubContext": true,
               "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Einladungen werden erst im freigegebenen Club-Kontext erzeugt.",
-              "loadPayloadDefaults": {
-                "p_club_id": "{club_id}"
-              },
               "savePayloadDefaults": {
                 "club_id": "{club_id}",
                 "club_code": "{club_code}"
@@ -1575,9 +1572,12 @@
             }
           },
           "loadBinding": {
-            "kind": "none",
-            "target": null,
-            "path": "none"
+            "kind": "rpc",
+            "target": "public.club_invite_create_state",
+            "path": "rpc:public.club_invite_create_state",
+            "params": {
+              "p_club_id": "{club_id}"
+            }
           },
           "saveBinding": {
             "kind": "edge_function",
@@ -2156,8 +2156,8 @@
         {
           "id": "club_settings_roles_backend_contract",
           "title": "Rollen- und Rechtevertrag",
-          "renderMode": "readonly",
-          "componentType": "ReadonlyPanel",
+          "renderMode": "table",
+          "componentType": "InlineDataTablePanel",
           "contentArea": "main",
           "flowType": "standard",
           "permissions": {
@@ -2180,92 +2180,35 @@
             "serverValidated": true
           },
           "meta": {
-            "sourceTable": "public.club_user_roles",
+            "sourceTable": "public.club_roles + public.club_user_roles + public.club_role_permissions",
             "sourceKind": "table",
             "sourceOfTruth": "sql",
             "sqlContract": {
               "sqlFile": "docs/sql-contracts/processes/club-settings/roles/READ_roles_backend_contract.sql",
               "expectedColumns": [
-                "backend_relation",
-                "legacy_acl_state",
-                "allowed_roles"
+                "role_key",
+                "role_label",
+                "is_core",
+                "is_active",
+                "module_count",
+                "member_count"
               ]
             },
             "scope": "club_override",
             "ownership": "club_override",
             "metaDisplay": "full",
-            "panelState": "gap",
-            "panelStateLabel": "Vertrag offen",
-            "panelStateHint": "Backend-Relation public.club_user_roles existiert, aber kein club-scoped Read-Vertrag fuer eine Rollen-Uebersicht in ClubSettings vorhanden. ACL-Matrix war nur LocalStorage-Pilot.",
-            "resolver": {
-              "fieldDefs": [
-                {
-                  "name": "backend_relation",
-                  "label": "Backend-Relation",
-                  "type": "text",
-                  "componentType": "readonly",
-                  "scope": "club_override",
-                  "ownership": "club_override",
-                  "valuePath": "record.backend_relation",
-                  "payloadKey": "",
-                  "group": "roles",
-                  "displaySpan": "full",
-                  "order": 10,
-                  "placeholder": "",
-                  "helpText": "",
-                  "readonly": true,
-                  "required": false,
-                  "defaultValue": "public.club_user_roles",
-                  "validationRules": [],
-                  "options": []
-                },
-                {
-                  "name": "legacy_acl_state",
-                  "label": "Legacy-ACL-Stand",
-                  "type": "text",
-                  "componentType": "readonly",
-                  "scope": "club_override",
-                  "ownership": "club_override",
-                  "valuePath": "record.legacy_acl_state",
-                  "payloadKey": "",
-                  "group": "roles",
-                  "displaySpan": "full",
-                  "order": 20,
-                  "placeholder": "",
-                  "helpText": "",
-                  "readonly": true,
-                  "required": false,
-                  "defaultValue": "Nur LocalStorage-Pilot. Kein belastbarer Write-Vertrag fuer die alte ACL-Matrix.",
-                  "validationRules": [],
-                  "options": []
-                },
-                {
-                  "name": "allowed_roles",
-                  "label": "Freigegebene Manager-Rollen",
-                  "type": "text",
-                  "componentType": "readonly",
-                  "scope": "club_override",
-                  "ownership": "club_override",
-                  "valuePath": "record.allowed_roles",
-                  "payloadKey": "",
-                  "group": "roles",
-                  "displaySpan": "full",
-                  "order": 30,
-                  "placeholder": "",
-                  "helpText": "",
-                  "readonly": true,
-                  "required": false,
-                  "defaultValue": "admin, vorstand, superadmin",
-                  "validationRules": [],
-                  "options": []
-                }
-              ]
-            }
+            "panelState": "live",
+            "panelStateLabel": "Live",
+            "panelStateHint": "Read via RPC public.admin_club_roles_read. Quellen: club_roles + club_user_roles + club_role_permissions. Write-Vertrag fuer Rollen-Editor ist noch offen.",
+            "resolver": {}
           },
           "loadBinding": {
-            "kind": "none",
-            "target": null,
-            "path": "none"
+            "kind": "rpc",
+            "target": "public.admin_club_roles_read",
+            "path": "rpc:public.admin_club_roles_read",
+            "params": {
+              "p_club_id": "{club_id}"
+            }
           },
           "saveBinding": {
             "kind": "none",
@@ -2274,27 +2217,53 @@
           },
           "content": {
             "fields": [],
-            "rows": [
-              {
-                "label": "Status",
-                "value": "Noch nicht final angebunden. Separater Read-/Write-Vertrag fehlt.",
-                "span": "full"
-              }
-            ],
+            "rows": [],
             "actions": []
           },
-          "rowsPath": "",
+          "rowsPath": "rows",
           "tableConfig": {
-            "tableId": "",
-            "rowKeyField": "",
+            "tableId": "adm-club-settings-roles-overview",
+            "rowKeyField": "role_key",
             "gridTemplateColumns": "",
-            "rowInteractionMode": "dialog",
+            "rowInteractionMode": "inline",
             "selectionMode": "single",
             "viewMode": "table",
-            "sortKey": "",
+            "sortKey": "role_key",
             "sortDir": "asc",
             "filterFields": []
-          }
+          },
+          "columns": [
+            {
+              "key": "role_key",
+              "label": "Rolle",
+              "type": "text"
+            },
+            {
+              "key": "role_label",
+              "label": "Bezeichnung",
+              "type": "text"
+            },
+            {
+              "key": "is_core",
+              "label": "Kernrolle",
+              "type": "boolean"
+            },
+            {
+              "key": "is_active",
+              "label": "Aktiv",
+              "type": "boolean"
+            },
+            {
+              "key": "module_count",
+              "label": "Module",
+              "type": "number"
+            },
+            {
+              "key": "member_count",
+              "label": "Mitglieder",
+              "type": "number"
+            }
+          ]
         }
       ]
     },
@@ -2415,11 +2384,26 @@
               "editable": true,
               "editorType": "select",
               "options": [
-                { "value": "", "label": "Keine Auswahl" },
-                { "value": "see", "label": "See" },
-                { "value": "fluss", "label": "Fluss" },
-                { "value": "kanal", "label": "Kanal" },
-                { "value": "weiher", "label": "Weiher" }
+                {
+                  "value": "",
+                  "label": "Keine Auswahl"
+                },
+                {
+                  "value": "see",
+                  "label": "See"
+                },
+                {
+                  "value": "fluss",
+                  "label": "Fluss"
+                },
+                {
+                  "value": "kanal",
+                  "label": "Kanal"
+                },
+                {
+                  "value": "weiher",
+                  "label": "Weiher"
+                }
               ]
             },
             {
@@ -2429,8 +2413,14 @@
               "editable": true,
               "editorType": "select",
               "options": [
-                { "value": "active", "label": "Aktiv" },
-                { "value": "inactive", "label": "Inaktiv" }
+                {
+                  "value": "active",
+                  "label": "Aktiv"
+                },
+                {
+                  "value": "inactive",
+                  "label": "Inaktiv"
+                }
               ]
             },
             {
@@ -2454,8 +2444,14 @@
               "editable": true,
               "editorType": "select-multi",
               "options": [
-                { "value": "innenwasser", "label": "Innenwasser" },
-                { "value": "rheinlos39", "label": "Rheinlos" }
+                {
+                  "value": "innenwasser",
+                  "label": "Innenwasser"
+                },
+                {
+                  "value": "rheinlos39",
+                  "label": "Rheinlos"
+                }
               ]
             },
             {
@@ -2566,7 +2562,7 @@
               "vorstand",
               "superadmin"
             ],
-            "serverValidated": true
+            "serverValidated": false
           },
           "meta": {
             "sourceTable": "regulations_contract_pending",
@@ -2815,10 +2811,22 @@
                   "defaultValue": "annual",
                   "validationRules": [],
                   "options": [
-                    { "value": "annual", "label": "Jaehrlich" },
-                    { "value": "daily", "label": "Taeglich" },
-                    { "value": "weekly", "label": "Woechentlich" },
-                    { "value": "monthly", "label": "Monatlich" }
+                    {
+                      "value": "annual",
+                      "label": "Jaehrlich"
+                    },
+                    {
+                      "value": "daily",
+                      "label": "Taeglich"
+                    },
+                    {
+                      "value": "weekly",
+                      "label": "Woechentlich"
+                    },
+                    {
+                      "value": "monthly",
+                      "label": "Monatlich"
+                    }
                   ]
                 },
                 {
@@ -3072,20 +3080,95 @@
             "actions": []
           },
           "columns": [
-            { "key": "title", "label": "Karte", "type": "text", "editable": true, "editorType": "text" },
-            { "key": "kind", "label": "Intervall", "type": "text", "editable": true, "editorType": "select", "options": [
-              { "value": "annual", "label": "Jaehrlich" },
-              { "value": "daily", "label": "Taeglich" },
-              { "value": "weekly", "label": "Woechentlich" },
-              { "value": "monthly", "label": "Monatlich" }
-            ] },
-            { "key": "standard_default", "label": "Standard Auto", "type": "boolean", "editable": true, "editorType": "checkbox" },
-            { "key": "standard_price", "label": "Standard Preis", "type": "number", "editable": true, "editorType": "number" },
-            { "key": "youth_default", "label": "Jugend Auto", "type": "boolean", "editable": true, "editorType": "checkbox" },
-            { "key": "youth_price", "label": "Jugend Preis", "type": "number", "editable": true, "editorType": "number", "disabledWhenKey": "youth_default", "fallbackFromKey": "standard_price", "placeholder": "Mitgliedspreis" },
-            { "key": "honorary_default", "label": "Ehren Auto", "type": "boolean", "editable": true, "editorType": "checkbox" },
-            { "key": "honorary_price", "label": "Ehren Preis", "type": "number", "editable": true, "editorType": "number", "disabledWhenKey": "honorary_default", "fallbackFromKey": "standard_price", "placeholder": "Mitgliedspreis" },
-            { "key": "actions", "label": "Aktionen", "type": "actions", "editable": false, "sortable": false, "filterable": false, "width": "140px" }
+            {
+              "key": "title",
+              "label": "Karte",
+              "type": "text",
+              "editable": true,
+              "editorType": "text"
+            },
+            {
+              "key": "kind",
+              "label": "Intervall",
+              "type": "text",
+              "editable": true,
+              "editorType": "select",
+              "options": [
+                {
+                  "value": "annual",
+                  "label": "Jaehrlich"
+                },
+                {
+                  "value": "daily",
+                  "label": "Taeglich"
+                },
+                {
+                  "value": "weekly",
+                  "label": "Woechentlich"
+                },
+                {
+                  "value": "monthly",
+                  "label": "Monatlich"
+                }
+              ]
+            },
+            {
+              "key": "standard_default",
+              "label": "Standard Auto",
+              "type": "boolean",
+              "editable": true,
+              "editorType": "checkbox"
+            },
+            {
+              "key": "standard_price",
+              "label": "Standard Preis",
+              "type": "number",
+              "editable": true,
+              "editorType": "number"
+            },
+            {
+              "key": "youth_default",
+              "label": "Jugend Auto",
+              "type": "boolean",
+              "editable": true,
+              "editorType": "checkbox"
+            },
+            {
+              "key": "youth_price",
+              "label": "Jugend Preis",
+              "type": "number",
+              "editable": true,
+              "editorType": "number",
+              "disabledWhenKey": "youth_default",
+              "fallbackFromKey": "standard_price",
+              "placeholder": "Mitgliedspreis"
+            },
+            {
+              "key": "honorary_default",
+              "label": "Ehren Auto",
+              "type": "boolean",
+              "editable": true,
+              "editorType": "checkbox"
+            },
+            {
+              "key": "honorary_price",
+              "label": "Ehren Preis",
+              "type": "number",
+              "editable": true,
+              "editorType": "number",
+              "disabledWhenKey": "honorary_default",
+              "fallbackFromKey": "standard_price",
+              "placeholder": "Mitgliedspreis"
+            },
+            {
+              "key": "actions",
+              "label": "Aktionen",
+              "type": "actions",
+              "editable": false,
+              "sortable": false,
+              "filterable": false,
+              "width": "140px"
+            }
           ],
           "rowsPath": "record.workspace.cards",
           "tableConfig": {
@@ -3494,7 +3577,7 @@
               "vorstand",
               "superadmin"
             ],
-            "serverValidated": false
+            "serverValidated": true
           },
           "meta": {
             "sourceTable": "public.work_events + public.work_participations + public.event_planner_configs + public.event_planner_registrations",
@@ -3514,17 +3597,20 @@
             "scope": "club_override",
             "ownership": "club_override",
             "metaDisplay": "full",
-            "panelState": "gap",
-            "panelStateLabel": "Vertrag offen",
-            "panelStateHint": "Datenbausteine sind vorhanden, aber der kombinierte ClubSettings-Reader fuer Helfer und Einsaetze fehlt noch.",
+            "panelState": "live",
+            "panelStateLabel": "Live",
+            "panelStateHint": "Read via RPC public.admin_work_overview. Quellen: work_events + event_planner_configs + event_planner_slots + event_planner_registrations.",
             "resolver": {
               "rowsPath": "rows"
             }
           },
           "loadBinding": {
-            "kind": "none",
-            "target": null,
-            "path": "none"
+            "kind": "rpc",
+            "target": "public.admin_work_overview",
+            "path": "rpc:public.admin_work_overview",
+            "params": {
+              "p_club_id": "{club_id}"
+            }
           },
           "saveBinding": {
             "kind": "none",

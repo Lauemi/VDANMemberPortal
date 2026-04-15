@@ -6,7 +6,9 @@
       "Bash(grep -r \"we\\\\.title\\\\|we\\\\.event_date\\\\|we\\\\.starts_at\\\\|we\\\\.status\\\\|work_events.*title\\\\|title.*work_events\" /Users/michaellauenroth/Downloads/vdan-app-template/supabase/migrations/*.sql)",
       "Bash(git stash:*)",
       "mcp__claude_ai_Supabase__list_projects",
-      "mcp__claude_ai_Supabase__list_migrations"
+      "mcp__claude_ai_Supabase__list_migrations",
+      "Bash(gh auth:*)",
+      "Bash(git remote:*)"
     ]
   }
 }

@@ -422,6 +422,83 @@
   }
 
   // ---------------------------------------------------------------------------
+  // renderFormResultCard — Panel-spezifischer Ergebnisblock fuer invite_create
+  // Wird von fcp-adm-qfm-shared-renderers.js ueber Hook aufgerufen.
+  // Gibt null zurueck wenn das Panel nicht invite_create ist oder keine Daten vorliegen.
+  // ---------------------------------------------------------------------------
+
+  function renderFormResultCard(panel, fields, { createElement, pattern } = {}) {
+    if (panel?.id !== "club_settings_invite_create") return null;
+    if (typeof createElement !== "function") return null;
+
+    function findFieldValue(fieldName) {
+      const match = (fields || []).find((field) => String(field?.name || "").trim() === String(fieldName || "").trim());
+      return match?.value;
+    }
+
+    async function copyInviteLink(linkValue) {
+      const text = String(linkValue || "").trim();
+      if (!text) return false;
+      if (navigator?.clipboard?.writeText) {
+        return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+      }
+      return false;
+    }
+
+    const qrUrl = String(findFieldValue("invite_qr_url") || "").trim();
+    const inviteUrl = String(findFieldValue("invite_register_url") || "").trim();
+    const expiresAt = String(findFieldValue("invite_expires_at") || "").trim();
+    if (!qrUrl && !inviteUrl && !expiresAt) return null;
+
+    const card = createElement("section", { className: "qfp-form-group qfp-invite-result-card" });
+    const body = createElement("div", { className: "qfp-form-group__grid qfp-form-group__grid--ungrouped" });
+
+    if (qrUrl) {
+      const qrWrap = createElement("div", { className: "qfp-form-field is-full" });
+      qrWrap.append(createElement("span", { className: "qfp-field-label", text: "QR-Code" }));
+      qrWrap.append(createElement("img", {
+        className: "qfp-invite-result-card__qr",
+        attrs: { src: qrUrl, alt: "Einladungs-QR-Code", loading: "lazy" },
+      }));
+      body.append(qrWrap);
+    }
+
+    if (inviteUrl) {
+      const linkWrap = createElement("div", { className: "qfp-form-field is-full" });
+      linkWrap.append(createElement("span", { className: "qfp-field-label", text: "Invite-Link" }));
+      linkWrap.append(createElement("input", {
+        attrs: { type: "text", value: inviteUrl, readonly: "readonly" },
+      }));
+      linkWrap.append(createElement("button", {
+        className: "feed-btn",
+        text: "Invite-Link kopieren",
+        attrs: { type: "button" },
+        onClick: async () => {
+          const copied = await copyInviteLink(inviteUrl);
+          if (copied) {
+            pattern?.setMessage?.("Invite-Link in die Zwischenablage kopiert.");
+          } else {
+            pattern?.setMessage?.("Invite-Link konnte nicht kopiert werden.");
+          }
+        },
+      }));
+      body.append(linkWrap);
+    }
+
+    if (expiresAt) {
+      const expiresWrap = createElement("div", { className: "qfp-form-field is-full" });
+      expiresWrap.append(createElement("span", { className: "qfp-field-label", text: "Gueltig bis" }));
+      expiresWrap.append(createElement("input", {
+        attrs: { type: "text", value: expiresAt, readonly: "readonly" },
+      }));
+      body.append(expiresWrap);
+    }
+
+    card.append(body);
+    return card;
+  }
+
+  // ---------------------------------------------------------------------------
   // Export
   // ---------------------------------------------------------------------------
 
@@ -429,5 +506,6 @@
     normalizedCardAssignments,
     canonicalFishingCardType,
     createHandlers,
+    renderFormResultCard,
   });
 })();

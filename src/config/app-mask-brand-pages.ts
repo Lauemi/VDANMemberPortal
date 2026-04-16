@@ -18,6 +18,7 @@ export const APP_MASK_BRAND_PAGES: AppMaskBrandEntry[] = [
   { route: "/app/einstellungen/", label: "Einstellungen", note: "Persoenliche und Portal-Einstellungen.", default_brand: "fcp_tactical" },
   { route: "/app/eventplaner/", label: "Eventplaner", note: "Planung und Verwaltung von Events.", default_brand: "fcp_tactical" },
   { route: "/app/eventplaner/mitmachen/", label: "Eventplaner Mitmachen", note: "Mitgliederansicht fuer Beteiligung.", default_brand: "fcp_tactical" },
+  { route: "/app/eventplaner-v2/", label: "Eventplaner 2.0", note: "ADM-Workspace fuer Eventplaner 2.0 (Parallelpfad zur schrittweisen Migration).", default_brand: "fcp_tactical" },
   { route: "/app/feedback/", label: "Feedback", note: "Fehler- und Feedback-Meldungen.", default_brand: "fcp_tactical" },
   { route: "/app/fangliste/", label: "Fangliste", note: "Digitale Fangliste.", default_brand: "fcp_tactical" },
   { route: "/app/gewaesserkarte/", label: "Gewaesserkarte", note: "Kartendarstellung fuer das Portal.", default_brand: "fcp_tactical" },

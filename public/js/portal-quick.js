@@ -48,6 +48,7 @@
 
     { id: "scanner", href: "/app/ausweis/verifizieren/", label: "Scanner", short: "SC", access: "manager", group: "manager" },
     { id: "eventplaner", href: "/app/eventplaner/", label: "Eventplaner", short: "EP", access: "manager", group: "manager" },
+    { id: "eventplaner_v2", href: "/app/eventplaner-v2/", label: "Eventplaner 2.0", short: "E2", access: "manager", group: "manager" },
     { id: "feedback", href: "/app/feedback/", label: "Feedback", short: "FB", access: "member", group: "manager" },
     { id: "sitzungen", href: "/app/sitzungen/", label: "Sitzungen", short: "SI", access: "manager", group: "manager" },
     { id: "dokumente", href: "/app/dokumente/", label: "Dokumente", short: "DV", access: "manager", group: "manager" },

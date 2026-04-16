@@ -1,0 +1,71 @@
+---
+import path from "node:path";
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+import { readMaskJsonFile } from "../../../../scripts/fcp-mask-reader.mjs";
+
+const maskFilePath = path.resolve(process.cwd(), "docs/masks/templates/Eventplaner/ADM_eventplannerWorkspace.json");
+const resolvedMask = await readMaskJsonFile(maskFilePath);
+
+const admConfig = {
+  ...resolvedMask,
+  root: "#eventplannerV2AdmRoot",
+  currentRoles: ["admin", "vorstand", "superadmin"],
+  currentScopes: {
+    globalUser: true,
+    authSystem: true,
+    clubReadonly: true,
+    clubOverride: true,
+    billingSnapshot: false,
+    consentAppendOnly: false,
+  },
+};
+
+const admConfigJson = JSON.stringify(admConfig);
+---
+
+<Site title={`Eventplaner 2.0 • ${APP.name}`} description="ADM: Eventplaner 2.0 Workspace" robots="noindex" containerClass="container container--admin-wide">
+  <section class="card">
+    <div class="card__body">
+      <div id="eventplannerV2AdmRoot"></div>
+      <p id="eventplannerV2AdmMsg" class="small ofm-mask-stage__status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <script is:inline src="/js/fcp-mask-process-state.js"></script>
+  <script is:inline src="/js/fcp-adm-qfm-contract-hub.js"></script>
+  <script is:inline src="/js/fcp-mask-data-resolver.js"></script>
+  <script is:inline src="/js/fcp-data-table.js"></script>
+  <script is:inline src="/js/fcp-inline-data-table-v2.js"></script>
+  <script is:inline src="/js/fcp-adm-qfm-shared-renderers.js"></script>
+  <script is:inline src="/js/fcp-table-dialog-host.js"></script>
+  <script is:inline src="/js/admin-panel-mask.js"></script>
+  <script is:inline src="/js/fcp-mask-page-loader.js"></script>
+  <script id="eventplannerV2AdmConfig" type="application/json" set:html={admConfigJson}></script>
+  <script is:inline>
+    const admMsgEl = document.getElementById("eventplannerV2AdmMsg");
+
+    function setAdmMessage(text) {
+      if (admMsgEl) admMsgEl.textContent = text || "";
+    }
+
+    window.FcpMaskPageLoader.boot({
+      configScriptId: "eventplannerV2AdmConfig",
+      patternGlobal: "__ADM_EVENTPLANNER_V2__",
+      rendererFamily: "ADM",
+      onMessage: setAdmMessage,
+    }).catch((error) => {
+      setAdmMessage(error instanceof Error ? error.message : String(error));
+    });
+  </script>
+
+  <style>
+    #eventplannerV2AdmRoot {
+      min-height: 420px;
+    }
+
+    .ofm-mask-stage__status {
+      margin: 10px 0 0;
+    }
+  </style>
+</Site>

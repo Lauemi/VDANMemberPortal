@@ -9,6 +9,12 @@
     "defaultSectionId": "eventplanner_kalender",
     "items": [
       {
+        "id": "nav_eventplanner_kontext",
+        "label": "Kontext",
+        "targetSectionId": "eventplanner_kontext",
+        "icon": "info"
+      },
+      {
         "id": "nav_eventplanner_kalender",
         "label": "Kalender",
         "targetSectionId": "eventplanner_kalender",
@@ -44,7 +50,7 @@
       "vorstand",
       "superadmin"
     ],
-    "serverValidated": true
+    "serverValidated": false
   },
   "header": {
     "kicker": "Eventplaner 2.0",
@@ -66,7 +72,8 @@
     "appendOnlyHandling": "explicit"
   },
   "dataContract": {
-    "sourceOfTruth": "sql",
+    "sourceOfTruth": "none",
+    "note": "Kein Panel in diesem Workspace ist aktuell live an eine Datenquelle angeschlossen. Alle Kontrakte sind offen (gap). sourceOfTruth wird auf 'sql' gesetzt sobald der erste echte Lese-Vertrag erstellt wurde.",
     "contracts": []
   },
   "loadBinding": {
@@ -76,10 +83,10 @@
   },
   "sections": [
     {
-      "id": "eventplanner_kalender",
-      "label": "Kalender",
-      "title": "Kalender",
-      "description": "Gemeinsame Sicht auf Termine und Arbeitseinsaetze. Migration der Kalenderlogik aus dem bestehenden Eventplaner folgt.",
+      "id": "eventplanner_kontext",
+      "label": "Kontext",
+      "title": "Workspace-Kontext",
+      "description": "Identitaets- und Rollenbasis fuer den Eventplaner-Workspace. Liefert Profile, Vereinsrollen und Helfer-Mapping fuer alle nachgelagerten Segmente. Alle Kontrakte sind noch offen.",
       "workspaceSlot": "main",
       "sectionLayout": "stack",
       "permissions": {
@@ -99,14 +106,247 @@
           "vorstand",
           "superadmin"
         ],
-        "serverValidated": true
+        "serverValidated": false
       },
       "ownership": "club",
       "scope": "club",
       "panels": [
         {
-          "id": "eventplanner_kalender_placeholder",
-          "title": "Kalender",
+          "id": "eventplanner_kontext_profiles",
+          "title": "Profile (Mitglieder)",
+          "renderMode": "table",
+          "componentType": "data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": false
+          },
+          "meta": {
+            "sourceTable": "public.profiles",
+            "sourceKind": "table",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/eventplaner/context/READ_eventplaner_profiles.sql",
+              "expectedColumns": [
+                "canonical_membership_id",
+                "display_name",
+                "email",
+                "tenant_id"
+              ]
+            },
+            "panelState": "gap",
+            "panelStateLabel": "Vertrag offen",
+            "panelStateHint": "Lesevertrag fuer public.profiles im Eventplaner-Kontext fehlt. SQL-Kontrakt muss erstellt werden, bevor dieser Panel angebunden werden kann.",
+            "resolver": {
+              "requiresClubContext": true,
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            { "key": "canonical_membership_id", "label": "Mitglieds-ID", "type": "text" },
+            { "key": "display_name", "label": "Name", "type": "text" },
+            { "key": "email", "label": "E-Mail", "type": "text" }
+          ]
+        },
+        {
+          "id": "eventplanner_kontext_rollen",
+          "title": "Vereinsrollen",
+          "renderMode": "table",
+          "componentType": "data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": false
+          },
+          "meta": {
+            "sourceTable": "public.club_user_roles",
+            "sourceKind": "table",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/eventplaner/context/READ_eventplaner_club_user_roles.sql",
+              "expectedColumns": [
+                "canonical_membership_id",
+                "role",
+                "tenant_id"
+              ]
+            },
+            "panelState": "gap",
+            "panelStateLabel": "Vertrag offen",
+            "panelStateHint": "Lesevertrag fuer public.club_user_roles im Eventplaner-Kontext fehlt. Tabelle existiert moeglicherweise noch nicht – Architekturentscheidung ausstehend.",
+            "resolver": {
+              "requiresClubContext": true,
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            { "key": "canonical_membership_id", "label": "Mitglieds-ID", "type": "text" },
+            { "key": "role", "label": "Rolle", "type": "text" }
+          ]
+        },
+        {
+          "id": "eventplanner_kontext_identity_map",
+          "title": "Helfer-Identitaetsmap (RPC)",
+          "renderMode": "table",
+          "componentType": "data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": false
+          },
+          "meta": {
+            "sourceTable": "rpc:get_club_identity_map",
+            "sourceKind": "rpc",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/eventplaner/context/READ_eventplaner_identity_map.sql",
+              "expectedColumns": [
+                "canonical_membership_id",
+                "display_name",
+                "role",
+                "tenant_id"
+              ]
+            },
+            "panelState": "gap",
+            "panelStateLabel": "Vertrag offen",
+            "panelStateHint": "RPC get_club_identity_map existiert noch nicht in der DB. Muss als Supabase-RPC angelegt werden, bevor dieser Panel angebunden werden kann.",
+            "resolver": {
+              "requiresClubContext": true,
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            { "key": "canonical_membership_id", "label": "Mitglieds-ID", "type": "text" },
+            { "key": "display_name", "label": "Name", "type": "text" },
+            { "key": "role", "label": "Rolle", "type": "text" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eventplanner_kalender",
+      "label": "Kalender",
+      "title": "Kalender",
+      "description": "Gemeinsame Sicht auf Termine und Arbeitseinsaetze. Erfordert Spezialrenderer (Monatsansicht / Kalenderraster). Migration der Kalenderlogik aus dem bestehenden event-planner-board.js folgt.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": [
+          "admin",
+          "vorstand",
+          "superadmin"
+        ],
+        "serverValidated": false
+      },
+      "ownership": "club",
+      "scope": "club",
+      "panels": [
+        {
+          "id": "eventplanner_kalender_spezialrenderer",
+          "title": "Kalender (Monatsansicht)",
           "renderMode": "readonly",
           "componentType": "ReadonlyPanel",
           "contentArea": "main",
@@ -128,18 +368,35 @@
               "vorstand",
               "superadmin"
             ],
-            "serverValidated": true
+            "serverValidated": false
           },
           "meta": {
-            "sourceTable": "",
+            "sourceTable": "public.club_events + public.work_events",
             "sourceKind": "placeholder",
-            "sourceOfTruth": "none"
+            "sourceOfTruth": "none",
+            "spezialrenderer": true,
+            "spezialrendererType": "calendar_monthly",
+            "spezialrendererOrigin": "event-planner-board.js",
+            "spezialrendererStatus": "gap",
+            "spezialrendererNote": "Kalender-Renderer und Monatsrasterlogik muessen aus dem bestehenden event-planner-board.js extrahiert und als eigenstaendiger ADM-Renderer migriert werden. Quelle: public.club_events (Termine) + public.work_events (Arbeitseinsaetze).",
+            "panelState": "gap",
+            "panelStateLabel": "Vertrag offen",
+            "panelStateHint": "Spezialrenderer 'calendar_monthly' fehlt. Datenbankkontrakt und Kalender-Renderer muessen vor Anbindung erstellt werden. Quellen: public.club_events + public.work_events."
           },
-          "panelState": "migration_pending",
-          "panelStateLabel": "Migration ausstehend",
-          "panelStateHint": "Kalender-Spezialrenderer und Monatsansicht werden in einem Folgeschritt aus dem bestehenden event-planner-board.js in die ADM migriert. Quellen: public.club_events + public.work_events.",
+          "loadBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
           "content": {
-            "fields": []
+            "fields": [],
+            "rows": [],
+            "actions": []
           }
         }
       ]
@@ -148,7 +405,7 @@
       "id": "eventplanner_events",
       "label": "Events verwalten",
       "title": "Events verwalten",
-      "description": "Planungstabelle fuer Termine und Arbeitseinsaetze. Inline-Anlage, Detail-Edit und Statusuebersicht. Migration der Tabellen- und Dialoglogik folgt.",
+      "description": "Planungstabelle fuer Termine und Arbeitseinsaetze. Inline-Anlage, Detail-Edit und Statusuebersicht. Erfordert Spezialrenderer (Planungstabelle + eventPlannerSourceDialog). Migration folgt.",
       "workspaceSlot": "main",
       "sectionLayout": "stack",
       "permissions": {
@@ -171,13 +428,13 @@
           "vorstand",
           "superadmin"
         ],
-        "serverValidated": true
+        "serverValidated": false
       },
       "ownership": "club",
       "scope": "club",
       "panels": [
         {
-          "id": "eventplanner_events_placeholder",
+          "id": "eventplanner_events_spezialrenderer",
           "title": "Planungstabelle",
           "renderMode": "readonly",
           "componentType": "ReadonlyPanel",
@@ -200,19 +457,60 @@
               "vorstand",
               "superadmin"
             ],
-            "serverValidated": true
+            "serverValidated": false
           },
           "meta": {
-            "sourceTable": "public.club_events + public.work_events",
+            "sourceTable": "public.club_events + public.work_events + public.event_planner_configs + public.event_planner_slots + public.event_planner_registrations + public.work_participations",
             "sourceKind": "placeholder",
-            "sourceOfTruth": "sql"
+            "sourceOfTruth": "none",
+            "spezialrenderer": true,
+            "spezialrendererType": "planning_table_with_dialog",
+            "spezialrendererOrigin": "event-planner-board.js + eventPlannerSourceDialog",
+            "spezialrendererStatus": "gap",
+            "spezialrendererNote": "Planungstabelle und eventPlannerSourceDialog muessen aus dem bestehenden Eventplaner-Monolithen extrahiert und als inline-data-table oder dialog-host in die ADM migriert werden.",
+            "readSources": [
+              "public.club_events",
+              "public.work_events",
+              "public.event_planner_configs",
+              "public.event_planner_slots",
+              "public.event_planner_registrations",
+              "public.work_participations"
+            ],
+            "writeSources": [
+              "rpc:upsert_club_event",
+              "rpc:upsert_work_event",
+              "rpc:upsert_event_planner_config",
+              "rpc:upsert_event_planner_slot",
+              "rpc:delete_event_planner_slot"
+            ],
+            "panelState": "gap",
+            "panelStateLabel": "Vertrag offen",
+            "panelStateHint": "Spezialrenderer 'planning_table_with_dialog' fehlt. Planungstabellen- und Dialog-Renderer sowie alle Lese- und Schreibkontrakte muessen vor Anbindung erstellt werden."
           },
-          "panelState": "migration_pending",
-          "panelStateLabel": "Migration ausstehend",
-          "panelStateHint": "Planungstabelle und eventPlannerSourceDialog werden in einem Folgeschritt als inline-data-table oder dialog-host in die ADM migriert. Quellen: public.club_events, public.work_events, public.event_planner_configs.",
+          "loadBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
           "content": {
-            "fields": []
-          }
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            { "key": "event_type", "label": "Typ", "type": "text" },
+            { "key": "title", "label": "Bezeichnung", "type": "text" },
+            { "key": "event_date", "label": "Datum", "type": "date" },
+            { "key": "status", "label": "Status", "type": "text" },
+            { "key": "slots_total", "label": "Helfer-Slots", "type": "number" },
+            { "key": "registrations_count", "label": "Anmeldungen", "type": "number" },
+            { "key": "updated_at", "label": "Letzte Aenderung", "type": "datetime" }
+          ]
         }
       ]
     },
@@ -220,7 +518,7 @@
       "id": "eventplanner_freigaben",
       "label": "Helferanmeldungen / Freigaben",
       "title": "Freigabecenter",
-      "description": "Offene und freigegebene Helferanmeldungen. Migration des Freigabe-Workflows folgt.",
+      "description": "Offene und freigegebene Helferanmeldungen. Tabellenstruktur ist vorbereitet – Lese- und Schreibkontrakt fehlen noch.",
       "workspaceSlot": "main",
       "sectionLayout": "stack",
       "permissions": {
@@ -243,16 +541,104 @@
           "vorstand",
           "superadmin"
         ],
-        "serverValidated": true
+        "serverValidated": false
       },
       "ownership": "club",
       "scope": "club",
       "panels": [
         {
-          "id": "eventplanner_freigaben_placeholder",
-          "title": "Freigabecenter",
-          "renderMode": "readonly",
-          "componentType": "ReadonlyPanel",
+          "id": "eventplanner_freigaben_offen",
+          "title": "Offene Anmeldungen",
+          "renderMode": "table",
+          "componentType": "data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": true,
+            "delete": false,
+            "roles": [
+              "admin",
+              "vorstand"
+            ]
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": false
+          },
+          "meta": {
+            "sourceTable": "public.work_participations JOIN public.work_events + public.club_events + public.event_planner_registrations",
+            "sourceKind": "table",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/eventplaner/freigaben/READ_eventplaner_freigaben_offen.sql",
+              "expectedColumns": [
+                "participation_id",
+                "event_type",
+                "event_title",
+                "event_date",
+                "member_label",
+                "status",
+                "approval_mode",
+                "updated_at"
+              ]
+            },
+            "readSources": [
+              "public.work_participations",
+              "public.work_events",
+              "public.club_events",
+              "public.event_planner_registrations"
+            ],
+            "writeSources": [
+              "rpc:approve_work_participation",
+              "rpc:reject_work_participation"
+            ],
+            "panelState": "gap",
+            "panelStateLabel": "Vertrag offen",
+            "panelStateHint": "Lesevertrag fuer offene Helferanmeldungen fehlt. JOIN ueber work_participations + work_events + club_events + event_planner_registrations muss als SQL-Kontrakt modelliert werden.",
+            "resolver": {
+              "requiresClubContext": true,
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            { "key": "event_type", "label": "Typ", "type": "text" },
+            { "key": "event_title", "label": "Veranstaltung", "type": "text" },
+            { "key": "event_date", "label": "Datum", "type": "date" },
+            { "key": "member_label", "label": "Mitglied", "type": "text" },
+            { "key": "status", "label": "Status", "type": "text" },
+            { "key": "updated_at", "label": "Letzte Aenderung", "type": "datetime" }
+          ]
+        },
+        {
+          "id": "eventplanner_freigaben_archiv",
+          "title": "Archiv (freigegebene / abgelehnte Anmeldungen)",
+          "renderMode": "table",
+          "componentType": "data-table",
           "contentArea": "main",
           "flowType": "standard",
           "permissions": {
@@ -272,19 +658,61 @@
               "vorstand",
               "superadmin"
             ],
-            "serverValidated": true
+            "serverValidated": false
           },
           "meta": {
-            "sourceTable": "public.work_participations",
-            "sourceKind": "placeholder",
-            "sourceOfTruth": "sql"
+            "sourceTable": "public.work_participations JOIN public.work_events + public.club_events",
+            "sourceKind": "table",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "sqlFile": "docs/sql-contracts/processes/eventplaner/freigaben/READ_eventplaner_freigaben_archiv.sql",
+              "expectedColumns": [
+                "participation_id",
+                "event_type",
+                "event_title",
+                "event_date",
+                "member_label",
+                "status",
+                "updated_at"
+              ]
+            },
+            "readSources": [
+              "public.work_participations",
+              "public.work_events",
+              "public.club_events"
+            ],
+            "writeSources": [],
+            "panelState": "gap",
+            "panelStateLabel": "Vertrag offen",
+            "panelStateHint": "Lesevertrag fuer archivierte Helferanmeldungen fehlt. JOIN ueber work_participations + work_events + club_events mit Statusfilter 'approved' / 'rejected' muss erstellt werden.",
+            "resolver": {
+              "requiresClubContext": true,
+              "rowsPath": "rows"
+            }
           },
-          "panelState": "migration_pending",
-          "panelStateLabel": "Migration ausstehend",
-          "panelStateHint": "Freigabetabellen (offene + archivierte Anmeldungen) werden in einem Folgeschritt als inline-data-table in die ADM migriert. Quelle: public.work_participations joined mit public.work_events / public.club_events.",
+          "loadBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
           "content": {
-            "fields": []
-          }
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            { "key": "event_type", "label": "Typ", "type": "text" },
+            { "key": "event_title", "label": "Veranstaltung", "type": "text" },
+            { "key": "event_date", "label": "Datum", "type": "date" },
+            { "key": "member_label", "label": "Mitglied", "type": "text" },
+            { "key": "status", "label": "Status", "type": "text" },
+            { "key": "updated_at", "label": "Letzte Aenderung", "type": "datetime" }
+          ]
         }
       ]
     },
@@ -292,7 +720,7 @@
       "id": "eventplanner_architektur",
       "label": "DB-Architektur",
       "title": "DB-Architekturleitplanke",
-      "description": "Dokumentation der Datenbankarchitektur und geplanter Erweiterungen fuer den Eventplaner.",
+      "description": "Dokumentation der Datenbankarchitektur und geplanter Erweiterungen fuer den Eventplaner. Statische Inhalte – kein Datenbankzugriff.",
       "workspaceSlot": "main",
       "sectionLayout": "stack",
       "permissions": {
@@ -312,7 +740,7 @@
           "vorstand",
           "superadmin"
         ],
-        "serverValidated": true
+        "serverValidated": false
       },
       "ownership": "club",
       "scope": "club",
@@ -341,16 +769,16 @@
               "vorstand",
               "superadmin"
             ],
-            "serverValidated": true
+            "serverValidated": false
           },
           "meta": {
             "sourceTable": "",
             "sourceKind": "static",
-            "sourceOfTruth": "none"
+            "sourceOfTruth": "none",
+            "panelState": "live",
+            "panelStateLabel": "Live",
+            "panelStateHint": "Statische Dokumentation der Datenbankarchitektur. Kein Datenbankzugriff."
           },
-          "panelState": "live",
-          "panelStateLabel": "Live",
-          "panelStateHint": "Statische Dokumentation der Datenbankarchitektur. Keine Datenbankabfrage.",
           "content": {
             "fields": [
               {
@@ -378,6 +806,15 @@
                 "componentType": "readonly",
                 "order": 30,
                 "defaultValue": "event_planner_configs (base_kind + base_id + approval_mode), event_planner_slots, event_planner_registrations als saubere Zusatzschicht mit Referenz auf Basisobjekt.",
+                "readonly": true
+              },
+              {
+                "name": "arch_gap_status",
+                "label": "GAP-Status",
+                "type": "text",
+                "componentType": "readonly",
+                "order": 40,
+                "defaultValue": "Alle Datenpanels (Kontext, Kalender, Events, Freigaben) haben offene Vertraege (panelState: gap). Kein Panel ist aktuell live an eine Datenquelle angeschlossen. Die Architektur-Sektion ist der einzige live-Bereich dieses Workspaces.",
                 "readonly": true
               }
             ]

@@ -21,6 +21,7 @@
     ["street", "Adresse"],
     ["postal_code", "PLZ"],
     ["city", "Ort"],
+    ["sepa_approved", "SEPA genehmigt"],
   ];
 
   // Import-Alias-Map: dieselben Felder wie HEADER_EXPORT, plus deutschen Varianten.
@@ -52,6 +53,11 @@
     zip: "postal_code",
     city: "city",
     ort: "city",
+    sepa_approved: "sepa_approved",
+    sepa: "sepa_approved",
+    sepa_genehmigt: "sepa_approved",
+    sepa_freigabe: "sepa_approved",
+    sepa_ok: "sepa_approved",
   };
 
   // Maps table column keys (FCPInlineDataTable) to HEADER_EXPORT canonical import keys.
@@ -68,6 +74,7 @@
     birthdate: "birthdate",
     street: "street",
     city: "city",
+    sepa_approved: "sepa_approved",
   };
 
   const dialogState = {
@@ -164,6 +171,16 @@
     return raw || "active";
   }
 
+  // Normalisiert sepa_approved zu "true" oder "false" (String).
+  // DB liefert boolean, CSV kann "true"/"false", "ja"/"nein", "1"/"0", "yes"/"no" enthalten.
+  // Leerstring bleibt leer (Feld nicht vorhanden im Import).
+  function normalizeSepaApproved(value) {
+    const raw = text(String(value ?? "")).toLowerCase();
+    if (raw === "") return "";
+    if (["true", "ja", "1", "yes", "approved"].includes(raw)) return "true";
+    return "false";
+  }
+
   function normalizeDate(value) {
     const raw = text(value);
     if (!raw) return { value: "", valid: true };
@@ -249,7 +266,7 @@
 
   // Vergleicht importierbare Felder. presentFields (Set<string> | null) begrenzt den Vergleich
   // auf die tatsächlich im CSV vorhandenen Felder – für Teilmengenimport.
-  // Ohne presentFields (null) werden alle 9 Felder verglichen (Vollimport).
+  // Ohne presentFields (null) werden alle Felder verglichen (Vollimport).
   function rowChanged(existing, mapped, presentFields = null) {
     if (!existing) return true;
     const has = (field) => !presentFields || presentFields.has(field);
@@ -263,6 +280,7 @@
       || (has("street") && text(existing.street) !== text(mapped.street || ""))
       || (has("postal_code") && text(existing.zip) !== text(mapped.postal_code || ""))
       || (has("city") && text(existing.city) !== text(mapped.city || ""))
+      || (has("sepa_approved") && normalizeSepaApproved(String(existing.sepa_approved ?? "")) !== normalizeSepaApproved(text(mapped.sepa_approved || "")))
     );
   }
 
@@ -323,6 +341,7 @@
         if (!presentFields.has("street") && text(existingRow.street)) mapped.street = text(existingRow.street);
         if (!presentFields.has("postal_code") && text(existingRow.zip)) mapped.postal_code = text(existingRow.zip);
         if (!presentFields.has("city") && text(existingRow.city)) mapped.city = text(existingRow.city);
+        if (!presentFields.has("sepa_approved") && existingRow.sepa_approved !== undefined) mapped.sepa_approved = String(existingRow.sepa_approved);
       }
 
       const birthdateInfo = normalizeDate(mapped.birthdate);
@@ -356,6 +375,7 @@
         street: text(mapped.street),
         postal_code: text(mapped.postal_code),
         city: text(mapped.city),
+        sepa_approved: normalizeSepaApproved(text(mapped.sepa_approved || "")),
         warnings,
         row_status: warnings.length ? "warning" : "ok",
         action,
@@ -388,6 +408,7 @@
       "street",
       "zip",
       "city",
+      "sepa_approved",
     ];
     const lines = [headers.join(",")];
     previewRows
@@ -405,6 +426,7 @@
           row.street,
           row.postal_code,
           row.city,
+          row.sepa_approved,
         ];
         lines.push(values.map(toCsvCell).join(","));
       });
@@ -427,6 +449,7 @@
         street: text(row?.street),
         postal_code: text(row?.zip),
         city: text(row?.city),
+        sepa_approved: text(String(row?.sepa_approved ?? "")),
       };
       lines.push(HEADER_EXPORT.map(([key]) => toCsvCell(data[key] ?? "")).join(";"));
     });
@@ -459,6 +482,7 @@
         street: text(row?.street),
         postal_code: text(row?.zip),
         city: text(row?.city),
+        sepa_approved: text(String(row?.sepa_approved ?? "")),
       };
       lines.push(exportFields.map(([key]) => toCsvCell(data[key] ?? "")).join(";"));
     });

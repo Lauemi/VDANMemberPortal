@@ -102,6 +102,8 @@
       sortDir: String(config?.sortDir || "asc").toLowerCase() === "desc" ? "desc" : "asc",
       columnOrder: initialColumns.slice(),
       columnWidths: Object.fromEntries(columns.map((column) => [column.key, column.width || "minmax(120px, 1fr)"])),
+      hiddenColumns: new Set(),
+      columnTogglePanelOpen: false,
       layoutDirty: false,
       feedback: null,
     };
@@ -150,6 +152,10 @@
         state.sortKey = persisted.sortKey;
         state.sortDir = persisted?.sortDir === "desc" ? "desc" : "asc";
       }
+      if (Array.isArray(persisted?.hiddenColumns)) {
+        const validHidden = persisted.hiddenColumns.filter((key) => initialColumns.includes(key));
+        state.hiddenColumns = new Set(validHidden);
+      }
     } catch {
       // noop
     }
@@ -162,6 +168,7 @@
           sortDir: state.sortDir,
           columnOrder: state.columnOrder,
           columnWidths: state.columnWidths,
+          hiddenColumns: [...state.hiddenColumns],
         }));
       } catch {
         // noop
@@ -171,6 +178,7 @@
     function orderedColumns() {
       const map = new Map(columns.map((column) => [column.key, column]));
       return state.columnOrder
+        .filter((key) => !state.hiddenColumns.has(key))
         .map((key) => map.get(key))
         .filter(Boolean)
         .map((column) => ({
@@ -551,9 +559,20 @@
                 }
                 return `<button type="button" class="${classes}" data-utility-action="${esc(key)}" ${titleAttr ? `title="${esc(titleAttr)}" aria-label="${esc(titleAttr)}"` : ""}>${icon ? `<span aria-hidden="true">${esc(icon)}</span>` : ""}${label ? `<span>${esc(label)}</span>` : ""}</button>`;
               }).join("")}
+              ${config?.showColumnToggle ? `<button type="button" class="feed-btn feed-btn--ghost${state.columnTogglePanelOpen ? " is-active" : ""}" data-inline-column-toggle="true" aria-label="Spalten ein-/ausblenden">⊞ Spalten</button>` : ""}
               ${config.showFilterButton ? `<button type="button" class="icon-utility" data-inline-filter-toggle="true" aria-label="Filter">☰</button>` : ""}
               ${showResetButton ? `<button type="button" class="icon-utility" data-inline-reset="true" aria-label="Reset">↺</button>` : ""}
             </div>
+          </div>
+          ` : ""}
+          ${config?.showColumnToggle && state.columnTogglePanelOpen ? `
+          <div class="column-toggle-panel">
+            ${columns.filter((column) => column.type !== "actions").map((column) => `
+              <label class="column-toggle-item">
+                <input type="checkbox" data-column-toggle-key="${esc(column.key)}" ${!state.hiddenColumns.has(column.key) ? "checked" : ""} />
+                <span>${esc(column.label)}</span>
+              </label>
+            `).join("")}
           </div>
           ` : ""}
           ${showFilterPanel ? `
@@ -648,6 +667,22 @@
     });
 
     root.addEventListener("change", (event) => {
+      const toggleKey = event.target?.getAttribute?.("data-column-toggle-key");
+      if (toggleKey) {
+        const key = String(toggleKey || "");
+        if (key) {
+          if (event.target.checked) {
+            state.hiddenColumns.delete(key);
+          } else {
+            state.hiddenColumns.add(key);
+          }
+          persistLayout();
+          render();
+          config?.onLayoutChange?.({ columnOrder: state.columnOrder.slice(), columnWidths: { ...state.columnWidths }, hiddenColumns: [...state.hiddenColumns] });
+        }
+        return;
+      }
+
       const multiWrap = event.target?.closest?.(".data-table__multi-select");
       if (multiWrap) {
         const mode = String(multiWrap.getAttribute("data-editor-mode") || "");
@@ -689,6 +724,12 @@
         return;
       }
 
+      if (target?.closest?.("[data-inline-column-toggle]")) {
+        state.columnTogglePanelOpen = !state.columnTogglePanelOpen;
+        render();
+        return;
+      }
+
       if (target?.closest?.("[data-inline-filter-toggle]")) {
         if (filterFields.length) {
           state.filterPanelOpen = state.filterPanelOpen === false;
@@ -704,7 +745,7 @@
         state.openUtilityMenuKey = "";
         render();
         if (actionKey && itemKey) {
-          await config?.onUtilityAction?.({ actionKey, itemKey });
+          await config?.onUtilityAction?.({ actionKey, itemKey, visibleColumns: state.columnOrder.filter((key) => !state.hiddenColumns.has(key)) });
         }
         return;
       }
@@ -719,7 +760,7 @@
             render();
           } else {
             state.openUtilityMenuKey = "";
-            await config?.onUtilityAction?.({ actionKey: key, itemKey: "" });
+            await config?.onUtilityAction?.({ actionKey: key, itemKey: "", visibleColumns: state.columnOrder.filter((key) => !state.hiddenColumns.has(key)) });
           }
         }
         return;
@@ -919,6 +960,8 @@
           columnOrder: state.columnOrder.slice(),
           columnWidths: { ...state.columnWidths },
           viewMode: state.viewMode,
+          hiddenColumns: [...state.hiddenColumns],
+          visibleColumns: state.columnOrder.filter((key) => !state.hiddenColumns.has(key)),
         };
       },
       openCreate() {

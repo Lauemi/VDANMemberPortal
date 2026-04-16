@@ -510,8 +510,13 @@
       if (target?.matches?.("[data-vv-cell]")) {
         const rowIndex = Number(target.getAttribute("data-vv-row") || -1);
         const key = text(target.getAttribute("data-vv-cell"));
+        if (key === "member_number") return; // readonly – Identifikationsschlüssel, nie ändern
         if (rowIndex >= 0 && key && dialogState.previewRows[rowIndex]) {
           dialogState.previewRows[rowIndex][key] = text(target.value);
+          // Action neu berechnen: noop kann zu update werden, update zu noop.
+          // Respektiert presentFields – kein Vergleich über nicht-importierte Felder.
+          dialogState.previewRows[rowIndex].action = recalcRowAction(dialogState.previewRows[rowIndex]);
+          renderDialog(dialog);
         }
       }
     });
@@ -548,6 +553,20 @@
     return dialog;
   }
 
+  // Berechnet die Action einer previewRow neu gegen den bestehenden DB-Datensatz.
+  // Wird nach jeder Feldbearbeitung in der Preview aufgerufen.
+  // Respektiert presentFields: nur die im Import vorhandenen Felder fließen in den Vergleich ein.
+  function recalcRowAction(previewRow) {
+    const memberNumber = text(previewRow.member_number);
+    if (!memberNumber) return "invalid";
+    const existingRow = dialogState.rows.find(
+      (row) => stripClubPrefix(row?.club_member_no || row?.member_number) === memberNumber
+    );
+    if (!existingRow) return "create";
+    const presentFields = dialogState.presentFields.length > 0 ? new Set(dialogState.presentFields) : null;
+    return rowChanged(existingRow, previewRow, presentFields) ? "update" : "noop";
+  }
+
   function actionBadge(action) {
     const map = {
       create: "neu",
@@ -575,19 +594,38 @@
     if (counts.invalid) summaryParts.push(`${counts.invalid} ungültig`);
     if (counts.excluded) summaryParts.push(`${counts.excluded} ausgeschlossen`);
 
-    const previewRows = dialogState.previewRows.map((row, index) => `
-      <tr class="vv-import-row vv-import-row--${esc(row.action)}${row.excluded ? " vv-import-row--excluded" : ""}">
-        <td><label><input type="checkbox" data-vv-exclude="${index}" ${!row.excluded ? "checked" : ""} /></label></td>
-        <td>${index + 1}</td>
-        <td><span class="vv-import-action vv-import-action--${esc(row.action)}">${actionBadge(row.action)}</span></td>
-        <td><input data-vv-row="${index}" data-vv-cell="member_number" value="${esc(row.member_number)}" /></td>
-        <td><input data-vv-row="${index}" data-vv-cell="first_name" value="${esc(row.first_name)}" /></td>
-        <td><input data-vv-row="${index}" data-vv-cell="last_name" value="${esc(row.last_name)}" /></td>
-        <td><input data-vv-row="${index}" data-vv-cell="email" value="${esc(row.email)}" /></td>
-        <td><input data-vv-row="${index}" data-vv-cell="status" value="${esc(row.status)}" /></td>
-        <td>${esc(row.warnings.join(" · ") || "-")}</td>
-      </tr>
-    `).join("");
+    // Bearbeitbare Spalten: genau die Felder, die im Import-CSV vorhanden waren.
+    // Bei Vollimport alle 9 Felder, bei Teilmengenimport nur die importierten.
+    // Wenn noch kein Preview geladen: alle Felder als Fallback (wird trotzdem keine Zeile zeigen).
+    // member_number ist immer readonly – es ist der Identifikationsschlüssel.
+    const presentFieldSet = new Set(dialogState.presentFields);
+    const editableFields = (dialogState.previewRows.length > 0 && presentFieldSet.size > 0)
+      ? HEADER_EXPORT.filter(([key]) => key !== "member_number" && presentFieldSet.has(key))
+      : HEADER_EXPORT.filter(([key]) => key !== "member_number");
+    const totalCols = 4 + editableFields.length + 1;
+
+    const previewRows = dialogState.previewRows.map((row, index) => {
+      const isExcluded = row.excluded;
+      const editableCells = editableFields.map(([key, label]) => `
+        <td><input
+          data-vv-row="${index}"
+          data-vv-cell="${esc(key)}"
+          value="${esc(String(row[key] ?? ""))}"
+          aria-label="${esc(label)}"
+          ${isExcluded ? "disabled" : ""}
+        /></td>
+      `).join("");
+      return `
+        <tr class="vv-import-row vv-import-row--${esc(row.action)}${isExcluded ? " vv-import-row--excluded" : ""}">
+          <td><label><input type="checkbox" data-vv-exclude="${index}" ${!isExcluded ? "checked" : ""} /></label></td>
+          <td>${index + 1}</td>
+          <td><span class="vv-import-action vv-import-action--${esc(row.action)}">${actionBadge(row.action)}</span></td>
+          <td><input value="${esc(row.member_number)}" readonly aria-label="Mitgliedsnummer" ${isExcluded ? "disabled" : ""} /></td>
+          ${editableCells}
+          <td class="small">${esc(row.warnings.join(" · ") || "-")}</td>
+        </tr>
+      `;
+    }).join("");
 
     body.innerHTML = `
       <div class="vv-import-grid">
@@ -605,7 +643,7 @@
         </label>
       </div>
       <p class="small">Export-Dateien aus diesem System verwenden Semikolon. Vorlage kann deutsch oder technisch beschriftet sein.</p>
-      ${isPartial ? `<p class="small vv-import-partial-hint">Teilmengenimport erkannt – nur die im CSV vorhandenen Felder werden verglichen und aktualisiert. Fehlende Felder bleiben unverändert.</p>` : ""}
+      ${isPartial ? `<p class="small vv-import-partial-hint">Teilmengenimport – nur die im CSV vorhandenen Felder werden bearbeitet und aktualisiert. Fehlende Felder bleiben unverändert.</p>` : ""}
       ${dialogState.errors.length ? `<div class="qfp-inline-error">${esc(dialogState.errors.join(" · "))}</div>` : ""}
       ${summaryParts.length ? `<div class="vv-import-summary small">${summaryParts.join(" · ")}</div>` : ""}
       ${dialogState.previewRows.length ? `
@@ -621,16 +659,13 @@
               <th>☑</th>
               <th>#</th>
               <th>Aktion</th>
-              <th>Mitgliedsnummer</th>
-              <th>Vorname</th>
-              <th>Nachname</th>
-              <th>E-Mail</th>
-              <th>Status</th>
+              <th>Mitglieds-Nr.</th>
+              ${editableFields.map(([, label]) => `<th>${esc(label)}</th>`).join("")}
               <th>Hinweise</th>
             </tr>
           </thead>
           <tbody>
-            ${previewRows || `<tr><td colspan="9" class="small">Noch keine Preview geladen.</td></tr>`}
+            ${previewRows || `<tr><td colspan="${totalCols}" class="small">Noch keine Preview geladen.</td></tr>`}
           </tbody>
         </table>
       </div>

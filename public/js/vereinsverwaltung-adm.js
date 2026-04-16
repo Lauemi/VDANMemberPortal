@@ -169,9 +169,11 @@
     return raw || "active";
   }
 
-  // Normalisiert sepa_approved zu "true" oder "false" (String).
-  // DB liefert boolean, CSV kann "true"/"false", "ja"/"nein", "1"/"0", "yes"/"no" enthalten.
-  // Leerstring bleibt leer (Feld nicht vorhanden im Import).
+  // Normalisiert sepa_approved für Lesezwecke (Preview-Anzeige, Export).
+  // sepa_approved ist kein frei toggelbares Boolean: false ist im DB-Schema nicht gültig
+  // (members.sepa_approved_check erlaubt nur null und true).
+  // Diese Funktion wird NICHT für den Import-Write-Pfad verwendet.
+  // Leerstring bleibt leer (Feld nicht vorhanden / kein Wert).
   function normalizeSepaApproved(value) {
     const raw = text(String(value ?? "")).toLowerCase();
     if (raw === "") return "";
@@ -265,6 +267,9 @@
   // Vergleicht importierbare Felder. presentFields (Set<string> | null) begrenzt den Vergleich
   // auf die tatsächlich im CSV vorhandenen Felder – für Teilmengenimport.
   // Ohne presentFields (null) werden alle Felder verglichen (Vollimport).
+  // sepa_approved ist bewusst NICHT Teil des Vergleichs: es ist ein Approval-Flag,
+  // kein frei schreibbares Feld – false ist per DB-Constraint verboten,
+  // und der Import-Pfad schreibt es nicht (nicht in buildImportCsv).
   function rowChanged(existing, mapped, presentFields = null) {
     if (!existing) return true;
     const has = (field) => !presentFields || presentFields.has(field);
@@ -278,7 +283,6 @@
       || (has("street") && text(existing.street) !== text(mapped.street || ""))
       || (has("postal_code") && text(existing.zip) !== text(mapped.postal_code || ""))
       || (has("city") && text(existing.city) !== text(mapped.city || ""))
-      || (has("sepa_approved") && normalizeSepaApproved(String(existing.sepa_approved ?? "")) !== normalizeSepaApproved(text(mapped.sepa_approved || "")))
     );
   }
 
@@ -394,6 +398,8 @@
   // Nur "create" und "update" Zeilen werden gesendet.
   // "noop" und "invalid" werden bewusst übersprungen.
   function buildImportCsv(previewRows) {
+    // sepa_approved bewusst nicht im Server-CSV: Approval-Flag, per DB-Constraint nur null/true
+    // erlaubt, false verboten. Der csv_confirm_import-Pfad soll es nicht überschreiben.
     const headers = [
       "member_no",
       "club_member_no",
@@ -406,7 +412,6 @@
       "street",
       "zip",
       "city",
-      "sepa_approved",
     ];
     const lines = [headers.join(",")];
     previewRows
@@ -424,7 +429,6 @@
           row.street,
           row.postal_code,
           row.city,
-          row.sepa_approved,
         ];
         lines.push(values.map(toCsvCell).join(","));
       });
@@ -594,13 +598,15 @@
     if (counts.excluded) summaryParts.push(`${counts.excluded} ausgeschlossen`);
 
     // Bearbeitbare Spalten: genau die Felder, die im Import-CSV vorhanden waren.
-    // Bei Vollimport alle 9 Felder, bei Teilmengenimport nur die importierten.
+    // Bei Vollimport alle Felder, bei Teilmengenimport nur die importierten.
     // Wenn noch kein Preview geladen: alle Felder als Fallback (wird trotzdem keine Zeile zeigen).
-    // member_number ist immer readonly – es ist der Identifikationsschlüssel.
+    // member_number ist immer readonly – Identifikationsschlüssel.
+    // sepa_approved ist immer readonly – Approval-Flag, nicht schreibbar via Import.
     const presentFieldSet = new Set(dialogState.presentFields);
+    const NON_EDITABLE_IN_PREVIEW = new Set(["member_number", "sepa_approved"]);
     const editableFields = (dialogState.previewRows.length > 0 && presentFieldSet.size > 0)
-      ? HEADER_EXPORT.filter(([key]) => key !== "member_number" && presentFieldSet.has(key))
-      : HEADER_EXPORT.filter(([key]) => key !== "member_number");
+      ? HEADER_EXPORT.filter(([key]) => !NON_EDITABLE_IN_PREVIEW.has(key) && presentFieldSet.has(key))
+      : HEADER_EXPORT.filter(([key]) => !NON_EDITABLE_IN_PREVIEW.has(key));
     const totalCols = 4 + editableFields.length + 1;
 
     const previewRows = dialogState.previewRows.map((row, index) => {

@@ -5,33 +5,33 @@
   const MAPPING_URL = "/import-templates/VDAN_Importvorlage_DB_Mapping.md";
   const PARSE_FN = "club-members-csv-parse";
   const CONFIRM_RPC = "csv_confirm_import";
+
+  // Export-Struktur: nur Felder die tatsächlich in admin_member_registry.expectedColumns stehen.
+  // Keine Ghost-Felder (source, house_number, country, club_join_date, membership_kind, current_membership_since, notes
+  // sind NICHT in expectedColumns → werden nie befüllt → dürfen nicht exportiert werden).
+  // Trennzeichen: Semikolon – passend für deutschen Excel-Standard.
   const HEADER_EXPORT = [
     ["member_number", "Mitgliedsnummer"],
     ["status", "Status"],
-    ["source", "Quelle"],
     ["first_name", "Vorname"],
     ["last_name", "Nachname"],
     ["email", "E-Mail"],
     ["phone", "Telefon"],
     ["birthdate", "Geburtsdatum"],
-    ["street", "Straße"],
-    ["house_number", "Hausnummer"],
+    ["street", "Adresse"],
     ["postal_code", "PLZ"],
     ["city", "Ort"],
-    ["country", "Land"],
-    ["club_join_date", "Vereinseintritt"],
-    ["current_membership_type", "Aktuelle Mitgliedschaft"],
-    ["current_membership_since", "Seit"],
-    ["notes", "Notizen"],
   ];
+
+  // Import-Alias-Map: dieselben Felder wie HEADER_EXPORT, plus deutschen Varianten.
+  // Kein Feld hier, das nicht auch in HEADER_EXPORT oder buildImportCsv verarbeitet wird.
   const HEADER_ALIASES = {
     member_number: "member_number",
     mitgliedsnummer: "member_number",
     mitglieds_nr: "member_number",
     mitgliedsnummer_nummerisch: "member_number",
+    club_member_no: "member_number",
     status: "status",
-    quelle: "source",
-    source: "source",
     first_name: "first_name",
     vorname: "first_name",
     last_name: "last_name",
@@ -45,24 +45,13 @@
     geburtstag: "birthdate",
     street: "street",
     strasse: "street",
+    adresse: "street",
     stra_e: "street",
-    house_number: "house_number",
-    hausnummer: "house_number",
     postal_code: "postal_code",
     plz: "postal_code",
     zip: "postal_code",
     city: "city",
     ort: "city",
-    country: "country",
-    land: "country",
-    club_join_date: "club_join_date",
-    vereinseintritt: "club_join_date",
-    current_membership_type: "current_membership_type",
-    aktuelle_mitgliedschaft: "current_membership_type",
-    current_membership_since: "current_membership_since",
-    seit: "current_membership_since",
-    notes: "notes",
-    notizen: "notes",
   };
 
   const dialogState = {
@@ -71,7 +60,7 @@
     clubId: "",
     rows: [],
     file: null,
-    delimiter: ",",
+    delimiter: ";",
     previewRows: [],
     errors: [],
   };
@@ -241,7 +230,29 @@
     return text(rows.find((row) => text(row?.club_id))?.club_id);
   }
 
-  function buildPreviewRows(fileText, rows = [], delimiter = ",") {
+  // Vergleicht die importierbaren Felder eines bestehenden DB-Eintrags mit dem
+  // gemappten Import-Datensatz. Gibt true zurück wenn mindestens ein Feld abweicht.
+  function rowChanged(existing, mapped) {
+    if (!existing) return true;
+    return (
+      normalizeStatus(text(existing.status)) !== normalizeStatus(text(mapped.status || ""))
+      || text(existing.first_name) !== text(mapped.first_name || "")
+      || text(existing.last_name) !== text(mapped.last_name || "")
+      || text(existing.email).toLowerCase() !== text(mapped.email || "").toLowerCase()
+      || text(existing.phone) !== text(mapped.phone || "")
+      || normalizeDate(text(existing.birthdate)).value !== normalizeDate(text(mapped.birthdate || "")).value
+      || text(existing.street) !== text(mapped.street || "")
+      || text(existing.zip) !== text(mapped.postal_code || "")
+      || text(existing.city) !== text(mapped.city || "")
+    );
+  }
+
+  // action-Werte: "create" | "update" | "noop" | "invalid"
+  // create  = neue Mitgliedsnummer, wird angelegt
+  // update  = bekannte Mitgliedsnummer, mindestens ein Feld geändert
+  // noop    = bekannte Mitgliedsnummer, kein Feld geändert – wird nicht an Server gesendet
+  // invalid = Mitgliedsnummer fehlt – Zeile wird übersprungen
+  function buildPreviewRows(fileText, rows = [], delimiter = ";") {
     const parsed = parseCsv(fileText, delimiter);
     if (!parsed.length) {
       return { previewRows: [], errors: ["CSV ist leer."], headerWarnings: [] };
@@ -251,6 +262,11 @@
     const canonicalHeaders = headerRow.map((header) => HEADER_ALIASES[normalizeHeader(header)] || "");
     const unknownHeaders = headerRow.filter((header, index) => !canonicalHeaders[index]).map((header) => text(header));
     const existingNumbers = new Set(rows.map((row) => stripClubPrefix(row?.club_member_no || row?.member_number)).filter(Boolean));
+    const existingByNumber = new Map(
+      rows
+        .map((row) => [stripClubPrefix(row?.club_member_no || row?.member_number), row])
+        .filter(([key]) => Boolean(key))
+    );
     const seenNumbers = new Set();
 
     const previewRows = bodyRows.map((values, index) => {
@@ -267,36 +283,39 @@
       const warnings = [];
       const memberNumber = stripClubPrefix(mapped.member_number);
       const birthdateInfo = normalizeDate(mapped.birthdate);
-      if (!memberNumber) warnings.push("Mitgliedsnummer fehlt – Zeile wird übersprungen.");
-      if (memberNumber && existingNumbers.has(memberNumber)) warnings.push("Mitglied existiert bereits – wird als Update behandelt.");
+
+      if (!memberNumber) warnings.push("Mitgliedsnummer fehlt – Zeile ungültig.");
       if (memberNumber && seenNumbers.has(memberNumber)) warnings.push("Mitgliedsnummer doppelt in Datei.");
       if (memberNumber) seenNumbers.add(memberNumber);
       if (!birthdateInfo.valid) warnings.push("Ungültiges Datum – Geburtstagsfeld wird geleert.");
       if (unknownHeaders.length) warnings.push(`Unbekannte Spalten werden ignoriert: ${unknownHeaders.join(", ")}`);
+
+      const isExisting = Boolean(memberNumber) && existingNumbers.has(memberNumber);
+      let action;
+      if (!memberNumber) {
+        action = "invalid";
+      } else if (isExisting) {
+        action = rowChanged(existingByNumber.get(memberNumber), mapped) ? "update" : "noop";
+      } else {
+        action = "create";
+      }
 
       return {
         row_index: index,
         source,
         member_number: memberNumber,
         status: normalizeStatus(mapped.status),
-        source_value: text(mapped.source) || "csv_import",
         first_name: text(mapped.first_name),
         last_name: text(mapped.last_name),
         email: text(mapped.email).toLowerCase(),
         phone: text(mapped.phone),
         birthdate: birthdateInfo.value,
         street: text(mapped.street),
-        house_number: text(mapped.house_number),
         postal_code: text(mapped.postal_code),
         city: text(mapped.city),
-        country: text(mapped.country),
-        club_join_date: text(mapped.club_join_date),
-        current_membership_type: text(mapped.current_membership_type),
-        current_membership_since: text(mapped.current_membership_since),
-        notes: text(mapped.notes),
         warnings,
         row_status: warnings.length ? "warning" : "ok",
-        action: memberNumber && existingNumbers.has(memberNumber) ? "update" : memberNumber ? "insert" : "skip",
+        action,
       };
     });
 
@@ -307,6 +326,10 @@
     };
   }
 
+  // Baut den internen CSV-Datensatz für den Server (club-members-csv-parse).
+  // Trenner immer Komma – das ist das Server-Format, unabhängig vom User-Trenner.
+  // Nur "create" und "update" Zeilen werden gesendet.
+  // "noop" und "invalid" werden bewusst übersprungen.
   function buildImportCsv(previewRows) {
     const headers = [
       "member_no",
@@ -320,12 +343,10 @@
       "street",
       "zip",
       "city",
-      "membership_kind",
-      "source",
     ];
     const lines = [headers.join(",")];
     previewRows
-      .filter((row) => row.action !== "skip")
+      .filter((row) => row.action === "create" || row.action === "update")
       .forEach((row) => {
         const values = [
           row.member_number,
@@ -339,37 +360,30 @@
           row.street,
           row.postal_code,
           row.city,
-          row.current_membership_type,
-          row.source_value || "csv_import",
         ];
         lines.push(values.map(toCsvCell).join(","));
       });
     return lines.join("\n");
   }
 
+  // Export liest genau die Felder aus HEADER_EXPORT – alle sind in admin_member_registry.expectedColumns.
+  // Trennzeichen: Semikolon – identisch mit Import-Standard.
   function exportMembers(rows) {
     const lines = [HEADER_EXPORT.map(([, label]) => toCsvCell(label)).join(";")];
     rows.forEach((row) => {
       const data = {
         member_number: stripClubPrefix(row?.club_member_no || row?.member_number),
         status: text(row?.status),
-        source: "",
         first_name: text(row?.first_name),
         last_name: text(row?.last_name),
         email: text(row?.email),
         phone: text(row?.phone),
         birthdate: text(row?.birthdate),
         street: text(row?.street),
-        house_number: "",
-        postal_code: text(row?.zip || row?.postal_code),
+        postal_code: text(row?.zip),
         city: text(row?.city),
-        country: "",
-        club_join_date: "",
-        current_membership_type: text(row?.membership_kind),
-        current_membership_since: "",
-        notes: "",
       };
-      lines.push(HEADER_EXPORT.map(([key]) => toCsvCell(data[key] || "")).join(";"));
+      lines.push(HEADER_EXPORT.map(([key]) => toCsvCell(data[key] ?? "")).join(";"));
     });
     downloadBlob("vereinsverwaltung_export_mitglieder.csv", lines.join("\n"), "text/csv;charset=utf-8");
   }
@@ -406,7 +420,7 @@
         dialogState.file = target.files?.[0] || null;
       }
       if (target?.matches?.("[data-vv-delimiter]")) {
-        dialogState.delimiter = text(target.value) || ",";
+        dialogState.delimiter = text(target.value) || ";";
       }
       if (target?.matches?.("[data-vv-cell]")) {
         const rowIndex = Number(target.getAttribute("data-vv-row") || -1);
@@ -439,13 +453,23 @@
     return dialog;
   }
 
+  function actionBadge(action) {
+    const map = {
+      create: "neu",
+      update: "ändern",
+      noop: "unverändert",
+      invalid: "ungültig",
+    };
+    return map[action] || esc(action);
+  }
+
   function renderDialog(dialog) {
     const body = dialog.querySelector(".vv-import-dialog__body");
     if (!body) return;
     const previewRows = dialogState.previewRows.map((row, index) => `
-      <tr>
+      <tr class="vv-import-row vv-import-row--${esc(row.action)}">
         <td>${index + 1}</td>
-        <td>${esc(row.action)}</td>
+        <td><span class="vv-import-action vv-import-action--${esc(row.action)}">${actionBadge(row.action)}</span></td>
         <td><input data-vv-row="${index}" data-vv-cell="member_number" value="${esc(row.member_number)}" /></td>
         <td><input data-vv-row="${index}" data-vv-cell="first_name" value="${esc(row.first_name)}" /></td>
         <td><input data-vv-row="${index}" data-vv-cell="last_name" value="${esc(row.last_name)}" /></td>
@@ -464,13 +488,13 @@
         <label class="ui-field">
           <span>Trennzeichen</span>
           <select data-vv-delimiter="true">
+            <option value=";" ${dialogState.delimiter === ";" ? "selected" : ""}>Semikolon (Standard)</option>
             <option value="," ${dialogState.delimiter === "," ? "selected" : ""}>Komma</option>
-            <option value=";" ${dialogState.delimiter === ";" ? "selected" : ""}>Semikolon</option>
             <option value="tab" ${dialogState.delimiter === "tab" ? "selected" : ""}>Tab</option>
           </select>
         </label>
       </div>
-      <p class="small">Vorlage kann deutsch oder technisch beschriftet sein. Aktuell wird der Mitglieder-Import über den bestehenden CSV-Serverpfad vorbereitet.</p>
+      <p class="small">Export-Dateien aus diesem System verwenden Semikolon. Vorlage kann deutsch oder technisch beschriftet sein.</p>
       ${dialogState.errors.length ? `<div class="qfp-inline-error">${esc(dialogState.errors.join(" · "))}</div>` : ""}
       <div class="work-part-table-wrap vv-import-preview-wrap">
         <table class="work-part-table vv-import-preview-table">
@@ -509,8 +533,9 @@
   }
 
   async function confirmImport(dialog) {
-    if (!(dialogState.previewRows || []).some((row) => row.action !== "skip")) {
-      dialogState.errors = ["Keine importierbaren Zeilen vorhanden."];
+    const importable = (dialogState.previewRows || []).filter((row) => row.action === "create" || row.action === "update");
+    if (!importable.length) {
+      dialogState.errors = ["Keine importierbaren Zeilen vorhanden (create oder update)."];
       renderDialog(dialog);
       return;
     }
@@ -557,7 +582,7 @@
       dialogState.previewRows = [];
       dialogState.errors = [];
       dialogState.file = null;
-      dialogState.delimiter = ",";
+      dialogState.delimiter = ";";
       dialogState.onMessage = typeof detail.onMessage === "function" ? detail.onMessage : null;
       dialogState.reload = typeof detail.reload === "function" ? detail.reload : null;
       renderDialog(dialog);

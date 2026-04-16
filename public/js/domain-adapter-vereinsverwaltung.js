@@ -302,7 +302,7 @@
         p_mobile: String(draft?.mobile || "").trim() || null,
         p_birthdate: String(draft?.birthdate || "").trim() || null,
         p_guardian_member_no: String(draft?.guardian_member_no || "").trim() || null,
-        p_sepa_approved: String(draft?.sepa_approved || "false") === "true" || draft?.sepa_approved === true,
+        p_sepa_approved: (String(draft?.sepa_approved || "false") === "true" || draft?.sepa_approved === true) ? true : null,
         p_iban: String(draft?.iban || "").trim() || null,
       }, true);
       const createdMemberNo = String(
@@ -344,7 +344,7 @@
         p_mobile: String(draft?.mobile || "").trim() || null,
         p_birthdate: String(draft?.birthdate || "").trim() || null,
         p_guardian_member_no: String(draft?.guardian_member_no || "").trim() || null,
-        p_sepa_approved: String(draft?.sepa_approved || "false") === "true" || draft?.sepa_approved === true,
+        p_sepa_approved: (String(draft?.sepa_approved || "false") === "true" || draft?.sepa_approved === true) ? true : null,
         p_iban: String(draft?.iban || "").trim() || null,
       }, true);
       await assignMemberCards(clubId, memberNo, draft, row);

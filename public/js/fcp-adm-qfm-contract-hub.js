@@ -945,6 +945,7 @@
           panel,
           section,
           rows,
+          columns,
           onMessage: message,
           reload: async () => {
             if (typeof pattern?.loadPanel === "function") {

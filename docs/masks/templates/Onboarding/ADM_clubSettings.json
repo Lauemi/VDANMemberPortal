@@ -1823,7 +1823,11 @@
             {
               "key": "club_member_no",
               "label": "Vereins-Nr.",
-              "type": "text"
+              "type": "text",
+              "exportable": true,
+              "exportKey": "member_number",
+              "exportLabel": "Mitgliedsnummer",
+              "alwaysExport": true
             },
             {
               "key": "member_no",
@@ -1833,12 +1837,18 @@
             {
               "key": "last_name",
               "label": "Name",
-              "type": "text"
+              "type": "text",
+              "exportable": true,
+              "exportKey": "last_name",
+              "exportLabel": "Nachname"
             },
             {
               "key": "first_name",
               "label": "Vorname",
-              "type": "text"
+              "type": "text",
+              "exportable": true,
+              "exportKey": "first_name",
+              "exportLabel": "Vorname"
             },
             {
               "key": "role",
@@ -1864,6 +1874,9 @@
               "key": "status",
               "label": "Status",
               "type": "text",
+              "exportable": true,
+              "exportKey": "status",
+              "exportLabel": "Status",
               "editorType": "select",
               "options": [
                 {
@@ -1947,27 +1960,42 @@
             {
               "key": "email",
               "label": "E-Mail",
-              "type": "text"
+              "type": "text",
+              "exportable": true,
+              "exportKey": "email",
+              "exportLabel": "E-Mail"
             },
             {
               "key": "street",
               "label": "Adresse",
-              "type": "text"
+              "type": "text",
+              "exportable": true,
+              "exportKey": "street",
+              "exportLabel": "Adresse"
             },
             {
               "key": "zip",
               "label": "PLZ",
-              "type": "text"
+              "type": "text",
+              "exportable": true,
+              "exportKey": "postal_code",
+              "exportLabel": "PLZ"
             },
             {
               "key": "city",
               "label": "Ort",
-              "type": "text"
+              "type": "text",
+              "exportable": true,
+              "exportKey": "city",
+              "exportLabel": "Ort"
             },
             {
               "key": "phone",
               "label": "Tel",
-              "type": "text"
+              "type": "text",
+              "exportable": true,
+              "exportKey": "phone",
+              "exportLabel": "Telefon"
             },
             {
               "key": "mobile",
@@ -1977,7 +2005,10 @@
             {
               "key": "birthdate",
               "label": "Geburtstag",
-              "type": "date"
+              "type": "date",
+              "exportable": true,
+              "exportKey": "birthdate",
+              "exportLabel": "Geburtsdatum"
             },
             {
               "key": "guardian_member_no",
@@ -1988,7 +2019,10 @@
               "key": "sepa_approved",
               "label": "SEPA",
               "type": "boolean",
-              "editorType": "checkbox"
+              "editorType": "checkbox",
+              "exportable": true,
+              "exportKey": "sepa_approved",
+              "exportLabel": "SEPA genehmigt"
             },
             {
               "key": "iban_last4",
@@ -2038,6 +2072,7 @@
             ],
             "deleteConfirmMessage": "Diesen Mitgliedseintrag wirklich loeschen?",
             "deleteConfirmLabel": "Loeschen",
+            "showColumnToggle": true,
             "utilityHandler": "vereinsverwaltung_members",
             "utilityActions": [
               {
@@ -2052,7 +2087,11 @@
                   },
                   {
                     "key": "export",
-                    "label": "Export"
+                    "label": "Export (alle)"
+                  },
+                  {
+                    "key": "export_view",
+                    "label": "Export (Ansicht)"
                   }
                 ]
               }

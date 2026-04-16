@@ -177,14 +177,15 @@
 
     function orderedColumns() {
       const map = new Map(columns.map((column) => [column.key, column]));
-      return state.columnOrder
-        .filter((key) => !state.hiddenColumns.has(key))
+      const actionKeys = new Set(columns.filter((col) => col.type === "actions").map((col) => col.key));
+      const withWidth = (column) => ({ ...column, width: state.columnWidths[column.key] || column.width || "minmax(120px, 1fr)" });
+      const data = state.columnOrder
+        .filter((key) => !state.hiddenColumns.has(key) && !actionKeys.has(key))
         .map((key) => map.get(key))
         .filter(Boolean)
-        .map((column) => ({
-          ...column,
-          width: state.columnWidths[column.key] || column.width || "minmax(120px, 1fr)",
-        }));
+        .map(withWidth);
+      const actionCols = columns.filter((col) => col.type === "actions").map(withWidth);
+      return [...data, ...actionCols];
     }
 
     function rowKey(row) {
@@ -366,6 +367,7 @@
       const isNumeric = column.type === "numeric" || column.type === "actions";
       const isActiveSort = state.sortKey === column.key;
       const dragEnabled = column.draggable !== false && column.type !== "actions";
+      const canHide = column.type !== "actions";
       const sortIcon = !column.sortable ? "" : (isActiveSort ? (state.sortDir === "asc" ? "↑" : "↓") : "↕");
       return `
         <div
@@ -380,7 +382,10 @@
               <span class="data-table__sort-icon" aria-hidden="true">${sortIcon}</span>
             </button>
           </div>
-          ${column.persistWidth === false ? "" : `<span class="column-resizer" data-resize-key="${esc(column.key)}" aria-hidden="true"></span>`}
+          <div class="headcell-right">
+            ${canHide ? `<button type="button" class="col-hide-btn" data-col-hide="${esc(column.key)}" aria-label="Spalte ausblenden" title="Spalte ausblenden">👁</button>` : ""}
+            ${column.persistWidth === false ? "" : `<span class="column-resizer" data-resize-key="${esc(column.key)}" aria-hidden="true"></span>`}
+          </div>
         </div>
       `;
     }
@@ -559,13 +564,13 @@
                 }
                 return `<button type="button" class="${classes}" data-utility-action="${esc(key)}" ${titleAttr ? `title="${esc(titleAttr)}" aria-label="${esc(titleAttr)}"` : ""}>${icon ? `<span aria-hidden="true">${esc(icon)}</span>` : ""}${label ? `<span>${esc(label)}</span>` : ""}</button>`;
               }).join("")}
-              ${config?.showColumnToggle ? `<button type="button" class="feed-btn feed-btn--ghost${state.columnTogglePanelOpen ? " is-active" : ""}" data-inline-column-toggle="true" aria-label="Spalten ein-/ausblenden">⊞ Spalten</button>` : ""}
+              ${config?.showColumnToggle !== false ? `<button type="button" class="feed-btn feed-btn--ghost${state.columnTogglePanelOpen ? " is-active" : ""}" data-inline-column-toggle="true" aria-label="Spalten ein-/ausblenden">⊞ Spalten</button>` : ""}
               ${config.showFilterButton ? `<button type="button" class="icon-utility" data-inline-filter-toggle="true" aria-label="Filter">☰</button>` : ""}
               ${showResetButton ? `<button type="button" class="icon-utility" data-inline-reset="true" aria-label="Reset">↺</button>` : ""}
             </div>
           </div>
           ` : ""}
-          ${config?.showColumnToggle && state.columnTogglePanelOpen ? `
+          ${config?.showColumnToggle !== false && state.columnTogglePanelOpen ? `
           <div class="column-toggle-panel">
             ${columns.filter((column) => column.type !== "actions").map((column) => `
               <label class="column-toggle-item">
@@ -727,6 +732,18 @@
       if (target?.closest?.("[data-inline-column-toggle]")) {
         state.columnTogglePanelOpen = !state.columnTogglePanelOpen;
         render();
+        return;
+      }
+
+      const hideBtn = target?.closest?.("[data-col-hide]");
+      if (hideBtn) {
+        const key = String(hideBtn.getAttribute("data-col-hide") || "");
+        if (key) {
+          state.hiddenColumns.add(key);
+          persistLayout();
+          render();
+          config?.onLayoutChange?.({ columnOrder: state.columnOrder.slice(), columnWidths: { ...state.columnWidths }, hiddenColumns: [...state.hiddenColumns] });
+        }
         return;
       }
 
@@ -910,6 +927,19 @@
       dragColumnKey = "";
     });
 
+    root.addEventListener("contextmenu", (event) => {
+      const head = event.target?.closest?.("[data-head-key]");
+      if (!head) return;
+      const key = String(head.getAttribute("data-head-key") || "");
+      const col = columns.find((entry) => entry.key === key);
+      if (!col || col.type === "actions") return;
+      event.preventDefault();
+      state.hiddenColumns.add(key);
+      persistLayout();
+      render();
+      config?.onLayoutChange?.({ columnOrder: state.columnOrder.slice(), columnWidths: { ...state.columnWidths }, hiddenColumns: [...state.hiddenColumns] });
+    });
+
     root.addEventListener("mousedown", (event) => {
       const resizer = event.target?.closest?.("[data-resize-key]");
       const resizeKey = String(resizer?.getAttribute?.("data-resize-key") || "");
@@ -963,6 +993,9 @@
           hiddenColumns: [...state.hiddenColumns],
           visibleColumns: state.columnOrder.filter((key) => !state.hiddenColumns.has(key)),
         };
+      },
+      getColumns() {
+        return columns.slice();
       },
       openCreate() {
         if (!state.createOpen) openCreateRow();

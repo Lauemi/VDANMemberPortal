@@ -60,22 +60,20 @@
     sepa_ok: "sepa_approved",
   };
 
-  // Maps table column keys (FCPInlineDataTable) to HEADER_EXPORT canonical import keys.
-  // Wird für View Export gebraucht – der Table nutzt andere Keys als die Import-CSV-Header.
-  const TABLE_COL_TO_EXPORT_KEY = {
-    club_member_no: "member_number",
-    member_no: "member_number",
-    zip: "postal_code",
-    status: "status",
-    first_name: "first_name",
-    last_name: "last_name",
-    email: "email",
-    phone: "phone",
-    birthdate: "birthdate",
-    street: "street",
-    city: "city",
-    sepa_approved: "sepa_approved",
+  // Werttransformationen für Export: Felder, bei denen der CSV-Wert vom Rohwert der DB-Zeile abweicht.
+  // Alle anderen Felder werden via text(row?.[col.key]) exportiert.
+  // Diese Map ersetzt TABLE_COL_TO_EXPORT_KEY + die separaten data-Objekte in den Export-Funktionen.
+  const EXPORT_VALUE_TRANSFORMS = {
+    club_member_no: (row) => stripClubPrefix(row?.club_member_no || row?.member_number),
+    zip: (row) => text(row?.zip),
+    sepa_approved: (row) => text(String(row?.sepa_approved ?? "")),
   };
+
+  function getExportValue(col, row) {
+    const transform = EXPORT_VALUE_TRANSFORMS[col.key];
+    if (transform) return transform(row);
+    return text(row?.[col.key] ?? "");
+  }
 
   const dialogState = {
     open: false,
@@ -433,58 +431,35 @@
     return lines.join("\n");
   }
 
-  // Export liest genau die Felder aus HEADER_EXPORT – alle sind in admin_member_registry.expectedColumns.
+  // Export: alle exportierbaren Spalten laut Column-Metadaten (exportable: true).
+  // Fällt auf HEADER_EXPORT zurück, wenn keine Column-Metadaten übergeben wurden.
   // Trennzeichen: Semikolon – identisch mit Import-Standard.
-  function exportMembers(rows) {
-    const lines = [HEADER_EXPORT.map(([, label]) => toCsvCell(label)).join(";")];
+  function exportMembers(rows, columns) {
+    const exportCols = Array.isArray(columns) && columns.length
+      ? columns.filter((col) => col.exportable)
+      : HEADER_EXPORT.map(([key, label]) => ({ key, exportKey: key, exportLabel: label, exportable: true }));
+    const lines = [exportCols.map((col) => toCsvCell(col.exportLabel || col.label)).join(";")];
     rows.forEach((row) => {
-      const data = {
-        member_number: stripClubPrefix(row?.club_member_no || row?.member_number),
-        status: text(row?.status),
-        first_name: text(row?.first_name),
-        last_name: text(row?.last_name),
-        email: text(row?.email),
-        phone: text(row?.phone),
-        birthdate: text(row?.birthdate),
-        street: text(row?.street),
-        postal_code: text(row?.zip),
-        city: text(row?.city),
-        sepa_approved: text(String(row?.sepa_approved ?? "")),
-      };
-      lines.push(HEADER_EXPORT.map(([key]) => toCsvCell(data[key] ?? "")).join(";"));
+      lines.push(exportCols.map((col) => toCsvCell(getExportValue(col, row))).join(";"));
     });
     downloadBlob("vereinsverwaltung_export_mitglieder.csv", lines.join("\n"), "text/csv;charset=utf-8");
   }
 
   // View Export: exportiert nur die aktuell im Table sichtbaren Spalten.
-  // member_number wird immer eingeschlossen – Pflichtfeld für Reimport.
+  // club_member_no (alwaysExport: true) wird immer mitgeführt – Pflichtschlüssel für Reimport.
   // visibleColumns = Array von Table-Spalten-Keys (aus FCPInlineDataTable.getState().visibleColumns).
-  function exportMembersView(rows, visibleColumns = []) {
-    const visibleSet = new Set(visibleColumns);
-    const exportFields = HEADER_EXPORT.filter(([key]) => {
-      if (key === "member_number") return true;
-      if (visibleSet.has(key)) return true;
-      for (const [tableKey, exportKey] of Object.entries(TABLE_COL_TO_EXPORT_KEY)) {
-        if (exportKey === key && visibleSet.has(tableKey)) return true;
-      }
-      return false;
-    });
-    const lines = [exportFields.map(([, label]) => toCsvCell(label)).join(";")];
+  // columns = Array von Column-Metadaten (aus detail.columns, trägt exportable/alwaysExport).
+  function exportMembersView(rows, visibleColumns, columns) {
+    const visibleSet = new Set(Array.isArray(visibleColumns) ? visibleColumns : []);
+    const exportCols = Array.isArray(columns) && columns.length
+      ? columns.filter((col) => col.exportable && (col.alwaysExport || visibleSet.has(col.key)))
+      : HEADER_EXPORT.filter(([key]) => {
+          if (key === "member_number") return true;
+          return visibleSet.has(key);
+        }).map(([key, label]) => ({ key, exportKey: key, exportLabel: label, exportable: true }));
+    const lines = [exportCols.map((col) => toCsvCell(col.exportLabel || col.label)).join(";")];
     rows.forEach((row) => {
-      const data = {
-        member_number: stripClubPrefix(row?.club_member_no || row?.member_number),
-        status: text(row?.status),
-        first_name: text(row?.first_name),
-        last_name: text(row?.last_name),
-        email: text(row?.email),
-        phone: text(row?.phone),
-        birthdate: text(row?.birthdate),
-        street: text(row?.street),
-        postal_code: text(row?.zip),
-        city: text(row?.city),
-        sepa_approved: text(String(row?.sepa_approved ?? "")),
-      };
-      lines.push(exportFields.map(([key]) => toCsvCell(data[key] ?? "")).join(";"));
+      lines.push(exportCols.map((col) => toCsvCell(getExportValue(col, row))).join(";"));
     });
     downloadBlob("vereinsverwaltung_view_export.csv", lines.join("\n"), "text/csv;charset=utf-8");
   }
@@ -750,13 +725,15 @@
     const itemKey = text(detail.itemKey);
     if (actionKey !== "members_more") return;
     if (itemKey === "export") {
-      exportMembers(Array.isArray(detail.rows) ? detail.rows : []);
+      const cols = Array.isArray(detail.columns) ? detail.columns : [];
+      exportMembers(Array.isArray(detail.rows) ? detail.rows : [], cols);
       detail.onMessage?.("Export erstellt.");
       return;
     }
     if (itemKey === "export_view") {
       const visibleCols = Array.isArray(detail.visibleColumns) ? detail.visibleColumns : [];
-      exportMembersView(Array.isArray(detail.rows) ? detail.rows : [], visibleCols);
+      const cols = Array.isArray(detail.columns) ? detail.columns : [];
+      exportMembersView(Array.isArray(detail.rows) ? detail.rows : [], visibleCols, cols);
       detail.onMessage?.("View Export erstellt.");
       return;
     }

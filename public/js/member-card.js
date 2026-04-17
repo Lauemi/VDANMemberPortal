@@ -171,7 +171,14 @@
     return Array.isArray(rows) ? rows : [];
   }
 
-  async function renderCard(profile, waters) {
+  async function loadCardLabel() {
+    // Wahrheitsquelle: member_card_assignments via get_my_card_label(),
+    // NICHT profiles.fishing_card_type (kann stale sein).
+    const rows = await sb("/rest/v1/rpc/get_my_card_label", { method: "POST", body: JSON.stringify({}) }, true);
+    return Array.isArray(rows) && rows[0]?.card_label ? String(rows[0].card_label) : null;
+  }
+
+  async function renderCard(profile, waters, cardLabel) {
     const box = document.getElementById("memberCardBox");
     if (!box) return;
     const isValid = Boolean(profile.member_card_valid);
@@ -211,7 +218,7 @@
             <div class="small">Mitgliedsnummer: <strong>${escapeHtml(profile.member_no || "-")}</strong></div>
             <div class="small">Ausweis-ID: <strong>${escapeHtml(cardId)}</strong></div>
             <div class="small">Gültigkeitsschlüssel: <strong>${escapeHtml(cardKey)}</strong></div>
-            <div class="small">Karte: <strong>${escapeHtml(profile.fishing_card_type || "-")}</strong></div>
+            <div class="small">Karte: <strong>${escapeHtml(cardLabel || "-")}</strong></div>
             <div class="small">Status: <strong>${isValid ? "Gültig" : "Ungültig"}</strong></div>
             <div class="small">${escapeHtml(validityText)}</div>
             <div class="small">Kontrolliert am: <strong>${escapeHtml(asDateTime(checkedAt))}</strong>${checkedBy ? ` · durch <strong>${escapeHtml(checkedBy)}</strong>` : ""}</div>
@@ -261,9 +268,10 @@
     }
     try {
       setMsg("Lade Ausweis…");
-      const [rows, waters, roles] = await Promise.all([
-        sb(`/rest/v1/profiles?select=display_name,member_no,fishing_card_type,member_card_valid,member_card_valid_from,member_card_valid_until,member_card_id,member_card_key,member_card_checked_at,member_card_checked_by_label&id=eq.${encodeURIComponent(userId())}&limit=1`, { method: "GET" }, true),
+      const [rows, waters, cardLabel, roles] = await Promise.all([
+        sb(`/rest/v1/profiles?select=display_name,member_no,member_card_valid,member_card_valid_from,member_card_valid_until,member_card_id,member_card_key,member_card_checked_at,member_card_checked_by_label&id=eq.${encodeURIComponent(userId())}&limit=1`, { method: "GET" }, true),
         listWatersAccess(),
+        loadCardLabel(),
         loadRoles(),
       ]);
       const p = Array.isArray(rows) ? rows[0] : null;
@@ -271,7 +279,7 @@
         setMsg("Kein Profil gefunden.");
         return;
       }
-      await renderCard(p, waters);
+      await renderCard(p, waters, cardLabel);
       const verifyLink = document.querySelector('[data-manager-only]');
       if (verifyLink) {
         const show = isManagerRole(roles);

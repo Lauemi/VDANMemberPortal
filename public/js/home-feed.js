@@ -258,7 +258,22 @@
     const categoryFilter = isForcedCategory ? `&category=eq.${encodeURIComponent(forcedCategory)}` : "";
     const cacheKey = `posts:${isForcedCategory ? forcedCategory : "all"}`;
     try {
-      const rows = await sb(`/rest/v1/${TABLE}?select=id,author_id,updated_by,title,body,category,created_at,updated_at,${MEDIA_TABLE}(id,sort_order,storage_bucket,storage_path,width,height)${categoryFilter}&order=created_at.desc`, { method: "GET" }, true);
+      const path = `/rest/v1/${TABLE}?select=id,author_id,updated_by,title,body,category,created_at,updated_at,${MEDIA_TABLE}(id,sort_order,storage_bucket,storage_path,width,height)${categoryFilter}&order=created_at.desc`;
+      const hasSessionContext = Boolean(session()?.access_token || session()?.user?.id);
+      let rows;
+
+      try {
+        rows = await sb(path, { method: "GET" }, hasSessionContext);
+      } catch (err) {
+        const authMessage = String(err?.message || "").toLowerCase();
+        const authStatus = Number(err?.status || 0);
+        const canFallbackToAnon = hasSessionContext
+          && (authStatus === 401 || authStatus === 403 || authMessage.includes("sitzung abgelaufen"));
+
+        if (!canFallbackToAnon) throw err;
+        rows = await sb(path, { method: "GET" }, false);
+      }
+
       const list = Array.isArray(rows) ? rows : [];
       await window.VDAN_OFFLINE_SYNC?.cacheSet?.(OFFLINE_NS, cacheKey, list);
       return [...pendingPosts, ...list];

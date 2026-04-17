@@ -414,21 +414,33 @@
 
   async function invokeFeedPostAdminDelete(postId) {
     const { url, key } = cfg();
-    const token = await ensureAccessToken();
-    if (!url || !key || !token) throw new Error("Sitzung abgelaufen. Bitte neu anmelden.");
+    if (!url || !key) throw new Error("Sitzung abgelaufen. Bitte neu anmelden.");
 
-    const res = await fetch(`${url}/functions/v1/feed-post-admin-delete`, {
-      method: "POST",
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ post_id: postId }),
-    });
+    const requestDelete = async (token) => {
+      if (!token) throw new Error("Sitzung abgelaufen. Bitte neu anmelden.");
+      const res = await fetch(`${url}/functions/v1/feed-post-admin-delete`, {
+        method: "POST",
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ post_id: postId }),
+      });
+      const err = !res.ok ? await res.json().catch(() => ({})) : null;
+      return { res, err };
+    };
+
+    let token = await ensureAccessToken();
+    let { res, err } = await requestDelete(token);
+
+    if (res.status === 401 && navigator.onLine && window.VDAN_AUTH?.refreshSession) {
+      const refreshed = await window.VDAN_AUTH.refreshSession().catch(() => null);
+      token = String(refreshed?.access_token || session()?.access_token || "").trim();
+      ({ res, err } = await requestDelete(token));
+    }
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
       throw new Error(err?.error || err?.message || `Delete fehlgeschlagen (${res.status})`);
     }
     return res.json().catch(() => ({}));

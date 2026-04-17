@@ -397,10 +397,30 @@
     return rows?.[0];
   }
 
+  async function invokeFeedPostAdminDelete(postId) {
+    const { url, key } = cfg();
+    const token = await ensureAccessToken();
+    if (!url || !key || !token) throw new Error("Sitzung abgelaufen. Bitte neu anmelden.");
+
+    const res = await fetch(`${url}/functions/v1/feed-post-admin-delete`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ post_id: postId }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error || err?.message || `Delete fehlgeschlagen (${res.status})`);
+    }
+    return res.json().catch(() => ({}));
+  }
+
   async function deletePost(id) {
-    await sb(`/rest/v1/${TABLE}?id=eq.${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    }, true);
+    await invokeFeedPostAdminDelete(id);
   }
 
   async function uploadOfflineMediaFromQueue(items = [], pathPrefix = "queued") {

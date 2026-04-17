@@ -3,8 +3,6 @@
 ;(() => {
   const TEMPLATE_URL = "/import-templates/Vereinsverwaltung_Importvorlage.xlsx";
   const MAPPING_URL = "/import-templates/VDAN_Importvorlage_DB_Mapping.md";
-  const PARSE_FN = "club-members-csv-parse";
-  const CONFIRM_RPC = "csv_confirm_import";
 
   // Export-Struktur: nur Felder die tatsächlich in admin_member_registry.expectedColumns stehen.
   // Keine Ghost-Felder (source, house_number, country, club_join_date, membership_kind, current_membership_since, notes
@@ -25,7 +23,6 @@
   ];
 
   // Import-Alias-Map: dieselben Felder wie HEADER_EXPORT, plus deutschen Varianten.
-  // Kein Feld hier, das nicht auch in HEADER_EXPORT oder buildImportCsv verarbeitet wird.
   const HEADER_ALIASES = {
     member_number: "member_number",
     mitgliedsnummer: "member_number",
@@ -112,26 +109,6 @@
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data?.ok === false) {
       throw new Error(String(data?.error || data?.message || `request_failed_${res.status}`));
-    }
-    return data;
-  }
-
-  async function callMultipartFn(functionName, formData) {
-    const { url, key } = cfg();
-    const token = session()?.access_token || "";
-    if (!url || !key) throw new Error("supabase_config_missing");
-    if (!token) throw new Error("login_required");
-    const res = await fetch(`${url}/functions/v1/${functionName}`, {
-      method: "POST",
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || data?.ok === false) {
-      throw new Error(String(data?.error || `${functionName}_failed_${res.status}`));
     }
     return data;
   }
@@ -269,7 +246,7 @@
   // Ohne presentFields (null) werden alle Felder verglichen (Vollimport).
   // sepa_approved ist bewusst NICHT Teil des Vergleichs: es ist ein Approval-Flag,
   // kein frei schreibbares Feld – false ist per DB-Constraint verboten,
-  // und der Import-Pfad schreibt es nicht (nicht in buildImportCsv).
+  // und der Import-Pfad schreibt es nicht.
   function rowChanged(existing, mapped, presentFields = null) {
     if (!existing) return true;
     const has = (field) => !presentFields || presentFields.has(field);
@@ -391,48 +368,6 @@
       headerWarnings: unknownHeaders.length ? [`Unbekannte Spalten: ${unknownHeaders.join(", ")}`] : [],
       presentFields: [...presentFields],
     };
-  }
-
-  // Baut den internen CSV-Datensatz für den Server (club-members-csv-parse).
-  // Trenner immer Komma – das ist das Server-Format, unabhängig vom User-Trenner.
-  // Nur "create" und "update" Zeilen werden gesendet.
-  // "noop" und "invalid" werden bewusst übersprungen.
-  function buildImportCsv(previewRows) {
-    // sepa_approved bewusst nicht im Server-CSV: Approval-Flag, per DB-Constraint nur null/true
-    // erlaubt, false verboten. Der csv_confirm_import-Pfad soll es nicht überschreiben.
-    const headers = [
-      "member_no",
-      "club_member_no",
-      "first_name",
-      "last_name",
-      "status",
-      "email",
-      "phone",
-      "birthdate",
-      "street",
-      "zip",
-      "city",
-    ];
-    const lines = [headers.join(",")];
-    previewRows
-      .filter((row) => (row.action === "create" || row.action === "update") && !row.excluded)
-      .forEach((row) => {
-        const values = [
-          row.member_number,
-          row.member_number,
-          row.first_name,
-          row.last_name,
-          row.status,
-          row.email,
-          row.phone,
-          row.birthdate,
-          row.street,
-          row.postal_code,
-          row.city,
-        ];
-        lines.push(values.map(toCsvCell).join(","));
-      });
-    return lines.join("\n");
   }
 
   // Export: alle exportierbaren Spalten laut Column-Metadaten (exportable: true).
@@ -693,7 +628,9 @@
   }
 
   async function confirmImport(dialog) {
-    const importable = (dialogState.previewRows || []).filter((row) => (row.action === "create" || row.action === "update") && !row.excluded);
+    const importable = (dialogState.previewRows || []).filter(
+      (row) => (row.action === "create" || row.action === "update") && !row.excluded
+    );
     if (!importable.length) {
       dialogState.errors = ["Keine importierbaren Zeilen vorhanden (create oder update)."];
       renderDialog(dialog);
@@ -701,18 +638,22 @@
     }
     dialogState.busy = true;
     try {
-      const csv = buildImportCsv(dialogState.previewRows);
-      const formData = new FormData();
-      formData.set("club_id", dialogState.clubId);
-      formData.set("delimiter", ",");
-      formData.set("has_header", "true");
-      formData.set("file", new File([csv], "vereinsverwaltung_import.csv", { type: "text/csv" }));
-      const parsed = await callMultipartFn(PARSE_FN, formData);
-      const jobId = text(parsed?.job_id);
-      if (!jobId) throw new Error("csv_job_missing");
-      await sb(`/rest/v1/rpc/${CONFIRM_RPC}`, {
+      // sepa_approved wird bewusst nicht gesendet: Approval-Flag, per DB-Constraint nur null/true erlaubt.
+      const rowsPayload = importable.map((row) => ({
+        member_number: row.member_number || null,
+        first_name: row.first_name || null,
+        last_name: row.last_name || null,
+        email: row.email || null,
+        status: row.status || "active",
+        phone: row.phone || null,
+        birthdate: row.birthdate || null,
+        street: row.street || null,
+        zip: row.postal_code || null,
+        city: row.city || null,
+      }));
+      await sb("/rest/v1/rpc/import_csv_confirmed", {
         method: "POST",
-        body: JSON.stringify({ p_job_id: jobId }),
+        body: JSON.stringify({ p_club_id: dialogState.clubId, p_rows: rowsPayload }),
       }, true);
       dialogState.open = false;
       dialog.close();

@@ -18,7 +18,7 @@ Laufmaske eingetragen werden. Laufmaske und Whiteboard bleiben getrennt.
 | club_settings_invite_compare | partial | Vergleichsflaeche sichtbar, kombinierter Live-Read-Vertrag fehlt noch |
 | club_settings_invite_create | partial | Write-Pfad live, Read fuer letzten Invite lokal bis RPC-Fallback ausgerollt |
 | club_settings_roles_panel | gap | Backend-Relation club_user_roles existiert, kein club-scoped Read-Vertrag |
-| club_settings_waters_table | preview | Bereich vorbereitet, noch nicht live an echte Datenquelle angeschlossen |
+| club_settings_waters_table | partial | Kartenzuordnung (card_keys) live auf permit_water_links; name/area_kind/is_active aus water_bodies. Felder water_type/water_status/is_youth_allowed/requires_board_approval sind Workspace-GAP (nicht in water_bodies). |
 | club_settings_cards | live | Erste Ausweise-Uebersicht auf bestehender Mitglieder-/Profilwahrheit |
 | club_settings_work | gap | ClubSettings-Reader fuer Helfer und Einsaetze fehlt noch |
 | club_settings_approvals | gap | Fangfreigaben als Zielbereich angelegt, Live-Vertrag nicht belegt |

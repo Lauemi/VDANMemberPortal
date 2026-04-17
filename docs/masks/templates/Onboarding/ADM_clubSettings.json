@@ -2325,18 +2325,17 @@
             "serverValidated": true
           },
           "meta": {
-            "sourceTable": "club-onboarding-workspace",
-            "sourceKind": "record",
-            "sourceOfTruth": "edge",
+            "sourceTable": "public.water_bodies",
+            "sourceKind": "table",
+            "sourceOfTruth": "sql",
             "sqlContract": {
-              "sqlFile": "docs/sql-contracts/processes/club-settings/waters/READ_waters_overview.sql",
+              "sqlFile": "docs/sql-contracts/processes/club-settings/waters/READ_waters_with_cards.sql",
               "expectedColumns": [
+                "water_body_id",
                 "name",
-                "water_type",
-                "water_status",
-                "is_youth_allowed",
-                "requires_board_approval",
-                "water_cards"
+                "area_kind",
+                "is_active",
+                "card_keys"
               ]
             },
             "scope": "club_override",
@@ -2346,25 +2345,25 @@
               "requiresClubContext": true,
               "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Gewaesser werden erst im Club-Kontext geladen.",
               "loadPayloadDefaults": {
-                "action": "get",
-                "club_id": "{club_id}"
+                "p_club_id": "{club_id}"
               },
               "savePayloadDefaults": {
-                "action": "update_water",
-                "club_id": "{club_id}"
+                "p_club_id": "{club_id}",
+                "p_water_body_id": "{row.water_body_id}",
+                "p_card_type_keys": "{row.card_keys}"
               },
-              "rowsPath": "record.workspace.waters"
+              "rowsPath": "rows"
             }
           },
           "loadBinding": {
-            "kind": "edge_function",
-            "target": "club-onboarding-workspace",
-            "path": "edge:club-onboarding-workspace"
+            "kind": "rpc",
+            "target": "public.admin_water_bodies_with_cards",
+            "path": "rpc:public.admin_water_bodies_with_cards"
           },
           "saveBinding": {
-            "kind": "edge_function",
-            "target": "club-onboarding-workspace",
-            "path": "edge:club-onboarding-workspace"
+            "kind": "rpc",
+            "target": "public.admin_water_permit_link_update",
+            "path": "rpc:public.admin_water_permit_link_update"
           },
           "content": {
             "fields": [],
@@ -2376,85 +2375,35 @@
               "key": "name",
               "label": "Gewaesser",
               "type": "text",
-              "editable": true,
-              "editorType": "text"
+              "editable": false
             },
             {
-              "key": "water_type",
-              "label": "Typ",
+              "key": "area_kind",
+              "label": "Art",
               "type": "text",
-              "editable": true,
-              "editorType": "select",
-              "options": [
-                {
-                  "value": "",
-                  "label": "Keine Auswahl"
-                },
-                {
-                  "value": "see",
-                  "label": "See"
-                },
-                {
-                  "value": "fluss",
-                  "label": "Fluss"
-                },
-                {
-                  "value": "kanal",
-                  "label": "Kanal"
-                },
-                {
-                  "value": "weiher",
-                  "label": "Weiher"
-                }
-              ]
+              "editable": false
             },
             {
-              "key": "water_status",
-              "label": "Status",
-              "type": "text",
-              "editable": true,
-              "editorType": "select",
-              "options": [
-                {
-                  "value": "active",
-                  "label": "Aktiv"
-                },
-                {
-                  "value": "inactive",
-                  "label": "Inaktiv"
-                }
-              ]
-            },
-            {
-              "key": "is_youth_allowed",
-              "label": "Jugend",
+              "key": "is_active",
+              "label": "Aktiv",
               "type": "boolean",
-              "editable": true,
-              "editorType": "checkbox"
+              "editable": false
             },
             {
-              "key": "requires_board_approval",
-              "label": "Vorstand",
-              "type": "boolean",
-              "editable": true,
-              "editorType": "checkbox"
-            },
-            {
-              "key": "water_cards",
+              "key": "card_keys",
               "label": "Angelkarten",
-              "type": "text",
+              "type": "json-display",
               "editable": true,
               "editorType": "select-multi",
-              "options": [
-                {
-                  "value": "innenwasser",
-                  "label": "Innenwasser"
-                },
-                {
-                  "value": "rheinlos39",
-                  "label": "Rheinlos"
-                }
-              ]
+              "options": [],
+              "optionsBinding": {
+                "kind": "rpc",
+                "target": "public.admin_permit_card_types_for_club",
+                "path": "rpc:public.admin_permit_card_types_for_club",
+                "payloadDefaults": { "p_club_id": "{club_id}" },
+                "valueKey": "card_type_key",
+                "labelKey": "card_title"
+              }
             },
             {
               "key": "actions",
@@ -2466,10 +2415,10 @@
               "width": "140px"
             }
           ],
-          "rowsPath": "record.workspace.waters",
+          "rowsPath": "rows",
           "tableConfig": {
             "tableId": "adm-club-settings-waters",
-            "rowKeyField": "id",
+            "rowKeyField": "water_body_id",
             "gridTemplateColumns": "",
             "rowInteractionMode": "inline",
             "selectionMode": "single",

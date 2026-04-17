@@ -1934,16 +1934,15 @@
               "label": "Angelkarte",
               "type": "json-display",
               "editorType": "select-multi",
-              "options": [
-                {
-                  "value": "innenwasser",
-                  "label": "Innenwasser"
-                },
-                {
-                  "value": "rheinlos39",
-                  "label": "Rheinlos"
-                }
-              ]
+              "options": [],
+              "optionsBinding": {
+                "kind": "rpc",
+                "target": "public.admin_permit_card_types_for_club",
+                "path": "rpc:public.admin_permit_card_types_for_club",
+                "payloadDefaults": { "p_club_id": "{club_id}" },
+                "valueKey": "card_type_key",
+                "labelKey": "card_title"
+              }
             },
             {
               "key": "has_login",

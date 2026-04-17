@@ -96,6 +96,15 @@ Statusklassen:
 - sichtbare und einheitliche Form-States fuer `dirty`, `saving`, `success`, `error`
 - expliziter Standard fuer Readonly-Boolean vs Edit-Boolean
 - einheitliche Checkbox-/Toggle-Norm fuer Label, Abstand und Readonly-Anzeige
+- `optionsBinding` fuer serverseitig geladene Select-Optionen (neu eingeführt):
+  - Felder mit dynamischen Optionen tragen `"options": []` plus `optionsBinding`
+  - `optionsBinding.kind`: Bindungstyp (`rpc`, `edge_function`)
+  - `optionsBinding.target`: RPC- oder Edge-Funktionsname
+  - `optionsBinding.path`: Pfad im Runtime-Format (`rpc:public.fn_name`)
+  - `optionsBinding.payloadDefaults`: Payload mit Club-/Tenant-Kontext
+  - `optionsBinding.valueKey`: Feldname im RPC-Ergebnis fuer den gespeicherten Wert
+  - `optionsBinding.labelKey`: Feldname im RPC-Ergebnis fuer die Anzeige
+  - Erster Einsatz: `card_assignments` in `club_settings_members_registry`
 
 ### Altlast / deprecated
 - freie Boolean-Darstellungen je Renderer ohne feste Norm

@@ -65,16 +65,25 @@ async function getAuthUser(req: Request, supabaseUrl: string, serviceKey: string
   const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
   if (!authHeader) return null;
 
-  const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    method: "GET",
-    headers: {
-      apikey: serviceKey,
-      Authorization: authHeader,
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
+  if (!anonKey) throw new Error("missing_supabase_anon_env");
+
+  const supabase = createClient(supabaseUrl, anonKey, {
+    global: {
+      headers: {
+        Authorization: authHeader,
+      },
+    },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
     },
   });
-  if (!res.ok) return null;
-  const user = await res.json().catch(() => null);
-  return user?.id ? user : null;
+
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data?.user?.id) return null;
+  return data.user;
 }
 
 async function isManager(userId: string) {

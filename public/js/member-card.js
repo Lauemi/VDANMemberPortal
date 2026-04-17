@@ -166,21 +166,8 @@
     return Array.isArray(rows) ? rows.map((r) => String(r.role || "").toLowerCase()) : [];
   }
 
-  function parseCardScope(fishingCardType) {
-    const t = String(fishingCardType || "").toLocaleLowerCase("de-DE");
-    const hasVgw = t.includes("innenwasser") || t.includes("innewasser") || t.includes("vereins");
-    const hasR39 = t.includes("rheinlos") || t.includes("rhein");
-    return { hasVgw, hasR39 };
-  }
-
-  function isAllowed(areaKind, scope) {
-    if (areaKind === "vereins_gemeinschaftsgewaesser") return scope.hasVgw;
-    if (areaKind === "rheinlos39") return scope.hasR39;
-    return false;
-  }
-
-  async function listWaters() {
-    const rows = await sb("/rest/v1/water_bodies?select=name,area_kind,is_active&is_active=eq.true&order=name.asc", { method: "GET" }, true);
+  async function listWatersAccess() {
+    const rows = await sb("/rest/v1/rpc/get_my_water_bodies_access", { method: "POST", body: JSON.stringify({}) }, true);
     return Array.isArray(rows) ? rows : [];
   }
 
@@ -203,9 +190,8 @@
     const offlineToken = await getOfflineVerifyToken().catch(() => null);
     if (offlineToken) qrUrl.searchParams.set("ot", offlineToken);
     const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(qrUrl.toString())}`;
-    const scope = parseCardScope(profile.fishing_card_type);
     const waterRows = (Array.isArray(waters) ? waters : []).map((w) => {
-      const allowed = isAllowed(w.area_kind, scope);
+      const allowed = Boolean(w.is_allowed);
       const bg = allowed ? "rgba(56, 184, 98, .17)" : "rgba(191, 66, 66, .16)";
       const border = allowed ? "rgba(56, 184, 98, .42)" : "rgba(191, 66, 66, .42)";
       return `
@@ -277,7 +263,7 @@
       setMsg("Lade Ausweis…");
       const [rows, waters, roles] = await Promise.all([
         sb(`/rest/v1/profiles?select=display_name,member_no,fishing_card_type,member_card_valid,member_card_valid_from,member_card_valid_until,member_card_id,member_card_key,member_card_checked_at,member_card_checked_by_label&id=eq.${encodeURIComponent(userId())}&limit=1`, { method: "GET" }, true),
-        listWaters(),
+        listWatersAccess(),
         loadRoles(),
       ]);
       const p = Array.isArray(rows) ? rows[0] : null;

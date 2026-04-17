@@ -65,13 +65,6 @@
       .toLocaleLowerCase("de-DE");
   }
 
-  function parseCardScope(fishingCardType) {
-    const t = String(fishingCardType || "").toLocaleLowerCase("de-DE");
-    const hasVgw = t.includes("innenwasser") || t.includes("innewasser") || t.includes("vereins");
-    const hasR39 = t.includes("rheinlos") || t.includes("rhein");
-    return { hasVgw, hasR39 };
-  }
-
   function descriptionText(value) {
     if (!value) return "";
     if (typeof value === "string") return value;
@@ -85,18 +78,11 @@
     return txt.includes("gesperrt") || txt.includes("verbot");
   }
 
-  function statusForRow(row, scope, memberCardValid) {
+  function statusForRow(row, memberCardValid) {
     if (!memberCardValid) return { allowed: false, code: "invalid_card", label: "AUSWEIS UNGUELTIG" };
     if (isBlockedArea(row)) return { allowed: false, code: "blocked", label: "GESCHLOSSEN" };
-    if (isAllowed(row.area_kind, scope, memberCardValid)) return { allowed: true, code: "allowed", label: "ERLAUBT" };
+    if (row.is_allowed) return { allowed: true, code: "allowed", label: "ERLAUBT" };
     return { allowed: false, code: "not_permitted", label: "NICHT FREIGEGEBEN" };
-  }
-
-  function isAllowed(areaKind, scope, memberCardValid) {
-    if (!memberCardValid) return false;
-    if (areaKind === "vereins_gemeinschaftsgewaesser") return scope.hasVgw;
-    if (areaKind === "rheinlos39") return scope.hasR39;
-    return false;
   }
 
   async function ensureLeaflet() {
@@ -126,7 +112,7 @@
     return null;
   }
 
-  function renderList(rows, scope, memberCardValid, onSelectWater) {
+  function renderList(rows, memberCardValid, onSelectWater) {
     const root = document.getElementById("waterMapList");
     if (!root) return;
     root.innerHTML = "";
@@ -135,7 +121,7 @@
     rows.forEach((r) => {
       const key = normalizeNameKey(r.name);
       const displayName = String(r.name || "-").trim().replace(/\s+/g, " ");
-      const st = statusForRow(r, scope, memberCardValid);
+      const st = statusForRow(r, memberCardValid);
       const prev = grouped.get(key) || { name: displayName, allowed: false, blocked: false, invalidCard: false };
       prev.allowed = prev.allowed || st.allowed;
       prev.blocked = prev.blocked || st.code === "blocked";
@@ -249,8 +235,8 @@
     try {
       setMsg("Lade Karte…");
       const [profileRows, areaRows] = await Promise.all([
-        sb(`/rest/v1/profiles?select=fishing_card_type,member_card_valid&id=eq.${encodeURIComponent(userId())}&limit=1`, { method: "GET" }, true),
-        sb("/rest/v1/water_areas?select=id,name,area_kind,geojson,is_active&is_active=eq.true&order=name.asc", { method: "GET" }, true),
+        sb(`/rest/v1/profiles?select=member_card_valid&id=eq.${encodeURIComponent(userId())}&limit=1`, { method: "GET" }, true),
+        sb("/rest/v1/rpc/get_my_water_areas_access", { method: "POST", body: JSON.stringify({}) }, true),
       ]);
 
       const profile = Array.isArray(profileRows) ? profileRows[0] : null;
@@ -263,7 +249,6 @@
         return;
       }
 
-      const scope = parseCardScope(profile.fishing_card_type);
       const memberCardValid = Boolean(profile.member_card_valid);
 
       await ensureLeaflet();
@@ -282,7 +267,7 @@
       rows.forEach((r) => {
         const gj = normalizeGeoJson(r.geojson);
         if (!gj) return;
-        const st = statusForRow(r, scope, memberCardValid);
+        const st = statusForRow(r, memberCardValid);
         const allowed = st.allowed;
         const lineColor = allowed ? "#16a34a" : (st.code === "blocked" ? "#ea580c" : "#dc2626");
         const fillColor = allowed ? "#22c55e" : (st.code === "blocked" ? "#f97316" : "#ef4444");
@@ -333,7 +318,7 @@
         if (first && typeof first.openPopup === "function") first.openPopup();
       }
 
-      renderList(rows, scope, memberCardValid, focusWaterByKey);
+      renderList(rows, memberCardValid, focusWaterByKey);
 
       const locationState = { marker: null, accuracyCircle: null };
       const locateBtn = document.getElementById("waterLocateBtn");

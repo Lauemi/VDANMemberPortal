@@ -1,0 +1,191 @@
+---
+import Site from "../../../layouts/Site.astro";
+import { APP } from "../../../config/app";
+---
+
+<Site
+  title={`Permit-Wahrheit • ${APP.name}`}
+  description="Admin-Sicht: Karten ↔ Gewässer-Mapping mit Permit-System."
+  robots="noindex"
+  containerClass="container container--admin-wide"
+>
+  <section class="card pw-page__header">
+    <div class="card__body">
+      <h1>Permit-Wahrheit</h1>
+      <p class="small">
+        Schreibgeschützte Prüfansicht: Welche Karten des Vereins sind mit welchen Gewässern verbunden?
+        Quelle: <code>permit_card_types → permit_water_links → water_bodies → water_areas</code>.
+      </p>
+      <p id="pwMsg" class="small" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="card pw-page__table-card">
+    <div class="card__body">
+      <div class="pw-toolbar">
+        <div class="pw-toolbar__filters">
+          <label class="pw-search-label">
+            <span class="small">Suche</span>
+            <input
+              id="pwSearch"
+              type="search"
+              placeholder="Gewässer oder Karte…"
+              autocomplete="off"
+            />
+          </label>
+
+          <label class="pw-filter-label">
+            <span class="small">Karte</span>
+            <select id="pwFilterCard">
+              <option value="">Alle Karten</option>
+            </select>
+          </label>
+
+          <label class="pw-filter-label">
+            <span class="small">Status</span>
+            <select id="pwFilterStatus">
+              <option value="">Alle Status</option>
+              <option value="ok">ok</option>
+              <option value="multi_area">multi_area</option>
+              <option value="missing_area">missing_area</option>
+              <option value="inactive_water">inactive_water</option>
+              <option value="orphaned_link">orphaned_link</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="pw-toolbar__meta">
+          <span id="pwRowCount" class="small">–</span>
+        </div>
+      </div>
+
+      <div class="pw-table-wrap">
+        <table class="pw-table" id="pwTable">
+          <thead>
+            <tr>
+              <th>Karte</th>
+              <th>card_type_key</th>
+              <th>Gewässer</th>
+              <th>area_kind</th>
+              <th>area_count</th>
+              <th>aktiv</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="pwTableBody">
+            <tr><td colspan="7" class="pw-empty">Lade…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/permit-wahrheit.js" defer></script>
+
+  <style>
+    .pw-page__header,
+    .pw-page__table-card {
+      border-color: rgba(124, 156, 255, 0.2);
+    }
+
+    .pw-page__header code {
+      font-size: .82rem;
+      background: rgba(255,255,255,.06);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    .pw-toolbar {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .pw-toolbar__filters {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .pw-search-label,
+    .pw-filter-label {
+      display: grid;
+      gap: 6px;
+    }
+
+    .pw-search-label input {
+      min-width: 220px;
+    }
+
+    .pw-filter-label select {
+      min-width: 140px;
+    }
+
+    .pw-table-wrap {
+      overflow-x: auto;
+    }
+
+    .pw-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+    }
+
+    .pw-table th,
+    .pw-table td {
+      padding: 9px 12px;
+      text-align: left;
+      border-bottom: 1px solid rgba(124, 156, 255, 0.1);
+      white-space: nowrap;
+    }
+
+    .pw-table th {
+      font-size: .78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: rgba(211, 223, 255, 0.7);
+      background: rgba(255,255,255,.03);
+    }
+
+    .pw-table tbody tr:hover td {
+      background: rgba(255,255,255,.03);
+    }
+
+    .pw-empty {
+      text-align: center;
+      color: rgba(211, 223, 255, 0.5);
+      padding: 24px !important;
+    }
+
+    .pw-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: .74rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+
+    .pw-badge--ok           { background: rgba(56,184,98,.15);  border-color: rgba(56,184,98,.35);  color: #7fe0a8; }
+    .pw-badge--multi-area   { background: rgba(124,156,255,.12); border-color: rgba(124,156,255,.3); color: #b9cdfd; }
+    .pw-badge--missing-area { background: rgba(255,193,48,.12);  border-color: rgba(255,193,48,.3);  color: #ffd166; }
+    .pw-badge--inactive     { background: rgba(255,100,100,.12); border-color: rgba(255,100,100,.3); color: #ff9898; }
+    .pw-badge--orphaned     { background: rgba(255,100,100,.2);  border-color: rgba(255,100,100,.4); color: #ff6a6a; }
+
+    .pw-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .pw-dot--active   { background: #7fe0a8; }
+    .pw-dot--inactive { background: #ff9898; }
+  </style>
+</Site>

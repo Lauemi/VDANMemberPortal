@@ -345,6 +345,9 @@
         row_index: index,
         source,
         member_number: memberNumber,
+        // member_no ist der interne Registry-Key (MID-XXXX) – wird für den Update-Pfad
+        // in import_csv_confirmed benötigt, um public.members korrekt zu adressieren.
+        member_no: text(existingRow?.member_no) || null,
         status: normalizeStatus(mapped.status),
         first_name: text(mapped.first_name),
         last_name: text(mapped.last_name),
@@ -639,7 +642,10 @@
     dialogState.busy = true;
     try {
       // sepa_approved wird bewusst nicht gesendet: Approval-Flag, per DB-Constraint nur null/true erlaubt.
+      // member_no (MID-XXX) wird für den Update-Pfad mitgeliefert, damit import_csv_confirmed
+      // über membership_number = member_no in public.members schreiben kann (Registry-Wahrheit).
       const rowsPayload = importable.map((row) => ({
+        member_no: row.member_no || null,
         member_number: row.member_number || null,
         first_name: row.first_name || null,
         last_name: row.last_name || null,

@@ -16,8 +16,10 @@ const safeEmail = emailParam.includes("@") ? emailParam : "";
     <div class="card__body ui-card__body register-flow">
       <div class="register-flow__intro">
         <h1>E-Mail bestätigt</h1>
-        <p class="small register-flow__lede">Gib dein Passwort ein, um die Registrierung abzuschließen.</p>
+        <p class="small register-flow__lede">Dein Zugang wurde bestätigt. Bitte warte einen Moment, der Vereinsbeitritt wird geprüft.</p>
       </div>
+
+      <p id="inviteClaimStatus" class="small" aria-live="polite" hidden></p>
 
       <form id="inviteConfirmForm" class="register-flow__form form-shell__section">
         <label class="ui-field">
@@ -54,20 +56,68 @@ const safeEmail = emailParam.includes("@") ? emailParam : "";
 </Site>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("inviteConfirmForm");
-    const emailInput = /** @type {HTMLInputElement|null} */ (document.getElementById("inviteConfirmEmail"));
-    const passInput = /** @type {HTMLInputElement|null} */ (document.getElementById("inviteConfirmPass"));
-    const msg = document.getElementById("inviteConfirmMsg");
-    const btn = /** @type {HTMLButtonElement|null} */ (document.getElementById("inviteConfirmBtn"));
+  function setClaimStatus(type: "success" | "error" | "warning", message: string) {
+    const el = document.getElementById("inviteClaimStatus");
+    if (!el) return;
+    el.textContent = message;
+    el.removeAttribute("hidden");
+    if (type === "error") {
+      el.style.cssText = "color:var(--color-danger,#c0392b);font-weight:600;";
+    } else if (type === "warning") {
+      el.style.cssText = "color:var(--color-warning,#d35400);font-weight:600;";
+    } else {
+      el.style.cssText = "color:var(--color-success,#27ae60);";
+    }
+  }
 
-    if (!form) return;
+  document.addEventListener("DOMContentLoaded", async () => {
+    const auth = (window as any)["VDAN_AUTH"];
+    const form = document.getElementById("inviteConfirmForm") as HTMLFormElement | null;
+    const emailInput = document.getElementById("inviteConfirmEmail") as HTMLInputElement | null;
+    const passInput = document.getElementById("inviteConfirmPass") as HTMLInputElement | null;
+    const msg = document.getElementById("inviteConfirmMsg");
+    const btn = document.getElementById("inviteConfirmBtn") as HTMLButtonElement | null;
+
+    if (!form || !auth) return;
 
     const email = String(emailInput?.value || "").trim();
     if (!email) {
-      if (msg) msg.textContent = "Kein E-Mail-Kontext. Bitte den Invite-Link erneut verwenden.";
+      setClaimStatus("error", "Kein E-Mail-Kontext. Bitte den Invite-Link erneut verwenden.");
       if (btn) btn.disabled = true;
       return;
+    }
+
+    // Determine whether there is a pending invite claim to attempt.
+    let hasPendingInvite = false;
+    try {
+      hasPendingInvite = Boolean(
+        localStorage.getItem(String(auth.INVITE_PENDING_KEY || ""))
+      );
+    } catch {
+      // localStorage not available — treat as no pending invite
+    }
+
+    if (hasPendingInvite) {
+      // member-auth.js already saved the session from the URL callback before returning early.
+      const session = auth.loadSession();
+      const token = String(session?.access_token || "").trim();
+
+      if (!token) {
+        setClaimStatus("warning", "Sitzung konnte nicht geladen werden. Bitte den Invite-Link erneut oeffnen.");
+      } else {
+        try {
+          await auth.claimPendingInviteIfPresent(token);
+          setClaimStatus("success", "Vereinsbeitritt erfolgreich abgeschlossen. Bitte Passwort eingeben zum Einloggen.");
+        } catch (err: any) {
+          const message = auth.mapRegistrationErrorMessage
+            ? auth.mapRegistrationErrorMessage(err)
+            : mapClaimError(err);
+          setClaimStatus("error", message);
+        }
+      }
+    } else {
+      // No pending invite — either already claimed or auth callback without a join flow.
+      setClaimStatus("success", "E-Mail bestaetigt. Bitte Passwort eingeben zum Einloggen.");
     }
 
     form.addEventListener("submit", async (e) => {
@@ -79,15 +129,22 @@ const safeEmail = emailParam.includes("@") ? emailParam : "";
       if (msg) msg.textContent = "…";
 
       try {
-        const auth = /** @type {any} */ (window["VDAN_AUTH"]);
-        if (!auth?.loginWithPassword) throw new Error("Auth-Modul nicht verfügbar.");
-
         await auth.loginWithPassword(email, pass);
         window.location.assign("/app/zugang-pruefen/?next=" + encodeURIComponent("/app/"));
-      } catch (/** @type {any} */ err) {
+      } catch (err: any) {
         if (msg) msg.textContent = String(err?.message || "Anmeldung fehlgeschlagen.");
         if (btn) btn.disabled = false;
       }
     });
   });
+
+  // Inline fallback in case mapRegistrationErrorMessage is not yet exported.
+  function mapClaimError(err: any): string {
+    const message = String(err?.message || "").trim();
+    if (message === "member_email_missing") return "Fuer diese Mitgliedsnummer ist im Verein keine E-Mail-Adresse hinterlegt. Bitte wende dich an den Verein.";
+    if (message === "member_email_mismatch") return "Diese E-Mail-Adresse passt nicht zum Mitgliedsdatensatz im Verein.";
+    if (message === "member_no_not_found_in_club") return "Diese Mitgliedsnummer wurde im Verein nicht gefunden.";
+    if (message === "invite_expired" || message === "invite_invalid" || message === "invite_inactive" || message === "invite_exhausted") return "Diese Einladung ist abgelaufen oder nicht mehr gueltig.";
+    return "Dein Konto wurde bestaetigt, aber der Vereinsbeitritt konnte nicht abgeschlossen werden. Bitte wende dich an den Verein.";
+  }
 </script>

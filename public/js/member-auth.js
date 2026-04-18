@@ -1188,9 +1188,11 @@
     acceptCurrentLegal,
     verifyInviteToken,
     claimPendingInviteIfPresent,
+    mapRegistrationErrorMessage,
     logout,
     SESSION_KEY,
     SESSION_META_KEY,
+    INVITE_PENDING_KEY,
   };
 
   // Login page wiring (if present)
@@ -1215,6 +1217,8 @@
     }
 
     const callbackResult = await consumeAuthCallbackFromUrl().catch(() => null);
+    // invite-confirm.astro owns its post-callback claim flow and surfaces errors explicitly.
+    if (window.location.pathname.startsWith("/auth/invite-confirm")) return;
     if (callbackResult?.ok && callbackResult?.session?.access_token) {
       const callbackToken = String(callbackResult.session.access_token || "");
       await submitClubRequestIfNeeded(callbackToken, { autoApprove: false }).catch(() => null);

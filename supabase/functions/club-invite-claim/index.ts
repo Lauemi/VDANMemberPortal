@@ -119,6 +119,8 @@ async function ensureProfile(user: Record<string, unknown>, clubId: string, memb
   const displayName = [firstName, lastName].map(txt).filter(Boolean).join(" ") || txt(existing?.display_name) || email || userId;
 
   if (!existing?.id) {
+    const cardIdSuffix = [...crypto.getRandomValues(new Uint8Array(5))].map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+    const cardKey = [...crypto.getRandomValues(new Uint8Array(6))].map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
     await sbServiceFetch("/rest/v1/profiles", {
       method: "POST",
       headers: { Prefer: "return=minimal" },
@@ -128,6 +130,8 @@ async function ensureProfile(user: Record<string, unknown>, clubId: string, memb
         email: email || null,
         club_id: clubId,
         member_no: memberNo,
+        member_card_id: `MC-${cardIdSuffix}`,
+        member_card_key: cardKey,
         must_verify_identity: true,
         identity_verified_at: null,
       }]),

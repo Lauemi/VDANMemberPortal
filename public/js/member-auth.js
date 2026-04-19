@@ -925,14 +925,17 @@
       };
     }
 
-    const base = loadStoredSession() || {};
+    // Clear any existing session BEFORE building the new one.
+    // An auth callback always establishes a fresh identity — spreading an existing
+    // session via ...base would let an old browser session (different user/club)
+    // bleed into the callback session, causing wrong-context bugs.
+    clearSession();
     const expiresIn = Number(payload.expires_in || 3600);
     const expiresAt = nowMs() + (expiresIn * 1000);
     const nextSession = {
-      ...base,
       access_token: payload.access_token,
-      refresh_token: payload.refresh_token || base.refresh_token || "",
-      token_type: payload.token_type || base.token_type || "bearer",
+      refresh_token: payload.refresh_token || "",
+      token_type: payload.token_type || "bearer",
       expires_in: expiresIn,
       expiresAt,
     };
@@ -1221,6 +1224,22 @@
     if (window.location.pathname.startsWith("/auth/invite-confirm")) return;
     if (callbackResult?.ok && callbackResult?.session?.access_token) {
       const callbackToken = String(callbackResult.session.access_token || "");
+
+      // If a pending invite claim exists and the callback did NOT land on /auth/invite-confirm
+      // (e.g. Supabase SITE_URL override redirected here instead), send the user to the
+      // invite-confirm page so that claim errors surface explicitly rather than being swallowed.
+      const _hasPendingInvite = (() => {
+        try { return Boolean(localStorage.getItem(INVITE_PENDING_KEY)); } catch { return false; }
+      })();
+      if (_hasPendingInvite) {
+        const _sessionEmail = String(callbackResult.session?.user?.email || "").trim();
+        const _confirmPath = _sessionEmail
+          ? "/auth/invite-confirm/?email=" + encodeURIComponent(_sessionEmail)
+          : "/auth/invite-confirm/";
+        window.location.replace(_confirmPath);
+        return;
+      }
+
       await submitClubRequestIfNeeded(callbackToken, { autoApprove: false }).catch(() => null);
       await acceptCurrentLegal(callbackToken).catch(() => null);
       await ensureProfileBootstrap(callbackToken).catch(() => null);
@@ -1372,6 +1391,11 @@
               first_name: firstName,
               last_name: lastName,
             };
+          // GAP[supabase-redirect-whitelist]: This URL must be listed under
+          // Supabase Auth → URL Configuration → Additional Redirect URLs.
+          // If it is not whitelisted, Supabase silently falls back to SITE_URL,
+          // causing the callback to land on the wrong page/site. This is a
+          // Supabase dashboard configuration step — not fixable repo-side.
           const inviteConfirmUrl = `${window.location.origin}/auth/invite-confirm/?email=${encodeURIComponent(emailRaw)}`;
           const result = await signUpWithPassword(emailRaw, pass, {
               registration_mode: "join_club",

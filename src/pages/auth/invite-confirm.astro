@@ -105,6 +105,19 @@ const safeEmail = emailParam.includes("@") ? emailParam : "";
       if (!token) {
         setClaimStatus("warning", "Sitzung konnte nicht geladen werden. Bitte den Invite-Link erneut oeffnen.");
       } else {
+        // Guard: if the session already has a resolved user email, verify it matches
+        // the expected email from the URL param. A mismatch means a stale session from
+        // a different account is still active despite the clearSession fix in member-auth.js.
+        const sessionEmail = String((session as any)?.user?.email || "").trim().toLowerCase();
+        if (sessionEmail && email && sessionEmail !== email.toLowerCase()) {
+          setClaimStatus("error",
+            "Sitzungskonflikt: Die aktive Sitzung gehört zu einer anderen E-Mail-Adresse " +
+            "(" + sessionEmail + "). Bitte ein Inkognito-Fenster verwenden und den Einladungslink erneut öffnen."
+          );
+          if (btn) btn.disabled = true;
+          return;
+        }
+
         try {
           await auth.claimPendingInviteIfPresent(token);
           setClaimStatus("success", "Vereinsbeitritt erfolgreich abgeschlossen. Bitte Passwort eingeben zum Einloggen.");

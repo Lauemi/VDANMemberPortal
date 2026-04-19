@@ -10,6 +10,21 @@ import { APP } from "../../../config/app";
       <p class="small" id="identityModeHint">Bitte prüfe und bestätige jetzt deine Kontodaten.</p>
       <p id="identityMsg" class="small" aria-live="polite"></p>
 
+      <div id="identityUnlinkedBox" class="resp-form-grid" style="display:none;margin-top:12px;">
+        <label class="resp-full">
+          <span>Status</span>
+          <input value="Portalzugang ist aktuell keinem Verein mehr zugeordnet." disabled />
+        </label>
+        <p class="small resp-full" style="margin:0;">
+          Dein Portalzugang wurde vom Vereinskontext entkoppelt. Die Vereinsstammdaten bleiben beim Verein erhalten.
+        </p>
+        <div class="resp-full" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <a href="/" class="feed-btn feed-btn--ghost">Zur Startseite</a>
+          <a href="/app/einstellungen/" class="feed-btn feed-btn--ghost">Einstellungen öffnen</a>
+          <button id="identityLogoutBtn" type="button" class="feed-btn feed-btn--ghost">Abmelden</button>
+        </div>
+      </div>
+
       <div class="resp-form-grid" id="identitySummary">
         <label class="resp-half">
           <span>Zugangsname</span>

@@ -22,6 +22,13 @@
     if (el) el.value = String(value || "").trim() || "-";
   }
 
+  function setHidden(id, hidden) {
+    const el = typeof id === "string" ? document.getElementById(id) : id;
+    if (!el) return;
+    el.style.display = hidden ? "none" : "";
+    el.toggleAttribute("hidden", hidden);
+  }
+
   async function readErrorPayload(res) {
     const contentType = String(res.headers?.get?.("content-type") || "").toLowerCase();
     if (contentType.includes("application/json")) {
@@ -133,6 +140,46 @@
     return null;
   }
 
+  async function loadPortalAccessState() {
+    const rows = await sb("/rest/v1/rpc/self_portal_access_state", {
+      method: "POST",
+      body: "{}",
+    }, true);
+    if (Array.isArray(rows) && rows[0]) return rows[0];
+    return null;
+  }
+
+  async function renderUnlinkedState() {
+    setHidden("identityUnlinkedBox", false);
+    setHidden("identitySummary", true);
+    setHidden("identityEmailForm", true);
+    setHidden("legacyLoginBox", true);
+    setHidden("authOnlyBox", true);
+    setHidden("identityCompleteBtn", true);
+    setHidden("identityEmailStatus", true);
+
+    const confirmCheck = document.getElementById("identityConfirmCheck");
+    const sepaCheck = document.getElementById("identitySepaCheck");
+    if (confirmCheck?.parentElement) confirmCheck.parentElement.style.display = "none";
+    if (sepaCheck?.parentElement) sepaCheck.parentElement.style.display = "none";
+
+    const modeHint = document.getElementById("identityModeHint");
+    if (modeHint) {
+      modeHint.textContent = "Dein Portalzugang ist aktuell keinem Vereinskontext zugeordnet.";
+    }
+
+    const logoutBtn = document.getElementById("identityLogoutBtn");
+    if (logoutBtn && !logoutBtn.dataset.bound) {
+      logoutBtn.dataset.bound = "1";
+      logoutBtn.addEventListener("click", async () => {
+        await window.VDAN_AUTH?.logout?.().catch(() => null);
+        window.location.assign("/");
+      });
+    }
+
+    setMsg("Portalzugang entkoppelt. Für eine spätere Rückkehr brauchst du einen neuen Claim-/Invite-Pfad.");
+  }
+
   async function completeVerification({ sepaApproved = false } = {}) {
     const rows = await sb("/rest/v1/rpc/self_identity_verification_complete", {
       method: "POST",
@@ -145,6 +192,14 @@
     if (!session()?.access_token) {
       const next = encodeURIComponent(window.location.pathname + window.location.search);
       window.location.replace(`/login/?next=${next}`);
+      return;
+    }
+
+    setMsg("Lade Status ...");
+
+    const portalState = await loadPortalAccessState().catch(() => null);
+    if (String(portalState?.state_key || "").trim().toLowerCase() === "unlinked") {
+      await renderUnlinkedState();
       return;
     }
 

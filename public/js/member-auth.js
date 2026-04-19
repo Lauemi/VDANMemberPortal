@@ -1054,6 +1054,19 @@
     return Array.isArray(rows) && rows[0] ? rows[0] : null;
   }
 
+  async function loadPortalAccessState(accessToken = "") {
+    const token = String(accessToken || "").trim() || String(loadSession()?.access_token || "").trim();
+    if (!token) return null;
+    const res = await sbFetch("/rest/v1/rpc/self_portal_access_state", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: "{}",
+    });
+    if (!res.ok) return null;
+    const rows = await res.json().catch(() => []);
+    return Array.isArray(rows) && rows[0] ? rows[0] : null;
+  }
+
   function buildClubRequestPayloadFromSource(source = {}) {
     const city = String(source?.city || source?.club_city || source?.club_location || "").trim();
     const street = String(source?.street || "").trim();
@@ -1145,6 +1158,20 @@
 
     if (path.startsWith("/app/anfrage-offen/")) return false;
     window.location.replace("/app/anfrage-offen/");
+    return true;
+  }
+
+  async function enforcePortalAccessStateIfNeeded(accessToken = "", redirectTarget = "") {
+    const path = String(window.location.pathname || "");
+    if (!path.startsWith("/app/")) return false;
+    if (path.startsWith("/app/passwort-aendern/")) return false;
+    if (path.startsWith("/app/zugang-pruefen/")) return false;
+
+    const state = await loadPortalAccessState(accessToken);
+    if (!state || String(state.state_key || "").trim().toLowerCase() === "linked") return false;
+
+    const next = encodeURIComponent(String(redirectTarget || (path + window.location.search) || "/app/"));
+    window.location.replace(`/app/zugang-pruefen/?state=unlinked&next=${next}`);
     return true;
   }
 
@@ -1245,6 +1272,7 @@
       await ensureProfileBootstrap(callbackToken).catch(() => null);
       await claimPendingInviteIfPresent(callbackToken).catch(() => null);
       if (await enforceClubRequestPendingIfNeeded(callbackToken, { allowRegisterPage: true })) return;
+      if (await enforcePortalAccessStateIfNeeded(callbackToken, DEFAULT_CORE_HOME)) return;
       if (isRegistrationPath(window.location.pathname || "")) {
         const target = postAuthTarget(DEFAULT_CORE_HOME);
         if (await enforceIdentityVerificationIfNeeded(callbackToken, target)) return;
@@ -1279,6 +1307,7 @@
             window.location.assign(`/app/passwort-aendern/?next=${encodeURIComponent(target)}`);
             return;
           }
+          if (await enforcePortalAccessStateIfNeeded(sessionData?.access_token || "", target)) return;
           if (await enforceIdentityVerificationIfNeeded(sessionData?.access_token || "", target)) return;
           if (await enforceLegalAcceptanceIfNeeded(sessionData?.access_token || "", target)) return;
           if (await enforceClubRequestPendingIfNeeded(sessionData?.access_token || "")) return;
@@ -1538,6 +1567,8 @@
       ensureProfileBootstrap(active?.access_token || "").catch(() => {});
       (async () => {
         await enforcePasswordChangeIfNeeded().catch(() => {});
+        await enforceClubRequestPendingIfNeeded(active?.access_token || "").catch(() => {});
+        await enforcePortalAccessStateIfNeeded(active?.access_token || "").catch(() => {});
         await enforceIdentityVerificationIfNeeded(active?.access_token || "").catch(() => {});
         await enforceLegalAcceptanceIfNeeded(active?.access_token || "").catch(() => {});
       })();

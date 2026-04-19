@@ -146,6 +146,20 @@ const qfmPilotConfigJson = JSON.stringify(qfmPilotConfig);
 
   <section class="ofm-mask-stage">
     <div id="settingsQfmRoot"></div>
+    <article class="card ofm-mask-stage__danger">
+      <div class="card__body">
+        <h2>Portalzugang entkoppeln</h2>
+        <p class="small">
+          Dieser Schritt entfernt nur den Portalzugang aus dem Vereinskontext. Vereinsstammdaten bleiben beim Verein erhalten.
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button id="settingsAccessUnlinkBtn" type="button" class="feed-btn feed-btn--danger">
+            Portalzugang entfernen
+          </button>
+        </div>
+        <p id="settingsAccessDangerMsg" class="small" aria-live="polite" style="margin:8px 0 0;"></p>
+      </div>
+    </article>
     <p id="settingsQfmPilotMsg" class="small ofm-mask-stage__status" aria-live="polite"></p>
   </section>
 
@@ -156,6 +170,7 @@ const qfmPilotConfigJson = JSON.stringify(qfmPilotConfig);
   <script is:inline src="/js/fcp-inline-data-table-v2.js"></script>
   <script is:inline src="/js/quick-flow-pattern.js"></script>
   <script is:inline src="/js/fcp-mask-page-loader.js"></script>
+  <script src="/js/settings-access-unlink.js" defer></script>
   <script id="settingsQfmConfig" type="application/json" set:html={qfmPilotConfigJson}></script>
   <script is:inline>
     const pilotMsgEl = document.getElementById("settingsQfmPilotMsg");
@@ -183,6 +198,9 @@ const qfmPilotConfigJson = JSON.stringify(qfmPilotConfig);
     }
     .ofm-mask-stage__status {
       margin: 0;
+    }
+    .ofm-mask-stage__danger h2 {
+      margin: 0 0 8px;
     }
   </style>
 </Site>

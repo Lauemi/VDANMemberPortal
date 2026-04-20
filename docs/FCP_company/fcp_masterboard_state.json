@@ -428,25 +428,29 @@
         "eine Datei oder Multi-Sheet? wie viel Inline-Korrektur im MVP?"
       ],
       "gaps": [
-        "CSV-Golden-Path ist serverseitig verdrahtet, aber noch nicht end-to-end smoke-getestet",
+        "CSV Edge Function noch nicht remote deployed (M2 lokal angewendet, deploy ausstehend)",
+        "M3 Smoke-Test (parse -> confirm -> DB-Verify) noch nicht ausgefuehrt",
         "Mapping bleibt bewusst minimal und noch nicht als gefuehrter Inline-Korrekturpfad ausgebaut"
       ],
       "id": "csv",
       "lane": "onboarding",
-      "last_verified_at": "2026-04-10",
+      "last_verified_at": "2026-04-20",
       "launch_class": "L3",
       "progress_invisible": [
         "Zielpfad auf club_members statt members festgezogen",
-        "Import-Jobs, Preview-RPC und Confirm-RPC sind serverseitig gekapselt"
+        "M2 abgeschlossen: Edge Function von Job/Preview-Layer bereinigt; Frontend auf import_csv_confirmed(p_club_id, p_rows) umgestellt",
+        "suggestPreviewValues() um email, phone, birthdate, street, zip, city erweitert"
       ],
       "progress_visible": [
         "CSV-UI-Rahmen im Onboarding vorhanden",
-        "Serverseitiger Parse-Wrapper mit echtem Preview-Pfad im Repo verdrahtet"
+        "Direkter Parse-Confirm-Pfad ohne Job-Schicht lokal fertig"
       ],
       "refs": [
         "docs/project/FCP_CSV_ONBOARDING_ARCHITEKTUR_2026-03-31.md",
         "docs/project/FCP_CSV_ONBOARDING_REPO_SCHEMA_CHECK_2026-03-31.md",
-        "docs/project/FCP_CSV_ONBOARDING_MVP_TODO_2026-03-31.md"
+        "docs/project/FCP_CSV_ONBOARDING_MVP_TODO_2026-03-31.md",
+        "supabase/functions/club-members-csv-parse/index.ts",
+        "public/js/club-admin-setup.js"
       ],
       "risk_level": "hoch",
       "status": "teilweise",
@@ -829,11 +833,13 @@
       ],
       "id": "auth-profiles",
       "lane": "system",
-      "last_verified_at": "2026-04-07",
+      "last_verified_at": "2026-04-20",
       "launch_class": "L2",
       "progress_invisible": [
         "Bootstrap-, Signup-Guard- und Identity-Fixes vorhanden",
-        "Consent-State in get_onboarding_process_state gegen aktive Policy-Versionen geh\u00e4rtet (legal_acceptance_events + legal_documents.is_active)"
+        "Consent-State in get_onboarding_process_state gegen aktive Policy-Versionen geh\u00e4rtet (legal_acceptance_events + legal_documents.is_active)",
+        "self_portal_access_state() und self_portal_access_unlink() remote deployed (Migrationen 20260419100000 + 20260419103000); Portal-RPC-404 behoben",
+        "self_member_banking_get() und member_bank_data remote verifiziert; 400 auf Frontend-Mask-Auth-Forwarding eingegrenzt (banking_profile index-0-Auto-Open ohne Auth-Guard)"
       ],
       "progress_visible": [
         "Identitaetsbasis vorhanden"
@@ -1093,6 +1099,6 @@
     }
   ],
   "source_of_truth": "supabase-live-sync",
-  "updated_at": "2026-04-10",
+  "updated_at": "2026-04-20",
   "version": 1
 }

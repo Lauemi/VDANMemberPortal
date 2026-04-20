@@ -239,10 +239,16 @@
           "severity": "mittel",
           "status": "offen",
           "title": "Leere-State nach erstem Import nicht geloest"
+        },
+        {
+          "id": "b-on-3",
+          "severity": "mittel",
+          "status": "offen",
+          "title": "Settings-Maske: banking_profile (index 0, auto-open) loest 400 aus -- Mask-Auth-Forwarding-Bug; Fix: Panel-Reihenfolge oder Auth-Guard in boot() vor hydrateVisiblePanels"
         }
       ],
       "id": "p-onboarding",
-      "last_reviewed_at": "2026-04-10",
+      "last_reviewed_at": "2026-04-20",
       "owner": "michael",
       "priority": "kritisch",
       "related_nodes": [
@@ -255,7 +261,7 @@
         "work-onboard",
         "welcome"
       ],
-      "review_note": "CSV-Golden-Path ist im Repo serverseitig verdrahtet; End-to-End-Smoke-Test und finaler Flow-Freeze bleiben offen.",
+      "review_note": "M2 (CSV-Pfad-Fix) lokal abgeschlossen: Edge Function bereinigt, Frontend auf import_csv_confirmed umgestellt. Edge Function deploy und M3 Smoke-Test stehen noch aus. sc-on-4 korrigiert auf false (war faelschlicherweise true). Portal-RPC-404 (self_portal_access_state/unlink) remote behoben.",
       "screens": [
         {
           "bugs_open": 2,
@@ -311,13 +317,13 @@
         },
         {
           "bugs_open": 0,
-          "build_ref": "n/a",
+          "build_ref": "main@2026-04-20",
           "checked_access": false,
           "checked_function": true,
           "checked_smoke": false,
           "checked_ui": true,
           "id": "s-csv-import",
-          "notes": "Serverseitiger Parse + Row-Push vorhanden, echte Preview ueber csv_get_preview; Smoke-Test offen.",
+          "notes": "M2 lokal abgeschlossen: Job/Preview-Layer entfernt; Edge Function direkt parse + return preview; Frontend ruft import_csv_confirmed(p_club_id, p_rows). Edge Function noch nicht deployed. Smoke-Test M3 offen.",
           "path": "(neu) csv-onboarding",
           "status": "teilweise",
           "title": "CSV-Import"
@@ -340,9 +346,9 @@
           "title": "Onboarding-Fortschritt ist sichtbar"
         },
         {
-          "done": true,
+          "done": false,
           "id": "sc-on-4",
-          "title": "CSV Golden Path existiert"
+          "title": "CSV Golden Path end-to-end smoke-getestet (parse -> confirm -> DB-Verify)"
         }
       ],
       "status": "teilweise",
@@ -642,6 +648,6 @@
     "scope": "Operatives Kontrollboard fuer Prozesse, Screens, Smoke Checks, UI-Abnahmen und offene Bugs."
   },
   "source_of_truth": "supabase-live-sync",
-  "updated_at": "2026-04-10",
+  "updated_at": "2026-04-20",
   "version": 1
 }

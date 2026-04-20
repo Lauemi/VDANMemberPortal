@@ -662,10 +662,23 @@
   color: rgba(255, 255, 255, 0.78);
 }
 
+.masterboard-drawer .mini {
+  padding: 5px 9px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e7e7e7;
+}
+
 .masterboard-app .mini.is-good {
   background: rgba(103, 192, 103, 0.18);
   border-color: rgba(103, 192, 103, 0.28);
   color: #ccffd6;
+}
+
+.masterboard-drawer .mini.is-good {
+  background: rgba(103, 192, 103, 0.2);
+  border-color: rgba(103, 192, 103, 0.32);
+  color: #d8ffe1;
 }
 
 .masterboard-app .mb-card .signals {
@@ -856,7 +869,9 @@
   right: 0;
   height: 100vh;
   width: min(760px, 96vw);
-  background: #0f0f0f;
+  background:
+    radial-gradient(circle at top right, rgba(247, 201, 72, 0.06), transparent 20%),
+    linear-gradient(180deg, #151515, #0d0d0d);
   border-left: 1px solid var(--line);
   box-shadow: -20px 0 50px rgba(0, 0, 0, 0.4);
   transform: translateX(100%);
@@ -878,6 +893,10 @@
   justify-content: space-between;
   gap: 12px;
   align-items: flex-start;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.012)),
+    rgba(0, 0, 0, 0.14);
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.18);
 }
 
 .masterboard-drawer__body {
@@ -885,7 +904,7 @@
   overflow: auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .masterboard-drawer label {
@@ -911,29 +930,34 @@
   padding: 16px;
   color: var(--text);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.014));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
 }
 
 .masterboard-drawer .panel-head {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .masterboard-drawer h3 {
   margin: 0;
-  font-size: 17px;
-  color: var(--text);
+  font-size: 19px;
+  line-height: 1.15;
+  color: #fff8df;
 }
 
 .masterboard-drawer .item {
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--line);
-  color: var(--text);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f1f1;
+  line-height: 1.45;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
 }
 
 .masterboard-drawer .chip,
@@ -1014,13 +1038,13 @@
 }
 
 .masterboard-drawer .screen-item {
-  padding: 12px;
+  padding: 14px;
   border-radius: 14px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025));
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .masterboard-drawer .screen-item__head {
@@ -1031,53 +1055,61 @@
 }
 
 .masterboard-drawer .screen-item__title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 900;
   color: var(--text);
 }
 
 .masterboard-drawer .workbench-hero {
   background:
-    radial-gradient(circle at top right, rgba(247, 201, 72, 0.12), transparent 30%),
-    linear-gradient(180deg, rgba(247, 201, 72, 0.08), rgba(247, 201, 72, 0.02));
-  border-color: rgba(247, 201, 72, 0.18);
+    radial-gradient(circle at top right, rgba(247, 201, 72, 0.18), transparent 32%),
+    linear-gradient(180deg, rgba(247, 201, 72, 0.11), rgba(247, 201, 72, 0.035));
+  border-color: rgba(247, 201, 72, 0.24);
+  box-shadow:
+    0 18px 36px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(247, 201, 72, 0.08) inset;
 }
 
 .masterboard-drawer .workbench-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .masterboard-drawer .workbench-kpi {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px;
+  gap: 7px;
+  padding: 13px;
   border-radius: 14px;
-  border: 1px solid rgba(247, 201, 72, 0.14);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(247, 201, 72, 0.18);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
 }
 
 .masterboard-drawer .workbench-kpi span {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #d9d1b1;
+  color: #e2d9b5;
   font-weight: 700;
 }
 
 .masterboard-drawer .workbench-kpi strong {
-  font-size: 18px;
+  font-size: 21px;
+  line-height: 1.05;
+  color: #fff8dc;
 }
 
 .masterboard-drawer .workbench-next {
   margin-bottom: 12px;
-  padding: 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(247, 201, 72, 0.14);
-  background: rgba(255, 255, 255, 0.025);
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(247, 201, 72, 0.22);
+  background:
+    linear-gradient(180deg, rgba(247, 201, 72, 0.14), rgba(247, 201, 72, 0.045)),
+    rgba(255, 255, 255, 0.03);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.14);
 }
 
 .masterboard-drawer strong,
@@ -1090,10 +1122,63 @@
   color: var(--text);
 }
 
+.masterboard-drawer__head .eyebrow {
+  color: #f0de9d;
+  opacity: 1;
+}
+
+.masterboard-drawer__head h2 {
+  color: #fff7de;
+  margin-bottom: 10px;
+}
+
+.masterboard-drawer__head .subtitle {
+  color: #ddd0a1;
+  max-width: 46ch;
+}
+
+.masterboard-drawer .panel-head .small,
+.masterboard-drawer .screen-item .small,
+.masterboard-drawer .item .small {
+  color: #d4d4d4;
+}
+
+.masterboard-drawer .workbench-next .eyebrow {
+  color: #f5de93;
+  margin-bottom: 10px;
+}
+
+.masterboard-drawer .workbench-next strong {
+  display: block;
+  font-size: 28px;
+  line-height: 1.05;
+  color: #fff8df;
+  margin-bottom: 10px;
+}
+
+.masterboard-drawer .workbench-next p,
+.masterboard-drawer .workbench-next .subtitle {
+  color: #f0e3b8;
+  line-height: 1.5;
+}
+
+.masterboard-drawer .small {
+  color: #c8c8c8;
+}
+
+.masterboard-drawer .panel > .small,
+.masterboard-drawer .screen-list + .small,
+.masterboard-drawer .chip-list + .small {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.025);
+}
+
 .masterboard-drawer .advanced-panel summary {
   cursor: pointer;
   font-weight: 700;
-  color: var(--muted);
+  color: #a9a9a9;
   list-style: none;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1110,8 +1195,9 @@
 .masterboard-drawer .advanced-panel {
   border-style: dashed;
   border-color: rgba(255, 255, 255, 0.1);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.01));
-  opacity: 0.82;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.014), rgba(255, 255, 255, 0.006));
+  opacity: 0.72;
+  box-shadow: none;
 }
 
 .masterboard-app .c-marketing { --card-bg: linear-gradient(180deg, #61112d, #4d0f26); --card-line: #ba3d73; --card-text: #ffd9e7; }

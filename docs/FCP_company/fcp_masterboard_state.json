@@ -28,22 +28,27 @@
     },
     {
       "decisions_open": [
-        "eigene Pricing-Regel-Tabelle pro Kartentyp?"
+        "wie wird pricing_rules.product_id mit permit_card_types verknuepft? (FK-Anker noch lose)"
       ],
       "gaps": [
-        "keine harte Preisregel-Struktur im Schema"
+        "pricing_rules noch nicht mit Kartenzuweisung oder UI verbunden",
+        "product_id-FK-Herkunft unklar (kein products-Table sichtbar)"
       ],
       "id": "pricing-model",
       "lane": "config",
-      "last_verified_at": "2026-03-31",
+      "last_verified_at": "2026-04-20",
       "launch_class": "L2",
-      "progress_invisible": [],
+      "progress_invisible": [
+        "pricing_rules Tabelle vorhanden: product_id, rule_key, member_group_key, price_type, currency, amount_gross, valid_from/until"
+      ],
       "progress_visible": [
         "Preisbedarf als eigenes Systemthema erkannt"
       ],
-      "refs": [],
+      "refs": [
+        "public.pricing_rules"
+      ],
       "risk_level": "hoch",
-      "status": "offen",
+      "status": "teilweise",
       "title": "Preismodell"
     },
     {
@@ -484,27 +489,30 @@
     },
     {
       "decisions_open": [
-        "welche Basisfelder gehoeren in club_card_types V1?"
+        "wie werden permit_card_types per Onboarding befuellt? (aktuell nur via tenant_nodes-Seed)"
       ],
       "gaps": [
-        "Kartentypen noch zu stark settings-basiert"
+        "kein Admin-UI zum Befuellen/Verwalten von permit_card_types im Onboarding",
+        "Befuellung aktuell nur ueber Seed/direkten DB-Eintrag via tenant_nodes"
       ],
       "id": "cards-onboard",
       "lane": "onboarding",
-      "last_verified_at": "2026-03-31",
+      "last_verified_at": "2026-04-20",
       "launch_class": "L3",
       "progress_invisible": [
-        "MVP-Zieltabelle club_card_types fachlich festgelegt"
+        "Tatgebende Tabelle ist permit_card_types (verknuepft via tenant_nodes.legacy_club_id); club_card_types wurde nie erstellt",
+        "admin_permit_card_types_for_club(p_club_id) RPC vorhanden: club_id -> tenant_nodes -> permit_card_types"
       ],
       "progress_visible": [
         "Kartendenke im Workspace und in Registry sichtbar"
       ],
       "refs": [
-        "public.app_secure_settings",
-        "supabase/functions/club-onboarding-workspace/index.ts",
-        "docs/project/FCP_CSV_ONBOARDING_MVP_TODO_2026-03-31.md"
+        "public.permit_card_types",
+        "public.tenant_nodes",
+        "supabase/migrations/20260417200000_admin_permit_card_types_for_club_rpc.sql",
+        "supabase/functions/club-onboarding-workspace/index.ts"
       ],
-      "risk_level": "hoch",
+      "risk_level": "mittel",
       "status": "teilweise",
       "title": "Kartentyp-Setup"
     },
@@ -690,19 +698,28 @@
         "was ist operativ V1-genug ohne volles Pricing?"
       ],
       "gaps": [
-        "kein echtes Kartenmodul mit Historie, Gueltigkeit und Pricing-Anker"
+        "pricing_rules noch nicht mit Kartenzuweisung UI verbunden",
+        "Gueltigkeits- und Verlaufsmodul offen"
       ],
       "id": "cards-ops",
       "lane": "operations",
-      "last_verified_at": "2026-03-31",
+      "last_verified_at": "2026-04-20",
       "launch_class": "L2",
-      "progress_invisible": [],
+      "progress_invisible": [
+        "member_card_assignments Tabelle vorhanden (club_id, member_no, card_id)",
+        "admin_member_assign_cards() + admin_member_cards_overview_v2() RPCs vorhanden",
+        "admin_permit_card_types_for_club() als optionsBinding-Quelle im ADM-Panel aktiv"
+      ],
       "progress_visible": [
-        "Kartenzuordnung ist rudimentaer in Mitgliedern und Workspace sichtbar"
+        "Kartenzuordnung in Registry-Maske sichtbar und zuweisbar"
       ],
       "refs": [
         "public.club_members",
         "public.members",
+        "public.member_card_assignments",
+        "public.permit_card_types",
+        "supabase/migrations/20260412103000_member_card_assignments_runtime.sql",
+        "supabase/migrations/20260417200000_admin_permit_card_types_for_club_rpc.sql",
         "supabase/functions/club-onboarding-workspace/index.ts"
       ],
       "risk_level": "hoch",

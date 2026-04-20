@@ -155,18 +155,18 @@
         {
           "id": "b-card-1",
           "severity": "hoch",
-          "status": "offen",
-          "title": "Kartentypen liegen noch zu stark in Settings"
+          "status": "geschlossen",
+          "title": "Kartentypen liegen noch zu stark in Settings — behoben: permit_card_types ist fuehrende Tabelle (via tenant_nodes); club_card_types wurde nie erstellt"
         },
         {
           "id": "b-card-2",
           "severity": "hoch",
           "status": "offen",
-          "title": "Kein Pricing-Anker fuer spaetere Bank-/Beitragslogik"
+          "title": "Kein Pricing-Anker fuer spaetere Bank-/Beitragslogik — pricing_rules Tabelle vorhanden, aber product_id FK und UI-Verbindung noch offen"
         }
       ],
       "id": "p-cards-pricing",
-      "last_reviewed_at": "2026-04-10",
+      "last_reviewed_at": "2026-04-20",
       "owner": "michael",
       "priority": "kritisch",
       "related_nodes": [
@@ -176,30 +176,30 @@
         "fees-ops",
         "waters-ops"
       ],
-      "review_note": "CSV-Golden-Path ist im Repo serverseitig verdrahtet; End-to-End-Smoke-Test und finaler Flow-Freeze bleiben offen.",
+      "review_note": "DB-Wahrheit hergestellt: permit_card_types + pricing_rules + member_card_assignments existieren. club_card_types existiert nicht und wird nicht erstellt. admin_permit_card_types_for_club() RPC aktiv. Zuweisung via admin_member_assign_cards() + member_card_assignments bewiesen. Pricing UI-Verbindung offen.",
       "screens": [
         {
           "bugs_open": 0,
-          "build_ref": "n/a",
+          "build_ref": "main@2026-04-20",
           "checked_access": false,
-          "checked_function": false,
+          "checked_function": true,
           "checked_smoke": false,
-          "checked_ui": true,
+          "checked_ui": false,
           "id": "s-cards-setup",
-          "notes": "Harte Kartentyp-Tabelle fehlt.",
-          "path": "(neu) club_card_types UI",
-          "status": "offen",
+          "notes": "permit_card_types Tabelle vorhanden (via tenant_nodes); admin_permit_card_types_for_club() RPC aktiv als optionsBinding-Quelle. Kein Admin-UI zum Befuellen/Verwalten.",
+          "path": "(neu) permit_card_types Admin-UI",
+          "status": "teilweise",
           "title": "Kartentyp-Setup"
         },
         {
           "bugs_open": 0,
-          "build_ref": "n/a",
+          "build_ref": "main@2026-04-20",
           "checked_access": false,
           "checked_function": false,
           "checked_smoke": false,
           "checked_ui": false,
           "id": "s-pricing-rules",
-          "notes": "Noch nicht modelliert.",
+          "notes": "pricing_rules Tabelle vorhanden (product_id, rule_key, member_group_key, amount_gross, currency, valid_from/until). product_id FK-Herkunft und UI-Verbindung offen.",
           "path": "(neu) pricing-rules",
           "status": "offen",
           "title": "Preisregeln Inline Table"
@@ -207,22 +207,22 @@
       ],
       "smoke_checks": [
         {
-          "done": false,
+          "done": true,
           "id": "sc-card-1",
-          "title": "club_card_types existiert"
+          "title": "permit_card_types existiert (via tenant_nodes; club_card_types nie erstellt)"
         },
         {
-          "done": false,
+          "done": true,
           "id": "sc-card-2",
-          "title": "Kartentyp kann Mitglied sauber zugeordnet werden"
+          "title": "Kartentyp kann Mitglied sauber zugeordnet werden (admin_member_assign_cards + member_card_assignments)"
         },
         {
           "done": false,
           "id": "sc-card-3",
-          "title": "Preis-/Gueltigkeitslogik fachlich festgezogen"
+          "title": "Preis-/Gueltigkeitslogik fachlich festgezogen (pricing_rules vorhanden, product-FK und UI-Verbindung offen)"
         }
       ],
-      "status": "offen",
+      "status": "teilweise",
       "summary": "Kartentypen, Preise, Gueltigkeit, spaetere Abrechnung und Sonderregeln.",
       "title": "Karten / Beitraege"
     },

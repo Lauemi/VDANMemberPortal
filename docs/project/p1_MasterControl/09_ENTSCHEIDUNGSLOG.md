@@ -150,6 +150,39 @@ Betroffene Dateien:
 - `00_README_PROJECT_ONE_MASTERCONTROL.md`
 - `08_UMSETZUNGSPAKETE_CODEX.md`
 
+## 2026-04-20 — Phase 2 / Phase 1A wird auf bestehender Masterboard-UI aufgebaut
+
+Status:
+
+- `entschieden`
+
+Kontext:
+
+- Die verifizierte Phase-0-/Phase-1-Basis hat gezeigt, dass das bisherige Board Zustand anzeigt und Rohpflege erlaubt, aber noch keine gefuehrte Arbeit aus Klicks erzeugt.
+- Gleichzeitig sind reale DB-/RPC-Pfade und die bestehende Masterboard-Implementierung bereits im Repo vorhanden.
+
+Entscheidung:
+
+- Phase 2 / Phase 1A wird nicht als neue Produktarchitektur begonnen.
+- Die bestehende Masterboard-UI bleibt der Tragrahmen.
+- Fuehrungslogik wird direkt in den vorhandenen Board-, Process- und Drawer-Flaechen ausgebaut:
+  - klickbare Top-Blocker
+  - sichtbare Legende und Signalerklaerung
+  - sichtbare Board-Process-UI-File-Relationen
+  - Drawer als Workbench statt Rohpflege
+
+Konsequenzen:
+
+- Umsetzung bleibt repo-wahr und respektiert bestehende RPCs, Bootstrap-Daten und Statusstrukturen.
+- Produkt, Relation, Status und Projektdokumentation bleiben auch in der Umsetzungsphase gekoppelt.
+
+Betroffene Dateien:
+
+- `src/pages/app/masterboard/index.astro`
+- `public/js/masterboard-app.js`
+- `public/css/masterboard.css`
+- `10_AENDERUNGSLOG.md`
+
 ---
 
 ## Offene Entscheidungsfelder

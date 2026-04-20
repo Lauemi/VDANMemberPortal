@@ -44,6 +44,9 @@ const bootstrapScript = [
             <h2>FCP Systemboard</h2>
             <p class="subtitle">Zentrale Sicht auf Architektur, Prozessreife, Risiken und offene Systemlücken.</p>
             <div class="golden">Golden Path: Website → Registrierung → Login → Onboarding → CSV → Dashboard → Nutzung</div>
+            <p class="masterboard-intent">
+              Ziel dieser Maske ist gefuehrte Arbeit: Blocker, Relationen, betroffene Screens und konkrete Arbeitsanker sollen direkt in den passenden Arbeitskontext fuehren.
+            </p>
           </section>
 
           <section class="filterbox">
@@ -98,6 +101,9 @@ const bootstrapScript = [
               <button type="button" class="ghost" id="masterboardExportMasterBtn">Master export</button>
               <button type="button" class="ghost" id="masterboardExportOpsBtn">Ops export</button>
             </div>
+            <p class="masterboard-intent masterboard-intent--small">
+              Die Statistik folgt den aktiven Filtern und zeigt den aktuell gefuehrten Arbeitsfokus.
+            </p>
           </section>
         </div>
 
@@ -114,6 +120,8 @@ const bootstrapScript = [
               <div><span class="legend-dot is-green"></span> Grün = stabil</div>
               <div><span class="legend-mark">L1/L2/L3</span> Launch-Klasse / Reife</div>
               <div><span class="legend-mark">!</span> Risiko hoch</div>
+              <div><span class="legend-mark">~</span> Gap / Luecke offen</div>
+              <div><span class="legend-mark">✦</span> Golden-Path-relevant</div>
             </div>
           </section>
           <section class="guidebox guidebox--blockers">
@@ -135,12 +143,12 @@ const bootstrapScript = [
         <div id="masterboardOpsView" class="hidden">
           <div class="process-table process-head">
             <div>Prozess</div>
-            <div>Status</div>
             <div>Screens</div>
             <div>UI</div>
             <div>Smoke</div>
             <div>Bugs</div>
-            <div>Review</div>
+            <div>Prioritaet</div>
+            <div>Workbench</div>
           </div>
           <div id="masterboardProcessList"></div>
         </div>

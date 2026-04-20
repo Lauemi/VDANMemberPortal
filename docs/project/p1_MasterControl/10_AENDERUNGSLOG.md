@@ -93,6 +93,23 @@ Wirkung fuer Folge-Agenten:
 - Richtungsentscheidungen haben einen festen Ort.
 - Projektordner-Aenderungen koennen versioniert und nachvollziehbar nachgezogen werden.
 
+## 2026-04-20 — Phase 2 / Phase 1A in der Masterboard-UI aufgebaut
+
+Geaenderte Dateien:
+
+- `src/pages/app/masterboard/index.astro`
+- `public/js/masterboard-app.js`
+- `public/css/masterboard.css`
+- `09_ENTSCHEIDUNGSLOG.md`
+
+Wirkung fuer Folge-Agenten:
+
+- Das Masterboard fuehrt jetzt aus dem UI heraus in echte Arbeitskontexte statt nur in Rohpflege.
+- Top-Blocker sind klickbar.
+- Node- und Prozess-Relationen sind gegenseitig sichtbar und klickbar.
+- Screens, betroffene Dateien, Folgeflaechen und Zielmasken sind im Drawer als Workbench strukturiert sichtbar.
+- Die bestehende DB-/RPC-Wahrheit bleibt der Tragrahmen; es wurden keine neuen Statusdateien als Produktquelle eingefuehrt.
+
 ---
 
 ## Offene Folgearbeiten am Projektordner

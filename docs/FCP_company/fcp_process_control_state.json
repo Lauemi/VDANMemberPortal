@@ -243,8 +243,8 @@
         {
           "id": "b-on-3",
           "severity": "mittel",
-          "status": "fix-applied",
-          "title": "Settings-Maske: banking_profile 400 -- fcp-mask-page-loader.js: hydrateVisiblePanels jetzt hinter VDAN_AUTH.loadSession-Guard; live-Verifikation ausstehend"
+          "status": "geschlossen",
+          "title": "Settings-Maske: banking_profile 400 -- behoben (4d64b1b); hydrateVisiblePanels hinter VDAN_AUTH.loadSession-Guard; keine 400 in 24h-Logs, kein spurioser RPC-Call mehr"
         }
       ],
       "id": "p-onboarding",

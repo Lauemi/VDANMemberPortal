@@ -838,8 +838,8 @@
       "progress_invisible": [
         "Bootstrap-, Signup-Guard- und Identity-Fixes vorhanden",
         "Consent-State in get_onboarding_process_state gegen aktive Policy-Versionen geh\u00e4rtet (legal_acceptance_events + legal_documents.is_active)",
-        "self_portal_access_state() und self_portal_access_unlink() remote deployed (Migrationen 20260419100000 + 20260419103000); Portal-RPC-404 behoben",
-        "self_member_banking_get() und member_bank_data remote verifiziert; 400 auf Frontend-Mask-Auth-Forwarding eingegrenzt (banking_profile index-0-Auto-Open ohne Auth-Guard)"
+        "self_portal_access_state() und self_portal_access_unlink() remote deployed (Migrationen 20260419100000 + 20260419103000); Portal-RPC-404 behoben; API-Logs bestaetigen 200",
+        "self_member_banking_get() und member_bank_data remote verifiziert; banking 400 behoben (4d64b1b): hydrateVisiblePanels hinter VDAN_AUTH.loadSession-Guard; keine 400 in 24h-Logs"
       ],
       "progress_visible": [
         "Identitaetsbasis vorhanden"

@@ -110,6 +110,21 @@ Wirkung fuer Folge-Agenten:
 - Screens, betroffene Dateien, Folgeflaechen und Zielmasken sind im Drawer als Workbench strukturiert sichtbar.
 - Die bestehende DB-/RPC-Wahrheit bleibt der Tragrahmen; es wurden keine neuen Statusdateien als Produktquelle eingefuehrt.
 
+## 2026-04-20 — UI-/UX-Nachschaerfung fuer Lesbarkeit und Fuehrung umgesetzt
+
+Geaenderte Dateien:
+
+- `src/pages/app/masterboard/index.astro`
+- `public/js/masterboard-app.js`
+- `public/css/masterboard.css`
+
+Wirkung fuer Folge-Agenten:
+
+- Die bestehende Masterboard-Struktur bleibt erhalten, ist aber visuell klarer gefuehrt.
+- Kontrastfehler im dunklen Masterboard-/Drawer-Kontext sind gezielt bereinigt.
+- Karten, Top-Blocker, Ops-Liste und Drawer staffeln wichtige Arbeitssignale jetzt deutlicher.
+- Fuehrungs- und Detailmodus sind optisch klarer unterscheidbar, ohne neue Produktlogik einzufuehren.
+
 ---
 
 ## Offene Folgearbeiten am Projektordner

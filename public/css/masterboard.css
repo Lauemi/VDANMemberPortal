@@ -6,12 +6,15 @@
   --bg: #090909;
   --panel: #141414;
   --panel-2: #1c1c1c;
+  --panel-3: #232323;
   --text: #f3f3f3;
   --muted: #b7b7b7;
+  --muted-2: #8c8c8c;
   --line: #2f2f2f;
   --gold: #f7c948;
   --red: #ef5350;
   --yellow: #fbbf24;
+  --blue: #60a5fa;
   --accent: #f3e2a2;
   --accent-warm: #f4eed7;
   --maxw: 1700px;
@@ -34,10 +37,35 @@
   padding: 16px;
 }
 
+.masterboard-app .guidebox--blockers {
+  background:
+    radial-gradient(circle at top right, rgba(239, 83, 80, 0.12), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)),
+    var(--panel);
+  border-color: rgba(239, 83, 80, 0.18);
+}
+
 .masterboard-app .mode-switch {
   display: inline-flex;
   gap: 8px;
   margin-bottom: 12px;
+}
+
+.masterboard-app .mode-hint {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(247, 201, 72, 0.18);
+  background: rgba(247, 201, 72, 0.08);
+  color: #efe1aa;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.masterboard-app[data-mode="detail"] .mode-hint {
+  border-color: rgba(96, 165, 250, 0.24);
+  background: rgba(96, 165, 250, 0.08);
+  color: #d9e9ff;
 }
 
 .masterboard-app .legend-list {
@@ -90,6 +118,7 @@
   margin: 0 0 10px;
   color: #f3e2a2;
   line-height: 1.45;
+  font-size: 13px;
 }
 
 .masterboard-app .blocker-item {
@@ -102,6 +131,26 @@
 .masterboard-app .blocker-item--button {
   width: 100%;
   text-align: left;
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.masterboard-app .blocker-item--button::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, rgba(239, 83, 80, 0.9), rgba(251, 191, 36, 0.9));
+}
+
+.masterboard-app .blocker-item--button:hover,
+.masterboard-app .blocker-item--button:focus-visible {
+  border-color: rgba(247, 201, 72, 0.28);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
 }
 
 .masterboard-app .blocker-item__head {
@@ -128,6 +177,7 @@
 .masterboard-app .blocker-item__title {
   font-weight: 800;
   color: var(--text);
+  font-size: 16px;
 }
 
 .masterboard-app .blocker-item__status,
@@ -136,6 +186,15 @@
 .masterboard-app .card-owner {
   font-size: 12px;
   color: var(--muted);
+}
+
+.masterboard-app .blocker-item__status {
+  font-weight: 800;
+}
+
+.masterboard-app .blocker-item__meta {
+  color: #ddd2a0;
+  line-height: 1.45;
 }
 
 .masterboard-app * {
@@ -335,6 +394,25 @@
   color: black;
 }
 
+.masterboard-app .tab {
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.masterboard-app .mode-switch .tab {
+  min-width: 104px;
+  justify-content: center;
+}
+
+.masterboard-app[data-mode="lead"] .mode-switch .tab.active {
+  box-shadow: 0 0 0 1px rgba(247, 201, 72, 0.18) inset;
+}
+
+.masterboard-app[data-mode="detail"] .mode-switch .tab.active {
+  background: linear-gradient(180deg, rgba(96, 165, 250, 0.18), rgba(96, 165, 250, 0.08));
+  border-color: rgba(96, 165, 250, 0.34);
+  color: #e7f1ff;
+}
+
 .masterboard-app .stat {
   padding: 10px 12px;
   border-radius: 14px;
@@ -382,16 +460,22 @@
 }
 
 .masterboard-app .lane {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.015));
-  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015)),
+    linear-gradient(180deg, #171717, #111111);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  padding: 12px;
+  padding: 14px;
 }
 
 .masterboard-app .card-next {
-  margin-top: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(247, 201, 72, 0.16);
+  background: linear-gradient(180deg, rgba(247, 201, 72, 0.12), rgba(247, 201, 72, 0.04));
   color: #f0e2a2;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .masterboard-app .card-next__label {
@@ -418,7 +502,7 @@
 .masterboard-app .lane-title {
   font-size: 20px;
   font-weight: 900;
-  color: black;
+  color: var(--text);
 }
 
 .masterboard-app .lane-sub,
@@ -426,7 +510,6 @@
   font-size: 12px;
   color: var(--muted);
   line-height: 1.5;
-  color: black;
 }
 
 .masterboard-drawer .small {
@@ -437,7 +520,7 @@
 
 .masterboard-app .lane-meta {
   font-size: 12px;
-  color: #d0d0d0;
+  color: var(--muted);
   background: var(--panel-2);
   border: 1px solid var(--line);
   padding: 8px 10px;
@@ -466,6 +549,13 @@
   flex-direction: column;
   cursor: pointer;
   overflow: hidden;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.masterboard-app .mb-card:hover,
+.masterboard-app .mb-card:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.26);
 }
 
 .masterboard-app .mb-card .card-head {
@@ -497,22 +587,27 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .masterboard-app .mb-card .card-title {
-  font-size: 17px;
+  font-size: 24px;
   font-weight: 900;
-  line-height: 1.15;
-  margin: 0 0 6px;
+  line-height: 1.05;
+  margin: 0 0 8px;
+  max-width: 13ch;
 }
 
 .masterboard-app .mb-card .card-sub {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.64);
   line-height: 1.35;
 }
 
@@ -534,6 +629,7 @@
 
 .masterboard-app .card-summary {
   margin-top: 10px;
+  opacity: 0.88;
 }
 
 .masterboard-app .card-section {
@@ -544,16 +640,16 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.56);
   margin-bottom: 6px;
   font-weight: 800;
 }
 
 .masterboard-app .mb-card .mini {
   padding: 5px 9px;
-  background: rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .masterboard-app .mini.is-good {
@@ -564,27 +660,42 @@
 
 .masterboard-app .mb-card .signals {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 12px;
+  right: 12px;
   display: flex;
   gap: 6px;
 }
 
 .masterboard-app .signal {
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
-  font-size: 12px;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  font-size: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.22);
 }
 
-.masterboard-app .signal-risk { background: rgba(239, 83, 80, 0.95); color: #fff; }
-.masterboard-app .signal-gap { background: rgba(251, 191, 36, 0.95); color: #552f00; }
-.masterboard-app .signal-focus { background: rgba(96, 165, 250, 0.95); color: #082648; }
+.masterboard-app .signal-risk {
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(239, 83, 80, 1), rgba(194, 43, 39, 1));
+  color: #fff;
+}
+
+.masterboard-app .signal-gap {
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(251, 191, 36, 1), rgba(222, 143, 0, 1));
+  color: #3b2200;
+}
+
+.masterboard-app .signal-focus {
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(96, 165, 250, 1), rgba(33, 106, 200, 1));
+  color: #fff;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
 
 .masterboard-app .mb-card.is-highlighted,
 .masterboard-app .process-row.is-highlighted {
@@ -607,10 +718,10 @@
 
 .masterboard-app .flow-connector .label {
   font-size: 12px;
-  color: #d6d6d6;
+  color: var(--muted);
   font-weight: 800;
   text-transform: uppercase;
-  color: black;
+  letter-spacing: 0.08em;
 }
 
 .masterboard-app .process-table {
@@ -640,12 +751,21 @@
 .masterboard-app .process-row {
   cursor: pointer;
   margin-top: 10px;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.masterboard-app .process-row:hover,
+.masterboard-app .process-row:focus-within {
+  transform: translateY(-1px);
+  border-color: rgba(247, 201, 72, 0.22);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
 }
 
 .masterboard-app .process-primary {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
 
 .masterboard-app .process-primary__head {
@@ -656,15 +776,30 @@
   justify-content: space-between;
 }
 
+.masterboard-app .process-primary__head > div:first-child {
+  font-size: 20px;
+  line-height: 1.1;
+}
+
 .masterboard-app .process-row__meta {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--muted-2);
 }
 
 .masterboard-app .process-row__section {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.masterboard-app .process-row .small {
+  color: #ddd2a0;
+}
+
+.masterboard-app .process-row > div:not(.process-primary) {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
 }
 
 .masterboard-app .pill {
@@ -752,6 +887,7 @@
 .masterboard-drawer .panel {
   padding: 16px;
   color: var(--text);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.014));
 }
 
 .masterboard-drawer .panel-head {
@@ -759,6 +895,8 @@
   flex-direction: column;
   gap: 4px;
   margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .masterboard-drawer h3 {
@@ -783,8 +921,8 @@
   padding: 7px 10px;
   border-radius: 999px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text);
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(243, 243, 243, 0.9);
   font-size: 12px;
   font-weight: 800;
 }
@@ -867,7 +1005,9 @@
 }
 
 .masterboard-drawer .workbench-hero {
-  background: linear-gradient(180deg, rgba(247, 201, 72, 0.08), rgba(247, 201, 72, 0.02));
+  background:
+    radial-gradient(circle at top right, rgba(247, 201, 72, 0.12), transparent 30%),
+    linear-gradient(180deg, rgba(247, 201, 72, 0.08), rgba(247, 201, 72, 0.02));
 }
 
 .masterboard-drawer .workbench-grid {
@@ -901,6 +1041,10 @@
 
 .masterboard-drawer .workbench-next {
   margin-bottom: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(247, 201, 72, 0.14);
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .masterboard-drawer strong,
@@ -915,8 +1059,9 @@
 
 .masterboard-drawer .advanced-panel summary {
   cursor: pointer;
-  font-weight: 800;
-  color: var(--accent);
+  font-weight: 700;
+  color: var(--muted);
+  list-style: none;
 }
 
 .masterboard-drawer .advanced-panel__body {
@@ -924,6 +1069,12 @@
   flex-direction: column;
   gap: 14px;
   margin-top: 14px;
+}
+
+.masterboard-drawer .advanced-panel {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.01));
 }
 
 .masterboard-app .c-marketing { --card-bg: linear-gradient(180deg, #61112d, #4d0f26); --card-line: #ba3d73; --card-text: #ffd9e7; }

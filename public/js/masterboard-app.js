@@ -52,6 +52,7 @@
   const sourceBadge = document.getElementById("masterboardSourceBadge");
   const blockersList = document.getElementById("masterboardTopBlockers");
   const blockersSummary = document.getElementById("masterboardTopBlockersSummary");
+  const modeHint = document.getElementById("masterboardModeHint");
   let lastDrawerFocus = null;
 
   const NON_BILLING_CLUB_LOGIC_IDS = new Set(["pricing-model", "cards-onboard", "p-cards-pricing"]);
@@ -785,6 +786,14 @@
     document.getElementById("masterboardDrawerSub").textContent = sub;
   }
 
+  function syncModeUi() {
+    root.dataset.mode = currentMode();
+    if (!modeHint) return;
+    modeHint.textContent = currentMode() === "detail"
+      ? "Detailmodus: volle Sicht auf Karten, Prozesse und Pflegefelder."
+      : "Fokusmodus: priorisierte Arbeitsstarts, Blocker und kritische Pfade zuerst.";
+  }
+
   function textareaValue(arr) {
     return Array.isArray(arr) ? arr.join("\n") : "";
   }
@@ -1232,6 +1241,7 @@
         state.mode = btn.getAttribute("data-masterboard-mode") === "detail" ? "detail" : "lead";
         document.querySelectorAll("[data-masterboard-mode]").forEach((node) => node.classList.remove("active"));
         btn.classList.add("active");
+        syncModeUi();
         renderAll();
       });
     });
@@ -1248,6 +1258,7 @@
   async function init() {
     bindEvents();
     setTab("master");
+    syncModeUi();
     setSource("loading");
     try {
       await loadState();

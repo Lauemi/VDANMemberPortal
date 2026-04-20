@@ -146,6 +146,14 @@ Wenn Umsetzungspakete betroffen sind zusätzlich:
 
 - `08_UMSETZUNGSPAKETE_CODEX.md`
 
+Wenn Richtungs-, Struktur- oder Prioritaetsentscheidungen betroffen sind zusaetzlich:
+
+- `09_ENTSCHEIDUNGSLOG.md`
+
+Wenn bereits veraenderte Projektdokumentation oder neue Projektdateien betroffen sind zusaetzlich:
+
+- `10_AENDERUNGSLOG.md`
+
 ---
 
 ## Pflichtverhalten bei Änderungen
@@ -185,6 +193,18 @@ Dieser Ordner ist absichtlich als kleiner Projektkern aufgebaut.
 - `08_UMSETZUNGSPAKETE_CODEX.md`
 - `09_ENTSCHEIDUNGSLOG.md`
 - `10_AENDERUNGSLOG.md`
+
+### Rolle der Dateien 08 bis 10 im Projektfluss
+
+- `08_UMSETZUNGSPAKETE_CODEX.md`
+  - fuehrende Paket- und Arbeitsdatei fuer spaetere Umsetzungsphasen
+  - wird erst nach der Einstiegskette `00` bis `07` verwendet
+- `09_ENTSCHEIDUNGSLOG.md`
+  - fuehrender Ort fuer Richtungs-, Struktur- und Prioritaetsentscheidungen
+  - muss geprueft werden, wenn sich Projektlogik oder Ordnungsprinzipien aendern
+- `10_AENDERUNGSLOG.md`
+  - fuehrender Ort fuer konkrete Aenderungen am Projektordner
+  - muss nachgezogen werden, wenn neue fuehrende Dateien entstehen oder bestehende Projekttexte wesentlich angepasst werden
 
 ### Aktuelle Ist-Lage des Ordners
 
@@ -239,6 +259,12 @@ Ein Folge-Agent muss den Ordner isoliert in dieser Reihenfolge lesen:
 8. `07_UMSETZUNGSREGELN_MASTERCONTROL.md`
 
 Erst danach duerfen ergaenzende Soll-/Plan-Dokumente oder historische Paralleltexte herangezogen werden.
+
+Wenn nach der Einstiegskette konkrete Folgearbeit geplant oder vorbereitet wird, gilt anschliessend diese Leselogik:
+
+1. `08_UMSETZUNGSPAKETE_CODEX.md`
+2. bei Struktur- oder Richtungsfragen `09_ENTSCHEIDUNGSLOG.md`
+3. bei bereits erfolgten Projektordner-Aenderungen `10_AENDERUNGSLOG.md`
 
 ### Templates
 

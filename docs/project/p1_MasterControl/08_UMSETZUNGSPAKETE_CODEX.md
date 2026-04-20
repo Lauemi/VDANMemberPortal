@@ -21,6 +21,51 @@ Grundsatz:
 
 ---
 
+## Trennung der Rollen
+
+Diese Datei ist **keine** neue Analysebasis.
+
+Die Trennung ist verbindlich:
+
+### Analysebasis
+
+Die verifizierte Analysebasis liegt in:
+
+- `00_README_PROJECT_ONE_MASTERCONTROL.md`
+- `01_ZIELBILD_MASTERCONTROL.md`
+- `02_IST_ANALYSE_MASTERBOARD.md`
+- `03_UI_WAHRHEIT_MASTERBOARD.md`
+- `04_INTERAKTIONSWAHRHEIT_MASTERBOARD.md`
+- `05_FUEHRUNGSDEFIZITE_MASTERBOARD.md`
+- `06_RELATIONEN_BOARD_PROCESS_UI_FILES.md`
+- `07_UMSETZUNGSREGELN_MASTERCONTROL.md`
+
+### Umsetzungsphase
+
+Diese Datei `08_UMSETZUNGSPAKETE_CODEX.md` beschreibt:
+
+- wie Folgearbeit in Pakete geschnitten werden soll
+- in welcher Reihenfolge gearbeitet werden kann
+- welche Alt-/Paralleltexte wie einzuordnen sind
+- welche Vorbedingungen vor einer spaeteren Umsetzung erfuellt sein muessen
+
+### Was Codex spaeter konkret daraus bauen soll
+
+Ein Folge-Agent darf aus dieser Datei spaeter:
+
+- Umsetzungspakete priorisieren
+- Arbeitspakete vorbereiten
+- Produktaenderungen in saubere Reihenfolgen schneiden
+- Folgepruefungen gegen Relation, Status und Projektdokumentation planen
+
+Ein Folge-Agent darf aus dieser Datei **nicht** ableiten:
+
+- dass die Analysebasis erneut von null erstellt werden muss
+- dass Soll-Texte die verifizierte Ist-Kette ersetzen
+- dass ein Paket ohne Rueckbindung an `00` bis `07` direkt umgesetzt werden darf
+
+---
+
 ## Einordnung im Projektordner
 
 Vor dem Arbeiten mit Umsetzungspaketen muessen Folge-Agenten zuerst lesen:
@@ -35,6 +80,13 @@ Vor dem Arbeiten mit Umsetzungspaketen muessen Folge-Agenten zuerst lesen:
 8. `07_UMSETZUNGSREGELN_MASTERCONTROL.md`
 
 Erst danach darf mit `08_UMSETZUNGSPAKETE_CODEX.md` gearbeitet werden.
+
+Kurzregel:
+
+```text
+00 bis 07 sagen, was verifiziert ist.
+08 sagt, wie daraus spaetere Umsetzung geschnitten wird.
+```
 
 ---
 

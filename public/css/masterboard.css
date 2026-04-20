@@ -38,9 +38,34 @@
   padding: 16px;
 }
 
+.masterboard-app .guidebox__lead {
+  margin: 0 0 12px;
+  color: #d8d2b8;
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 58ch;
+}
+
+.masterboard-app .guidebox__lead--primary {
+  color: #f6e2bf;
+  font-weight: 600;
+}
+
 .masterboard-app .filterbox,
 .masterboard-app .actionbox {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.008));
+}
+
+.masterboard-app .titlebox--primary {
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(247, 201, 72, 0.08) inset;
+}
+
+.masterboard-app .filterbox--secondary,
+.masterboard-app .actionbox--secondary,
+.masterboard-app .guidebox--context {
+  opacity: 0.94;
 }
 
 .masterboard-app .titlebox {
@@ -59,6 +84,27 @@
   box-shadow:
     0 20px 42px rgba(0, 0, 0, 0.24),
     0 0 0 1px rgba(239, 83, 80, 0.08) inset;
+}
+
+.masterboard-app .guidebox--start {
+  position: relative;
+  overflow: hidden;
+}
+
+.masterboard-app .guidebox--start::before {
+  content: "Primaerer Arbeitsstart";
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(247, 201, 72, 0.3);
+  background: rgba(247, 201, 72, 0.12);
+  color: #ffe6a1;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 800;
 }
 
 .masterboard-app .mode-switch {
@@ -667,10 +713,21 @@
   opacity: 0.88;
 }
 
+.masterboard-app .chip-list--path {
+  gap: 6px;
+}
+
 .masterboard-app .card-section {
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.masterboard-app .card-section--path {
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 14px;
+  padding: 12px;
+  border-top: 0;
 }
 
 .masterboard-app .card-section__label {
@@ -687,6 +744,19 @@
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: rgba(255, 255, 255, 0.78);
+}
+
+.masterboard-app .mini--context {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  gap: 6px;
+}
+
+.masterboard-app .mini__kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+  opacity: 0.72;
 }
 
 .masterboard-drawer .mini {
@@ -825,6 +895,23 @@
   min-width: 0;
 }
 
+.masterboard-app .process-primary__next {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(247, 201, 72, 0.16);
+  background: linear-gradient(180deg, rgba(247, 201, 72, 0.08), rgba(247, 201, 72, 0.03));
+}
+
+.masterboard-app .process-primary__next-label {
+  display: inline-block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ffe3a1;
+  font-weight: 800;
+}
+
 .masterboard-app .process-primary__head {
   display: flex;
   flex-wrap: wrap;
@@ -848,6 +935,13 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.masterboard-app .process-row__section--path {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .masterboard-app .process-row .small {
@@ -876,6 +970,18 @@
 .masterboard-app .chip {
   background: rgba(255, 255, 255, 0.045);
   color: rgba(243, 243, 243, 0.92);
+}
+
+.masterboard-app .chip--path {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.04));
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+.masterboard-app .chip--node,
+.masterboard-app .chip--process {
+  border-color: rgba(247, 201, 72, 0.22);
+  background: rgba(247, 201, 72, 0.09);
+  color: #fff0b5;
 }
 
 .masterboard-app .chip--screen {

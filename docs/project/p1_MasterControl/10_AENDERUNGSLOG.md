@@ -125,6 +125,22 @@ Wirkung fuer Folge-Agenten:
 - Karten, Top-Blocker, Ops-Liste und Drawer staffeln wichtige Arbeitssignale jetzt deutlicher.
 - Fuehrungs- und Detailmodus sind optisch klarer unterscheidbar, ohne neue Produktlogik einzufuehren.
 
+## 2026-04-20 — Arbeitsstart und Arbeitsweg auf der Hauptflaeche nachgezogen
+
+Geaenderte Dateien:
+
+- `src/pages/app/masterboard/index.astro`
+- `public/js/masterboard-app.js`
+- `public/css/masterboard.css`
+- `09_ENTSCHEIDUNGSLOG.md`
+
+Wirkung fuer Folge-Agenten:
+
+- Der obere Fuehrungsbereich markiert die Top-3-Blocker jetzt expliziter als primaeren Arbeitsstart.
+- Karten zeigen einen kompakten Arbeitsweg `Process -> Screen -> File`, statt Relationen erst im Drawer voll sichtbar zu machen.
+- Prozesszeilen tragen denselben Arbeitsweg `Board -> Screen -> File` und machen damit die Ops-Liste staerker zur Steuerflaeche.
+- Die Umsetzung bleibt innerhalb der bestehenden Produktlogik; DB, RPC, Statuswerte und Drawer-Funktionslogik wurden nicht veraendert.
+
 ---
 
 ## Offene Folgearbeiten am Projektordner

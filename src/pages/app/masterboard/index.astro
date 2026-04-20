@@ -39,7 +39,7 @@ const bootstrapScript = [
     <div class="card__body">
       <div id="fcpMasterboardApp" class="masterboard-app">
         <div class="masterboard-app__topbar">
-          <section class="titlebox">
+          <section class="titlebox titlebox--primary">
             <div class="eyebrow">Systemsteuerung</div>
             <h2>FCP Systemboard</h2>
             <p class="subtitle">Zentrale Sicht auf Architektur, Prozessreife, Risiken und offene Systemlücken.</p>
@@ -49,7 +49,7 @@ const bootstrapScript = [
             </p>
           </section>
 
-          <section class="filterbox">
+          <section class="filterbox filterbox--secondary">
             <div class="eyebrow">Filter</div>
             <div class="filter-grid">
               <label class="control">
@@ -83,7 +83,7 @@ const bootstrapScript = [
             </div>
           </section>
 
-          <section class="actionbox">
+          <section class="actionbox actionbox--secondary">
             <div class="eyebrow">Zustand</div>
             <div class="masterboard-source">
               <span class="masterboard-source__label">Datenquelle</span>
@@ -108,7 +108,7 @@ const bootstrapScript = [
         </div>
 
         <div class="masterboard-app__guidance">
-          <section class="guidebox">
+          <section class="guidebox guidebox--context">
             <div class="eyebrow">Führung</div>
             <div class="mode-switch" role="tablist" aria-label="Board-Modus">
               <button type="button" class="tab active" data-masterboard-mode="lead">Führung</button>
@@ -116,6 +116,9 @@ const bootstrapScript = [
             </div>
             <p id="masterboardModeHint" class="mode-hint">
               Fokusmodus: priorisierte Arbeitsstarts, Blocker und kritische Pfade zuerst.
+            </p>
+            <p class="guidebox__lead">
+              Modus, Legende und Signale rahmen die Arbeit. Der primaere Einstieg in offene Fuehrungsarbeit liegt rechts bei den Top-3-Blockern.
             </p>
             <div class="legend-list">
               <div><span class="legend-dot is-red"></span> Rot = Blocker</div>
@@ -127,8 +130,11 @@ const bootstrapScript = [
               <div><span class="legend-mark">✦</span> Golden-Path-relevant</div>
             </div>
           </section>
-          <section class="guidebox guidebox--blockers">
+          <section class="guidebox guidebox--blockers guidebox--start">
             <div class="eyebrow">Top 3 Blocker</div>
+            <p class="guidebox__lead guidebox__lead--primary">
+              Arbeitsstart: zuerst Blocker oeffnen, dann von dort in Knoten, Prozess, Screen oder Arbeitsanker verzweigen.
+            </p>
             <p id="masterboardTopBlockersSummary" class="small masterboard-top-summary"></p>
             <div id="masterboardTopBlockers" class="blocker-list"></div>
           </section>

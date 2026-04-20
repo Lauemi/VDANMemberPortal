@@ -183,6 +183,39 @@ Betroffene Dateien:
 - `public/css/masterboard.css`
 - `10_AENDERUNGSLOG.md`
 
+## 2026-04-20 — Fuehrungsweg wird direkt auf Board und Ops sichtbar gemacht
+
+Status:
+
+- `entschieden`
+
+Kontext:
+
+- Das Zielbild fordert eine lesbare Fuehrung entlang `Board -> Process -> Screen -> File`.
+- Diese Relation war in der Produktbasis bereits technisch vorhanden, aber auf der Hauptoberflaeche noch zu stark im Drawer gebuendelt.
+- Dadurch blieb die Erstfuehrung im Board und in der Ops-Liste zu indirekt.
+
+Entscheidung:
+
+- Der primaere Arbeitsstart wird im oberen Bereich sichtbar staerker auf die Top-3-Blocker gelegt.
+- Karten und Prozesszeilen tragen kuenftig selbst einen kompakten Arbeitsweg:
+  - Board-/Process-Bezug
+  - erster relevanter Screen
+  - erster sichtbarer Datei-/Ref-Anker
+- Die Relation wird damit nicht nur im Drawer, sondern schon in der Flaeche lesbar.
+
+Konsequenzen:
+
+- Die Hauptoberflaeche naehert sich dem dokumentierten MasterControl-Zielbild an, ohne neue Datenmodelle oder neue Navigation zu erfinden.
+- Drawer bleibt Workbench, aber nicht mehr alleiniger Ort fuer relationale Orientierung.
+
+Betroffene Dateien:
+
+- `src/pages/app/masterboard/index.astro`
+- `public/js/masterboard-app.js`
+- `public/css/masterboard.css`
+- `10_AENDERUNGSLOG.md`
+
 ---
 
 ## Offene Entscheidungsfelder

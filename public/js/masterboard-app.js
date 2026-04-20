@@ -646,6 +646,35 @@
     }).join("")}</div>`;
   }
 
+  function workpathMetaChip(label = "", value = "") {
+    if (!value) return "";
+    return `<span class="mini mini--context"><span class="mini__kicker">${esc(label)}</span>${esc(value)}</span>`;
+  }
+
+  function renderWorkpath({ process = null, node = null, screen = null, ref = "", extra = [] } = {}) {
+    const items = [];
+    if (node) {
+      items.push(`<button type="button" class="chip chip--path chip--node" data-action="open-node" data-id="${esc(node.node_id)}"><span class="chip__kicker">Board</span>${esc(node.title)}</button>`);
+    }
+    if (process) {
+      items.push(`<button type="button" class="chip chip--path chip--process" data-action="open-process" data-id="${esc(process.process_id)}"><span class="chip__kicker">Process</span>${esc(process.title)}</button>`);
+    }
+    if (screen) {
+      const route = realRoutePath(screen);
+      if (route) {
+        items.push(`<button type="button" class="chip chip--path chip--screen" data-action="open-route" data-ref="${esc(route)}"><span class="chip__kicker">Screen</span>${esc(screen.title || route)}</button>`);
+      } else {
+        items.push(workpathMetaChip("Screen", screen.title || screen.path || "-"));
+      }
+    }
+    if (ref) {
+      items.push(`<button type="button" class="chip chip--path chip--ref" data-action="search-ref" data-ref="${esc(ref)}"><span class="chip__kicker">File</span>${esc(ref)}</button>`);
+    }
+    extra.filter(Boolean).forEach((item) => items.push(item));
+    if (!items.length) return '<div class="small">Noch kein lesbarer Arbeitsweg hinterlegt.</div>';
+    return `<div class="chip-list chip-list--path">${items.join("")}</div>`;
+  }
+
   function renderMaster() {
     laneBoard.innerHTML = "";
     const visible = visibleNodes();
@@ -673,6 +702,8 @@
         const next = nextActionForNode(node);
         const refs = nodeRefsWithProcessPaths(node);
         const workType = workTypeForNode(node);
+        const primaryProcess = relatedProcesses[0] || null;
+        const primaryScreen = relatedScreens[0] || null;
         const highlight = state.highlightNodeId === node.node_id || relatedProcesses.some((proc) => proc.process_id === state.highlightProcessId);
         let signals = "";
         if (node.risk_level === "hoch") signals += '<span class="signal signal-risk" title="Risiko hoch">!</span>';
@@ -695,6 +726,18 @@
             <div class="mini">Prozesse ${relatedProcesses.length}</div>
             <div class="mini">Screens ${relatedScreens.length}</div>
             <div class="mini">Refs ${refs.length}</div>
+          </div>
+          <div class="card-section card-section--path">
+            <div class="card-section__label">Arbeitsweg</div>
+            ${renderWorkpath({
+              process: primaryProcess,
+              screen: primaryScreen,
+              ref: refs[0] || "",
+              extra: [
+                relatedProcesses.length > 1 ? workpathMetaChip("Mehr Prozesse", `+${relatedProcesses.length - 1}`) : "",
+                relatedScreens.length > 1 ? workpathMetaChip("Mehr Screens", `+${relatedScreens.length - 1}`) : "",
+              ],
+            })}
           </div>
           <div class="card-section">
             <div class="card-section__label">Prozess-Relationen</div>
@@ -731,6 +774,9 @@
       const openBugs = (Array.isArray(proc.bugs) ? proc.bugs : []).filter((bug) => !isClosedBug(bug)).length;
       const next = nextActionForProcess(proc);
       const relatedNodes = relatedNodesForProcess(proc);
+      const refs = processRefs(proc);
+      const primaryNode = relatedNodes[0] || null;
+      const primaryScreen = screens[0] || null;
       const highlight = state.highlightProcessId === proc.process_id || relatedNodes.some((node) => node.node_id === state.highlightNodeId);
       const row = document.createElement("div");
       row.className = `process-row process-table${highlight ? " is-highlighted" : ""}`;
@@ -740,8 +786,23 @@
             <div style="font-weight:900">${esc(proc.title)}</div>
             <span class="pill ${proc.status === "erfuellt" ? "ok" : proc.status === "teilweise" ? "mid" : "bad"}">${statusDot(proc.status)} ${esc(statusText(proc.status))}</span>
           </div>
-          <div class="small">${esc(next.label)}: ${esc(next.text)}</div>
+          <div class="process-primary__next">
+            <span class="process-primary__next-label">${esc(next.label)}</span>
+            <div class="small">${esc(next.text)}</div>
+          </div>
           <div class="process-row__meta">Typ ${esc(workTypeForProcess(proc))} · Owner ${esc(proc.owner || "-")} · Review ${esc(proc.last_reviewed_at || "-")}</div>
+          <div class="process-row__section process-row__section--path">
+            <div class="card-section__label">Arbeitsweg</div>
+            ${renderWorkpath({
+              node: primaryNode,
+              screen: primaryScreen,
+              ref: refs[0] || "",
+              extra: [
+                relatedNodes.length > 1 ? workpathMetaChip("Mehr Nodes", `+${relatedNodes.length - 1}`) : "",
+                screens.length > 1 ? workpathMetaChip("Mehr Screens", `+${screens.length - 1}`) : "",
+              ],
+            })}
+          </div>
           <div class="process-row__section">
             <div class="card-section__label">Related Nodes</div>
             ${renderRelationChips(relatedNodes, "node", "Keine Nodes verknuepft.")}

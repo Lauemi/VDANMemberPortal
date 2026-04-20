@@ -28,6 +28,7 @@
   display: grid;
   grid-template-columns: 1fr 1.4fr;
   gap: 12px;
+  align-items: stretch;
 }
 
 .masterboard-app .guidebox {
@@ -42,13 +43,22 @@
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.008));
 }
 
+.masterboard-app .titlebox {
+  background:
+    radial-gradient(circle at top left, rgba(247, 201, 72, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.024), rgba(255, 255, 255, 0.01)),
+    var(--panel);
+}
+
 .masterboard-app .guidebox--blockers {
   background:
-    radial-gradient(circle at top right, rgba(239, 83, 80, 0.12), transparent 32%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)),
+    radial-gradient(circle at top right, rgba(239, 83, 80, 0.16), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
     var(--panel);
-  border-color: rgba(239, 83, 80, 0.18);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+  border-color: rgba(239, 83, 80, 0.24);
+  box-shadow:
+    0 20px 42px rgba(0, 0, 0, 0.24),
+    0 0 0 1px rgba(239, 83, 80, 0.08) inset;
 }
 
 .masterboard-app .mode-switch {
@@ -79,6 +89,7 @@
   gap: 8px;
   color: var(--muted);
   font-size: 13px;
+  opacity: 0.92;
 }
 
 .legend-dot,
@@ -125,6 +136,7 @@
   color: #f3e2a2;
   line-height: 1.45;
   font-size: 13px;
+  max-width: 58ch;
 }
 
 .masterboard-app .blocker-item {
@@ -137,7 +149,7 @@
 .masterboard-app .blocker-item--button {
   width: 100%;
   text-align: left;
-  padding: 14px;
+  padding: 16px 16px 16px 18px;
   position: relative;
   overflow: hidden;
   transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
@@ -164,7 +176,7 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .masterboard-app .blocker-item__index {
@@ -183,7 +195,8 @@
 .masterboard-app .blocker-item__title {
   font-weight: 800;
   color: var(--text);
-  font-size: 18px;
+  font-size: 19px;
+  line-height: 1.15;
 }
 
 .masterboard-app .blocker-item__status,
@@ -196,11 +209,16 @@
 
 .masterboard-app .blocker-item__status {
   font-weight: 800;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .masterboard-app .blocker-item__meta {
   color: #ddd2a0;
-  line-height: 1.45;
+  line-height: 1.5;
+  max-width: 70ch;
 }
 
 .masterboard-app * {
@@ -227,6 +245,11 @@
 .masterboard-app .filterbox,
 .masterboard-app .actionbox {
   padding: 16px;
+}
+
+.masterboard-app .filterbox,
+.masterboard-app .actionbox {
+  opacity: 0.94;
 }
 
 .masterboard-source {
@@ -320,6 +343,7 @@
   color: var(--muted);
   font-size: 13px;
   line-height: 1.45;
+  max-width: 60ch;
 }
 
 .masterboard-app .masterboard-intent--small {
@@ -425,6 +449,7 @@
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
   border: 1px solid var(--line);
+  opacity: 0.92;
 }
 
 .masterboard-app .stat .k {
@@ -472,13 +497,13 @@
     linear-gradient(180deg, #171717, #111111);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  padding: 14px;
+  padding: 14px 14px 16px;
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
 }
 
 .masterboard-app .card-next {
   margin-top: 12px;
-  padding: 12px;
+  padding: 14px;
   border-radius: 14px;
   border: 1px solid rgba(247, 201, 72, 0.16);
   background: linear-gradient(180deg, rgba(247, 201, 72, 0.12), rgba(247, 201, 72, 0.04));
@@ -504,7 +529,7 @@
   justify-content: space-between;
   align-items: flex-end;
   gap: 12px;
-  padding: 6px 6px 10px;
+  padding: 8px 8px 12px;
 }
 
 .masterboard-app .lane-title {
@@ -539,7 +564,7 @@
 .masterboard-app .cards {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .masterboard-app .mb-card {
@@ -552,7 +577,7 @@
   background: var(--card-bg);
   border: 1px solid var(--card-line);
   color: var(--card-text);
-  min-height: 208px;
+  min-height: 218px;
   display: flex;
   flex-direction: column;
   cursor: pointer;
@@ -571,7 +596,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .masterboard-app .badge,
@@ -589,6 +614,7 @@
   letter-spacing: 0.04em;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .masterboard-app .mb-card .card-status {
@@ -617,6 +643,7 @@
   font-size: 12px;
   color: rgba(255, 255, 255, 0.64);
   line-height: 1.35;
+  margin-bottom: 2px;
 }
 
 .masterboard-app .mb-card .card-tags {
@@ -730,7 +757,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 8px 2px;
+  padding: 10px 8px 4px;
 }
 
 .masterboard-app .flow-connector .line {
@@ -749,6 +776,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
 }
 
 .masterboard-app .process-table {
@@ -779,7 +807,7 @@
 
 .masterboard-app .process-row {
   cursor: pointer;
-  margin-top: 10px;
+  margin-top: 12px;
   transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
@@ -793,7 +821,7 @@
 .masterboard-app .process-primary {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -824,6 +852,7 @@
 
 .masterboard-app .process-row .small {
   color: #ddd2a0;
+  line-height: 1.5;
 }
 
 .masterboard-app .process-row .chip--open {
@@ -842,6 +871,21 @@
   padding: 5px 9px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.08);
+}
+
+.masterboard-app .chip {
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(243, 243, 243, 0.92);
+}
+
+.masterboard-app .chip--screen {
+  border-color: rgba(96, 165, 250, 0.22);
+  background: rgba(96, 165, 250, 0.09);
+  color: #dcebff;
+}
+
+.masterboard-app .chip--ref {
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .masterboard-app .ok { color: #9cf7b4; }

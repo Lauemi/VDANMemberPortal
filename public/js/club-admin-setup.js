@@ -851,15 +851,16 @@
 
     const draft = state.csvImportDraft;
     if (!draft?.file) {
-      stateEl.innerHTML = pill("Serverseitiger Parse offen", "warn");
-      metaEl.textContent = "Geplanter Pfad: `csv_create_import_job` → serverseitiger Parse/Mapping-Step → `csv_get_preview` → `csv_confirm_import`.";
+      stateEl.innerHTML = pill("CSV noch nicht hochgeladen", "warn");
+      metaEl.textContent = "CSV hochladen → serverseitiger Parse → Vorschau prüfen → Import bestätigen.";
       if (confirmBtn) confirmBtn.disabled = true;
       return;
     }
 
-    stateEl.innerHTML = pill("CSV vorbereitet", "good");
-    metaEl.textContent = `Bereit für Job-Anlage: ${draft.file.name} · ${draft.file.size} Bytes · Delimiter ${draft.delimiter === "\t" ? "Tab" : draft.delimiter}. Der Parse/Row-Push bleibt serverseitig gekapselt.`;
-    if (confirmBtn) confirmBtn.disabled = !String(draft.job_id || "").trim();
+    const hasRows = Array.isArray(draft.preview_rows) && draft.preview_rows.length > 0;
+    stateEl.innerHTML = hasRows ? pill("CSV geparst – bereit zur Bestätigung", "good") : pill("CSV hochgeladen – Parse ausstehend", "warn");
+    metaEl.textContent = `${draft.file.name} · ${draft.file.size} Bytes · Delimiter ${draft.delimiter === "\t" ? "Tab" : draft.delimiter}${hasRows ? ` · ${draft.preview_rows.length} Zeilen erkannt` : ""}.`;
+    if (confirmBtn) confirmBtn.disabled = !hasRows;
   }
 
   function renderCsvPreviewRows(rows = [], note = "") {
@@ -903,15 +904,9 @@
       file,
       delimiter: delimiterValue(delimiterInput?.value || ","),
       has_header: true,
-      contract: {
-        create_job_rpc: "csv_create_import_job",
-        preview_rpc: "csv_get_preview",
-        confirm_rpc: "csv_confirm_import",
-        parse_function: "club-members-csv-parse",
-      },
     };
     renderCsvImportDraft();
-    setOnboardingMsg("CSV-Rahmen vorbereitet. Der eigentliche Parse- und Preview-Schritt bleibt serverseitig.", false);
+    setOnboardingMsg("CSV-Rahmen vorbereitet.", false);
   }
 
   async function startCsvImportServerParse() {
@@ -939,27 +934,42 @@
     const data = await callMultipartFn("club-members-csv-parse", formData);
     state.csvImportDraft = {
       ...(state.csvImportDraft || {}),
-      job_id: String(data?.job_id || "").trim(),
       preview_rows: Array.isArray(data?.preview) ? data.preview : [],
     };
     renderCsvImportDraft();
     renderCsvPreviewRows(
       Array.isArray(data?.preview) ? data.preview : [],
-      String(data?.note || "Job angelegt. Preview wurde über csv_get_preview geladen."),
+      String(data?.note || "CSV geparst. Vorschau prüfen und Import bestätigen."),
     );
-    setOnboardingMsg("CSV-Job angelegt. Preview stammt aus dem bestehenden Preview-Contract.");
+    setOnboardingMsg("CSV geparst. Vorschau prüfen, dann Import bestätigen.");
   }
 
   async function confirmCsvImportDraft() {
-    const jobId = String(state.csvImportDraft?.job_id || "").trim();
-    if (!jobId) {
-      setOnboardingMsg("Bitte zuerst eine CSV vorbereiten.", true);
+    const clubId = String(state.csvImportDraft?.club_id || state.onboardingSelectedClubId || "").trim();
+    const previewRows = Array.isArray(state.csvImportDraft?.preview_rows) ? state.csvImportDraft.preview_rows : [];
+    if (!clubId || !previewRows.length) {
+      setOnboardingMsg("Bitte zuerst eine CSV hochladen und parsen.", true);
       return;
     }
+    const p_rows = previewRows.map((row) => {
+      const pv = row?.preview_values || {};
+      return {
+        member_no:  String(pv.member_no  || "").trim() || null,
+        first_name: String(pv.first_name || "").trim() || null,
+        last_name:  String(pv.last_name  || "").trim() || null,
+        status:     String(pv.status     || "active").trim(),
+        email:      String(pv.email      || "").trim() || null,
+        phone:      String(pv.phone      || "").trim() || null,
+        birthdate:  String(pv.birthdate  || "").trim() || null,
+        street:     String(pv.street     || "").trim() || null,
+        zip:        String(pv.zip        || "").trim() || null,
+        city:       String(pv.city       || "").trim() || null,
+      };
+    });
     setOnboardingMsg("CSV-Import wird bestätigt ...");
-    await sb("/rest/v1/rpc/csv_confirm_import", {
+    await sb("/rest/v1/rpc/import_csv_confirmed", {
       method: "POST",
-      body: JSON.stringify({ p_job_id: jobId }),
+      body: JSON.stringify({ p_club_id: clubId, p_rows }),
     }, true);
     setOnboardingMsg("CSV-Import bestätigt.");
     await loadOnboardingStatus({ clubId: state.onboardingSelectedClubId });

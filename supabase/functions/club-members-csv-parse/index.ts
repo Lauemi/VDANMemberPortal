@@ -42,26 +42,6 @@ async function sbServiceFetch(path: string, init: RequestInit = {}) {
   return res;
 }
 
-async function callRpc<T>(fn: string, payload: Record<string, unknown>): Promise<T> {
-  const res = await sbServiceFetch(`/rest/v1/rpc/${fn}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload || {}),
-  });
-  return await res.json().catch(() => null) as T;
-}
-
-async function sbServiceJson(path: string, init: RequestInit = {}) {
-  const res = await sbServiceFetch(path, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init.headers || {}),
-    },
-  });
-  return await res.json().catch(() => null);
-}
-
 async function getAuthUser(req: Request, supabaseUrl: string, serviceKey: string) {
   const bearerHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
   if (!bearerHeader) return null;
@@ -170,63 +150,19 @@ function suggestPreviewValues(sourceValues: Record<string, string>) {
     return "";
   };
   return {
-    member_no: pick("member_no", "mitgliedsnummer", "mitglied_nr", "nr", "number"),
-    first_name: pick("first_name", "vorname"),
-    last_name: pick("last_name", "nachname"),
-    status: pick("status"),
+    member_no:   pick("member_no", "mitgliedsnummer", "mitglied_nr", "nr", "number"),
+    first_name:  pick("first_name", "vorname"),
+    last_name:   pick("last_name", "nachname"),
+    status:      pick("status") || "active",
     club_member_no: pick("club_member_no", "vereinsnummer", "vereins_nr"),
     fishing_card_type: pick("fishing_card_type", "karten_typ", "kartentyp"),
+    email:       pick("email", "e_mail", "e_mail_adresse", "mail"),
+    phone:       pick("phone", "telefon", "tel", "telefonnummer"),
+    birthdate:   pick("birthdate", "geburtsdatum", "geburtstag", "geb_datum"),
+    street:      pick("street", "strasse", "stra_e", "adresse"),
+    zip:         pick("zip", "postal_code", "postleitzahl", "plz"),
+    city:        pick("city", "ort", "wohnort", "stadt"),
   };
-}
-
-async function sha256Hex(input: string) {
-  const bytes = new TextEncoder().encode(input);
-  const hash = await crypto.subtle.digest("SHA-256", bytes);
-  return [...new Uint8Array(hash)].map((value) => value.toString(16).padStart(2, "0")).join("");
-}
-
-async function upsertImportRows(jobId: string, rows: Array<{
-  row_no: number;
-  row_status: string;
-  source_values_json: Record<string, string>;
-  normalized_values_json: Record<string, string>;
-  target_preview_json: Record<string, string>;
-}>) {
-  const payload = await Promise.all(rows.map(async (row) => {
-    const fingerprint = JSON.stringify({
-      import_job_id: jobId,
-      row_no: row.row_no,
-      source_values_json: row.source_values_json,
-      target_preview_json: row.target_preview_json,
-    });
-    const rowHash = await sha256Hex(fingerprint);
-    return {
-      import_job_id: jobId,
-      mapping_version_id: null,
-      row_no: row.row_no,
-      row_hash: rowHash,
-      idempotency_key: `${jobId}:${row.row_no}:${rowHash.slice(0, 16)}`,
-      row_status: row.row_status,
-      source_values_json: row.source_values_json,
-      normalized_values_json: row.normalized_values_json,
-      target_preview_json: row.target_preview_json,
-      target_domain: "club_onboarding",
-      target_table_family: "club_members",
-      target_entity_type: "club_member",
-      target_entity_id: null,
-      source: "csv_onboarding",
-      external_ref: null,
-    };
-  }));
-
-  await sbServiceFetch(`/rest/v1/import_rows?on_conflict=import_job_id,row_no`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Prefer": "resolution=merge-duplicates,return=minimal",
-    },
-    body: JSON.stringify(payload),
-  });
 }
 
 Deno.serve(async (req: Request) => {
@@ -259,21 +195,6 @@ Deno.serve(async (req: Request) => {
     const headersRow = hasHeader ? rows[0] : rows[0].map((_, index) => `column_${index + 1}`);
     const dataRows = hasHeader ? rows.slice(1) : rows;
 
-    const rawJobId = await callRpc<unknown>("csv_create_import_job", {
-      p_club_id: clubId,
-      p_filename: file.name,
-      p_size: file.size,
-      p_sha256: null,
-      p_delimiter: delimiter,
-      p_has_header: hasHeader,
-    });
-    const jobId = txt(
-      rawJobId && typeof rawJobId === "object" && !Array.isArray(rawJobId)
-        ? (rawJobId as Record<string, unknown>).job_id
-        : rawJobId,
-    );
-    if (!jobId) throw new Error("csv_create_import_job_failed");
-
     const parsedRows = dataRows.map((row, index) => {
       const sourceValues = headersRow.reduce<Record<string, string>>((acc, key, keyIndex) => {
         acc[txt(key) || `column_${keyIndex + 1}`] = txt(row[keyIndex]);
@@ -287,32 +208,18 @@ Deno.serve(async (req: Request) => {
       return {
         row_no: index + 1,
         row_status: issues.length ? "review" : "ready",
-        source_values_json: sourceValues,
-        normalized_values_json: sourceValues,
-        target_preview_json: previewValues,
         source_values: sourceValues,
         preview_values: previewValues,
         issues,
       };
     });
 
-    await upsertImportRows(jobId, parsedRows);
-    const previewRows = await callRpc<unknown[]>("csv_get_preview", { p_job_id: jobId });
-    const preview = Array.isArray(previewRows) ? previewRows : [];
-
     return new Response(
       JSON.stringify({
         ok: true,
-        job_id: jobId,
         headers: headersRow,
-        preview,
-        note: "Import-Job wurde angelegt, serverseitig nach import_rows geschrieben und die Preview über csv_get_preview geladen.",
-        contract: {
-          create_job_rpc: "csv_create_import_job",
-          preview_rpc: "csv_get_preview",
-          confirm_rpc: "csv_confirm_import",
-          parse_function: "club-members-csv-parse",
-        },
+        preview: parsedRows,
+        note: "CSV serverseitig geparst. Vorschau prüfen und Import bestätigen.",
       }),
       { status: 200, headers: { ...headers, "Content-Type": "application/json" } },
     );

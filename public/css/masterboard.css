@@ -422,12 +422,17 @@
 }
 
 .masterboard-app .lane-sub,
-.masterboard-app .small,
-.masterboard-drawer .small {
+.masterboard-app .small {
   font-size: 12px;
   color: var(--muted);
   line-height: 1.5;
   color: black;
+}
+
+.masterboard-drawer .small {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
 }
 
 .masterboard-app .lane-meta {
@@ -746,6 +751,7 @@
 
 .masterboard-drawer .panel {
   padding: 16px;
+  color: var(--text);
 }
 
 .masterboard-drawer .panel-head {
@@ -758,6 +764,7 @@
 .masterboard-drawer h3 {
   margin: 0;
   font-size: 17px;
+  color: var(--text);
 }
 
 .masterboard-drawer .item {
@@ -856,6 +863,7 @@
 .masterboard-drawer .screen-item__title {
   font-size: 15px;
   font-weight: 900;
+  color: var(--text);
 }
 
 .masterboard-drawer .workbench-hero {
@@ -893,6 +901,16 @@
 
 .masterboard-drawer .workbench-next {
   margin-bottom: 12px;
+}
+
+.masterboard-drawer strong,
+.masterboard-drawer .eyebrow,
+.masterboard-drawer .subtitle,
+.masterboard-drawer .panel-head,
+.masterboard-drawer .workbench-next,
+.masterboard-drawer .workbench-next p,
+.masterboard-drawer .workbench-kpi strong {
+  color: var(--text);
 }
 
 .masterboard-drawer .advanced-panel summary {

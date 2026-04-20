@@ -1075,8 +1075,8 @@
       ],
       "gaps": [
         "CHECKOUT_SUCCESS_URL / CHECKOUT_CANCEL_URL muessen auf echte Portal-URLs zeigen",
-        "sc-bill-1 blockiert: STRIPE_SECRET_KEY + STRIPE_FCP_PRICE_ID + User-JWT erforderlich",
-        "sc-bill-2/3 DB-Layer bewiesen; voller End-to-End-Beweis erfordert STRIPE_WEBHOOK_SECRET im Supabase-Projekt",
+        "sc-bill-1 Operator-blockiert: erfordert live User-Checkout-Session (Stripe-Config bestaetigt im Board)",
+        "sc-bill-2/3 DB-Layer bewiesen; voller HMAC-End-to-End-Beweis erfordert reale Stripe-Webhook-Zustellung",
         "ADM Panel club_settings_billing_overview noch gap"
       ],
       "id": "billing-stripe",

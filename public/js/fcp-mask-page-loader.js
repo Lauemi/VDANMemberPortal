@@ -53,7 +53,11 @@
     }
 
     await pattern.init();
-    await resolver.hydrateVisiblePanels(pattern);
+    // Only auto-hydrate if a valid session exists — panels with RPC bindings require auth.
+    // Without a session, panels load on-demand when the user opens them (autoLoadPanelOnOpen: true).
+    if (window.VDAN_AUTH?.loadSession?.()?.access_token) {
+      await resolver.hydrateVisiblePanels(pattern);
+    }
 
     if (onReady) {
       await onReady({

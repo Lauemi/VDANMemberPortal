@@ -243,8 +243,8 @@
         {
           "id": "b-on-3",
           "severity": "mittel",
-          "status": "offen",
-          "title": "Settings-Maske: banking_profile (index 0, auto-open) loest 400 aus -- Mask-Auth-Forwarding-Bug; Fix: Panel-Reihenfolge oder Auth-Guard in boot() vor hydrateVisiblePanels"
+          "status": "fix-applied",
+          "title": "Settings-Maske: banking_profile 400 -- fcp-mask-page-loader.js: hydrateVisiblePanels jetzt hinter VDAN_AUTH.loadSession-Guard; live-Verifikation ausstehend"
         }
       ],
       "id": "p-onboarding",

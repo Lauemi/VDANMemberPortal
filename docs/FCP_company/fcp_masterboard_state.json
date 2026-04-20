@@ -1075,19 +1075,23 @@
         "Wer triggert Checkout: nur Superadmin manuell oder Self-Service durch Vereins-Admin?"
       ],
       "gaps": [
-        "CHECKOUT_SUCCESS_URL / CHECKOUT_CANCEL_URL m\u00fcssen auf echte Portal-URLs zeigen",
-        "Smoke-Test (curl checkout-session) noch ausstehend",
+        "CHECKOUT_SUCCESS_URL / CHECKOUT_CANCEL_URL muessen auf echte Portal-URLs zeigen",
+        "sc-bill-1 blockiert: STRIPE_SECRET_KEY + STRIPE_FCP_PRICE_ID + User-JWT erforderlich",
+        "sc-bill-2/3 DB-Layer bewiesen; voller End-to-End-Beweis erfordert STRIPE_WEBHOOK_SECRET im Supabase-Projekt",
         "ADM Panel club_settings_billing_overview noch gap"
       ],
       "id": "billing-stripe",
       "lane": "system",
-      "last_verified_at": "2026-04-10",
+      "last_verified_at": "2026-04-20",
       "launch_class": "L2",
       "progress_invisible": [
         "Log-first Idempotenz via stripe_event_id UNIQUE index",
         "fcp_is_superadmin() als Auth-Pattern (kein current_setting)",
         "billing_state = checkout_open beim Session-Anlegen, active erst via Webhook",
-        "member_count automatisch aus club_members WHERE status = active"
+        "member_count automatisch aus club_members WHERE status = active",
+        "stripe-webhook-handler v4: event_id NOT NULL fix (schrieb nur stripe_event_id, verletzte NOT NULL + unique(provider,event_id))",
+        "sc-bill-2 DB-Layer bewiesen: club_billing_webhook_events INSERT mit event_id + stripe_event_id erfolgreich",
+        "sc-bill-3 DB-Layer bewiesen: club_billing_subscriptions UPSERT setzt billing_state=active korrekt"
       ],
       "progress_visible": [
         "Stripe Account vorhanden (acct_1Smvj2GnWHH4jaHM)",

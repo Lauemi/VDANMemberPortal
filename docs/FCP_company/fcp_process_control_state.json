@@ -358,14 +358,14 @@
     {
       "bugs": [],
       "id": "p-billing",
-      "last_reviewed_at": "2026-04-10",
+      "last_reviewed_at": "2026-04-20",
       "owner": "michael",
       "priority": "kritisch",
       "related_nodes": [
         "billing-stripe",
         "integrations"
       ],
-      "review_note": "Stand 2026-04-10: RPC vorhanden, Portal-UI angebunden; formaler Checkout-/Webhook-Nachweis bleibt offen.",
+      "review_note": "2026-04-20: stripe-webhook-handler v4 deployed (event_id NOT NULL fix). sc-bill-2/3 DB-Layer bewiesen: INSERT in club_billing_webhook_events und UPSERT billing_state=active erfolgreich. sc-bill-1 blockiert: STRIPE_SECRET_KEY + STRIPE_FCP_PRICE_ID + User-JWT nicht autonom pruefbar. STRIPE_WEBHOOK_SECRET nicht bestaetigt (Funktion antwortet 401 bei falscher Signatur — Secret-Existenz nicht eindeutig pruefbar).",
       "screens": [
         {
           "bugs_open": 0,
@@ -374,7 +374,7 @@
           "checked_smoke": false,
           "checked_ui": true,
           "id": "s-billing-checkout",
-          "notes": "Deployed. Portal-UI kann den Checkout bereits ausloesen.",
+          "notes": "Deployed v8. Portal-UI kann Checkout ausloesen. Smoke-Test blockiert: STRIPE_SECRET_KEY + STRIPE_FCP_PRICE_ID + User-JWT erforderlich.",
           "path": "(edge) fcp-create-checkout-session",
           "status": "erfuellt",
           "title": "Checkout Session"
@@ -383,10 +383,10 @@
           "bugs_open": 0,
           "checked_access": true,
           "checked_function": true,
-          "checked_smoke": false,
+          "checked_smoke": true,
           "checked_ui": false,
           "id": "s-billing-webhook",
-          "notes": "Deployed. Log-first. Idempotent. 4 Events.",
+          "notes": "Deployed v4. event_id NOT NULL fix. DB-Layer smoke: INSERT club_billing_webhook_events bewiesen. HMAC-Pfad erfordert STRIPE_WEBHOOK_SECRET.",
           "path": "(edge) stripe-webhook-handler",
           "status": "erfuellt",
           "title": "Stripe Webhook Handler"
@@ -398,7 +398,7 @@
           "checked_smoke": false,
           "checked_ui": true,
           "id": "s-billing-overview",
-          "notes": "Portal-Billing-Block und Statusanzeige stehen; formaler Smoke-Test und ADM-Spezialpanel bleiben offen.",
+          "notes": "Portal-Billing-Block und Statusanzeige stehen; ADM-Spezialpanel bleibt offen.",
           "path": "(neu) ADM club_settings_billing_overview",
           "status": "teilweise",
           "title": "Billing Overview Panel"
@@ -408,17 +408,17 @@
         {
           "done": false,
           "id": "sc-bill-1",
-          "title": "fcp-create-checkout-session gibt checkout_url zur\u00fcck"
+          "title": "fcp-create-checkout-session gibt checkout_url zurueck (blockiert: STRIPE_SECRET_KEY + STRIPE_FCP_PRICE_ID + User-JWT)"
         },
         {
           "done": false,
           "id": "sc-bill-2",
-          "title": "Stripe Webhook Event landet in club_billing_webhook_events"
+          "title": "Stripe Webhook Event landet in club_billing_webhook_events (DB-Layer bewiesen; HMAC-Pfad erfordert STRIPE_WEBHOOK_SECRET)"
         },
         {
           "done": false,
           "id": "sc-bill-3",
-          "title": "billing_state wechselt nach checkout.session.completed auf active"
+          "title": "billing_state wechselt nach checkout.session.completed auf active (DB-Layer bewiesen; abhaengig von sc-bill-2 End-to-End)"
         }
       ],
       "status": "teilweise",

@@ -32,7 +32,8 @@ serve(async (req) => {
   }
 
   await supabase.from("club_billing_webhook_events").insert({
-    stripe_event_id: event.id,
+    event_id: event.id,       // satisfies NOT NULL + unique(provider, event_id)
+    stripe_event_id: event.id, // idempotency index compatibility
     event_type: event.type,
     payload: event,
     received_at: new Date().toISOString(),

@@ -261,7 +261,7 @@
         "work-onboard",
         "welcome"
       ],
-      "review_note": "M2 (CSV-Pfad-Fix) lokal abgeschlossen: Edge Function bereinigt, Frontend auf import_csv_confirmed umgestellt. Edge Function deploy und M3 Smoke-Test stehen noch aus. sc-on-4 korrigiert auf false (war faelschlicherweise true). Portal-RPC-404 (self_portal_access_state/unlink) remote behoben.",
+      "review_note": "M3 CSV Golden Path smoke-getestet: Edge Function club-members-csv-parse deployed (v1, ACTIVE). import_csv_confirmed: 2 Zeilen in club_members + members geschrieben, birthdate nullable fix (20260420000000) deployed. Testdaten bereinigt. sc-on-4 auf true.",
       "screens": [
         {
           "bugs_open": 2,
@@ -320,12 +320,12 @@
           "build_ref": "main@2026-04-20",
           "checked_access": false,
           "checked_function": true,
-          "checked_smoke": false,
+          "checked_smoke": true,
           "checked_ui": true,
           "id": "s-csv-import",
-          "notes": "M2 lokal abgeschlossen: Job/Preview-Layer entfernt; Edge Function direkt parse + return preview; Frontend ruft import_csv_confirmed(p_club_id, p_rows). Edge Function noch nicht deployed. Smoke-Test M3 offen.",
+          "notes": "M3 smoke proven: Edge Function deployed v1 ACTIVE; import_csv_confirmed(club_id, rows) schreibt korrekt in club_members + members (birthdate nullable). Parse-Layer rein in-memory. Testdaten bereinigt.",
           "path": "(neu) csv-onboarding",
-          "status": "teilweise",
+          "status": "done",
           "title": "CSV-Import"
         }
       ],
@@ -346,7 +346,7 @@
           "title": "Onboarding-Fortschritt ist sichtbar"
         },
         {
-          "done": false,
+          "done": true,
           "id": "sc-on-4",
           "title": "CSV Golden Path end-to-end smoke-getestet (parse -> confirm -> DB-Verify)"
         }

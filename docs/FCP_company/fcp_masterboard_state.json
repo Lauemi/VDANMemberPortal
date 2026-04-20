@@ -428,8 +428,6 @@
         "eine Datei oder Multi-Sheet? wie viel Inline-Korrektur im MVP?"
       ],
       "gaps": [
-        "CSV Edge Function noch nicht remote deployed (M2 lokal angewendet, deploy ausstehend)",
-        "M3 Smoke-Test (parse -> confirm -> DB-Verify) noch nicht ausgefuehrt",
         "Mapping bleibt bewusst minimal und noch nicht als gefuehrter Inline-Korrekturpfad ausgebaut"
       ],
       "id": "csv",
@@ -439,21 +437,23 @@
       "progress_invisible": [
         "Zielpfad auf club_members statt members festgezogen",
         "M2 abgeschlossen: Edge Function von Job/Preview-Layer bereinigt; Frontend auf import_csv_confirmed(p_club_id, p_rows) umgestellt",
-        "suggestPreviewValues() um email, phone, birthdate, street, zip, city erweitert"
+        "suggestPreviewValues() um email, phone, birthdate, street, zip, city erweitert",
+        "M3 smoke proven: Edge Function v1 ACTIVE, 2 Zeilen in club_members + members geschrieben, birthdate nullable fix (20260420000000) deployed, Testdaten bereinigt"
       ],
       "progress_visible": [
         "CSV-UI-Rahmen im Onboarding vorhanden",
-        "Direkter Parse-Confirm-Pfad ohne Job-Schicht lokal fertig"
+        "Direkter Parse-Confirm-Pfad ohne Job-Schicht live und smoke-getestet"
       ],
       "refs": [
         "docs/project/FCP_CSV_ONBOARDING_ARCHITEKTUR_2026-03-31.md",
         "docs/project/FCP_CSV_ONBOARDING_REPO_SCHEMA_CHECK_2026-03-31.md",
         "docs/project/FCP_CSV_ONBOARDING_MVP_TODO_2026-03-31.md",
         "supabase/functions/club-members-csv-parse/index.ts",
-        "public/js/club-admin-setup.js"
+        "public/js/club-admin-setup.js",
+        "supabase/migrations/20260420000000_members_birthdate_nullable.sql"
       ],
-      "risk_level": "hoch",
-      "status": "teilweise",
+      "risk_level": "mittel",
+      "status": "erfuellt",
       "title": "CSV-Import"
     },
     {

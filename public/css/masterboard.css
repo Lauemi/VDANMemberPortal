@@ -37,12 +37,18 @@
   padding: 16px;
 }
 
+.masterboard-app .filterbox,
+.masterboard-app .actionbox {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.008));
+}
+
 .masterboard-app .guidebox--blockers {
   background:
     radial-gradient(circle at top right, rgba(239, 83, 80, 0.12), transparent 32%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)),
     var(--panel);
   border-color: rgba(239, 83, 80, 0.18);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
 }
 
 .masterboard-app .mode-switch {
@@ -162,8 +168,8 @@
 }
 
 .masterboard-app .blocker-item__index {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
@@ -177,7 +183,7 @@
 .masterboard-app .blocker-item__title {
   font-weight: 800;
   color: var(--text);
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .masterboard-app .blocker-item__status,
@@ -251,6 +257,7 @@
   color: var(--muted);
   font-size: 12px;
   font-weight: 800;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
 }
 
 .masterboard-source__badge.is-live {
@@ -416,7 +423,7 @@
 .masterboard-app .stat {
   padding: 10px 12px;
   border-radius: 14px;
-  background: var(--panel-2);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
   border: 1px solid var(--line);
 }
 
@@ -466,6 +473,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   padding: 14px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
 }
 
 .masterboard-app .card-next {
@@ -544,7 +552,7 @@
   background: var(--card-bg);
   border: 1px solid var(--card-line);
   color: var(--card-text);
-  min-height: 178px;
+  min-height: 208px;
   display: flex;
   flex-direction: column;
   cursor: pointer;
@@ -634,6 +642,8 @@
 
 .masterboard-app .card-section {
   margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .masterboard-app .card-section__label {
@@ -707,12 +717,12 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 8px 0;
+  padding: 8px 8px 2px;
 }
 
 .masterboard-app .flow-connector .line {
   height: 1px;
-  background: #444;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
   flex: 1;
 }
 
@@ -722,6 +732,10 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .masterboard-app .process-table {
@@ -743,9 +757,11 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #cfcfcf;
+  color: var(--muted-2);
   font-weight: 700;
   background: transparent;
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .masterboard-app .process-row {
@@ -779,6 +795,7 @@
 .masterboard-app .process-primary__head > div:first-child {
   font-size: 20px;
   line-height: 1.1;
+  color: var(--text);
 }
 
 .masterboard-app .process-row__meta {
@@ -794,6 +811,12 @@
 
 .masterboard-app .process-row .small {
   color: #ddd2a0;
+}
+
+.masterboard-app .process-row .chip--open {
+  background: linear-gradient(180deg, rgba(247, 201, 72, 0.18), rgba(247, 201, 72, 0.08));
+  border-color: rgba(247, 201, 72, 0.3);
+  color: #fff1bc;
 }
 
 .masterboard-app .process-row > div:not(.process-primary) {
@@ -925,6 +948,15 @@
   color: rgba(243, 243, 243, 0.9);
   font-size: 12px;
   font-weight: 800;
+  transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
+}
+
+.masterboard-drawer .chip:hover,
+.masterboard-app .chip:hover,
+.masterboard-drawer .chip:focus-visible,
+.masterboard-app .chip:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .masterboard-drawer .chip__kicker,
@@ -1008,6 +1040,7 @@
   background:
     radial-gradient(circle at top right, rgba(247, 201, 72, 0.12), transparent 30%),
     linear-gradient(180deg, rgba(247, 201, 72, 0.08), rgba(247, 201, 72, 0.02));
+  border-color: rgba(247, 201, 72, 0.18);
 }
 
 .masterboard-drawer .workbench-grid {
@@ -1062,6 +1095,9 @@
   font-weight: 700;
   color: var(--muted);
   list-style: none;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
 }
 
 .masterboard-drawer .advanced-panel__body {
@@ -1075,6 +1111,7 @@
   border-style: dashed;
   border-color: rgba(255, 255, 255, 0.1);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.01));
+  opacity: 0.82;
 }
 
 .masterboard-app .c-marketing { --card-bg: linear-gradient(180deg, #61112d, #4d0f26); --card-line: #ba3d73; --card-text: #ffd9e7; }

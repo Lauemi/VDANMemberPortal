@@ -993,12 +993,11 @@
         "Wann wird get_onboarding_process_state der f\u00fchrende Step-State-Pfad f\u00fcr den Onboarding-Renderer?"
       ],
       "gaps": [
-        "Migration 20260407103200 muss gegen echte DB gepr\u00fcft werden (war bereits produktiv vorhanden laut RPC_Functions.json)",
-        "invite_state USED/EXPIRED/REVOKED im Client-Flow noch nicht vollst\u00e4ndig sichtbar getestet"
+        "invite_state USED/EXPIRED/REVOKED im Client-Flow noch nicht vollstaendig sichtbar getestet"
       ],
       "id": "onboarding-process",
       "lane": "system",
-      "last_verified_at": "2026-04-07",
+      "last_verified_at": "2026-04-20",
       "launch_class": "L2",
       "progress_invisible": [
         "invite_state: SHA-256-Validierung gegen app_secure_settings (mirrors club-invite-verify)",
@@ -1008,7 +1007,7 @@
         "current_user_has_role_in_club: fehlende Migration nachgezogen"
       ],
       "progress_visible": [
-        "get_onboarding_process_state RPC im Repo als Migration vorhanden"
+        "get_onboarding_process_state RPC remote bestaetigt aktiv; sc-on-1/2/3/4 alle done"
       ],
       "refs": [
         "supabase/migrations/20260407103200_harden_onboarding_process_state.sql",

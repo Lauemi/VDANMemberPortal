@@ -374,7 +374,7 @@
           "checked_smoke": false,
           "checked_ui": true,
           "id": "s-billing-checkout",
-          "notes": "Deployed v8. Portal-UI kann Checkout ausloesen. Smoke-Test blockiert: STRIPE_SECRET_KEY + STRIPE_FCP_PRICE_ID + User-JWT erforderlich.",
+          "notes": "Deployed v8. Stripe-Config im Board bestaetigt (Price ID + Webhook-Ziel). Portal-UI kann Checkout ausloesen. Smoke-Test erfordert live User-Checkout durch Operator.",
           "path": "(edge) fcp-create-checkout-session",
           "status": "erfuellt",
           "title": "Checkout Session"
@@ -408,7 +408,7 @@
         {
           "done": false,
           "id": "sc-bill-1",
-          "title": "fcp-create-checkout-session gibt checkout_url zurueck (blockiert: STRIPE_SECRET_KEY + STRIPE_FCP_PRICE_ID + User-JWT)"
+          "title": "fcp-create-checkout-session gibt checkout_url zurueck (Stripe-Config im Board bestaetigt; erfordert live User-Checkout-Session durch Operator)"
         },
         {
           "done": false,
@@ -647,6 +647,7 @@
     "done_rule": "Aenderung ist erst abgeschlossen, wenn Code + betroffene JSON-Knoten + Kontrollstatus aktualisiert sind.",
     "scope": "Operatives Kontrollboard fuer Prozesse, Screens, Smoke Checks, UI-Abnahmen und offene Bugs."
   },
+  "last_reviewed_at": "2026-04-20",
   "source_of_truth": "supabase-live-sync",
   "updated_at": "2026-04-20",
   "version": 1

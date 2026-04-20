@@ -79,6 +79,35 @@ Vor jeder Aenderung muss der Folge-Agent mindestens diese Fragen beantworten:
 
 Wenn diese Fragen nicht beantwortet wurden, ist die Aenderung nicht sauber vorbereitet.
 
+## Vierfach-Pflicht bei jeder relevanten Aenderung
+
+Jede relevante MasterControl-Aenderung muss immer vier Ebenen gemeinsam mitdenken:
+
+1. **Produkt**
+   - reale UI-Dateien
+   - reale Interaktion
+   - reale Darstellung
+2. **Relation**
+   - Node -> Prozess
+   - Prozess -> Screen
+   - Screen -> Datei
+   - Folgeflaechen
+3. **Status**
+   - Board-State
+   - Process-Control-State
+   - DB-/RPC-Wahrheit gegen JSON-/Repo-Referenz
+4. **Projektdokumentation**
+   - verifizierte Ist-Dokumente
+   - Arbeitsregeln
+   - Folge-Agent-Einstieg
+
+Kurzregel:
+
+```text
+Produkt, Relation, Status und Projektdokumentation sind keine getrennten Nacharbeiten.
+Sie muessen bei jeder relevanten Aenderung gemeinsam geprueft und gemeinsam nachgezogen werden.
+```
+
 ---
 
 ## Relation- und Folgeflaechenpflicht
@@ -202,6 +231,9 @@ Wenn sich Node- oder Prozessstrukturen aendern, muss geprueft werden:
 Nicht erlaubt ist:
 
 - nur UI aendern, ohne Status- und Relationsfolgen zu pruefen
+- nur Produkt aendern, ohne Relation, Status und Projektdokumentation mitzudenken
+- nur Relation aendern, ohne Produkt- und Statusfolgen mitzudenken
+- nur Status aendern, ohne Produkt- und Dokumentationsfolgen mitzudenken
 - nur JSON aendern, ohne Produkt- und DB-Folgen zu bedenken
 - nur Chat-Analyse liefern, ohne Repo-Dokumentation nachzuziehen
 - neue Prozess- oder Screen-Ziele eintragen, ohne reale Repo-Lage zu pruefen

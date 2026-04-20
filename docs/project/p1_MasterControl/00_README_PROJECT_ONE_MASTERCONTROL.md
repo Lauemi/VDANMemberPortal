@@ -21,6 +21,18 @@ Der Ordner muss so gepflegt werden, dass **jede KI** nach dem Lesen sofort verst
 5. wie Änderungen dokumentiert und versioniert werden,
 6. wie das System bei Bedarf in einem anderen Repo erneut aufgebaut werden kann.
 
+## Verbindlicher Einstieg
+
+Diese Datei ist ab jetzt der **verpflichtende Startpunkt fuer jeden Folge-Agenten**.
+
+Arbeitsregel:
+
+1. zuerst `00_README_PROJECT_ONE_MASTERCONTROL.md`
+2. danach `01_ZIELBILD_MASTERCONTROL.md`
+3. danach die verifizierten Ist-/Pflichtdateien `02_` bis `07_`
+
+Ohne diese Lesereihenfolge darf keine relevante Analyse, Planung oder Umsetzung als vollstaendig gelten.
+
 ---
 
 ## Grundprinzipien
@@ -119,6 +131,17 @@ Jede KI, die in diesem Projekt arbeitet, muss vor Änderungen mindestens folgend
 - `06_RELATIONEN_BOARD_PROCESS_UI_FILES.md`
 - `07_UMSETZUNGSREGELN_MASTERCONTROL.md`
 
+Diese Reihenfolge ist verpflichtend:
+
+1. `00_README_PROJECT_ONE_MASTERCONTROL.md`
+2. `01_ZIELBILD_MASTERCONTROL.md`
+3. `02_IST_ANALYSE_MASTERBOARD.md`
+4. `03_UI_WAHRHEIT_MASTERBOARD.md`
+5. `04_INTERAKTIONSWAHRHEIT_MASTERBOARD.md`
+6. `05_FUEHRUNGSDEFIZITE_MASTERBOARD.md`
+7. `06_RELATIONEN_BOARD_PROCESS_UI_FILES.md`
+8. `07_UMSETZUNGSREGELN_MASTERCONTROL.md`
+
 Wenn Umsetzungspakete betroffen sind zusätzlich:
 
 - `08_UMSETZUNGSPAKETE_CODEX.md`
@@ -149,7 +172,7 @@ Wenn **keine** Projektdatei angepasst wurde, obwohl ein relevanter Systemteil ge
 
 Dieser Ordner ist absichtlich als kleiner Projektkern aufgebaut.
 
-### Führende Dateien
+### Fuehrende Dateien ab jetzt
 
 - `00_README_PROJECT_ONE_MASTERCONTROL.md`
 - `01_ZIELBILD_MASTERCONTROL.md`
@@ -177,6 +200,45 @@ Repo-real verankert sind aktuell:
 - `07_UMSETZUNGSREGELN_MASTERCONTROL.md`
 
 Die Dateien `08_` bis `10_` bleiben weiterhin vorgesehene Folgeartefakte, sind aber nicht Voraussetzung fuer das Verstehen des jetzt dokumentierten Ist-Standes.
+
+### Historische oder parallele Dateien im Ordner
+
+Im Ordner existieren zusaetzlich bereits weitere Dateien wie:
+
+- `02_SYSTEMKONTEXT_UND_DATEILANDKARTE.md`
+- `04_IST_ANALYSE_MASTERBOARD.md`
+- `05_SOLL_ARCHITEKTUR_MASTERCONTROL.md`
+- `06_UMSETZUNGSPLAN_MASTERCONTROL.md`
+
+Diese Dateien koennen weiterhin fachlich nuetzlich sein, sind aber **nicht** die fuehrende verifizierte Phase-0-/Phase-1-Basis.
+
+Fuer die aktuell belastbare Einstiegskette gelten vorrangig:
+
+- `00_README_PROJECT_ONE_MASTERCONTROL.md`
+- `01_ZIELBILD_MASTERCONTROL.md`
+- `02_IST_ANALYSE_MASTERBOARD.md`
+- `03_UI_WAHRHEIT_MASTERBOARD.md`
+- `04_INTERAKTIONSWAHRHEIT_MASTERBOARD.md`
+- `05_FUEHRUNGSDEFIZITE_MASTERBOARD.md`
+- `06_RELATIONEN_BOARD_PROCESS_UI_FILES.md`
+- `07_UMSETZUNGSREGELN_MASTERCONTROL.md`
+
+Wenn parallele Dateien inhaltlich abweichen, haben diese acht Dateien Vorrang fuer Folge-Agenten.
+
+### Startkette fuer Folge-Agenten
+
+Ein Folge-Agent muss den Ordner isoliert in dieser Reihenfolge lesen:
+
+1. `00_README_PROJECT_ONE_MASTERCONTROL.md`
+2. `01_ZIELBILD_MASTERCONTROL.md`
+3. `02_IST_ANALYSE_MASTERBOARD.md`
+4. `03_UI_WAHRHEIT_MASTERBOARD.md`
+5. `04_INTERAKTIONSWAHRHEIT_MASTERBOARD.md`
+6. `05_FUEHRUNGSDEFIZITE_MASTERBOARD.md`
+7. `06_RELATIONEN_BOARD_PROCESS_UI_FILES.md`
+8. `07_UMSETZUNGSREGELN_MASTERCONTROL.md`
+
+Erst danach duerfen ergaenzende Soll-/Plan-Dokumente oder historische Paralleltexte herangezogen werden.
 
 ### Templates
 

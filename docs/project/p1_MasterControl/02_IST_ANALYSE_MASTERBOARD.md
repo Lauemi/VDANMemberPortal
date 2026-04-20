@@ -270,6 +270,15 @@ Zum Analysezeitpunkt wurden repo-seitig bestaetigt:
   - `system`
   - `legal`
 
+Zusatzpruefung zur Routenlage aus `fcp_process_control_state.json`:
+
+- alle `related_nodes` verweisen auf reale Masterboard-Node-IDs
+- nicht aufloesbare Screen-Routen im Repo:
+  - `/app/vereine`
+  - `/app/termine/cockpit`
+
+Diese Punkte sind wichtig, weil sie die reale Grenze zwischen formal konsistenter Prozessrelation und teilweise inkonsistenter UI-Routenlage markieren.
+
 ---
 
 ## Wichtige Ist-Abgrenzung

@@ -42,6 +42,15 @@ Das bedeutet:
 - Process -> UI ist nur teilweise repo-sicher
 - UI -> Files ist heute haeufig implizit statt sauber gefuehrt
 
+Repo-seitig verifiziert:
+
+- 41 Masterboard-Nodes
+- 9 Prozesse
+- keine fehlenden `related_nodes`
+- aktuell zwei nicht aufloesbare Screen-Routen:
+  - `/app/vereine`
+  - `/app/termine/cockpit`
+
 ---
 
 ## Konkrete Zuordnungen
@@ -486,3 +495,22 @@ Die Hauptschwaeche liegt nicht im kompletten Fehlen von Relationen, sondern dari
 - Folgeflaechen nicht als Arbeitskontext sichtbar machen
 
 Genau diese Luecke muss MasterControl spaeter schliessen.
+
+---
+
+## Verwendungsregel fuer Folge-Agenten
+
+Dieses Dokument ist die fuehrende repo-wahre Mapping-Basis fuer:
+
+- Board -> Process
+- Process -> UI
+- UI -> Files
+- Inkonsistenzen
+- Mehrfachzuordnungen
+
+Wenn spaetere Soll- oder Plan-Dokumente abweichen, gilt fuer die reale Ist-Lage immer zuerst dieses Mapping-Dokument zusammen mit:
+
+- `02_IST_ANALYSE_MASTERBOARD.md`
+- `03_UI_WAHRHEIT_MASTERBOARD.md`
+- `04_INTERAKTIONSWAHRHEIT_MASTERBOARD.md`
+- `05_FUEHRUNGSDEFIZITE_MASTERBOARD.md`

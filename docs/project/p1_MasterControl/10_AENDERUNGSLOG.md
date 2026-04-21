@@ -141,6 +141,22 @@ Wirkung fuer Folge-Agenten:
 - Prozesszeilen tragen denselben Arbeitsweg `Board -> Screen -> File` und machen damit die Ops-Liste staerker zur Steuerflaeche.
 - Die Umsetzung bleibt innerhalb der bestehenden Produktlogik; DB, RPC, Statuswerte und Drawer-Funktionslogik wurden nicht veraendert.
 
+## 2026-04-20 — Hauptflaeche weiter in Richtung MasterControl-Fuehrung umgebaut
+
+Geaenderte Dateien:
+
+- `src/pages/app/masterboard/index.astro`
+- `public/js/masterboard-app.js`
+- `public/css/masterboard.css`
+
+Wirkung fuer Folge-Agenten:
+
+- Der obere Bereich trennt jetzt deutlicher zwischen Arbeitsstart und nachgeordnetem Steuer-/Kontextraum.
+- Top-3-Blocker tragen auf der Hauptflaeche selbst einen ersten relationalen Arbeitsweg.
+- Node-Karten lesen sich staerker als Arbeitsobjekte mit direktem Workbench-, Prozess- und Screen-Zugang.
+- Prozesszeilen tragen jetzt Problemblock, naechsten Arbeitsanker, lesbaren Pfad und staerker gewichteten Workbench-Zugang statt nur tabellarischer Kontrollwerte.
+- Die Runde materialisiert die bestehende MasterControl-Richtung weiter, ohne neue Produktarchitektur oder neue Statuswahrheiten einzufuehren.
+
 ---
 
 ## Offene Folgearbeiten am Projektordner

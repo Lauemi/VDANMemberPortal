@@ -38,7 +38,7 @@ const bootstrapScript = [
   <section class="card masterboard-page masterboard-page--workspace">
     <div class="card__body">
       <div id="fcpMasterboardApp" class="masterboard-app">
-        <div class="masterboard-app__topbar">
+        <div class="masterboard-app__startshell">
           <section class="titlebox titlebox--primary">
             <div class="eyebrow">Systemsteuerung</div>
             <h2>FCP Systemboard</h2>
@@ -47,6 +47,40 @@ const bootstrapScript = [
             <p class="masterboard-intent">
               Ziel dieser Maske ist gefuehrte Arbeit: Blocker, Relationen, betroffene Screens und konkrete Arbeitsanker sollen direkt in den passenden Arbeitskontext fuehren.
             </p>
+          </section>
+
+          <section class="guidebox guidebox--blockers guidebox--start">
+            <div class="eyebrow">Top 3 Blocker</div>
+            <p class="guidebox__lead guidebox__lead--primary">
+              Arbeitsstart: zuerst Blocker oeffnen, dann von dort in Knoten, Prozess, Screen oder Arbeitsanker verzweigen.
+            </p>
+            <p id="masterboardTopBlockersSummary" class="small masterboard-top-summary"></p>
+            <div id="masterboardTopBlockers" class="blocker-list"></div>
+          </section>
+        </div>
+
+        <div class="masterboard-app__controlrail">
+          <section class="guidebox guidebox--context">
+            <div class="eyebrow">Führung</div>
+            <div class="mode-switch" role="tablist" aria-label="Board-Modus">
+              <button type="button" class="tab active" data-masterboard-mode="lead">Führung</button>
+              <button type="button" class="tab" data-masterboard-mode="detail">Detail</button>
+            </div>
+            <p id="masterboardModeHint" class="mode-hint">
+              Fokusmodus: priorisierte Arbeitsstarts, Blocker und kritische Pfade zuerst.
+            </p>
+            <p class="guidebox__lead">
+              Modus, Legende und Signale rahmen die Arbeit. Der primaere Einstieg in offene Fuehrungsarbeit liegt rechts bei den Top-3-Blockern.
+            </p>
+            <div class="legend-list">
+              <div><span class="legend-dot is-red"></span> Rot = Blocker</div>
+              <div><span class="legend-dot is-yellow"></span> Gelb = offen / Entscheidung fehlt</div>
+              <div><span class="legend-dot is-green"></span> Grün = stabil</div>
+              <div><span class="legend-mark">L1/L2/L3</span> Launch-Klasse / Reife</div>
+              <div><span class="legend-mark">!</span> Risiko hoch</div>
+              <div><span class="legend-mark">~</span> Gap / Luecke offen</div>
+              <div><span class="legend-mark">✦</span> Golden-Path-relevant</div>
+            </div>
           </section>
 
           <section class="filterbox filterbox--secondary">
@@ -104,39 +138,6 @@ const bootstrapScript = [
             <p class="masterboard-intent masterboard-intent--small">
               Die Statistik folgt den aktiven Filtern und zeigt den aktuell gefuehrten Arbeitsfokus.
             </p>
-          </section>
-        </div>
-
-        <div class="masterboard-app__guidance">
-          <section class="guidebox guidebox--context">
-            <div class="eyebrow">Führung</div>
-            <div class="mode-switch" role="tablist" aria-label="Board-Modus">
-              <button type="button" class="tab active" data-masterboard-mode="lead">Führung</button>
-              <button type="button" class="tab" data-masterboard-mode="detail">Detail</button>
-            </div>
-            <p id="masterboardModeHint" class="mode-hint">
-              Fokusmodus: priorisierte Arbeitsstarts, Blocker und kritische Pfade zuerst.
-            </p>
-            <p class="guidebox__lead">
-              Modus, Legende und Signale rahmen die Arbeit. Der primaere Einstieg in offene Fuehrungsarbeit liegt rechts bei den Top-3-Blockern.
-            </p>
-            <div class="legend-list">
-              <div><span class="legend-dot is-red"></span> Rot = Blocker</div>
-              <div><span class="legend-dot is-yellow"></span> Gelb = offen / Entscheidung fehlt</div>
-              <div><span class="legend-dot is-green"></span> Grün = stabil</div>
-              <div><span class="legend-mark">L1/L2/L3</span> Launch-Klasse / Reife</div>
-              <div><span class="legend-mark">!</span> Risiko hoch</div>
-              <div><span class="legend-mark">~</span> Gap / Luecke offen</div>
-              <div><span class="legend-mark">✦</span> Golden-Path-relevant</div>
-            </div>
-          </section>
-          <section class="guidebox guidebox--blockers guidebox--start">
-            <div class="eyebrow">Top 3 Blocker</div>
-            <p class="guidebox__lead guidebox__lead--primary">
-              Arbeitsstart: zuerst Blocker oeffnen, dann von dort in Knoten, Prozess, Screen oder Arbeitsanker verzweigen.
-            </p>
-            <p id="masterboardTopBlockersSummary" class="small masterboard-top-summary"></p>
-            <div id="masterboardTopBlockers" class="blocker-list"></div>
           </section>
         </div>
 

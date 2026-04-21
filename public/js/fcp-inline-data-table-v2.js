@@ -70,6 +70,10 @@
       }));
   }
 
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
   function createStandardV2(config = {}) {
     const root = config?.root;
     if (!(root instanceof HTMLElement)) {
@@ -84,7 +88,9 @@
     const storageKey = `fcp-inline-table-layout-v2::${String(config?.tableId || "default").trim() || "default"}`;
     const filterFields = Array.isArray(config?.filterFields) ? config.filterFields : [];
     const initialRows = Array.isArray(config?.rows) ? config.rows : [];
-    const initialViewMode = String(config?.viewMode || "table").trim() || "table";
+    const configuredViewMode = String(config?.viewMode || "table").trim().toLowerCase() || "table";
+    const allowCards = configuredViewMode === "cards" || configuredViewMode === "both" || configuredViewMode === "table" || !configuredViewMode;
+    const initialViewMode = configuredViewMode === "cards" ? "cards" : "table";
     const initialColumns = columns.map((column) => column.key);
     const initialSortKey = String(config?.sortKey || columns.find((column) => column.type !== "actions")?.key || columns[0].key);
     const state = {
@@ -112,6 +118,8 @@
     let dragColumnKey = "";
     let lastTableScrollLeft = 0;
     let feedbackTimer = 0;
+    let resizeObserver = null;
+    let lastObservedContainerWidth = 0;
 
     function configuredRowActions() {
       const raw = Array.isArray(config?.rowActions) ? config.rowActions : ["edit", "duplicate", "delete"];
@@ -175,6 +183,10 @@
       } catch {
         // noop
       }
+    }
+
+    function supportsCardsMode() {
+      return config?.allowCards !== false && allowCards;
     }
 
     function orderedColumns() {
@@ -293,34 +305,105 @@
       });
     }
 
+    function responsiveContainer() {
+      return root.parentElement || root;
+    }
+
     function measureContainerWidth() {
-      // root.clientWidth is the bounded parent truth — subtract shell border (2px × 2)
-      return Math.max(0, (root.clientWidth || 0) - 4);
+      const container = responsiveContainer();
+      const width = container.getBoundingClientRect?.().width || container.clientWidth || root.clientWidth || 0;
+      return Math.max(0, Math.floor(width - 4));
+    }
+
+    function responsiveMode(containerWidth = measureContainerWidth()) {
+      if (containerWidth <= 720) return "mobile";
+      if (containerWidth <= 1180) return "tablet";
+      return "desktop";
+    }
+
+    function effectiveViewMode(containerWidth = measureContainerWidth()) {
+      if (supportsCardsMode() && responsiveMode(containerWidth) === "mobile") return "cards";
+      return state.viewMode === "cards" && supportsCardsMode() ? "cards" : "table";
+    }
+
+    function preferredColumnWidth(column = {}) {
+      const width = String(state.columnWidths[column.key] || column.width || "").trim();
+      const numericOrMeta = column.type === "numeric" || column.type === "actions";
+      const baseMin = numericOrMeta ? 84 : 108;
+      const softMin = column.type === "primary" ? 160 : column.type === "meta" ? 100 : baseMin;
+      const minMatch = width.match(/minmax\((\d+(?:\.\d+)?)px/i);
+      const pxMatch = width.match(/^(\d+(?:\.\d+)?)px$/i);
+      const frMatch = width.match(/(\d+(?:\.\d+)?)fr/i);
+      const labelLen = String(column.label || "").trim().length;
+      const contentHint = clamp(labelLen * 8 + 36, softMin, column.type === "primary" ? 260 : 180);
+      const preferred = pxMatch
+        ? parseFloat(pxMatch[1])
+        : minMatch
+          ? Math.max(parseFloat(minMatch[1]) * 1.28, contentHint)
+          : contentHint;
+      const min = minMatch
+        ? clamp(parseFloat(minMatch[1]), baseMin, preferred)
+        : clamp(Math.min(contentHint, preferred * 0.72), baseMin, preferred);
+      const flex = frMatch ? parseFloat(frMatch[1]) : (column.type === "primary" ? 1.35 : numericOrMeta ? 0.78 : 1);
+      return {
+        min: Math.round(min),
+        preferred: Math.round(Math.max(min, preferred)),
+        flex: Number.isFinite(flex) && flex > 0 ? flex : 1,
+      };
+    }
+
+    function gridTemplateMeta() {
+      const containerWidth = measureContainerWidth();
+      const active = orderedColumns();
+      if (!active.length) return { template: "", layout: responsiveMode(containerWidth), overflow: false };
+      const specs = active.map(preferredColumnWidth);
+      const sumMin = specs.reduce((sum, spec) => sum + spec.min, 0);
+      const sumPreferred = specs.reduce((sum, spec) => sum + spec.preferred, 0);
+      const mode = responsiveMode(containerWidth);
+      if (!containerWidth) {
+        return {
+          template: active.map((col) => state.columnWidths[col.key] || col.width || "minmax(120px, 1fr)").join(" "),
+          layout: mode,
+          overflow: false,
+        };
+      }
+      if (containerWidth >= sumPreferred) {
+        return {
+          template: specs.map((spec) => `minmax(${spec.preferred}px, ${spec.flex}fr)`).join(" "),
+          layout: mode,
+          overflow: false,
+        };
+      }
+      if (containerWidth >= sumMin) {
+        const ratio = (containerWidth - sumMin) / Math.max(1, (sumPreferred - sumMin));
+        return {
+          template: specs.map((spec) => `${Math.round(spec.min + (spec.preferred - spec.min) * ratio)}px`).join(" "),
+          layout: mode,
+          overflow: false,
+        };
+      }
+      return {
+        template: specs.map((spec) => `${spec.min}px`).join(" "),
+        layout: mode,
+        overflow: true,
+      };
     }
 
     function gridTemplate() {
-      const containerWidth = measureContainerWidth();
-      const active = orderedColumns();
-      if (!containerWidth || !active.length) {
-        return active.map((col) => col.width || "minmax(120px, 1fr)").join(" ");
-      }
-      const MIN_PX = 80;
-      const desired = active.map((col) => {
-        const w = String(col.width || "");
-        const raw = parseFloat(w);
-        if (w.endsWith("px") && Number.isFinite(raw) && raw > 0) return Math.max(MIN_PX, raw);
-        const m = w.match(/minmax\((\d+(?:\.\d+)?)px/);
-        return m ? Math.max(MIN_PX, parseFloat(m[1])) : 120;
+      return gridTemplateMeta().template;
+    }
+
+    function ensureResponsiveObserver() {
+      if (resizeObserver || typeof ResizeObserver !== "function") return;
+      resizeObserver = new ResizeObserver(() => {
+        const nextWidth = measureContainerWidth();
+        if (Math.abs(nextWidth - lastObservedContainerWidth) < 2) return;
+        lastObservedContainerWidth = nextWidth;
+        render();
       });
-      const total = desired.reduce((s, px) => s + px, 0);
-      if (total <= containerWidth) {
-        return desired.map((px) => `minmax(${px}px, 1fr)`).join(" ");
-      }
-      if (total <= containerWidth * 1.25) {
-        const scale = containerWidth / total;
-        return desired.map((px) => `minmax(${Math.max(MIN_PX, Math.round(px * scale))}px, 1fr)`).join(" ");
-      }
-      return desired.map((px) => `${px}px`).join(" ");
+      const container = responsiveContainer();
+      lastObservedContainerWidth = measureContainerWidth();
+      resizeObserver.observe(container);
     }
 
     function isInteractiveTarget(target) {
@@ -535,6 +618,7 @@
 
     function render() {
       const gt = gridTemplate();
+      const gtMeta = gridTemplateMeta();
       const rows = filteredRows();
       const activeCount = rows.length;
       const totalCount = state.rows.length;
@@ -542,7 +626,8 @@
       const showToolbar = config?.showToolbar !== false;
       const showSearch = config?.showSearch !== false;
       const showCreateButton = config?.showCreateButton !== false;
-      const showViewSwitch = config?.showViewSwitch !== false;
+      const showViewSwitch = config?.showViewSwitch !== false && supportsCardsMode();
+      const currentView = effectiveViewMode();
       const showResetButton = config?.showResetButton !== false;
       const showMetaBar = config?.showMetaBar === true;
       const showFilterPanel = filterFields.length > 0 && state.filterPanelOpen !== false;
@@ -564,6 +649,9 @@
       root.setAttribute("data-row-click", "inline");
       root.setAttribute("data-inline-create", state.createOpen ? "true" : "false");
       root.setAttribute("data-inline-edit", state.openEditorRowId ? "true" : "false");
+      root.setAttribute("data-inline-layout", gtMeta.layout);
+      root.setAttribute("data-inline-overflow", gtMeta.overflow ? "true" : "false");
+      root.setAttribute("data-inline-view", currentView);
       root.classList.toggle("is-redesign", isRedesign);
 
       const activeEl = document.activeElement;
@@ -593,8 +681,8 @@
             </div>
             ${showViewSwitch ? `
             <div class="view-toggle" role="group" aria-label="Ansicht">
-              <button type="button" class="${state.viewMode === "table" ? "is-active" : ""}" data-view-mode="table">Tabelle</button>
-              <button type="button" class="${state.viewMode === "cards" ? "is-active" : ""}" data-view-mode="cards">Cards</button>
+              <button type="button" class="${currentView === "table" ? "is-active" : ""}" data-view-mode="table" ${!supportsCardsMode() ? "disabled" : ""}>Tabelle</button>
+              <button type="button" class="${currentView === "cards" ? "is-active" : ""}" data-view-mode="cards" ${!supportsCardsMode() ? "disabled" : ""}>Cards</button>
             </div>
             ` : ""}
           </div>
@@ -667,7 +755,7 @@
             <span>${esc(config.metaLabel || "Datensätze")}: ${esc(activeCount)} / ${esc(totalCount)}</span>
             <span>${esc(config.metaHint || "")}</span>
           </div>` : ""}
-          ${state.viewMode === "table" ? `
+          ${currentView === "table" ? `
             <div class="data-table-wrap">
               <div class="data-table">
                 <div class="data-table__head" style="grid-template-columns:${esc(gt)}">
@@ -703,7 +791,7 @@
       `;
 
       const nextWrap = root.querySelector(".data-table-wrap");
-      if (nextWrap && lastTableScrollLeft > 0) {
+      if (currentView === "table" && nextWrap && lastTableScrollLeft > 0) {
         nextWrap.scrollLeft = lastTableScrollLeft;
       }
 
@@ -970,10 +1058,11 @@
 
       const viewBtn = target?.closest?.("[data-view-mode]");
       if (viewBtn) {
-        state.viewMode = String(viewBtn.getAttribute("data-view-mode") || "table");
+        const requested = String(viewBtn.getAttribute("data-view-mode") || "table");
+        state.viewMode = requested === "cards" && supportsCardsMode() ? "cards" : "table";
         persistLayout();
         render();
-        config?.onViewModeChange?.({ viewMode: state.viewMode });
+        config?.onViewModeChange?.({ viewMode: state.viewMode, effectiveViewMode: effectiveViewMode() });
         return;
       }
 
@@ -1174,6 +1263,7 @@
       document.addEventListener("mouseup", onUp);
     });
 
+    ensureResponsiveObserver();
     render();
 
     const api = {

@@ -2059,12 +2059,74 @@
             "rowInteractionMode": "inline",
             "selectionMode": "single",
             "viewMode": "table",
-            "sortKey": "club_member_no",
+            "layoutVersion": "members-redesign-v2",
+            "sortKey": "last_name",
             "sortDir": "asc",
+            "defaultColumnOrder": [
+              "club_member_no",
+              "last_name",
+              "email",
+              "status",
+              "role",
+              "fishing_card_type",
+              "city",
+              "member_no",
+              "card_assignments",
+              "mobile",
+              "has_login",
+              "birthdate",
+              "profile_user_id",
+              "street",
+              "zip",
+              "phone",
+              "guardian_member_no",
+              "sepa_approved",
+              "iban_last4",
+              "club_code",
+              "club_id",
+              "first_name",
+              "last_sign_in_at"
+            ],
+            "defaultHiddenColumns": [
+              "club_id",
+              "club_code",
+              "profile_user_id",
+              "member_no",
+              "first_name",
+              "card_assignments",
+              "mobile",
+              "has_login",
+              "birthdate",
+              "street",
+              "zip",
+              "phone",
+              "guardian_member_no",
+              "sepa_approved",
+              "iban_last4",
+              "last_sign_in_at"
+            ],
+            "defaultColumnWidths": {
+              "club_member_no": "110px",
+              "last_name": "minmax(220px, 1.6fr)",
+              "email": "minmax(220px, 1.5fr)",
+              "status": "130px",
+              "role": "minmax(180px, 1.2fr)",
+              "fishing_card_type": "150px",
+              "city": "140px"
+            },
+            "title": "Mitglieder",
+            "description": "Inline-Erfassung mit Spalten-Reorder, Resize, Ausblenden, Suche, Filter und Kartenansicht.",
+            "searchPlaceholder": "Suche in Nr., Name, E-Mail, Status, Ort …",
             "showToolbar": true,
+            "showViewSwitch": true,
             "showCreateButton": true,
             "showResetButton": true,
-            "createLabel": "Mitglied anlegen",
+            "showFilterButton": true,
+            "showMetaBar": true,
+            "metaLabel": "Mitglieder",
+            "metaHint": "Live-Ansicht der Vereinsverwaltung",
+            "redesign": true,
+            "createLabel": "Neues Mitglied",
             "rowActions": [
               "edit",
               "delete"
@@ -2077,8 +2139,9 @@
               {
                 "key": "members_more",
                 "kind": "menu",
-                "icon": "⋮",
-                "title": "Mehr",
+                "icon": "⇩",
+                "label": "Export",
+                "title": "Exportieren",
                 "items": [
                   {
                     "key": "import",
@@ -2099,26 +2162,34 @@
               {
                 "key": "status",
                 "label": "Status",
-                "type": "text",
-                "placeholder": "aktiv / passiv"
+                "type": "select",
+                "options": [
+                  { "value": "", "label": "Alle" },
+                  { "value": "active", "label": "Aktiv" },
+                  { "value": "inactive", "label": "Inaktiv" },
+                  { "value": "invited", "label": "Invited" },
+                  { "value": "blocked", "label": "Blocked" },
+                  { "value": "Aktiv", "label": "Aktiv (Legacy)" },
+                  { "value": "Passiv", "label": "Passiv (Legacy)" }
+                ]
               },
               {
-                "key": "club_code",
-                "label": "Club",
-                "type": "text",
-                "placeholder": "Club"
+                "key": "fishing_card_type",
+                "label": "Karte",
+                "type": "select",
+                "options": [
+                  { "value": "", "label": "Alle" },
+                  { "value": "Innenwasser", "label": "Innenwasser" },
+                  { "value": "Innenwasser + Rheinlos", "label": "Innenwasser + Rheinlos" },
+                  { "value": "Rheinlos", "label": "Rheinlos" },
+                  { "value": "-", "label": "-" }
+                ]
               },
               {
-                "key": "role",
-                "label": "Rolle",
+                "key": "city",
+                "label": "Ort enthält",
                 "type": "text",
-                "placeholder": "Rolle"
-              },
-              {
-                "key": "email",
-                "label": "E-Mail",
-                "type": "text",
-                "placeholder": "suche@email"
+                "placeholder": "z. B. Lahr"
               }
             ]
           }

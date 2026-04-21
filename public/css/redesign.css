@@ -6,11 +6,11 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .is-redesign {
-  /* ── Palette: warme creme/oliv Basis + Portal-Gold als Akzent ── */
-  --rd-bg:           #f6f1e5;   /* canvas / seitenhintergrund */
-  --rd-surface:      #fbf7ee;   /* karten-/zeilenflächen */
-  --rd-surface-2:    #efe8d7;   /* header, inline-edit, meta-leiste */
-  --rd-surface-hi:   #ffffff;   /* inputs, hover-zellen */
+  /* ── Produktdefault: helle Claude-Variante ── */
+  --rd-bg:           #f6f1e5;
+  --rd-surface:      #fbf7ee;
+  --rd-surface-2:    #efe8d7;
+  --rd-surface-hi:   #ffffff;
 
   --rd-line:         rgba(108, 112, 91, 0.14);
   --rd-line-strong:  rgba(108, 112, 91, 0.22);
@@ -21,7 +21,7 @@
   --rd-muted:        #7a7c68;
   --rd-muted-soft:   #9b9c88;
 
-  --rd-gold:         #b79a63;   /* portal-gold primary */
+  --rd-gold:         #b79a63;
   --rd-gold-hi:      #c6ad67;
   --rd-gold-lo:      #9c8148;
   --rd-gold-soft:    rgba(183, 154, 99, 0.12);
@@ -36,25 +36,33 @@
   --rd-danger:       #a84a3e;
   --rd-danger-soft:  #f2dcd7;
 
-  /* ── Dichte (wird vom Tweaks-Panel auf :root.rd-density-* gespiegelt) ── */
   --rd-row-h:        40px;
   --rd-cell-px:      14px;
   --rd-font:         14px;
   --rd-radius:       10px;
   --rd-radius-sm:    6px;
 
-  /* Typo */
   font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-feature-settings: "cv11", "ss01", "ss03";
   color: var(--rd-ink);
 }
 
-/* dichten */
-[data-rd-density="compact"]     .is-redesign { --rd-row-h: 30px; --rd-cell-px: 10px; --rd-font: 13px; }
-[data-rd-density="comfortable"] .is-redesign { --rd-row-h: 52px; --rd-cell-px: 18px; --rd-font: 15px; }
+[data-rd-density="compact"] .is-redesign,
+.is-redesign[data-rd-density="compact"] {
+  --rd-row-h: 30px;
+  --rd-cell-px: 10px;
+  --rd-font: 13px;
+}
 
-/* Dark-Mode */
-[data-rd-theme="dark"] .is-redesign {
+[data-rd-density="comfortable"] .is-redesign,
+.is-redesign[data-rd-density="comfortable"] {
+  --rd-row-h: 52px;
+  --rd-cell-px: 18px;
+  --rd-font: 15px;
+}
+
+[data-rd-theme="dark"].is-redesign,
+body[data-app-theme="fcp_tactical"] .is-redesign {
   --rd-bg:          #1a1d18;
   --rd-surface:     #222620;
   --rd-surface-2:   #2a2f28;
@@ -77,8 +85,8 @@
   --rd-danger-soft: #3a2622;
 }
 
-/* User-setzbarer Akzent */
-[style*="--rd-gold-override"] .is-redesign {
+[style*="--rd-gold-override"] .is-redesign,
+.is-redesign[style*="--rd-gold-override"] {
   --rd-gold: var(--rd-gold-override);
 }
 

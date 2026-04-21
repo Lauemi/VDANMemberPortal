@@ -1415,12 +1415,39 @@
       viewMode: tableConfig?.viewMode || undefined,
       sortKey: tableConfig?.sortKey || undefined,
       sortDir: tableConfig?.sortDir || undefined,
+      layoutVersion: tableConfig?.layoutVersion || undefined,
+      defaultColumnOrder: Array.isArray(tableConfig?.defaultColumnOrder) ? tableConfig.defaultColumnOrder : undefined,
+      defaultHiddenColumns: Array.isArray(tableConfig?.defaultHiddenColumns) ? tableConfig.defaultHiddenColumns : undefined,
+      defaultColumnWidths: tableConfig?.defaultColumnWidths && typeof tableConfig.defaultColumnWidths === "object"
+        ? tableConfig.defaultColumnWidths
+        : undefined,
+      title: tableConfig?.title || panel?.title || undefined,
+      description: tableConfig?.description || panel?.description || undefined,
+      searchPlaceholder: tableConfig?.searchPlaceholder || undefined,
       filterFields: Array.isArray(tableConfig?.filterFields) ? tableConfig.filterFields : [],
+      showViewSwitch: tableConfig?.showViewSwitch !== false,
+      showFilterButton: tableConfig?.showFilterButton === true,
+      showMetaBar: tableConfig?.showMetaBar === true,
+      metaLabel: tableConfig?.metaLabel || undefined,
+      metaHint: tableConfig?.metaHint || undefined,
+      redesignTheme: tableConfig?.redesignTheme || undefined,
+      redesign: tableConfig?.redesign !== false,
     };
+
+    const mountVersion = Number(root.dataset.fcpMountVersion || "0") + 1;
+    root.dataset.fcpMountVersion = String(mountVersion);
 
     globalScope.requestAnimationFrame(() => {
       if (!root.isConnected) return;
+      if (String(root.dataset.fcpMountVersion || "") !== String(mountVersion)) return;
       try {
+        if (root._fcpApi && typeof root._fcpApi.destroy === "function") {
+          try {
+            root._fcpApi.destroy({ reason: "quickflow-remount", mountVersion });
+          } catch {
+            // noop
+          }
+        }
         root.innerHTML = "";
         const instance = factory(mountConfig);
         if (componentType === "data-table" && typeof instance?.setRows === "function") {

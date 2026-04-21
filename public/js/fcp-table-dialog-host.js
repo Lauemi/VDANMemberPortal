@@ -131,11 +131,25 @@
       viewMode: runtimeOptions?.runtime?.viewMode || tableConfig?.viewMode || undefined,
       sortKey: runtimeOptions?.runtime?.sortKey || tableConfig?.sortKey || undefined,
       sortDir: runtimeOptions?.runtime?.sortDir || tableConfig?.sortDir || undefined,
+      layoutVersion: runtimeOptions?.runtime?.layoutVersion || tableConfig?.layoutVersion || undefined,
+      defaultColumnOrder: runtimeOptions?.runtime?.defaultColumnOrder || tableConfig?.defaultColumnOrder || undefined,
+      defaultHiddenColumns: runtimeOptions?.runtime?.defaultHiddenColumns || tableConfig?.defaultHiddenColumns || undefined,
+      defaultColumnWidths: runtimeOptions?.runtime?.defaultColumnWidths || tableConfig?.defaultColumnWidths || undefined,
+      title: runtimeOptions?.runtime?.title || tableConfig?.title || undefined,
+      description: runtimeOptions?.runtime?.description || tableConfig?.description || undefined,
+      searchPlaceholder: runtimeOptions?.runtime?.searchPlaceholder || tableConfig?.searchPlaceholder || undefined,
       filterFields: runtimeOptions?.runtime?.filterFields || (Array.isArray(tableConfig?.filterFields) ? tableConfig.filterFields : []),
+      showViewSwitch: runtimeOptions?.runtime?.showViewSwitch,
+      showFilterButton: runtimeOptions?.runtime?.showFilterButton,
+      showMetaBar: runtimeOptions?.runtime?.showMetaBar,
+      metaLabel: runtimeOptions?.runtime?.metaLabel,
+      metaHint: runtimeOptions?.runtime?.metaHint,
+      redesignTheme: runtimeOptions?.runtime?.redesignTheme || tableConfig?.redesignTheme || undefined,
       showToolbar: runtimeOptions?.runtime?.showToolbar,
       showCreateButton: runtimeOptions?.runtime?.showCreateButton,
       showResetButton: runtimeOptions?.runtime?.showResetButton,
       createLabel: runtimeOptions?.runtime?.createLabel,
+      redesign: runtimeOptions?.runtime?.redesign,
       filterPanel,
       rowActions: runtimeOptions?.runtime?.rowActions || [],
       utilityActions: runtimeOptions?.runtime?.utilityActions || [],
@@ -148,8 +162,19 @@
       onDelete: runtimeOptions?.runtime?.onDelete,
     };
 
+    const mountVersion = Number(root.dataset.fcpMountVersion || "0") + 1;
+    root.dataset.fcpMountVersion = String(mountVersion);
+
     window.requestAnimationFrame(() => {
       if (!root.isConnected) return;
+      if (String(root.dataset.fcpMountVersion || "") !== String(mountVersion)) return;
+      if (root._fcpApi && typeof root._fcpApi.destroy === "function") {
+        try {
+          root._fcpApi.destroy({ reason: "host-remount", mountVersion });
+        } catch {
+          // noop
+        }
+      }
       root.innerHTML = "";
       try {
         if (isStandardTable) {

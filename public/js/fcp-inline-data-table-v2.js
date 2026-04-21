@@ -85,7 +85,9 @@
       throw new Error(`${COMPONENT_NAME} braucht mindestens eine Spalte.`);
     }
 
-    const storageKey = `fcp-inline-table-layout-v2::${String(config?.tableId || "default").trim() || "default"}`;
+    const tableId = String(config?.tableId || "default").trim() || "default";
+    const layoutVersion = String(config?.layoutVersion || "v1").trim() || "v1";
+    const storageKey = `fcp-inline-table-layout-v2::${tableId}::${layoutVersion}`;
     const filterFields = Array.isArray(config?.filterFields) ? config.filterFields : [];
     const initialRows = Array.isArray(config?.rows) ? config.rows : [];
     const configuredViewMode = String(config?.viewMode || "table").trim().toLowerCase() || "table";
@@ -115,6 +117,37 @@
       rdFiltersOpen: false,
       rdInlineFilters: {},
     };
+
+    const configuredDefaultOrder = Array.isArray(config?.defaultColumnOrder)
+      ? config.defaultColumnOrder.map((entry) => String(entry || "").trim()).filter(Boolean)
+      : [];
+    if (configuredDefaultOrder.length) {
+      const allowed = new Set(initialColumns);
+      const ordered = configuredDefaultOrder.filter((key) => allowed.has(key));
+      const missing = initialColumns.filter((key) => !ordered.includes(key));
+      state.columnOrder = [...ordered, ...missing];
+    }
+
+    if (Array.isArray(config?.defaultHiddenColumns)) {
+      const allowed = new Set(initialColumns);
+      state.hiddenColumns = new Set(
+        config.defaultHiddenColumns
+          .map((entry) => String(entry || "").trim())
+          .filter((key) => allowed.has(key))
+      );
+    }
+
+    if (config?.defaultColumnWidths && typeof config.defaultColumnWidths === "object") {
+      state.columnWidths = {
+        ...state.columnWidths,
+        ...Object.fromEntries(
+          Object.entries(config.defaultColumnWidths).map(([key, value]) => {
+            const column = columns.find((entry) => entry.key === key);
+            return [key, sanitizeWidthValue(value, column)];
+          })
+        ),
+      };
+    }
     let dragColumnKey = "";
     let lastTableScrollLeft = 0;
     let feedbackTimer = 0;
@@ -156,7 +189,13 @@
         state.columnOrder = [...ordered, ...missing];
       }
       if (persisted?.columnWidths && typeof persisted.columnWidths === "object") {
-        state.columnWidths = { ...state.columnWidths, ...persisted.columnWidths };
+        const sanitizedPersistedWidths = Object.fromEntries(
+          Object.entries(persisted.columnWidths).map(([key, value]) => {
+            const column = columns.find((entry) => entry.key === key);
+            return [key, sanitizeWidthValue(value, column)];
+          })
+        );
+        state.columnWidths = { ...state.columnWidths, ...sanitizedPersistedWidths };
       }
       if (!config?.sortKey && persisted?.sortKey && initialColumns.includes(persisted.sortKey)) {
         state.sortKey = persisted.sortKey;
@@ -189,6 +228,14 @@
       return config?.allowCards !== false && allowCards;
     }
 
+    if (root._fcpApi && typeof root._fcpApi.destroy === "function") {
+      try {
+        root._fcpApi.destroy();
+      } catch {
+        // noop
+      }
+    }
+
     function orderedColumns() {
       const map = new Map(columns.map((column) => [column.key, column]));
       const actionKeys = new Set(columns.filter((col) => col.type === "actions").map((col) => col.key));
@@ -202,6 +249,15 @@
       if (config?.redesign !== false) return data;
       const actionCols = columns.filter((col) => col.type === "actions").map(withWidth);
       return [...data, ...actionCols];
+    }
+
+    function resolveRedesignTheme() {
+      const explicit = String(config?.redesignTheme || "").trim().toLowerCase();
+      if (explicit === "light" || explicit === "dark") return explicit;
+      const rootTheme = String(root?.dataset?.rdTheme || "").trim().toLowerCase();
+      if (rootTheme === "light" || rootTheme === "dark") return rootTheme;
+      const appTheme = String(document.body?.dataset?.appTheme || "").trim().toLowerCase();
+      return appTheme === "fcp_tactical" ? "dark" : "light";
     }
 
     function rowKey(row) {
@@ -306,13 +362,28 @@
     }
 
     function responsiveContainer() {
-      return root.parentElement || root;
+      return root.closest("[data-inline-width-anchor], .panel-body, .card, .card-body, .workscreen, .workscreen-main, main")
+        || root.parentElement
+        || root;
+    }
+
+    function viewportAvailableWidth() {
+      if (typeof window === "undefined") return 0;
+      const rect = root.getBoundingClientRect?.() || { left: 0, right: 0 };
+      const gutter = 24;
+      const left = Number.isFinite(rect.left) ? Math.max(0, rect.left) : 0;
+      const available = window.innerWidth - left - gutter;
+      return Math.max(0, Math.floor(available));
     }
 
     function measureContainerWidth() {
       const container = responsiveContainer();
-      const width = container.getBoundingClientRect?.().width || container.clientWidth || root.clientWidth || 0;
-      return Math.max(0, Math.floor(width - 4));
+      const containerWidth = container.getBoundingClientRect?.().width || container.clientWidth || 0;
+      const rootWidth = root.getBoundingClientRect?.().width || root.clientWidth || 0;
+      const viewportWidth = viewportAvailableWidth();
+      const candidates = [containerWidth, rootWidth, viewportWidth].filter((value) => Number.isFinite(value) && value > 0);
+      if (!candidates.length) return 0;
+      return Math.max(0, Math.floor(Math.min(...candidates) - 4));
     }
 
     function responsiveMode(containerWidth = measureContainerWidth()) {
@@ -326,23 +397,52 @@
       return state.viewMode === "cards" && supportsCardsMode() ? "cards" : "table";
     }
 
-    function preferredColumnWidth(column = {}) {
-      const width = String(state.columnWidths[column.key] || column.width || "").trim();
+    function widthLimits(column = {}, mode = responsiveMode()) {
       const numericOrMeta = column.type === "numeric" || column.type === "actions";
       const baseMin = numericOrMeta ? 84 : 108;
       const softMin = column.type === "primary" ? 160 : column.type === "meta" ? 100 : baseMin;
+      const capByMode = mode === "mobile"
+        ? (column.type === "primary" ? 220 : numericOrMeta ? 120 : 156)
+        : mode === "tablet"
+          ? (column.type === "primary" ? 260 : numericOrMeta ? 132 : 176)
+          : (column.type === "primary" ? 320 : numericOrMeta ? 144 : 220);
+      return { baseMin, softMin, cap: capByMode };
+    }
+
+    function sanitizeWidthValue(width, column = {}, mode = responsiveMode()) {
+      const raw = String(width || "").trim();
+      if (!raw) return "";
+      const limits = widthLimits(column, mode);
+      const minMatch = raw.match(/minmax\((\d+(?:\.\d+)?)px\s*,\s*(\d+(?:\.\d+)?)fr\)/i);
+      if (minMatch) {
+        const min = clamp(parseFloat(minMatch[1]), limits.baseMin, limits.cap);
+        const fr = clamp(parseFloat(minMatch[2]), 0.6, 2.2);
+        return `minmax(${Math.round(min)}px, ${fr}fr)`;
+      }
+      const pxMatch = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+      if (pxMatch) {
+        return `${Math.round(clamp(parseFloat(pxMatch[1]), limits.baseMin, limits.cap))}px`;
+      }
+      return raw;
+    }
+
+    function preferredColumnWidth(column = {}) {
+      const mode = responsiveMode();
+      const width = String(state.columnWidths[column.key] || column.width || "").trim();
+      const numericOrMeta = column.type === "numeric" || column.type === "actions";
+      const { baseMin, softMin, cap } = widthLimits(column, mode);
       const minMatch = width.match(/minmax\((\d+(?:\.\d+)?)px/i);
       const pxMatch = width.match(/^(\d+(?:\.\d+)?)px$/i);
       const frMatch = width.match(/(\d+(?:\.\d+)?)fr/i);
       const labelLen = String(column.label || "").trim().length;
-      const contentHint = clamp(labelLen * 8 + 36, softMin, column.type === "primary" ? 260 : 180);
+      const contentHint = clamp(labelLen * 8 + 36, softMin, cap);
       const preferred = pxMatch
-        ? parseFloat(pxMatch[1])
+        ? clamp(parseFloat(pxMatch[1]), baseMin, cap)
         : minMatch
-          ? Math.max(parseFloat(minMatch[1]) * 1.28, contentHint)
+          ? clamp(Math.max(parseFloat(minMatch[1]) * 1.12, contentHint), baseMin, cap)
           : contentHint;
       const min = minMatch
-        ? clamp(parseFloat(minMatch[1]), baseMin, preferred)
+        ? clamp(parseFloat(minMatch[1]), baseMin, Math.min(preferred, cap))
         : clamp(Math.min(contentHint, preferred * 0.72), baseMin, preferred);
       const flex = frMatch ? parseFloat(frMatch[1]) : (column.type === "primary" ? 1.35 : numericOrMeta ? 0.78 : 1);
       return {
@@ -362,14 +462,14 @@
       const mode = responsiveMode(containerWidth);
       if (!containerWidth) {
         return {
-          template: active.map((col) => state.columnWidths[col.key] || col.width || "minmax(120px, 1fr)").join(" "),
+          template: specs.map((spec) => `minmax(${spec.min}px, ${spec.flex}fr)`).join(" "),
           layout: mode,
           overflow: false,
         };
       }
       if (containerWidth >= sumPreferred) {
         return {
-          template: specs.map((spec) => `minmax(${spec.preferred}px, ${spec.flex}fr)`).join(" "),
+          template: specs.map((spec) => `minmax(${spec.min}px, ${spec.flex}fr)`).join(" "),
           layout: mode,
           overflow: false,
         };
@@ -395,7 +495,7 @@
 
     function ensureResponsiveObserver() {
       if (resizeObserver || typeof ResizeObserver !== "function") return;
-      resizeObserver = new ResizeObserver(() => {
+      resizeObserver = new ResizeObserver((entries = []) => {
         const nextWidth = measureContainerWidth();
         if (Math.abs(nextWidth - lastObservedContainerWidth) < 2) return;
         lastObservedContainerWidth = nextWidth;
@@ -404,6 +504,9 @@
       const container = responsiveContainer();
       lastObservedContainerWidth = measureContainerWidth();
       resizeObserver.observe(container);
+      if (container !== root) {
+        resizeObserver.observe(root);
+      }
     }
 
     function isInteractiveTarget(target) {
@@ -652,6 +755,7 @@
       root.setAttribute("data-inline-layout", gtMeta.layout);
       root.setAttribute("data-inline-overflow", gtMeta.overflow ? "true" : "false");
       root.setAttribute("data-inline-view", currentView);
+      root.setAttribute("data-rd-theme", resolveRedesignTheme());
       root.classList.toggle("is-redesign", isRedesign);
 
       const activeEl = document.activeElement;
@@ -1245,7 +1349,8 @@
       const startWidth = Number.parseFloat(current) || 160;
 
       function onMove(moveEvent) {
-        const nextWidth = Math.max(72, Math.round(startWidth + (moveEvent.clientX - startX)));
+        const limits = widthLimits(column, responsiveMode());
+        const nextWidth = clamp(Math.round(startWidth + (moveEvent.clientX - startX)), limits.baseMin, limits.cap);
         state.columnWidths[resizeKey] = `${nextWidth}px`;
         lastTableScrollLeft = wrap?.scrollLeft || lastTableScrollLeft;
         render();
@@ -1289,6 +1394,23 @@
       },
       getColumns() {
         return columns.slice();
+      },
+      destroy() {
+        if (resizeObserver) {
+          try {
+            resizeObserver.disconnect();
+          } catch {
+            // noop
+          }
+          resizeObserver = null;
+        }
+        if (feedbackTimer) {
+          window.clearTimeout(feedbackTimer);
+          feedbackTimer = 0;
+        }
+        if (root._fcpApi === api) {
+          delete root._fcpApi;
+        }
       },
       openCreate() {
         if (!state.createOpen) openCreateRow();

@@ -156,7 +156,7 @@ const loginHref = `/login/?next=${encodeURIComponent(nextTarget)}`;
     <link rel="stylesheet" href="/css/ofmMask.css" />
   </Fragment>
 
-  <div id="clubRequestQfmRoot" data-login-href={loginHref}></div>
+  <div id="clubRequestQfmRoot" class="fcp-table-root" data-login-href={loginHref}></div>
 
   <script is:inline src="/js/fcp-mask-process-state.js"></script>
   <script is:inline src="/js/fcp-adm-qfm-contract-hub.js"></script>
@@ -165,6 +165,9 @@ const loginHref = `/login/?next=${encodeURIComponent(nextTarget)}`;
   <script is:inline src="/js/fcp-inline-data-table-v2.js"></script>
   <script is:inline src="/js/quick-flow-pattern.js"></script>
   <script is:inline src="/js/fcp-mask-page-loader.js"></script>
+  <link rel="stylesheet" href="/css/redesign.css" />
+  <script is:inline src="/js/redesign.js"></script>
+  <script is:inline>toggleRedesign(true);</script>
   <script id="clubRequestQfmConfig" type="application/json" set:html={qfmPageConfigJson}></script>
   <script is:inline>
     const rootEl = document.getElementById("clubRequestQfmRoot");

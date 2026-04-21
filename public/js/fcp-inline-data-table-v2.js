@@ -106,6 +106,8 @@
       columnTogglePanelOpen: false,
       layoutDirty: false,
       feedback: null,
+      rdFiltersOpen: false,
+      rdInlineFilters: {},
     };
     let dragColumnKey = "";
     let lastTableScrollLeft = 0;
@@ -184,6 +186,8 @@
         .map((key) => map.get(key))
         .filter(Boolean)
         .map(withWidth);
+      // In redesign mode the floating rd-row-actions overlay replaces action columns
+      if (config?.redesign !== false) return data;
       const actionCols = columns.filter((col) => col.type === "actions").map(withWidth);
       return [...data, ...actionCols];
     }
@@ -225,6 +229,16 @@
       });
     }
 
+    function rdRowStatus(row) {
+      const statusKey = String(config?.statusKey || "status").trim();
+      const raw = String(row?.[statusKey] ?? "").trim().toLowerCase();
+      if (!raw) return "";
+      if (raw === "active" || raw === "aktiv") return "active";
+      if (raw === "pending" || raw === "offen") return "pending";
+      if (raw === "inactive" || raw === "inaktiv") return "inactive";
+      return raw;
+    }
+
     function filteredRows() {
       const needle = normalizeText(state.search);
       const activeColumns = orderedColumns();
@@ -255,6 +269,20 @@
           return normalizeText(raw).includes(value);
         }));
       }
+      // Redesign inline column filters
+      if (config?.redesign !== false) {
+        const rdFilters = Object.entries(state.rdInlineFilters).filter(([, v]) => String(v ?? "").trim() !== "");
+        if (rdFilters.length) {
+          filtered = filtered.filter((row) => rdFilters.every(([key, filterValue]) => {
+            const col = activeColumns.find((c) => c.key === key);
+            if (!col) return true;
+            const value = readValue(col, row);
+            const normalizedNeedle = normalizeText(filterValue);
+            if (Array.isArray(value)) return value.some((item) => normalizeText(item?.label || item?.name || item).includes(normalizedNeedle));
+            return normalizeText(value).includes(normalizedNeedle);
+          }));
+        }
+      }
       const sortColumn = activeColumns.find((column) => column.key === state.sortKey) || haystackColumns[0];
       if (!sortColumn) return filtered;
       const direction = state.sortDir === "desc" ? -1 : 1;
@@ -277,7 +305,6 @@
         return active.map((col) => col.width || "minmax(120px, 1fr)").join(" ");
       }
       const MIN_PX = 80;
-      // Resolve each column's desired width in px from whatever form it's stored in
       const desired = active.map((col) => {
         const w = String(col.width || "");
         const raw = parseFloat(w);
@@ -287,15 +314,12 @@
       });
       const total = desired.reduce((s, px) => s + px, 0);
       if (total <= containerWidth) {
-        // Columns fit: distribute remaining space proportionally with 1fr
         return desired.map((px) => `minmax(${px}px, 1fr)`).join(" ");
       }
       if (total <= containerWidth * 1.25) {
-        // Slightly over: scale all down proportionally, still distribute with 1fr
         const scale = containerWidth / total;
         return desired.map((px) => `minmax(${Math.max(MIN_PX, Math.round(px * scale))}px, 1fr)`).join(" ");
       }
-      // Significantly over: user explicitly sized wide — respect px, wrap scrolls
       return desired.map((px) => `${px}px`).join(" ");
     }
 
@@ -398,10 +422,11 @@
       const isActiveSort = state.sortKey === column.key;
       const dragEnabled = column.draggable !== false && column.type !== "actions";
       const canHide = column.type !== "actions";
+      const hasRdFilter = config?.redesign !== false && Boolean(state.rdInlineFilters[column.key]);
       const sortIcon = !column.sortable ? "" : (isActiveSort ? (state.sortDir === "asc" ? "↑" : "↓") : "↕");
       return `
         <div
-          class="data-table__headcell ${isNumeric ? "data-table__headcell--numeric" : ""} ${isActiveSort ? "is-active" : ""}"
+          class="data-table__headcell ${isNumeric ? "data-table__headcell--numeric" : ""} ${isActiveSort ? "is-active" : ""} ${hasRdFilter ? "rd-has-filter" : ""}"
           data-head-key="${esc(column.key)}"
           draggable="${dragEnabled ? "true" : "false"}"
         >
@@ -413,6 +438,7 @@
             </button>
           </div>
           <div class="headcell-right">
+            ${config?.redesign !== false ? `<button type="button" class="rd-col-menu-btn" data-col-menu-key="${esc(column.key)}" aria-label="Spalten-Aktionen">⋯</button>` : ""}
             ${canHide ? `<button type="button" class="col-hide-btn" data-col-hide="${esc(column.key)}" aria-label="Spalte ausblenden" title="Spalte ausblenden">👁</button>` : ""}
             ${column.persistWidth === false ? "" : `<span class="column-resizer" data-resize-key="${esc(column.key)}" aria-hidden="true"></span>`}
           </div>
@@ -420,8 +446,26 @@
       `;
     }
 
-    function editorRowHtml(mode, rowLike, rowId = "") {
+    function filterRowHtml(gt) {
+      const activeColumns = orderedColumns();
+      const filterDefs = config?.redesignFilterDefs || {};
+      const cells = activeColumns.map((col) => {
+        const def = filterDefs[col.key];
+        const curVal = state.rdInlineFilters[col.key] || "";
+        if (def?.type === "select") {
+          const opts = (def.options || []).map((o) =>
+            `<option value="${esc(o.value)}" ${o.value === curVal ? "selected" : ""}>${esc(o.label)}</option>`
+          ).join("");
+          return `<div class="rd-filter-cell"><select data-rd-filter-key="${esc(col.key)}">${opts}</select></div>`;
+        }
+        return `<div class="rd-filter-cell"><input type="text" data-rd-filter-key="${esc(col.key)}" value="${esc(curVal)}" placeholder="Filter …" /></div>`;
+      }).join("");
+      return `<div class="rd-filter-row" style="grid-template-columns:${esc(gt)}">${cells}</div>`;
+    }
+
+    function editorRowHtml(mode, rowLike, rowId = "", gt = "") {
       const target = mode === "create" ? state.draftCreate : state.draftEdit;
+      const resolvedGt = gt || gridTemplate();
       const cells = orderedColumns().map((column) => {
         if (column.type === "actions") {
           return `
@@ -437,7 +481,7 @@
       }).join("");
 
       return `
-        <div class="data-table__row data-table__row--editor" data-editor-row="${esc(rowId || mode)}" style="grid-template-columns:${esc(gridTemplate())}">
+        <div class="data-table__row data-table__row--editor" data-editor-row="${esc(rowId || mode)}" style="grid-template-columns:${esc(resolvedGt)}">
           ${cells}
         </div>
       `;
@@ -490,6 +534,7 @@
     }
 
     function render() {
+      const gt = gridTemplate();
       const rows = filteredRows();
       const activeCount = rows.length;
       const totalCount = state.rows.length;
@@ -501,6 +546,7 @@
       const showResetButton = config?.showResetButton !== false;
       const showMetaBar = config?.showMetaBar === true;
       const showFilterPanel = filterFields.length > 0 && state.filterPanelOpen !== false;
+      const isRedesign = config?.redesign !== false;
       const title = String(config?.title || "").trim();
       const description = String(config?.description || "").trim();
       const emptyTitle = String(config?.emptyStateTitle || "Noch keine Datensaetze vorhanden.").trim();
@@ -518,12 +564,14 @@
       root.setAttribute("data-row-click", "inline");
       root.setAttribute("data-inline-create", state.createOpen ? "true" : "false");
       root.setAttribute("data-inline-edit", state.openEditorRowId ? "true" : "false");
+      root.classList.toggle("is-redesign", isRedesign);
 
       const activeEl = document.activeElement;
       const focusState = activeEl && root.contains(activeEl)
         ? {
             id: String(activeEl.id || "").trim(),
             filterKey: String(activeEl.getAttribute?.("data-filter-key") || "").trim(),
+            rdFilterKey: String(activeEl.getAttribute?.("data-rd-filter-key") || "").trim(),
             editorMode: String(activeEl.getAttribute?.("data-editor-mode") || "").trim(),
             editorKey: String(activeEl.getAttribute?.("data-editor-key") || "").trim(),
             selectionStart: typeof activeEl.selectionStart === "number" ? activeEl.selectionStart : null,
@@ -595,7 +643,7 @@
                 return `<button type="button" class="${classes}" data-utility-action="${esc(key)}" ${titleAttr ? `title="${esc(titleAttr)}" aria-label="${esc(titleAttr)}"` : ""}>${icon ? `<span aria-hidden="true">${esc(icon)}</span>` : ""}${label ? `<span>${esc(label)}</span>` : ""}</button>`;
               }).join("")}
               ${config?.showColumnToggle !== false ? `<button type="button" class="feed-btn feed-btn--ghost${state.columnTogglePanelOpen ? " is-active" : ""}" data-inline-column-toggle="true" aria-label="Spalten ein-/ausblenden">⊞ Spalten</button>` : ""}
-              ${config.showFilterButton ? `<button type="button" class="icon-utility" data-inline-filter-toggle="true" aria-label="Filter">☰</button>` : ""}
+              ${config.showFilterButton ? `<button type="button" class="icon-utility${isRedesign && state.rdFiltersOpen ? " is-active" : ""}" data-inline-filter-toggle="true" aria-label="Filter">☰</button>` : ""}
               ${showResetButton ? `<button type="button" class="icon-utility" data-inline-reset="true" aria-label="Reset">↺</button>` : ""}
             </div>
           </div>
@@ -610,7 +658,7 @@
             `).join("")}
           </div>
           ` : ""}
-          ${showFilterPanel ? `
+          ${showFilterPanel && !isRedesign ? `
           <div class="filter-panel">
             ${filterFields.map((field) => filterControlHtml(field)).join("")}
           </div>
@@ -622,25 +670,31 @@
           ${state.viewMode === "table" ? `
             <div class="data-table-wrap">
               <div class="data-table">
-                <div class="data-table__head" style="grid-template-columns:${esc(gridTemplate())}">
+                <div class="data-table__head" style="grid-template-columns:${esc(gt)}">
                   ${activeColumns.map((column) => headerCellHtml(column)).join("")}
                 </div>
-                ${state.createOpen ? editorRowHtml("create", state.draftCreate, "create") : ""}
+                ${isRedesign && state.rdFiltersOpen ? filterRowHtml(gt) : ""}
+                ${state.createOpen ? editorRowHtml("create", state.draftCreate, "create", gt) : ""}
                 ${!rows.length ? emptyStateHtml : ""}
                 ${rows.map((row) => {
                   const key = rowKey(row);
+                  const status = isRedesign ? rdRowStatus(row) : "";
                   return `
-                    <div class="data-table__row ${state.openEditorRowId === key ? "is-selected" : ""}" data-row-id="${esc(key)}" style="grid-template-columns:${esc(gridTemplate())}">
+                    <div class="data-table__row ${state.openEditorRowId === key ? "is-selected" : ""}" data-row-id="${esc(key)}" style="grid-template-columns:${esc(gt)}"${status ? ` data-rd-status="${esc(status)}"` : ""}>
                       ${activeColumns.map((column) => dataCellHtml(column, row)).join("")}
+                      ${isRedesign ? `<div class="rd-row-actions">
+                        <button type="button" data-rd-row-action="edit" data-rd-row-id="${esc(key)}" aria-label="Bearbeiten">✎</button>
+                        <button type="button" data-rd-row-action="menu" data-rd-row-id="${esc(key)}" aria-label="Mehr">⋯</button>
+                      </div>` : ""}
                     </div>
-                    ${state.openEditorRowId === key ? editorRowHtml("edit", row, key) : ""}
+                    ${state.openEditorRowId === key ? editorRowHtml("edit", row, key, gt) : ""}
                   `;
                 }).join("")}
               </div>
             </div>
           ` : `
             <div class="cards-view">
-              ${state.createOpen ? `<div class="inline-card inline-card--create">${editorRowHtml("create", state.draftCreate, "create")}</div>` : ""}
+              ${state.createOpen ? `<div class="inline-card inline-card--create">${editorRowHtml("create", state.draftCreate, "create", gt)}</div>` : ""}
               ${!rows.length ? emptyStateHtml : ""}
               ${rows.map((row) => cardHtml(row)).join("")}
             </div>
@@ -661,6 +715,9 @@
         if (!nextFocus && focusState.filterKey) {
           nextFocus = root.querySelector(`[data-filter-key="${CSS.escape(focusState.filterKey)}"]`);
         }
+        if (!nextFocus && focusState.rdFilterKey) {
+          nextFocus = root.querySelector(`[data-rd-filter-key="${CSS.escape(focusState.rdFilterKey)}"]`);
+        }
         if (!nextFocus && focusState.editorMode && focusState.editorKey) {
           nextFocus = root.querySelector(`[data-editor-mode="${CSS.escape(focusState.editorMode)}"][data-editor-key="${CSS.escape(focusState.editorKey)}"]`);
         }
@@ -679,6 +736,14 @@
         state.search = String(target.value || "");
         render();
         return;
+      }
+      if (target?.getAttribute?.("data-rd-filter-key")) {
+        const key = String(target.getAttribute("data-rd-filter-key") || "");
+        if (key) {
+          state.rdInlineFilters[key] = String(target.value || "");
+          render();
+          return;
+        }
       }
       if (target?.getAttribute?.("data-filter-key")) {
         const key = String(target.getAttribute("data-filter-key") || "");
@@ -702,6 +767,15 @@
     });
 
     root.addEventListener("change", (event) => {
+      if (event.target?.getAttribute?.("data-rd-filter-key")) {
+        const key = String(event.target.getAttribute("data-rd-filter-key") || "");
+        if (key) {
+          state.rdInlineFilters[key] = String(event.target.value || "");
+          render();
+          return;
+        }
+      }
+
       const toggleKey = event.target?.getAttribute?.("data-column-toggle-key");
       if (toggleKey) {
         const key = String(toggleKey || "");
@@ -736,7 +810,8 @@
       const actionBtn = target?.closest?.("[data-row-action]");
       const sortBtn = target?.closest?.("[data-sort-key]");
       const rowClickOpensEditor = config?.rowClickOpensEditor !== false;
-      const utilityActions = Array.isArray(config?.utilityActions) ? config.utilityActions : [];
+      const utilityActionsLocal = Array.isArray(config?.utilityActions) ? config.utilityActions : [];
+      const isRedesign = config?.redesign !== false;
 
       if (target?.closest?.("[data-inline-create-toggle]")) {
         if (String(config?.rowInteractionMode || "").trim() === "dialog" && typeof config?.onCreateOpen === "function") {
@@ -753,6 +828,8 @@
         state.createOpen = false;
         state.openUtilityMenuKey = "";
         state.openEditorRowId = "";
+        state.rdFiltersOpen = false;
+        state.rdInlineFilters = {};
         state.draftCreate = typeof config?.getCreateDefaults === "function" ? cloneRow(config.getCreateDefaults()) : {};
         render();
         config?.onReset?.();
@@ -770,6 +847,7 @@
         const key = String(hideBtn.getAttribute("data-col-hide") || "");
         if (key) {
           state.hiddenColumns.add(key);
+          delete state.rdInlineFilters[key];
           persistLayout();
           render();
           config?.onLayoutChange?.({ columnOrder: state.columnOrder.slice(), columnWidths: { ...state.columnWidths }, hiddenColumns: [...state.hiddenColumns] });
@@ -778,9 +856,81 @@
       }
 
       if (target?.closest?.("[data-inline-filter-toggle]")) {
-        if (filterFields.length) {
+        if (isRedesign) {
+          state.rdFiltersOpen = !state.rdFiltersOpen;
+          render();
+        } else if (filterFields.length) {
           state.filterPanelOpen = state.filterPanelOpen === false;
           render();
+        }
+        return;
+      }
+
+      // Redesign column menu
+      const colMenuBtn = target?.closest?.("[data-col-menu-key]");
+      if (colMenuBtn && isRedesign) {
+        const key = String(colMenuBtn.getAttribute("data-col-menu-key") || "");
+        if (key) {
+          const col = columns.find((c) => c.key === key);
+          window.RdPopover?.openColumnMenu(colMenuBtn, key, col?.label || key, {
+            sortAsc: () => {
+              state.sortKey = key;
+              state.sortDir = "asc";
+              persistLayout();
+              render();
+              config?.onSortChange?.({ sortKey: state.sortKey, sortDir: state.sortDir });
+            },
+            sortDesc: () => {
+              state.sortKey = key;
+              state.sortDir = "desc";
+              persistLayout();
+              render();
+              config?.onSortChange?.({ sortKey: state.sortKey, sortDir: state.sortDir });
+            },
+            hide: () => {
+              state.hiddenColumns.add(key);
+              delete state.rdInlineFilters[key];
+              persistLayout();
+              render();
+              config?.onLayoutChange?.({ columnOrder: state.columnOrder.slice(), columnWidths: { ...state.columnWidths }, hiddenColumns: [...state.hiddenColumns] });
+            },
+            resetWidth: () => {
+              const original = columns.find((c) => c.key === key);
+              state.columnWidths[key] = original?.width || "minmax(120px, 1fr)";
+              persistLayout();
+              render();
+            },
+          });
+        }
+        return;
+      }
+
+      // Redesign row actions overlay
+      const rdRowActionBtn = target?.closest?.("[data-rd-row-action]");
+      if (rdRowActionBtn && isRedesign) {
+        const act = String(rdRowActionBtn.getAttribute("data-rd-row-action") || "");
+        const rowId = String(rdRowActionBtn.getAttribute("data-rd-row-id") || "");
+        const row = state.rows.find((entry) => rowKey(entry) === rowId);
+        if (row) {
+          if (act === "edit") {
+            if (String(config?.rowInteractionMode || "").trim() === "dialog") {
+              config?.onRowClick?.(row, { type: "row-action-edit" });
+            } else {
+              openEditor(row);
+            }
+          } else if (act === "menu") {
+            window.RdPopover?.openRowMenu(rdRowActionBtn, rowId, {
+              onEdit: () => {
+                if (String(config?.rowInteractionMode || "").trim() === "dialog") {
+                  config?.onRowClick?.(row, { type: "row-action-edit" });
+                } else {
+                  openEditor(row);
+                }
+              },
+              onDuplicate: config?.onDuplicate ? () => config.onDuplicate(row) : null,
+              onDelete: config?.onDelete ? () => config.onDelete(row) : null,
+            });
+          }
         }
         return;
       }
@@ -801,7 +951,7 @@
       if (utilityBtn) {
         const key = String(utilityBtn.getAttribute("data-utility-action") || "");
         if (key) {
-          const utilityAction = utilityActions.find((entry) => String(entry?.key || "").trim() === key) || null;
+          const utilityAction = utilityActionsLocal.find((entry) => String(entry?.key || "").trim() === key) || null;
           if (String(utilityAction?.kind || "") === "menu") {
             state.openUtilityMenuKey = state.openUtilityMenuKey === key ? "" : key;
             render();
@@ -958,6 +1108,29 @@
     });
 
     root.addEventListener("contextmenu", (event) => {
+      const isRedesign = config?.redesign !== false;
+      if (isRedesign) {
+        const rowEl = event.target?.closest?.("[data-row-id]");
+        if (rowEl) {
+          event.preventDefault();
+          const rowId = String(rowEl.getAttribute("data-row-id") || "");
+          const row = state.rows.find((entry) => rowKey(entry) === rowId);
+          if (row) {
+            window.RdPopover?.openRowContextMenu(event.clientX, event.clientY, rowId, {
+              onEdit: () => {
+                if (String(config?.rowInteractionMode || "").trim() === "dialog") {
+                  config?.onRowClick?.(row, { type: "row-action-edit" });
+                } else {
+                  openEditor(row);
+                }
+              },
+              onDuplicate: config?.onDuplicate ? () => config.onDuplicate(row) : null,
+              onDelete: config?.onDelete ? () => config.onDelete(row) : null,
+            });
+          }
+          return;
+        }
+      }
       const head = event.target?.closest?.("[data-head-key]");
       if (!head) return;
       const key = String(head.getAttribute("data-head-key") || "");
@@ -1003,7 +1176,7 @@
 
     render();
 
-    return {
+    const api = {
       setRows(nextRows = []) {
         state.rows = Array.isArray(nextRows) ? nextRows.slice() : [];
         render();
@@ -1036,8 +1209,19 @@
           render();
         }
       },
+      setRedesign(enabled) {
+        config.redesign = !!enabled;
+        if (!enabled) {
+          state.rdFiltersOpen = false;
+          state.rdInlineFilters = {};
+        }
+        render();
+      },
       render,
     };
+
+    root._fcpApi = api;
+    return api;
   }
 
   window.FCPInlineDataTable = {

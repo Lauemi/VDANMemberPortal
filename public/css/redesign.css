@@ -88,7 +88,7 @@
   border: 1px solid var(--rd-line);
   border-radius: var(--rd-radius);
   box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 8px 24px -12px rgba(42, 45, 36, 0.12);
-  overflow: clip;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -354,15 +354,19 @@
   background: var(--rd-surface);
   padding: 0;
   border: 0;
+  /* sole horizontal scroll container — shell clips, this scrolls */
   overflow-x: auto;
   overflow-y: visible;
+  min-width: 0;
 }
 
 .fcp-table-root.is-redesign .data-table {
   font-size: var(--rd-font);
   background: var(--rd-surface);
   border: 0;
+  /* fills wrap when columns fit; expands for overflow when gridTemplate uses raw px */
   min-width: 100%;
+  width: max-content;
 }
 
 /* ═══ 6a · SPALTEN-KOPF ════════════════════════════════════════════════════ */

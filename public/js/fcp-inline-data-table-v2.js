@@ -265,8 +265,38 @@
       });
     }
 
+    function measureContainerWidth() {
+      // root.clientWidth is the bounded parent truth — subtract shell border (2px × 2)
+      return Math.max(0, (root.clientWidth || 0) - 4);
+    }
+
     function gridTemplate() {
-      return orderedColumns().map((column) => column.width || "minmax(120px, 1fr)").join(" ");
+      const containerWidth = measureContainerWidth();
+      const active = orderedColumns();
+      if (!containerWidth || !active.length) {
+        return active.map((col) => col.width || "minmax(120px, 1fr)").join(" ");
+      }
+      const MIN_PX = 80;
+      // Resolve each column's desired width in px from whatever form it's stored in
+      const desired = active.map((col) => {
+        const w = String(col.width || "");
+        const raw = parseFloat(w);
+        if (w.endsWith("px") && Number.isFinite(raw) && raw > 0) return Math.max(MIN_PX, raw);
+        const m = w.match(/minmax\((\d+(?:\.\d+)?)px/);
+        return m ? Math.max(MIN_PX, parseFloat(m[1])) : 120;
+      });
+      const total = desired.reduce((s, px) => s + px, 0);
+      if (total <= containerWidth) {
+        // Columns fit: distribute remaining space proportionally with 1fr
+        return desired.map((px) => `minmax(${px}px, 1fr)`).join(" ");
+      }
+      if (total <= containerWidth * 1.25) {
+        // Slightly over: scale all down proportionally, still distribute with 1fr
+        const scale = containerWidth / total;
+        return desired.map((px) => `minmax(${Math.max(MIN_PX, Math.round(px * scale))}px, 1fr)`).join(" ");
+      }
+      // Significantly over: user explicitly sized wide — respect px, wrap scrolls
+      return desired.map((px) => `${px}px`).join(" ");
     }
 
     function isInteractiveTarget(target) {

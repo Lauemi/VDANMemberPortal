@@ -49,6 +49,25 @@
         ? raw.map((item) => `<span class="inline-token">${esc(item?.label || item?.name || item)}</span>`).join("")
         : esc(defaultEmptyValue(column));
     }
+    if (Array.isArray(column?.options)) {
+      const option = column.options.find((entry) => String(entry?.value ?? "") === String(raw ?? ""));
+      if (option?.label != null && String(option.label).trim() !== "") {
+        return esc(option.label);
+      }
+    }
+    if (column?.key === "status") {
+      const normalized = String(raw ?? "").trim().toLowerCase();
+      if (normalized === "active" || normalized === "aktiv") return "Aktiv";
+      if (normalized === "inactive" || normalized === "inaktiv" || normalized === "passiv" || normalized === "passive") return "Inaktiv";
+      if (normalized === "pending" || normalized === "offen" || normalized === "invited") return "Offen";
+      if (normalized === "blocked") return "Gesperrt";
+    }
+    if (column?.key === "role") {
+      const normalized = String(raw ?? "").trim().toLowerCase();
+      if (normalized === "member") return "Mitglied";
+      if (normalized === "admin") return "Admin";
+      if (normalized === "vorstand") return "Vorstand";
+    }
     if (typeof fieldContracts.formatFieldDisplayValue === "function") {
       return esc(fieldContracts.formatFieldDisplayValue(column, raw));
     }
@@ -153,6 +172,7 @@
     let feedbackTimer = 0;
     let resizeObserver = null;
     let lastObservedContainerWidth = 0;
+    const ownerDocument = root.ownerDocument || document;
 
     function configuredRowActions() {
       const raw = Array.isArray(config?.rowActions) ? config.rowActions : ["edit", "duplicate", "delete"];
@@ -175,6 +195,30 @@
         }
         return "";
       }).join("");
+    }
+
+    function deriveRedesignFilterDefs() {
+      if (config?.redesignFilterDefs && typeof config.redesignFilterDefs === "object") {
+        return config.redesignFilterDefs;
+      }
+      return Object.fromEntries(
+        filterFields.map((field) => {
+          if (field?.type === "select" && Array.isArray(field.options)) {
+            const noopValue = String(field.noopValue ?? "all").trim().toLowerCase();
+            return [field.key, {
+              type: "select",
+              options: field.options.map((option, index) => {
+                const value = String(option?.value ?? "");
+                return {
+                  value: index === 0 && value.trim().toLowerCase() === noopValue ? "" : value,
+                  label: String(option?.label ?? option?.value ?? ""),
+                };
+              }),
+            }];
+          }
+          return [field.key, { type: "text" }];
+        })
+      );
     }
 
     try {
@@ -362,7 +406,7 @@
     }
 
     function responsiveContainer() {
-      return root.closest("[data-inline-width-anchor], .panel-body, .card, .card-body, .workscreen, .workscreen-main, main")
+      return root.closest("[data-inline-width-anchor], [data-panel-content], .admin-card__content, .panel-body, .card, .card-body, .workscreen, .workscreen-main, main")
         || root.parentElement
         || root;
     }
@@ -402,10 +446,10 @@
       const baseMin = numericOrMeta ? 84 : 108;
       const softMin = column.type === "primary" ? 160 : column.type === "meta" ? 100 : baseMin;
       const capByMode = mode === "mobile"
-        ? (column.type === "primary" ? 220 : numericOrMeta ? 120 : 156)
+        ? (column.type === "primary" ? 360 : numericOrMeta ? 220 : 280)
         : mode === "tablet"
-          ? (column.type === "primary" ? 260 : numericOrMeta ? 132 : 176)
-          : (column.type === "primary" ? 320 : numericOrMeta ? 144 : 220);
+          ? (column.type === "primary" ? 520 : numericOrMeta ? 260 : 360)
+          : (column.type === "primary" ? 720 : numericOrMeta ? 320 : 480);
       return { baseMin, softMin, cap: capByMode };
     }
 
@@ -452,26 +496,43 @@
       };
     }
 
+    function usesManualWidth(column = {}) {
+      const raw = String(state.columnWidths[column.key] || column.width || "").trim();
+      if (!raw) return false;
+      if (/^\s*minmax\(\s*120px\s*,\s*1fr\s*\)\s*$/i.test(raw)) return false;
+      return /px/i.test(raw) || /minmax\(/i.test(raw);
+    }
+
     function gridTemplateMeta() {
       const containerWidth = measureContainerWidth();
       const active = orderedColumns();
       if (!active.length) return { template: "", layout: responsiveMode(containerWidth), overflow: false };
       const specs = active.map(preferredColumnWidth);
+      const hasManualWidths = active.some((column) => usesManualWidth(column));
       const sumMin = specs.reduce((sum, spec) => sum + spec.min, 0);
       const sumPreferred = specs.reduce((sum, spec) => sum + spec.preferred, 0);
       const mode = responsiveMode(containerWidth);
       if (!containerWidth) {
         return {
-          template: specs.map((spec) => `minmax(${spec.min}px, ${spec.flex}fr)`).join(" "),
+          template: specs.map((spec) => `${spec.preferred}px`).join(" "),
           layout: mode,
           overflow: false,
         };
       }
       if (containerWidth >= sumPreferred) {
         return {
-          template: specs.map((spec) => `minmax(${spec.min}px, ${spec.flex}fr)`).join(" "),
+          template: hasManualWidths
+            ? specs.map((spec) => `${spec.preferred}px`).join(" ")
+            : specs.map((spec) => `minmax(${spec.min}px, ${spec.flex}fr)`).join(" "),
           layout: mode,
           overflow: false,
+        };
+      }
+      if (hasManualWidths) {
+        return {
+          template: specs.map((spec) => `${spec.preferred}px`).join(" "),
+          layout: mode,
+          overflow: true,
         };
       }
       if (containerWidth >= sumMin) {
@@ -634,7 +695,7 @@
 
     function filterRowHtml(gt) {
       const activeColumns = orderedColumns();
-      const filterDefs = config?.redesignFilterDefs || {};
+      const filterDefs = deriveRedesignFilterDefs();
       const cells = activeColumns.map((col) => {
         const def = filterDefs[col.key];
         const curVal = state.rdInlineFilters[col.key] || "";
@@ -694,14 +755,39 @@
       `;
     }
 
+    function cardTitleValue(row) {
+      const explicitKey = String(config?.primaryColumnKey || config?.cardTitleKey || "").trim();
+      if (explicitKey) {
+        const explicitColumn = columns.find((column) => column.key === explicitKey);
+        if (explicitColumn) return renderDisplayValue(explicitColumn, row);
+      }
+      const firstName = String(row?.first_name ?? "").trim();
+      const lastName = String(row?.last_name ?? "").trim();
+      const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+      if (fullName) return esc(fullName);
+      const preferred = columns.find((column) => column.type === "primary")
+        || columns.find((column) => ["name", "title", "label", "display_name", "last_name"].includes(String(column.key || "")))
+        || columns.find((column) => !/_id$/i.test(String(column.key || "")) && column.key !== "club_id")
+        || columns[0];
+      return preferred ? renderDisplayValue(preferred, row) : esc(rowKey(row));
+    }
+
     function cardHtml(row) {
       const key = rowKey(row);
-      const titleColumn = columns.find((column) => column.type === "primary") || columns[0];
-      const metaColumns = columns.filter((column) => column.key !== titleColumn.key && column.type !== "actions");
+      const explicitKey = String(config?.primaryColumnKey || config?.cardTitleKey || "").trim();
+      const titleColumn = explicitKey
+        ? columns.find((column) => column.key === explicitKey)
+        : columns.find((column) => column.type === "primary") || columns.find((column) => column.key === "last_name") || columns[0];
+      const metaColumns = columns.filter((column) => {
+        if (column.type === "actions") return false;
+        if (titleColumn && column.key === titleColumn.key) return false;
+        if (!explicitKey && (column.key === "first_name" || column.key === "club_id")) return false;
+        return true;
+      });
       return `
         <article class="inline-card ${state.openEditorRowId === key ? "is-selected" : ""}" data-card-row-id="${esc(key)}">
           <div class="inline-card__head">
-            <strong>${renderDisplayValue(titleColumn, row)}</strong>
+            <strong>${cardTitleValue(row)}</strong>
             <div class="row-actions">
               ${rowActionsHtml()}
             </div>
@@ -1004,8 +1090,22 @@
       const rowClickOpensEditor = config?.rowClickOpensEditor !== false;
       const utilityActionsLocal = Array.isArray(config?.utilityActions) ? config.utilityActions : [];
       const isRedesign = config?.redesign !== false;
+      const insideColumnToggleSurface = target?.closest?.(".column-toggle-panel, [data-inline-column-toggle]");
+      const insideUtilitySurface = target?.closest?.("[data-inline-utility-menu], [data-utility-action]");
+      let closedFloatingUi = false;
+
+      if (state.columnTogglePanelOpen && !insideColumnToggleSurface) {
+        state.columnTogglePanelOpen = false;
+        closedFloatingUi = true;
+      }
+      if (state.openUtilityMenuKey && !insideUtilitySurface) {
+        state.openUtilityMenuKey = "";
+        closedFloatingUi = true;
+      }
 
       if (target?.closest?.("[data-inline-create-toggle]")) {
+        event.preventDefault();
+        event.stopPropagation();
         if (String(config?.rowInteractionMode || "").trim() === "dialog" && typeof config?.onCreateOpen === "function") {
           config.onCreateOpen?.({ open: true });
           return;
@@ -1015,6 +1115,8 @@
       }
 
       if (target?.closest?.("[data-inline-reset]")) {
+        event.preventDefault();
+        event.stopPropagation();
         state.search = "";
         state.filterPanelOpen = true;
         state.createOpen = false;
@@ -1029,6 +1131,8 @@
       }
 
       if (target?.closest?.("[data-inline-column-toggle]")) {
+        event.preventDefault();
+        event.stopPropagation();
         state.columnTogglePanelOpen = !state.columnTogglePanelOpen;
         render();
         return;
@@ -1036,6 +1140,8 @@
 
       const hideBtn = target?.closest?.("[data-col-hide]");
       if (hideBtn) {
+        event.preventDefault();
+        event.stopPropagation();
         const key = String(hideBtn.getAttribute("data-col-hide") || "");
         if (key) {
           state.hiddenColumns.add(key);
@@ -1048,6 +1154,8 @@
       }
 
       if (target?.closest?.("[data-inline-filter-toggle]")) {
+        event.preventDefault();
+        event.stopPropagation();
         if (isRedesign) {
           state.rdFiltersOpen = !state.rdFiltersOpen;
           render();
@@ -1061,6 +1169,8 @@
       // Redesign column menu
       const colMenuBtn = target?.closest?.("[data-col-menu-key]");
       if (colMenuBtn && isRedesign) {
+        event.preventDefault();
+        event.stopPropagation();
         const key = String(colMenuBtn.getAttribute("data-col-menu-key") || "");
         if (key) {
           const col = columns.find((c) => c.key === key);
@@ -1100,6 +1210,8 @@
       // Redesign row actions overlay
       const rdRowActionBtn = target?.closest?.("[data-rd-row-action]");
       if (rdRowActionBtn && isRedesign) {
+        event.preventDefault();
+        event.stopPropagation();
         const act = String(rdRowActionBtn.getAttribute("data-rd-row-action") || "");
         const rowId = String(rdRowActionBtn.getAttribute("data-rd-row-id") || "");
         const row = state.rows.find((entry) => rowKey(entry) === rowId);
@@ -1129,6 +1241,8 @@
 
       const utilityMenuItem = target?.closest?.("[data-utility-menu-item]");
       if (utilityMenuItem) {
+        event.preventDefault();
+        event.stopPropagation();
         const actionKey = String(utilityMenuItem.getAttribute("data-utility-parent") || "");
         const itemKey = String(utilityMenuItem.getAttribute("data-utility-menu-item") || "");
         state.openUtilityMenuKey = "";
@@ -1141,6 +1255,8 @@
 
       const utilityBtn = target?.closest?.("[data-utility-action]");
       if (utilityBtn) {
+        event.preventDefault();
+        event.stopPropagation();
         const key = String(utilityBtn.getAttribute("data-utility-action") || "");
         if (key) {
           const utilityAction = utilityActionsLocal.find((entry) => String(entry?.key || "").trim() === key) || null;
@@ -1162,6 +1278,8 @@
 
       const viewBtn = target?.closest?.("[data-view-mode]");
       if (viewBtn) {
+        event.preventDefault();
+        event.stopPropagation();
         const requested = String(viewBtn.getAttribute("data-view-mode") || "table");
         state.viewMode = requested === "cards" && supportsCardsMode() ? "cards" : "table";
         persistLayout();
@@ -1171,6 +1289,8 @@
       }
 
       if (sortBtn) {
+        event.preventDefault();
+        event.stopPropagation();
         const key = String(sortBtn.getAttribute("data-sort-key") || "");
         if (key) {
           if (state.sortKey === key) state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
@@ -1187,6 +1307,8 @@
 
       const submitBtn = target?.closest?.("[data-editor-submit]");
       if (submitBtn) {
+        event.preventDefault();
+        event.stopPropagation();
         const mode = String(submitBtn.getAttribute("data-editor-submit") || "");
         try {
           if (mode === "create") {
@@ -1218,6 +1340,8 @@
 
       const cancelBtn = target?.closest?.("[data-editor-cancel]");
       if (cancelBtn) {
+        event.preventDefault();
+        event.stopPropagation();
         const mode = String(cancelBtn.getAttribute("data-editor-cancel") || "");
         if (mode === "create") {
           state.createOpen = false;
@@ -1231,6 +1355,8 @@
       }
 
       if (actionBtn && rowEl) {
+        event.preventDefault();
+        event.stopPropagation();
         const key = String(rowEl.getAttribute("data-row-id") || rowEl.getAttribute("data-card-row-id") || "");
         const row = state.rows.find((entry) => rowKey(entry) === key);
         const action = String(actionBtn.getAttribute("data-row-action") || "");
@@ -1257,6 +1383,14 @@
           if (rowClickOpensEditor) openEditor(row);
           config?.onRowClick?.(row);
         }
+        if (closedFloatingUi) {
+          render();
+        }
+        return;
+      }
+
+      if (closedFloatingUi) {
+        render();
       }
     });
 
@@ -1336,6 +1470,40 @@
       config?.onLayoutChange?.({ columnOrder: state.columnOrder.slice(), columnWidths: { ...state.columnWidths }, hiddenColumns: [...state.hiddenColumns] });
     });
 
+    function handleDocumentPointerDown(event) {
+      if (!root.isConnected) return;
+      const target = event.target;
+      if (root.contains(target)) return;
+      let changed = false;
+      if (state.columnTogglePanelOpen) {
+        state.columnTogglePanelOpen = false;
+        changed = true;
+      }
+      if (state.openUtilityMenuKey) {
+        state.openUtilityMenuKey = "";
+        changed = true;
+      }
+      if (changed) render();
+    }
+
+    function handleDocumentKeydown(event) {
+      if (event.key !== "Escape") return;
+      let changed = false;
+      if (state.columnTogglePanelOpen) {
+        state.columnTogglePanelOpen = false;
+        changed = true;
+      }
+      if (state.openUtilityMenuKey) {
+        state.openUtilityMenuKey = "";
+        changed = true;
+      }
+      window.RdPopover?.close?.();
+      if (changed) render();
+    }
+
+    ownerDocument.addEventListener("pointerdown", handleDocumentPointerDown, true);
+    ownerDocument.addEventListener("keydown", handleDocumentKeydown);
+
     root.addEventListener("mousedown", (event) => {
       const resizer = event.target?.closest?.("[data-resize-key]");
       const resizeKey = String(resizer?.getAttribute?.("data-resize-key") || "");
@@ -1396,6 +1564,8 @@
         return columns.slice();
       },
       destroy() {
+        ownerDocument.removeEventListener("pointerdown", handleDocumentPointerDown, true);
+        ownerDocument.removeEventListener("keydown", handleDocumentKeydown);
         if (resizeObserver) {
           try {
             resizeObserver.disconnect();

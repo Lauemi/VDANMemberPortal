@@ -2116,6 +2116,7 @@
             },
             "title": "Mitglieder",
             "description": "Inline-Erfassung mit Spalten-Reorder, Resize, Ausblenden, Suche, Filter und Kartenansicht.",
+            "primaryColumnKey": "last_name",
             "searchPlaceholder": "Suche in Nr., Name, E-Mail, Status, Ort …",
             "showToolbar": true,
             "showViewSwitch": true,

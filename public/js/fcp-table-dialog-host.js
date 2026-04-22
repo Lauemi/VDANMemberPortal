@@ -144,6 +144,7 @@
       showMetaBar: runtimeOptions?.runtime?.showMetaBar,
       metaLabel: runtimeOptions?.runtime?.metaLabel,
       metaHint: runtimeOptions?.runtime?.metaHint,
+      primaryColumnKey: runtimeOptions?.runtime?.primaryColumnKey || tableConfig?.primaryColumnKey || undefined,
       redesignTheme: runtimeOptions?.runtime?.redesignTheme || tableConfig?.redesignTheme || undefined,
       showToolbar: runtimeOptions?.runtime?.showToolbar,
       showCreateButton: runtimeOptions?.runtime?.showCreateButton,

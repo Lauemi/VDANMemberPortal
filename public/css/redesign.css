@@ -348,6 +348,34 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
   color: var(--rd-ink-2);
 }
 
+.is-redesign .column-toggle-panel {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--rd-line);
+  background: color-mix(in srgb, var(--rd-surface-2) 70%, var(--rd-surface) 30%);
+}
+
+.is-redesign .column-toggle-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--rd-ink);
+}
+
+.is-redesign .column-toggle-item span {
+  min-width: 0;
+}
+
+.is-redesign .column-toggle-item input[type="checkbox"] {
+  margin: 0;
+  inline-size: 16px;
+  block-size: 16px;
+}
+
 /* ═══ 5 · FILTER-PANEL — standardmäßig weg; Werte stehen inline ════════════ */
 .is-redesign .filter-panel {
   display: none !important;
@@ -767,7 +795,7 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
   border-radius: 6px;
   padding: 2px;
   box-shadow: 0 2px 6px rgba(42,45,36,.08);
-  z-index: 1;
+  z-index: 4;
 }
 .is-redesign .data-table__row:hover .rd-row-actions {
   display: inline-flex;
@@ -788,6 +816,37 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
 .is-redesign .rd-row-actions button:hover {
   background: var(--rd-gold-soft);
   color: var(--rd-gold-lo);
+}
+
+.is-redesign .cards-view {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background: transparent;
+}
+
+.is-redesign .inline-card {
+  border: 1px solid var(--rd-line);
+  border-radius: 12px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rd-surface-hi) 90%, transparent), color-mix(in srgb, var(--rd-surface) 88%, transparent));
+  box-shadow: 0 12px 28px -18px rgba(0, 0, 0, .28);
+}
+
+.is-redesign .inline-card__head > strong {
+  color: var(--rd-ink);
+  font-size: 15px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.is-redesign .inline-card__meta {
+  color: var(--rd-muted);
+}
+
+.is-redesign .inline-card__meta strong {
+  color: var(--rd-ink);
+  text-align: right;
+  word-break: break-word;
 }
 
 /* ═══ 9 · INLINE-EDIT-ZEILE ════════════════════════════════════════════════ */

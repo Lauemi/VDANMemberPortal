@@ -800,6 +800,14 @@
   display: grid;
   gap: 10px;
   min-width: 0;
+  overflow: hidden;
+}
+
+.admin-card__content {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .admin-card__header {

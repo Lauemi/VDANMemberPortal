@@ -985,6 +985,7 @@
         showMetaBar: tableConfig?.showMetaBar === true,
         metaLabel: tableConfig?.metaLabel || undefined,
         metaHint: tableConfig?.metaHint || undefined,
+        primaryColumnKey: tableConfig?.primaryColumnKey || undefined,
         redesignTheme: tableConfig?.redesignTheme || undefined,
         showCreateButton: tableConfig?.showCreateButton !== false,
         createLabel: tableConfig?.createLabel || undefined,

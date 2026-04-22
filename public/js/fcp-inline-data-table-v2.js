@@ -135,6 +135,7 @@
       feedback: null,
       rdFiltersOpen: false,
       rdInlineFilters: {},
+      rdTheme: String(root.dataset.rdTheme || config?.redesignTheme || "").trim().toLowerCase(),
     };
 
     const configuredDefaultOrder = Array.isArray(config?.defaultColumnOrder)
@@ -226,6 +227,9 @@
       if (persisted?.viewMode === "cards" || persisted?.viewMode === "table") {
         state.viewMode = persisted.viewMode;
       }
+      if (persisted?.rdTheme === "light" || persisted?.rdTheme === "dark") {
+        state.rdTheme = persisted.rdTheme;
+      }
       if (Array.isArray(persisted?.columnOrder)) {
         const allowed = new Set(initialColumns);
         const ordered = persisted.columnOrder.filter((key) => allowed.has(key));
@@ -257,6 +261,7 @@
       try {
         localStorage.setItem(storageKey, JSON.stringify({
           viewMode: state.viewMode,
+          rdTheme: state.rdTheme,
           sortKey: state.sortKey,
           sortDir: state.sortDir,
           columnOrder: state.columnOrder,
@@ -296,6 +301,7 @@
     }
 
     function resolveRedesignTheme() {
+      if (state.rdTheme === "light" || state.rdTheme === "dark") return state.rdTheme;
       const explicit = String(config?.redesignTheme || "").trim().toLowerCase();
       if (explicit === "light" || explicit === "dark") return explicit;
       const rootTheme = String(root?.dataset?.rdTheme || "").trim().toLowerCase();
@@ -714,22 +720,18 @@
       const target = mode === "create" ? state.draftCreate : state.draftEdit;
       const resolvedGt = gt || gridTemplate();
       const cells = orderedColumns().map((column) => {
-        if (column.type === "actions") {
-          return `
-            <div class="data-table__editor-cell data-table__editor-cell--actions">
-              <div class="editor-actions">
-                <button type="button" class="feed-btn row-action-btn" data-editor-submit="${esc(mode)}" aria-label="${mode === "create" ? "Anlegen" : "Speichern"}">✔</button>
-                <button type="button" class="feed-btn feed-btn--ghost row-action-btn" data-editor-cancel="${esc(mode)}" aria-label="Abbrechen">✖</button>
-              </div>
-            </div>
-          `;
-        }
         return `<div class="data-table__editor-cell">${editorControl(column, target, mode)}</div>`;
       }).join("");
 
       return `
         <div class="data-table__row data-table__row--editor" data-editor-row="${esc(rowId || mode)}" style="grid-template-columns:${esc(resolvedGt)}">
           ${cells}
+          <div class="data-table__editor-cell data-table__editor-cell--actions">
+            <div class="editor-actions">
+              <button type="button" class="feed-btn row-action-btn" data-editor-submit="${esc(mode)}" aria-label="${mode === "create" ? "Anlegen" : "Speichern"}">${mode === "create" ? "Anlegen" : "Speichern"}</button>
+              <button type="button" class="feed-btn feed-btn--ghost row-action-btn" data-editor-cancel="${esc(mode)}" aria-label="Abbrechen">Abbrechen</button>
+            </div>
+          </div>
         </div>
       `;
     }
@@ -821,6 +823,7 @@
       const showMetaBar = config?.showMetaBar === true;
       const showFilterPanel = filterFields.length > 0 && state.filterPanelOpen !== false;
       const isRedesign = config?.redesign !== false;
+      const resolvedTheme = resolveRedesignTheme();
       const title = String(config?.title || "").trim();
       const description = String(config?.description || "").trim();
       const emptyTitle = String(config?.emptyStateTitle || "Noch keine Datensaetze vorhanden.").trim();
@@ -841,7 +844,7 @@
       root.setAttribute("data-inline-layout", gtMeta.layout);
       root.setAttribute("data-inline-overflow", gtMeta.overflow ? "true" : "false");
       root.setAttribute("data-inline-view", currentView);
-      root.setAttribute("data-rd-theme", resolveRedesignTheme());
+      root.setAttribute("data-rd-theme", resolvedTheme);
       root.classList.toggle("is-redesign", isRedesign);
 
       const activeEl = document.activeElement;
@@ -869,10 +872,20 @@
               ${title ? `<h1>${esc(title)}</h1>` : ""}
               ${description ? `<p>${esc(description)}</p>` : ""}
             </div>
-            ${showViewSwitch ? `
-            <div class="view-toggle" role="group" aria-label="Ansicht">
-              <button type="button" class="${currentView === "table" ? "is-active" : ""}" data-view-mode="table" ${!supportsCardsMode() ? "disabled" : ""}>Tabelle</button>
-              <button type="button" class="${currentView === "cards" ? "is-active" : ""}" data-view-mode="cards" ${!supportsCardsMode() ? "disabled" : ""}>Cards</button>
+            ${(showViewSwitch || isRedesign) ? `
+            <div class="title-row__controls">
+              ${showViewSwitch ? `
+              <div class="view-toggle" role="group" aria-label="Ansicht">
+                <button type="button" class="${currentView === "table" ? "is-active" : ""}" data-view-mode="table" ${!supportsCardsMode() ? "disabled" : ""}>Tabelle</button>
+                <button type="button" class="${currentView === "cards" ? "is-active" : ""}" data-view-mode="cards" ${!supportsCardsMode() ? "disabled" : ""}>Cards</button>
+              </div>
+              ` : ""}
+              ${isRedesign ? `
+              <div class="theme-toggle" role="group" aria-label="Farbschema">
+                <button type="button" class="${resolvedTheme === "light" ? "is-active" : ""}" data-theme-mode="light">Hell</button>
+                <button type="button" class="${resolvedTheme === "dark" ? "is-active" : ""}" data-theme-mode="dark">Dunkel</button>
+              </div>
+              ` : ""}
             </div>
             ` : ""}
           </div>
@@ -1285,6 +1298,19 @@
         persistLayout();
         render();
         config?.onViewModeChange?.({ viewMode: state.viewMode, effectiveViewMode: effectiveViewMode() });
+        return;
+      }
+
+      const themeBtn = target?.closest?.("[data-theme-mode]");
+      if (themeBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        const requested = String(themeBtn.getAttribute("data-theme-mode") || "").trim().toLowerCase();
+        if (requested === "light" || requested === "dark") {
+          state.rdTheme = requested;
+          persistLayout();
+          render();
+        }
         return;
       }
 

@@ -23,6 +23,7 @@
   function buildPopover(items) {
     const pop = document.createElement("div");
     pop.className = "rd-popover";
+    pop.setAttribute("role", "menu");
     items.forEach((item) => {
       if (item === "---") {
         pop.appendChild(document.createElement("hr"));
@@ -37,6 +38,7 @@
       }
       const b = document.createElement("button");
       b.type = "button";
+      b.setAttribute("role", "menuitem");
       if (item.danger) b.classList.add("is-danger");
       if (item.disabled) b.disabled = true;
       b.innerHTML = `<span style="width:14px;display:inline-flex;justify-content:center;">${item.icon || ""}</span><span>${item.label}</span>`;
@@ -54,10 +56,28 @@
     document.body.appendChild(pop);
     const rect = anchor.getBoundingClientRect();
     const popRect = pop.getBoundingClientRect();
+    const gutter = 12;
+    const anchorGap = 4;
     let left = align === "right" ? rect.right - popRect.width : rect.left;
-    let top = rect.bottom + 4;
-    if (top + popRect.height > window.innerHeight - 8) top = rect.top - popRect.height - 4;
-    left = Math.max(8, Math.min(left, window.innerWidth - popRect.width - 8));
+    let top = rect.bottom + anchorGap;
+    let verticalOrigin = "top";
+    let horizontalOrigin = align === "right" ? "right" : "left";
+
+    if (top + popRect.height > window.innerHeight - gutter) {
+      top = rect.top - popRect.height - anchorGap;
+      verticalOrigin = "bottom";
+    }
+
+    if (left < gutter) {
+      left = gutter;
+      horizontalOrigin = "left";
+    } else if (left + popRect.width > window.innerWidth - gutter) {
+      left = window.innerWidth - popRect.width - gutter;
+      horizontalOrigin = "right";
+    }
+
+    pop.dataset.align = align;
+    pop.style.transformOrigin = `${horizontalOrigin} ${verticalOrigin}`;
     pop.style.left = left + "px";
     pop.style.top = top + "px";
   }
@@ -65,11 +85,34 @@
   function positionPopoverAtPoint(pop, x, y) {
     document.body.appendChild(pop);
     const popRect = pop.getBoundingClientRect();
-    let left = x, top = y;
-    if (left + popRect.width > window.innerWidth - 8) left = window.innerWidth - popRect.width - 8;
-    if (top + popRect.height > window.innerHeight - 8) top = y - popRect.height;
-    pop.style.left = Math.max(8, left) + "px";
-    pop.style.top = Math.max(8, top) + "px";
+    const gutter = 12;
+    const pointGap = 2;
+    let left = x + pointGap;
+    let top = y + pointGap;
+    let verticalOrigin = "top";
+    let horizontalOrigin = "left";
+
+    if (left + popRect.width > window.innerWidth - gutter) {
+      left = x - popRect.width - pointGap;
+      horizontalOrigin = "right";
+    }
+    if (top + popRect.height > window.innerHeight - gutter) {
+      top = y - popRect.height - pointGap;
+      verticalOrigin = "bottom";
+    }
+
+    if (left < gutter) {
+      left = gutter;
+      horizontalOrigin = "left";
+    }
+    if (top < gutter) {
+      top = gutter;
+      verticalOrigin = "top";
+    }
+
+    pop.style.transformOrigin = `${horizontalOrigin} ${verticalOrigin}`;
+    pop.style.left = Math.max(gutter, left) + "px";
+    pop.style.top = Math.max(gutter, top) + "px";
   }
 
   document.addEventListener("click", (e) => {

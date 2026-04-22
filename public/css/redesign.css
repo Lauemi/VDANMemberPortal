@@ -129,6 +129,14 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
   margin: 0;
   line-height: 1.4;
 }
+.is-redesign .title-row__controls {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex-shrink: 0;
+}
 
 /* View-Toggle (Tabelle / Cards) — Segment-Control */
 .is-redesign .view-toggle {
@@ -158,6 +166,39 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
   color: var(--rd-ink);
 }
 .is-redesign .view-toggle button.is-active {
+  background: var(--rd-surface-hi);
+  color: var(--rd-ink);
+  box-shadow: 0 1px 2px rgba(42,45,36,.08), 0 0 0 1px var(--rd-line);
+}
+
+.is-redesign .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  background: color-mix(in srgb, var(--rd-surface-2) 88%, transparent);
+  border: 1px solid var(--rd-line);
+  border-radius: 8px;
+  gap: 0;
+  flex-shrink: 0;
+}
+.is-redesign .theme-toggle button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--rd-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  min-height: 28px;
+  padding: 0 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.is-redesign .theme-toggle button:hover {
+  color: var(--rd-ink);
+}
+.is-redesign .theme-toggle button.is-active {
   background: var(--rd-surface-hi);
   color: var(--rd-ink);
   box-shadow: 0 1px 2px rgba(42,45,36,.08), 0 0 0 1px var(--rd-line);
@@ -853,14 +894,91 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
 .is-redesign .data-table__row--editor,
 .is-redesign .data-table__row--inline-edit,
 .is-redesign .data-table__inline-edit {
-  display: block !important;
-  background: var(--rd-gold-softer);
+  display: grid !important;
+  align-items: start;
+  background: color-mix(in srgb, var(--rd-gold-softer) 72%, var(--rd-surface) 28%);
   border: 0;
   border-bottom: 1px solid var(--rd-gold-soft);
   border-top: 1px solid var(--rd-gold-soft);
-  padding: 16px 20px;
+  padding: 0;
   min-height: auto;
-  grid-template-columns: none !important;
+}
+.is-redesign .data-table__editor-cell {
+  min-width: 0;
+  padding: 10px 12px;
+  border-inline-end: 1px solid var(--rd-line);
+  background: transparent;
+}
+.is-redesign .data-table__editor-cell:last-child {
+  border-inline-end: 0;
+}
+.is-redesign .data-table__editor-cell label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.is-redesign .data-table__editor-cell label > span:first-child,
+.is-redesign .data-table__editor-cell .qfp-field-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--rd-muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.is-redesign .data-table__editor-cell input,
+.is-redesign .data-table__editor-cell select,
+.is-redesign .data-table__editor-cell textarea,
+.is-redesign .data-table__editor-cell .data-table__editor-control {
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  border: 1px solid var(--rd-line);
+  background: var(--rd-surface-hi);
+  border-radius: 7px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--rd-ink);
+  box-sizing: border-box;
+}
+.is-redesign .data-table__editor-cell textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+.is-redesign .data-table__editor-cell input:focus,
+.is-redesign .data-table__editor-cell select:focus,
+.is-redesign .data-table__editor-cell textarea:focus,
+.is-redesign .data-table__editor-cell .data-table__editor-control:focus {
+  outline: none;
+  border-color: var(--rd-gold);
+  box-shadow: 0 0 0 2px var(--rd-gold-soft);
+}
+.is-redesign .data-table__editor-readonly {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--rd-ink-2);
+  font-size: 12px;
+}
+.is-redesign .data-table__multi-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.is-redesign .data-table__editor-cell .inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+}
+.is-redesign .data-table__editor-cell--actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 12px 10px;
+  border-inline-end: 0;
+  border-top: 1px dashed var(--rd-line);
+  background: color-mix(in srgb, var(--rd-surface) 84%, transparent);
 }
 .is-redesign .data-table__inline-edit__grid,
 .is-redesign .rd-inline-edit-grid {
@@ -905,6 +1023,11 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
   justify-content: flex-end;
   gap: 8px;
   padding-top: 4px;
+}
+.is-redesign .editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 /* ═══ 10 · KARTEN-ANSICHT ══════════════════════════════════════════════════ */
@@ -957,19 +1080,21 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
 /* ═══ 11 · SPALTEN-⋯-MENÜ POPOVER ══════════════════════════════════════════ */
 .is-redesign .rd-popover {
   position: fixed;
-  min-width: 180px;
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 24px));
   background: var(--rd-surface-hi);
   border: 1px solid var(--rd-line-strong);
-  border-radius: 10px;
-  padding: 4px;
-  box-shadow: 0 16px 40px -12px rgba(42,45,36,.25), 0 4px 12px -4px rgba(42,45,36,.1);
-  z-index: 100;
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 20px 44px -18px rgba(42,45,36,.28), 0 6px 18px -8px rgba(42,45,36,.14);
+  z-index: 120;
   font-size: 13px;
+  backdrop-filter: blur(8px);
 }
 .is-redesign .rd-popover hr {
   border: 0;
   border-top: 1px solid var(--rd-line);
-  margin: 4px 2px;
+  margin: 6px 2px;
 }
 .is-redesign .rd-popover button {
   all: unset;
@@ -977,8 +1102,8 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 7px 10px;
-  border-radius: 6px;
+  padding: 9px 10px;
+  border-radius: 8px;
   cursor: pointer;
   color: var(--rd-ink);
   box-sizing: border-box;
@@ -986,6 +1111,10 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
 .is-redesign .rd-popover button:hover {
   background: var(--rd-gold-softer);
   color: var(--rd-gold-lo);
+}
+.is-redesign .rd-popover button:disabled {
+  opacity: .45;
+  cursor: default;
 }
 .is-redesign .rd-popover button.is-danger {
   color: var(--rd-danger);
@@ -995,9 +1124,12 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
   color: var(--rd-danger);
 }
 .is-redesign .rd-popover-hint {
-  padding: 6px 10px;
+  padding: 6px 10px 8px;
   font-size: 11px;
-  color: var(--rd-muted-soft);
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--rd-muted);
 }
 
 /* ═══ 12 · CHROME-ONLY-AT-HOVER Toggle (Tweak) ═════════════════════════════ */

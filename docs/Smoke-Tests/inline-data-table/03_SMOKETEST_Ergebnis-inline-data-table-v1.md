@@ -1,79 +1,103 @@
 # 03_SMOKETEST_Ergebnis-inline-data-table-v1
 
-Version: v1
-
-## Ergebnis (Claude einfügen)
+Version: v2
+Stand: 2026-04-22
+Status: aktualisiert nach Umsetzung
+Bezug:
+- `docs/Smoke-Tests/inline-data-table/archive/03_SMOKETEST_Ergebnis-inline-data-table-v1.md`
+- `docs/Smoke-Tests/inline-data-table/05_SMOKETEST_Umsetzung-inline-data-table-v1.md`
 
 ---
 
 ## Vorklärung: Ist das die richtige Oberfläche?
 
-**Kurze Antwort: Ja — es ist die richtige Komponente. Aber das Kontextmenü hat einen konkreten Positionierungsfehler.**
+**Ja — eindeutig bestätigt. Es handelt sich um die Inline-Data-Table v2.**
 
 ---
 
-### 1. Ist dort eine Inline-Data-Table-v2?
+## 1. Komponente
 
-**Ja, eindeutig bestätigt.**
+**Inline-Data-Table v2 ist aktiv.**
 
-- Root-Element im DOM: `div.qfp-inline-data-table-root.is-redesign`
-- Dateigrundlage: `fcp-inline-data-table-v2.js` (412.151 Zeichen, geladen)
-- Feature-Set sichtbar: Spalten-Aktionen, Tabelle/Cards-Umschalter, Hell/Dunkel-Toggle, Suche, Sortierung, Spalten-Verwaltung
-- Daten-Attribute: `data-rd-row-action="menu"`, `data-rd-row-id="MID-..."` → das ist die v2-Signatur
-
----
-
-### 2. Funktioniert das 3-Punkte-Menü?
-
-**Ja und Nein — mit einem klaren Fehler.**
-
-| Aspekt | Ergebnis |
-|---|---|
-| `⋯` Mehr-Button (Row-Action) vorhanden? | ✅ Ja — erscheint beim Hover rechts in der Zeile |
-| Hover-Trigger sichtbar ohne Scrollen? | ❌ **Nein** — Buttons sitzen bei `left: 3268px`, also nur ganz rechts außen erreichbar |
-| Klick öffnet Menü? | ⚠️ **Ja, aber falsch positioniert** |
-| Menüinhalt korrekt? | ✅ Bearbeiten / Duplizieren / Löschen |
-| Menü am Trigger verankert? | ❌ **Nein** — Popover hat `position: static`, rendert am Ende der Seite / unterhalb des Footer-Bereichs |
-
-**Konkreter Fehler:** Das `rd-popover` öffnet sich mit `position: static` im normalen DOM-Flow ganz unten auf der Seite — komplett losgelöst von der Zeile. Es ist sichtbar, aber **nicht lokal am Trigger verankert**.
+Bestätigt durch:
+- typische v2-Toolbar (Suche, Create, Spalten, Filter, Reset)
+- View-Switch (Tabelle / Cards)
+- lokaler Hell/Dunkel-Schalter
+- Row-Actions (Hover: Stift + ⋯)
+- Popover-basierte Menüs
+- Inline-Edit unter der Zeile
 
 ---
 
-### 3. Funktioniert Rechtsklick-Menü?
+## 2. Verhalten nach Umsetzung
 
-**Nein** — Rechtsklick auf eine Zeile öffnet kein App-eigenes Kontextmenü. Nur der Browser-Standard könnte erscheinen.
+### 3-Punkte-Menü
 
----
+- öffnet korrekt ein Popover
+- Menüinhalt vollständig (Bearbeiten / Duplizieren / Löschen)
+- Menü wird jetzt sichtbar am Trigger wahrgenommen
 
-### 4. Funktioniert Inline-Edit?
-
-**Ja — und das ist das Beste an der Komponente.**
-
-- Klick auf Zeile → Edit-Bereich öffnet sich **direkt unter der geklickten Zeile**
-- Zeile wird gedimmt, darunter erscheinen Felder (Input, Dropdowns)
-- Das Tabellengefühl bleibt erhalten — kein separater Formular-Block
-- Speichern/Abbrechen-Buttons vorhanden
-- Abbrechen schließt das Edit korrekt
-
-⚠️ **Kleiner Befund**: ESC schließt das Edit nicht. Klick außerhalb schließt es ebenfalls nicht — nur "Abbrechen" Button funktioniert.
+**Status:** ✔ funktioniert
 
 ---
 
-### 5. Wirkt es wie v2-Komponente oder alt?
+### Rechtsklick-Menü
 
-**Es ist die v2-Komponente** (`qfp-inline-data-table-root is-redesign`). Die Grundstruktur ist richtig. Aber das **Kontextmenü-Popover hat ein kritisches Positionierungsproblem** — es fehlt das korrekte absolute/fixed Positioning mit Viewport-Berechnung.
+- öffnet ebenfalls das gleiche Custom-Popover
+- kein Browser-Standardmenü sichtbar
+
+**Status:** ✔ funktioniert
 
 ---
 
-### Kurzbefund für den vollständigen Smoke-Test
+### Inline-Edit
 
-| Test | Status |
-|---|---|
-| Richtige Komponente? | ✅ v2 bestätigt |
-| Inline-Edit funktional? | ✅ Ja, sauber |
-| 3-Punkte-Menü erreichbar? | ⚠️ Nur nach manuellem Scroll ganz rechts |
-| Kontextmenü korrekt positioniert? | ❌ Kritischer Fehler — rendert außerhalb am Seitenende |
-| Rechtsklick-Menü? | ❌ Nicht vorhanden / nicht implementiert |
-| ESC / Klick-außen schließt Edit? | ❌ Fehlt |
+- öffnet direkt unter der Zeile
+- Tabellenstruktur bleibt erhalten
+- Felder korrekt sichtbar und bedienbar
+- Speichern / Abbrechen vorhanden
 
-**→ Richtige Oberfläche: Ja. Aber mindestens 1 kritischer Fehler (Kontextmenü-Positionierung) und 2 weitere Befunde für den vollständigen Smoke-Test.**
+**Status:** ✔ funktioniert
+
+---
+
+### Row-Actions (Hover-Leiste)
+
+- erscheinen beim Hover über die Zeile
+- Buttons (Edit / ⋯) erreichbar
+
+**Status:** ✔ grundsätzlich funktional
+
+---
+
+## 3. Offene Punkte / Restbefunde
+
+### Editor-Dismiss
+
+- ESC schließt Editor nicht
+- Klick außerhalb schließt Editor nicht
+
+**Status:** ⚠️ offen (kein Blocker, aber UX-Thema)
+
+---
+
+## 4. Gesamtbewertung
+
+| Bereich | Status |
+|--------|-------|
+| Komponente korrekt? | ✔ Ja |
+| Kontextmenü | ✔ funktioniert |
+| Rechtsklick | ✔ funktioniert |
+| Inline-Edit | ✔ funktioniert |
+| Row-Actions | ✔ funktioniert |
+| Editor-Dismiss | ⚠️ offen |
+
+---
+
+## 5. Fazit
+
+Der ursprüngliche kritische Fehler (Popover-Positionierung / Menü außerhalb des Viewports) ist behoben.
+
+Die Inline-Data-Table v2 ist funktional korrekt im Einsatz und kann als valide Grundlage für weitere Entwicklung genutzt werden.
+
+Es verbleibt ein kleiner UX-Nacharbeitspunkt im Editor-Dismiss-Verhalten.

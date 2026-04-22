@@ -52,7 +52,18 @@
     return pop;
   }
 
-  function positionPopover(pop, anchor, align = "right") {
+  function buildColumnMenuItems(label, callbacks) {
+    return [
+      { hint: `Spalte: ${label}` },
+      { icon: "↑", label: "Aufsteigend sortieren", onSelect: callbacks.sortAsc },
+      { icon: "↓", label: "Absteigend sortieren", onSelect: callbacks.sortDesc },
+      "---",
+      { icon: "⊘", label: "Spalte ausblenden", onSelect: callbacks.hide },
+      { icon: "↔", label: "Breite zurücksetzen", onSelect: callbacks.resetWidth },
+    ];
+  }
+
+  function positionPopover(pop, anchor, align = "left") {
     document.body.appendChild(pop);
     const rect = anchor.getBoundingClientRect();
     const popRect = pop.getBoundingClientRect();
@@ -128,7 +139,7 @@
   window.RdPopover = {
     close: closePopover,
 
-    open(anchor, items, align = "right") {
+    open(anchor, items, align = "left") {
       closePopover();
       const pop = buildPopover(items);
       positionPopover(pop, anchor, align);
@@ -143,14 +154,11 @@
     },
 
     openColumnMenu(anchor, key, label, callbacks) {
-      this.open(anchor, [
-        { hint: `Spalte: ${label}` },
-        { icon: "↑", label: "Aufsteigend sortieren", onSelect: callbacks.sortAsc },
-        { icon: "↓", label: "Absteigend sortieren", onSelect: callbacks.sortDesc },
-        "---",
-        { icon: "⊘", label: "Spalte ausblenden", onSelect: callbacks.hide },
-        { icon: "↔", label: "Breite zurücksetzen", onSelect: callbacks.resetWidth },
-      ], "right");
+      this.open(anchor, buildColumnMenuItems(label, callbacks), "left");
+    },
+
+    openColumnMenuAtPoint(x, y, key, label, callbacks) {
+      this.openAtPoint(x, y, buildColumnMenuItems(label, callbacks));
     },
 
     openRowMenu(anchor, rowId, callbacks) {

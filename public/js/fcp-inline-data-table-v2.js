@@ -774,6 +774,38 @@
       return preferred ? renderDisplayValue(preferred, row) : esc(rowKey(row));
     }
 
+    function buildColumnMenuCallbacks(key) {
+      return {
+        sortAsc: () => {
+          state.sortKey = key;
+          state.sortDir = "asc";
+          persistLayout();
+          render();
+          config?.onSortChange?.({ sortKey: state.sortKey, sortDir: state.sortDir });
+        },
+        sortDesc: () => {
+          state.sortKey = key;
+          state.sortDir = "desc";
+          persistLayout();
+          render();
+          config?.onSortChange?.({ sortKey: state.sortKey, sortDir: state.sortDir });
+        },
+        hide: () => {
+          state.hiddenColumns.add(key);
+          delete state.rdInlineFilters[key];
+          persistLayout();
+          render();
+          config?.onLayoutChange?.({ columnOrder: state.columnOrder.slice(), columnWidths: { ...state.columnWidths }, hiddenColumns: [...state.hiddenColumns] });
+        },
+        resetWidth: () => {
+          const original = columns.find((column) => column.key === key);
+          state.columnWidths[key] = original?.width || "minmax(120px, 1fr)";
+          persistLayout();
+          render();
+        },
+      };
+    }
+
     function cardHtml(row) {
       const key = rowKey(row);
       const explicitKey = String(config?.primaryColumnKey || config?.cardTitleKey || "").trim();
@@ -1187,35 +1219,7 @@
         const key = String(colMenuBtn.getAttribute("data-col-menu-key") || "");
         if (key) {
           const col = columns.find((c) => c.key === key);
-          window.RdPopover?.openColumnMenu(colMenuBtn, key, col?.label || key, {
-            sortAsc: () => {
-              state.sortKey = key;
-              state.sortDir = "asc";
-              persistLayout();
-              render();
-              config?.onSortChange?.({ sortKey: state.sortKey, sortDir: state.sortDir });
-            },
-            sortDesc: () => {
-              state.sortKey = key;
-              state.sortDir = "desc";
-              persistLayout();
-              render();
-              config?.onSortChange?.({ sortKey: state.sortKey, sortDir: state.sortDir });
-            },
-            hide: () => {
-              state.hiddenColumns.add(key);
-              delete state.rdInlineFilters[key];
-              persistLayout();
-              render();
-              config?.onLayoutChange?.({ columnOrder: state.columnOrder.slice(), columnWidths: { ...state.columnWidths }, hiddenColumns: [...state.hiddenColumns] });
-            },
-            resetWidth: () => {
-              const original = columns.find((c) => c.key === key);
-              state.columnWidths[key] = original?.width || "minmax(120px, 1fr)";
-              persistLayout();
-              render();
-            },
-          });
+          window.RdPopover?.openColumnMenu(colMenuBtn, key, col?.label || key, buildColumnMenuCallbacks(key));
         }
         return;
       }
@@ -1490,6 +1494,10 @@
       const col = columns.find((entry) => entry.key === key);
       if (!col || col.type === "actions") return;
       event.preventDefault();
+      if (isRedesign) {
+        window.RdPopover?.openColumnMenuAtPoint?.(event.clientX, event.clientY, key, col?.label || key, buildColumnMenuCallbacks(key));
+        return;
+      }
       state.hiddenColumns.add(key);
       persistLayout();
       render();

@@ -1483,7 +1483,7 @@
               },
               onDuplicate: config?.onDuplicate ? () => config.onDuplicate(row) : null,
               onDelete: config?.onDelete ? () => config.onDelete(row) : null,
-            });
+            }, root);
           }
           return;
         }
@@ -1495,7 +1495,7 @@
       if (!col || col.type === "actions") return;
       event.preventDefault();
       if (isRedesign) {
-        window.RdPopover?.openColumnMenuAtPoint?.(event.clientX, event.clientY, key, col?.label || key, buildColumnMenuCallbacks(key));
+        window.RdPopover?.openColumnMenuAtPoint?.(event.clientX, event.clientY, key, col?.label || key, buildColumnMenuCallbacks(key), root);
         return;
       }
       state.hiddenColumns.add(key);
@@ -1509,6 +1509,15 @@
       const target = event.target;
       if (root.contains(target)) return;
       let changed = false;
+      if (state.openEditorRowId) {
+        state.openEditorRowId = "";
+        state.draftEdit = {};
+        changed = true;
+      }
+      if (state.createOpen) {
+        state.createOpen = false;
+        changed = true;
+      }
       if (state.columnTogglePanelOpen) {
         state.columnTogglePanelOpen = false;
         changed = true;
@@ -1523,6 +1532,15 @@
     function handleDocumentKeydown(event) {
       if (event.key !== "Escape") return;
       let changed = false;
+      if (state.openEditorRowId) {
+        state.openEditorRowId = "";
+        state.draftEdit = {};
+        changed = true;
+      }
+      if (state.createOpen) {
+        state.createOpen = false;
+        changed = true;
+      }
       if (state.columnTogglePanelOpen) {
         state.columnTogglePanelOpen = false;
         changed = true;

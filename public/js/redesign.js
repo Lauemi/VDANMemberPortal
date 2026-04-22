@@ -12,6 +12,32 @@
 
   // ── Popover-Management ───────────────────────────────────────────────────
   let currentPopover = null;
+  const THEME_VARS = [
+    "--rd-bg",
+    "--rd-surface",
+    "--rd-surface-2",
+    "--rd-surface-hi",
+    "--rd-line",
+    "--rd-line-strong",
+    "--rd-line-focus",
+    "--rd-ink",
+    "--rd-ink-2",
+    "--rd-muted",
+    "--rd-muted-soft",
+    "--rd-gold",
+    "--rd-gold-hi",
+    "--rd-gold-lo",
+    "--rd-gold-soft",
+    "--rd-gold-softer",
+    "--rd-ok",
+    "--rd-ok-soft",
+    "--rd-warn",
+    "--rd-warn-soft",
+    "--rd-off",
+    "--rd-off-soft",
+    "--rd-danger",
+    "--rd-danger-soft",
+  ];
 
   function closePopover() {
     if (currentPopover) {
@@ -20,10 +46,22 @@
     }
   }
 
-  function buildPopover(items) {
+  function applyThemeVars(pop, sourceRoot) {
+    if (!sourceRoot) return;
+    pop.classList.add("rd-popover--redesign");
+    pop.dataset.rdTheme = String(sourceRoot.getAttribute("data-rd-theme") || "").trim().toLowerCase();
+    const computed = window.getComputedStyle(sourceRoot);
+    THEME_VARS.forEach((name) => {
+      const value = computed.getPropertyValue(name);
+      if (value) pop.style.setProperty(name, value.trim());
+    });
+  }
+
+  function buildPopover(items, sourceRoot) {
     const pop = document.createElement("div");
     pop.className = "rd-popover";
     pop.setAttribute("role", "menu");
+    applyThemeVars(pop, sourceRoot);
     items.forEach((item) => {
       if (item === "---") {
         pop.appendChild(document.createElement("hr"));
@@ -141,14 +179,14 @@
 
     open(anchor, items, align = "left") {
       closePopover();
-      const pop = buildPopover(items);
+      const pop = buildPopover(items, anchor?.closest?.(".is-redesign") || null);
       positionPopover(pop, anchor, align);
       currentPopover = pop;
     },
 
-    openAtPoint(x, y, items) {
+    openAtPoint(x, y, items, sourceRoot = null) {
       closePopover();
-      const pop = buildPopover(items);
+      const pop = buildPopover(items, sourceRoot);
       positionPopoverAtPoint(pop, x, y);
       currentPopover = pop;
     },
@@ -157,8 +195,8 @@
       this.open(anchor, buildColumnMenuItems(label, callbacks), "left");
     },
 
-    openColumnMenuAtPoint(x, y, key, label, callbacks) {
-      this.openAtPoint(x, y, buildColumnMenuItems(label, callbacks));
+    openColumnMenuAtPoint(x, y, key, label, callbacks, sourceRoot = null) {
+      this.openAtPoint(x, y, buildColumnMenuItems(label, callbacks), sourceRoot);
     },
 
     openRowMenu(anchor, rowId, callbacks) {
@@ -178,7 +216,7 @@
       this.open(anchor, items, "right");
     },
 
-    openRowContextMenu(x, y, rowId, callbacks) {
+    openRowContextMenu(x, y, rowId, callbacks, sourceRoot = null) {
       const items = [
         { icon: "✎", label: "Bearbeiten", onSelect: callbacks.onEdit },
       ];
@@ -192,7 +230,7 @@
           callbacks.onDelete();
         }});
       }
-      this.openAtPoint(x, y, items);
+      this.openAtPoint(x, y, items, sourceRoot);
     },
   };
 

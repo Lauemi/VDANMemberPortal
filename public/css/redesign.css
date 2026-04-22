@@ -61,8 +61,7 @@
   --rd-font: 15px;
 }
 
-[data-rd-theme="dark"].is-redesign,
-body[data-app-theme="fcp_tactical"] .is-redesign {
+.is-redesign[data-rd-theme="dark"] {
   --rd-bg:          #1a1d18;
   --rd-surface:     #222620;
   --rd-surface-2:   #2a2f28;
@@ -686,10 +685,14 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
   min-height: var(--rd-row-h);
   align-items: center;
   position: relative;
+  isolation: isolate;
   transition: background .1s ease;
 }
 .is-redesign .data-table__row:hover {
   background: var(--rd-gold-softer);
+}
+.is-redesign[data-rd-theme="dark"] .data-table__row:hover {
+  background: color-mix(in srgb, var(--rd-surface-hi) 82%, var(--rd-gold-softer) 18%);
 }
 
 /* Zeilen-Trenner (Tweakbar) */
@@ -732,6 +735,14 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.is-redesign .data-table__row:hover .data-table__cell,
+.is-redesign .data-table__row.is-selected .data-table__cell {
+  color: #2a2d24;
+}
+.is-redesign[data-rd-theme="dark"] .data-table__row:hover .data-table__cell,
+.is-redesign[data-rd-theme="dark"] .data-table__row.is-selected .data-table__cell {
+  color: var(--rd-ink);
 }
 .is-redesign .data-table__cell[data-label="E-Mail"],
 .is-redesign .data-table__cell--meta {
@@ -825,7 +836,7 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
 
 /* Schwebender Row-⋯-Button */
 .is-redesign .data-table__row .rd-row-actions {
-  position: absolute;
+  position: sticky;
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
@@ -838,8 +849,15 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
   padding: 2px;
   box-shadow: 0 2px 6px rgba(42,45,36,.08);
   z-index: 4;
+  grid-column: 1 / -1;
+  justify-self: end;
+  margin-right: 8px;
 }
 .is-redesign .data-table__row:hover .rd-row-actions {
+  display: inline-flex;
+}
+.is-redesign .data-table__row.is-selected .rd-row-actions,
+.is-redesign .data-table__row:focus-within .rd-row-actions {
   display: inline-flex;
 }
 .is-redesign .rd-row-actions button {
@@ -1079,7 +1097,7 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
 }
 
 /* ═══ 11 · SPALTEN-⋯-MENÜ POPOVER ══════════════════════════════════════════ */
-.is-redesign .rd-popover {
+.rd-popover--redesign {
   position: fixed;
   min-width: 208px;
   max-width: min(320px, calc(100vw - 24px));
@@ -1093,12 +1111,12 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
   backdrop-filter: blur(6px);
   animation: rdPopoverIn .12s ease-out;
 }
-.is-redesign .rd-popover hr {
+.rd-popover--redesign hr {
   border: 0;
   border-top: 1px solid var(--rd-line);
   margin: 4px 4px;
 }
-.is-redesign .rd-popover button {
+.rd-popover--redesign button {
   all: unset;
   display: flex;
   align-items: center;
@@ -1113,22 +1131,22 @@ body[data-app-theme="fcp_tactical"] .is-redesign {
   font-size: 13px;
   font-weight: 500;
 }
-.is-redesign .rd-popover button:hover {
+.rd-popover--redesign button:hover {
   background: color-mix(in srgb, var(--rd-gold-softer) 70%, #f3ede4 30%);
   color: var(--rd-ink);
 }
-.is-redesign .rd-popover button:disabled {
+.rd-popover--redesign button:disabled {
   opacity: .45;
   cursor: default;
 }
-.is-redesign .rd-popover button.is-danger {
+.rd-popover--redesign button.is-danger {
   color: var(--rd-danger);
 }
-.is-redesign .rd-popover button.is-danger:hover {
+.rd-popover--redesign button.is-danger:hover {
   background: var(--rd-danger-soft);
   color: var(--rd-danger);
 }
-.is-redesign .rd-popover-hint {
+.rd-popover--redesign .rd-popover-hint {
   padding: 6px 12px 7px;
   font-size: 11px;
   font-weight: 600;

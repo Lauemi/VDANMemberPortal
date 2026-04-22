@@ -1,0 +1,257 @@
+# 11_CLAUDE_Cowork_Nachtest-inline-data-table-v1
+
+Version: v1
+Stand: 2026-04-22
+Status: aktiv
+Ziel: Verifikation des Fixstands aus Commit `030e510` für die produktive Inline-Data-Table v2
+
+---
+
+## AUFGABE
+
+Du bist Claude im Cowork-Modus.
+
+Du prüfst nicht allgemein „ob die Tabelle läuft“, sondern gezielt, ob die im Commit `030e510` dokumentierten Restlücken der Inline-Data-Table v2 real geschlossen wurden.
+
+WICHTIG:
+
+* Repo ist Wahrheit
+* keine Vermutung
+* keine weiche Bestätigung
+* „öffnet sich“ ist nicht automatisch „funktioniert korrekt“
+* teste gegen die dokumentierten Restfehler aus `07` / `08`
+* teste gegen den Fixstand aus `030e510`
+
+---
+
+## PFLICHTDATEIEN ZUERST LESEN
+
+1. `docs/Smoke-Tests/inline-data-table/07_SMOKETEST_Ergebnis-inline-data-table-v1.md`
+2. `docs/Smoke-Tests/inline-data-table/08_SMOKETEST_Ableitung-inline-data-table-v1.md`
+3. `docs/Smoke-Tests/inline-data-table/09_CODEX_Fixauftrag-inline-data-table-v1.md`
+4. `docs/Smoke-Tests/inline-data-table/10_SMOKETEST_Umsetzung-inline-data-table-v1.md`
+
+Zusätzlich den Fixstand aus Commit:
+
+* `030e510` `fix: close remaining inline table smoke test gaps`
+
+---
+
+## TESTZUGANG
+
+URL:
+`http://127.0.0.1:4321/app/mitgliederverwaltung/`
+
+User:
+`fcp_demoadmin@fishing-club-portal.de`
+
+Passwort:
+`FCP1admin`
+
+---
+
+## WAS LAUT COMMIT 030e510 BEHOBEN WORDEN SEIN SOLL
+
+Prüfe diese Punkte gezielt:
+
+1. Popover-/Menüpfad repariert
+
+   * Popover soll nicht mehr als `position: static` am Seitenende landen
+   * Header-/Zeilen-/Rechtsklick-Menüs sollen lokal verankert sein
+
+2. Theme-Wirkung repariert
+
+   * Hell/Dunkel soll sichtbar unterschiedlich wirken
+   * nicht nur Attributwechsel, sondern echter UI-Unterschied
+
+3. Editor-Dismiss ergänzt
+
+   * ESC soll offenen Edit/Create-Zustand schließen
+   * Klick außerhalb soll offenen Edit/Create-Zustand schließen
+
+4. Row-Actions nachgeschärft
+
+   * sollen auch in breiter Tabellenansicht erreichbar bleiben
+
+5. Hover-Kontrast verbessert
+
+   * Text soll bei Hover / Selected weiterhin lesbar sein
+
+---
+
+## KONKRETE PRÜFPUNKTE
+
+### A. HEADER-MENÜ
+
+Prüfe separat:
+
+1. Klick auf Header-`⋯`
+2. Rechtsklick auf Header
+3. sitzt das Menü lokal am Trigger oder wieder unten auf der Seite?
+4. ist `position: static` weiterhin sichtbar oder nicht?
+5. funktionieren:
+
+   * Aufsteigend sortieren
+   * Absteigend sortieren
+   * Spalte ausblenden
+   * Breite zurücksetzen
+
+WICHTIG:
+Nicht nur „Menü erscheint“, sondern:
+
+* sitzt es richtig?
+* ist es direkt benutzbar?
+* bleibt es im sinnvollen UI-Kontext?
+
+---
+
+### B. ZEILEN-MENÜ
+
+Prüfe separat:
+
+1. Hover über Zeile → erscheinen Stift + `⋯`?
+2. Klick auf Zeilen-`⋯`
+3. Rechtsklick auf Zeile
+4. sitzt das Menü lokal an der Zeile / am Cursor?
+5. ist `Bearbeiten / Duplizieren / Löschen` direkt benutzbar?
+6. landet das Menü wieder im unteren Seitenbereich?
+
+---
+
+### C. INLINE-EDIT / DISMISS
+
+Prüfen:
+
+1. RowClick öffnet Edit direkt unter der Zeile?
+2. Speichern / Abbrechen vorhanden?
+3. ESC schließt den offenen Editor jetzt?
+4. Klick außerhalb schließt den offenen Editor jetzt?
+5. gilt das auch für Create-Zustand?
+6. entstehen Seiteneffekte / falsches Schließen?
+
+---
+
+### D. HELL / DUNKEL
+
+Pflichtprüfung:
+
+1. Reagiert der lokale Hell/Dunkel-Schalter?
+2. sieht Hell sichtbar anders aus als Dunkel?
+3. ändern sich erkennbar:
+
+   * Header
+   * Tabellenhintergrund
+   * Zellhintergründe
+   * Texte
+   * Menüs
+   * Buttons
+   * Hover-Zustände
+   * Editor-Zeile
+4. bleiben Menüs in beiden Modi korrekt positioniert?
+5. gibt es weiterhin eine Attrappen-Umschaltung ohne sichtbare Wirkung?
+
+---
+
+### E. ROW-ACTIONS / VIEWPORT
+
+Prüfen:
+
+1. schmale Standardansicht
+2. breite Tabellenansicht / viele Spalten sichtbar
+3. sitzen Row-Actions wieder absurd weit außerhalb?
+4. bleiben sie erreichbar?
+5. kollidieren sie mit Editor oder Menüs?
+
+---
+
+### F. KONTRAST / HOVER / SELECTED
+
+Gezielt prüfen:
+
+1. Hover über Datenzeile
+2. Selected-Zustand
+3. Hell-Modus
+4. Dunkel-Modus
+5. Popover-Menüs
+6. Buttons / Icons
+
+Explizit markieren, wenn weiterhin entsteht:
+
+* Text auf zu hellem Hintergrund
+* kaum sichtbare Icons
+* Hover/Fokus nur schwer erkennbar
+
+---
+
+### G. OVERFLOW / CONTAINMENT
+
+Kurz gegenprüfen:
+
+1. Seite bläht sich horizontal wieder auf oder nicht?
+2. bleibt horizontales Scrollen im Tabellencontainer?
+3. bleiben Menüs und Actions innerhalb des sinnvollen Layoutkontexts?
+
+---
+
+## SCREENSHOT-PFLICHT
+
+Erzeuge Screenshots für:
+
+1. Header-`⋯` geöffnet
+2. Header-Rechtsklick-Menü
+3. Zeilen-`⋯` geöffnet
+4. Zeilen-Rechtsklick-Menü
+5. Inline-Edit offen
+6. ESC-/Klick-außen-Schließen belegt
+7. Hell-Modus
+8. Dunkel-Modus
+9. breiter Tabellenzustand mit Row-Actions
+10. jeden klaren Restfehler
+
+---
+
+## AUSGABEFORMAT
+
+Liefere das Ergebnis exakt so:
+
+### 1. GEPRÜFTE_FIXPUNKTE
+
+* welche Punkte aus `030e510` real nachgetestet wurden
+
+### 2. REAL_BEHOBEN
+
+* nur was wirklich sauber geschlossen ist
+
+### 3. TEILWEISE_BEHOBEN
+
+* grundsätzlich verbessert, aber noch nicht produktreif
+
+### 4. WEITERHIN_OFFEN
+
+* präzise Restfehler
+* keine Vermutung
+
+### 5. SCREENSHOT-HINWEISE
+
+* welcher Screenshot zeigt was
+
+### 6. GESAMTURTEIL
+
+Wähle genau eins:
+
+* `noch nicht sauber`
+* `teilweise sauber`
+* `für nächsten Schritt brauchbar`
+* `produktreif in diesem Bereich`
+
+---
+
+## ERGEBNISZIEL
+
+Am Ende muss klar sein:
+
+1. ob Commit `030e510` den Primärfehler wirklich geschlossen hat
+2. ob Hell/Dunkel jetzt real funktioniert
+3. ob ESC/Klick-außen jetzt wirklich gehen
+4. ob Row-Actions und Hover-Kontrast jetzt produktiv nutzbar sind
+5. ob die Fläche jetzt tragfähig weitergebaut werden kann

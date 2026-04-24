@@ -5,9 +5,13 @@ Stellt eine reproduzierbare Smoke-Umgebung fuer den mobilen Invite-Flow (`/verei
 
 ## Lokal ausfuehren
 1. `npm ci`
-2. `npx playwright install chromium`
+2. Optional (wenn lokale Browser-Libs vorhanden): `npx playwright install chromium`
 3. `npm run build`
 4. `npm run test:smoke:invite-375`
+
+Hinweis fuer no-sudo Agent-Runner:
+- `npm run test:smoke:invite-375` startet zuerst lokal und faellt bei fehlenden Host-Libs (z. B. `libatk-1.0.so.0`) automatisch auf Docker `mcr.microsoft.com/playwright:v1.59.1-noble` zurueck.
+- Fuer erzwungenen Container-Lauf: `FORCE_PLAYWRIGHT_DOCKER=1 npm run test:smoke:invite-375`
 
 ## Was der Smoke prueft
 - Invite-Entry mit Query-Parametern laedt (`invite`, `club_name`, `club_code`).

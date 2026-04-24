@@ -8,38 +8,38 @@ const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
 const inviteClubId = String(Astro.url.searchParams.get("club_id") ?? "").trim();
 const inviteClubCode = String(Astro.url.searchParams.get("club_code") ?? "").trim().toUpperCase();
 const inviteClubName = String(Astro.url.searchParams.get("club_name") ?? "").trim();
-const clubRequestHref = `/verein-anfragen/?next=${encodeURIComponent(nextTarget)}`;
 const hasInviteContext = Boolean(inviteToken || inviteClubId || inviteClubName);
 const clubDisplayName = inviteClubName || "Verein";
 ---
 
 <Site title={hasInviteContext ? `${clubDisplayName} beitreten • ${APP.name}` : `VereinsSignIn • ${APP.name}`} description="Getrennter Einstieg für bestehende Vereine." robots="noindex" density="compact">
-  <section class="card ui-card register-flow-card form-shell" style="max-width:840px;margin:0 auto;">
+  <section class="card ui-card register-flow-card register-flow-card--invite form-shell" style="max-width:760px;margin:0 auto;">
     <div class="card__body ui-card__body register-flow">
       <div class="register-flow__intro">
         {hasInviteContext ? (
           <>
             <h1>{clubDisplayName} beitreten</h1>
-            <p class="small register-flow__lede">Mit Einladung fortfahren</p>
+            <p class="small register-flow__lede">Einladung prüfen, Zugang anlegen, beitreten.</p>
           </>
         ) : (
           <>
             <span class="register-flow__eyebrow">Onboarding</span>
-            <div id="registerCurrentPathLabel" class="register-current-path">Aktiver Pfad: VereinsSignIn</div>
-            <h1 id="registerIntroTitle">VereinsSignIn</h1>
+            <div id="registerCurrentPathLabel" class="register-current-path">Vereinsbeitritt per Einladung</div>
+            <h1 id="registerIntroTitle">Bestehendem Verein beitreten</h1>
             <p id="registerModeHint" class="small register-flow__lede">
-              Getrennter SignIn- und Beitrittsprozess für bestehende Vereine mit Invite-Token und Mitgliedsnummer.
+              Gib deine Zugangsdaten und Einladungsdaten ein, dann erstellen wir dein Konto.
             </p>
             <p id="registerModeContext" class="register-flow__context small">
-              Du befindest dich im Beitrittsprozess für bestehende Vereine. Es werden nur Invite- und Mitgliedsdaten abgefragt.
+              Für neue Vereine gibt es einen separaten Anfragepfad.
             </p>
           </>
         )}
+        <a class="register-flow__mobile-anchor feed-btn feed-btn--ghost" href="#registerSubmitBtn">Direkt zum Abschluss</a>
       </div>
 
       <form
         id="registerForm"
-        class="register-flow__form form-shell__section"
+        class="register-flow__form register-form--invite form-shell__section"
         data-next-target={nextTarget}
         data-register-mode="join_club"
         data-invite-club-id={inviteClubId}
@@ -49,37 +49,12 @@ const clubDisplayName = inviteClubName || "Verein";
       >
         <input id="registerModeValue" type="hidden" name="registration_mode" value="join_club" />
 
-        {!hasInviteContext && (
-          <section class="register-step register-step--mode is-active">
-            <div class="register-step__head">
-              <span class="register-step__index">0</span>
-              <div>
-                <h2>Pfad: Bestehendem Verein beitreten</h2>
-                <p>Dieser Einstieg ist nur für bestehende Vereine gedacht. Für neue Vereine gibt es eine eigene Maske.</p>
-              </div>
-            </div>
-            <div class="register-mode-grid">
-              <div id="registerModeJoinCardWrap" class="register-mode-card is-active">
-                <span class="register-mode-card__badge">Bestehender Verein</span>
-                <span class="register-mode-card__title">VereinsSignIn</span>
-                <span class="register-mode-card__copy">Invite-Link, Invite-Token und Vereins-Mitgliedsnummer führen dich in den Join-Flow.</span>
-              </div>
-              <a id="registerModeCreateCard" class="register-mode-card" href={clubRequestHref}>
-                <span class="register-mode-card__badge">Neuer Verein</span>
-                <span class="register-mode-card__title">Verein anfragen</span>
-                <span class="register-mode-card__copy">Neuer Vereinsstart läuft aktuell über den Anfragepfad.</span>
-              </a>
-            </div>
-          </section>
-        )}
-
-        <section id="registerAuthSection" class="register-step register-step--auth is-active">
+        <section id="registerAuthSection" class="register-step register-step--auth">
           {!hasInviteContext ? (
             <div class="register-step__head">
-              <span class="register-step__index">1</span>
               <div>
-                <h2 id="registerAuthTitle">Zugang für den VereinsSignIn</h2>
-                <p id="registerAuthCopy">Zuerst legen wir den Zugang für den Vereinsbeitritt an. Danach prüfen wir Invite-Token und Vereins-Mitgliedsnummer.</p>
+                <h2 id="registerAuthTitle">1. Zugangsdaten</h2>
+                <p id="registerAuthCopy">Nutze die E-Mail-Adresse, die in deinem Verein hinterlegt ist.</p>
               </div>
             </div>
           ) : (
@@ -99,16 +74,16 @@ const clubDisplayName = inviteClubName || "Verein";
               <input id="registerPass2" name="password_repeat" type="password" autocomplete="new-password" minlength="8" required />
             </label>
           </div>
+          <p class="small register-flow__context">Sicherheit: Dein Passwort wird verschlüsselt gespeichert und nie im Klartext übertragen.</p>
           <p id="registerPasswordHint" class="small" aria-live="polite"></p>
         </section>
 
-        <section id="registerJoinSection" class="register-step register-step--join is-active">
+        <section id="registerJoinSection" class="register-step register-step--join">
           {!hasInviteContext && (
             <div class="register-step__head">
-              <span class="register-step__index">2</span>
               <div>
-                <h2>VereinsSignIn</h2>
-                <p>Nutze Invite-Link oder Invite-Token zusammen mit deiner Vereins-Mitgliedsnummer.</p>
+                <h2>2. Einladungsdaten</h2>
+                <p>Nutze Invite-Link oder Invite-Token zusammen mit deiner Mitgliedsnummer.</p>
               </div>
             </div>
           )}
@@ -129,6 +104,7 @@ const clubDisplayName = inviteClubName || "Verein";
             <label>
               <span>Mitgliedsnummer</span>
               <input id="registerMemberNo" name="member_no" type="text" inputmode="text" autocomplete="username" />
+              <small class="small">Pflichtfeld. Verwende die Mitgliedsnummer, die dir dein Verein mit der Einladung zugeordnet hat.</small>
             </label>
           </div>
           {!hasInviteContext && (
@@ -139,11 +115,10 @@ const clubDisplayName = inviteClubName || "Verein";
         </section>
 
         {!hasInviteContext ? (
-          <section id="registerLegalSection" class="register-step register-step--legal is-active">
+          <section id="registerLegalSection" class="register-step register-step--legal">
             <div class="register-step__head">
-              <span class="register-step__index">3</span>
               <div>
-                <h2 id="registerLegalTitle">Rechtstexte für den VereinsSignIn</h2>
+                <h2 id="registerLegalTitle">3. Zustimmung</h2>
                 <p id="registerLegalCopy">Ohne bestätigte Rechtstexte wird der Vereinsbeitritt nicht abgeschlossen.</p>
               </div>
             </div>
@@ -163,14 +138,9 @@ const clubDisplayName = inviteClubName || "Verein";
 
         <div class="register-flow__actions">
           <button id="registerSubmitBtn" class="feed-btn fcp-brand-btn--primary" type="submit">
-            {hasInviteContext ? "Jetzt beitreten" : "VereinsSignIn starten"}
+            Konto anlegen
           </button>
-          {!hasInviteContext && (
-            <a class="feed-btn feed-btn--ghost" href={clubRequestHref}>Stattdessen Verein anfragen</a>
-          )}
-          {!hasInviteContext && (
-            <a class="register-flow__secondary-link" href={`/login/?next=${encodeURIComponent(nextTarget)}`}>Zur Anmeldung</a>
-          )}
+          <a class="register-flow__secondary-link" href={`/login/?next=${encodeURIComponent(nextTarget)}`}>Zur Anmeldung</a>
           <span id="registerMsg" class="small" aria-live="polite"></span>
         </div>
       </form>

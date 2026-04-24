@@ -59,6 +59,7 @@ const resolvedSiteMode = resolveSiteMode(Astro.url.hostname, APP.siteMode);
 const isFcpMode = resolvedSiteMode === "fcp";
 const path = Astro.url.pathname.toLowerCase();
 const isAppPath = path.startsWith("/app/");
+const isExternalInvitePath = path.startsWith("/vereinssignin");
 const staticPageEntry = !isAppPath ? getStaticWebPageEntry(path) : null;
 const staticPageTarget = staticPageEntry ? getStaticWebTargetConfig(path, resolvedSiteMode) : null;
 const staticPageVisible = staticPageTarget ? staticPageTarget.visible !== false : true;
@@ -142,6 +143,7 @@ const isTermsPath = path === "/nutzungsbedingungen.html/" || path === "/nutzungs
 const showPortalTermsLink = isAppPath || isTermsPath;
 const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
 const showHeaderAuthCta = false;
+const showHeaderBetaBadge = isBetaChannel && !isExternalInvitePath;
 const robotsMeta = staticPageBlocked
   ? "noindex,nofollow"
   : String(robots || "index").includes(",")
@@ -229,7 +231,7 @@ const publicMenuLinks = isFcpMode
                 <img src={fcpHeaderLogoPng} alt="" loading="eager" decoding="async" />
               </picture>
             </a>
-            {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+            {showHeaderBetaBadge && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
           </div>
           <div
             id="headerBrandVdan"
@@ -240,7 +242,7 @@ const publicMenuLinks = isFcpMode
             <a class="logo" href="/" aria-label={APP.name}>
               <img src="/Bilder/logo300x300.png" alt={APP.name} />
             </a>
-            {isBetaChannel && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
+            {showHeaderBetaBadge && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
           </div>
           <div class="header-utility">
             <div id="headerLoginEntryWrap" class="header-login-entry" data-ui-session-skip>

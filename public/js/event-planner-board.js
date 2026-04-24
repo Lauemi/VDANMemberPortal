@@ -1447,11 +1447,16 @@
         ? `<span class="event-planner-approved-check" title="Freigegeben" aria-label="Freigegeben">OK</span>`
         : "";
       const actionButtons = entry.sourceKind === "work"
-        ? `
-            <button type="button" class="feed-btn event-planner-symbol-btn" data-work-approve="${escapeHtml(row.id)}" data-approval-kind="work" aria-label="${rowStatus === "approved" ? "Änderung speichern" : "Freigeben"}" title="${rowStatus === "approved" ? "Änderung speichern" : "Freigeben"}">&#10003;</button>
-            <button type="button" class="feed-btn feed-btn--ghost event-planner-symbol-btn" data-work-edit="${escapeHtml(row.id)}" aria-label="Bearbeiten" title="Bearbeiten">&#9998;</button>
-            <button type="button" class="feed-btn feed-btn--ghost event-planner-symbol-btn" data-work-reject="${escapeHtml(row.id)}" data-approval-kind="work" aria-label="Ablehnen" title="Ablehnen">&#8856;</button>
-          `
+        ? isEditing
+          ? `
+              <button type="button" class="feed-btn event-planner-symbol-btn" data-work-save="${escapeHtml(row.id)}" aria-label="Speichern" title="Speichern">&#10003;</button>
+              <button type="button" class="feed-btn feed-btn--ghost event-planner-symbol-btn" data-work-cancel="${escapeHtml(row.id)}" aria-label="Abbrechen" title="Abbrechen">&#10005;</button>
+            `
+          : `
+              <button type="button" class="feed-btn event-planner-symbol-btn" data-work-approve="${escapeHtml(row.id)}" data-approval-kind="work" aria-label="${rowStatus === "approved" ? "Änderung speichern" : "Freigeben"}" title="${rowStatus === "approved" ? "Änderung speichern" : "Freigeben"}">&#10003;</button>
+              <button type="button" class="feed-btn feed-btn--ghost event-planner-symbol-btn" data-work-edit="${escapeHtml(row.id)}" aria-label="Bearbeiten" title="Bearbeiten">&#9998;</button>
+              <button type="button" class="feed-btn feed-btn--ghost event-planner-symbol-btn" data-work-reject="${escapeHtml(row.id)}" data-approval-kind="work" aria-label="Ablehnen" title="Ablehnen">&#8856;</button>
+            `
         : `
             <button type="button" class="feed-btn event-planner-symbol-btn" data-work-approve="${escapeHtml(row.id)}" data-approval-kind="planner"${rowStatus === "pending" ? "" : " disabled"} aria-label="Freigeben" title="Freigeben">&#10003;</button>
             <button type="button" class="feed-btn feed-btn--ghost event-planner-symbol-btn" data-work-reject="${escapeHtml(row.id)}" data-approval-kind="planner"${rowStatus === "pending" ? "" : " disabled"} aria-label="Ablehnen" title="Ablehnen">&#8856;</button>
@@ -2079,6 +2084,45 @@
         return;
       }
 
+      const workSaveButton = target.closest("[data-work-save]");
+      if (workSaveButton) {
+        const participationId = String(workSaveButton.getAttribute("data-work-save") || "");
+        if (!participationId) return;
+        const checkinInput = document.querySelector(`[data-work-checkin="${participationId}"]`);
+        const checkoutInput = document.querySelector(`[data-work-checkout="${participationId}"]`);
+        const checkinIso = checkinInput instanceof HTMLInputElement ? toIsoFromLocalInput(checkinInput.value) : null;
+        const checkoutIso = checkoutInput instanceof HTMLInputElement ? toIsoFromLocalInput(checkoutInput.value) : null;
+        if (!checkinIso || !checkoutIso) {
+          setMsg("Bitte Von und Bis vollständig angeben.");
+          return;
+        }
+        const editedMinutes = computeMinutes(checkinIso, checkoutIso);
+        if (editedMinutes == null) {
+          setMsg("Die Endzeit muss nach der Startzeit liegen.");
+          return;
+        }
+        try {
+          await adminUpdateParticipationTime(participationId, checkinIso, checkoutIso, null);
+          await approveWorkParticipation(participationId, editedMinutes);
+          state.approvalEditingRows.delete(participationId);
+          await reloadAndRender("Teilnahme gespeichert und freigegeben.");
+        } catch (error) {
+          console.error("[event-planner-save-edit]", error);
+          setMsg(`Speichern fehlgeschlagen: ${error?.message || error}`);
+        }
+        return;
+      }
+
+      const workCancelButton = target.closest("[data-work-cancel]");
+      if (workCancelButton) {
+        const participationId = String(workCancelButton.getAttribute("data-work-cancel") || "");
+        if (!participationId) return;
+        state.approvalEditingRows.delete(participationId);
+        renderApprovalsTable();
+        setMsg("Inline-Bearbeitung abgebrochen.");
+        return;
+      }
+
       const workEditButton = target.closest("[data-work-edit]");
       if (workEditButton) {
         const participationId = String(workEditButton.getAttribute("data-work-edit") || "");
@@ -2151,11 +2195,35 @@
 
     document.body.addEventListener("keydown", async (event) => {
       const target = event.target instanceof HTMLElement ? event.target : null;
-      if (!target || event.key !== "Enter") return;
-      if (!target.closest(".event-planner-create-row")) return;
-      if (target instanceof HTMLTextAreaElement) return;
-      event.preventDefault();
-      await onCreateSubmit();
+      if (!target) return;
+
+      if (event.key === "Enter") {
+        if (target.closest(".event-planner-create-row")) {
+          if (target instanceof HTMLTextAreaElement) return;
+          event.preventDefault();
+          await onCreateSubmit();
+          return;
+        }
+        const editingRow = target.closest(".event-planner-presence-row.is-editing");
+        if (editingRow && !(target instanceof HTMLTextAreaElement)) {
+          const saveButton = editingRow.querySelector("[data-work-save]");
+          if (saveButton instanceof HTMLElement) {
+            event.preventDefault();
+            saveButton.click();
+          }
+        }
+        return;
+      }
+
+      if (event.key === "Escape") {
+        const editingRow = target.closest(".event-planner-presence-row.is-editing");
+        if (!editingRow) return;
+        const cancelButton = editingRow.querySelector("[data-work-cancel]");
+        if (cancelButton instanceof HTMLElement) {
+          event.preventDefault();
+          cancelButton.click();
+        }
+      }
     });
   }
 

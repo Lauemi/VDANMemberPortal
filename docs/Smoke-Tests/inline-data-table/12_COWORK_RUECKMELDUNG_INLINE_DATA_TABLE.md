@@ -1,366 +1,185 @@
-# 12_COWORK_RUECKMELDUNG_INLINE_DATA_TABLE
+# 11_CLAUDE_Cowork_Nachtest-inline-data-table-v1 – ERGEBNIS
 
-Version: v1
-Stand: 2026-04-24
-Status: rohspur-erfasst
-Typ: Smoke-Test-Rückmeldung / Cowork-Ergebnisaufnahme
-Pfad: `docs/Smoke-Tests/inline-data-table/12_COWORK_RUECKMELDUNG_INLINE_DATA_TABLE.md`
-Bezug: Inline-Data-Table-Smoke-Test
+**Tester:** Claude (Cowork-Modus)  
+**Stand:** 2026-04-24  
+**Bezug:** Commit `030e510` fix: close remaining inline table smoke test gaps  
+**Testgrundlage:** Docs 07 / 08 / 09 / 10, direkter Live-Test auf http://127.0.0.1:4321/app/mitgliederverwaltung/
 
 ---
 
-## 1. Zweck dieser Datei
+## 1. GEPRÜFTE_FIXPUNKTE
 
-Diese Datei nimmt die Rückmeldung aus dem aktuellen Claude-Cowork-Smoke-Test zur Inline-Data-Table auf.
+Alle fünf laut Commit 030e510 behaupteten Behebungen wurden gezielt nachgetestet:
 
-Sie ist keine neue Analyse und keine neue Soll-Architektur.
-Sie dient ausschließlich dazu, das reale Cowork-Ergebnis strukturiert festzuhalten und für die weitere Auswertung anschlussfähig zu machen.
-
----
-
-## 2. Einordnung im Smoke-Test-Prozess
-
-Diese Datei folgt auf die vorherige Datei der Smoke-Test-Kette und dient als nächste Ergebnis-/Rückmeldungsstufe.
-
-Grundregel:
-
-- Repo-Wahrheit bleibt führend.
-- Cowork-Rückmeldung wird als Ergebnisquelle dokumentiert.
-- Aussagen müssen nach Möglichkeit an konkrete Dateien, Routen, Screens oder Beobachtungen gebunden werden.
-- Unklare Punkte werden als GAP markiert, nicht geraten.
+1. **Popover-/Menüpfad** — Header-⋯, Header-Rechtsklick, Zeilen-⋯, Zeilen-Rechtsklick
+2. **Theme-Wirkung Hell/Dunkel** — visueller UI-Unterschied zwischen beiden Modi
+3. **Editor-Dismiss** — ESC und Klick-außen für Edit- und Create-Zustand
+4. **Row-Actions in breiter Tabellenansicht** — sticky-Verhalten bei maximalem horizontalen Scroll
+5. **Hover-Kontrast** — Hell-Modus und Dunkel-Modus, Hover- und Selected-Zustände
 
 ---
 
-## 3. Rückmeldung von Claude Cowork
+## 2. REAL_BEHOBEN
 
-Quelle: Michael / Chat, 2026-04-24
-Status: Rohspur des Smoke-Test-Ablaufs, ohne Screenshots
+### Primärfehler FEHLER 1 + FEHLER 2 (Kritisch aus Dok 07): Popover-Positionierung **real behoben**
 
-```text
-Plan erstellt
+**Messung vor Commit (Dok 07):** `position: static`, `top: 733px`, `left: 3px` → Menü am Seitenende.
 
-Tabs abrufen
+**Messung nach Commit 030e510:**
+- Header-⋯ geöffnet: `position: fixed`, `top: 380px`, `left: 728px` ✓
+- Header-Rechtsklick: `position: fixed`, `top: 364px`, `left: 699px` ✓
+- Zeilen-⋯: `position: fixed`, `top: 482px`, `left: 928px` ✓
+- Zeilen-Rechtsklick: `position: fixed`, `top: 446px`, `left: 556px` ✓
 
-Zu http://127.0.0.1:4321/ navigieren
+Alle vier Menü-Typen sitzen lokal am Trigger/Klickpunkt im sichtbaren Viewport. `position: static` am Seitenende ist nicht mehr reproduzierbar. Der Primärfehler ist **real geschlossen**.
 
-Javascript tool
+Alle Menüinhalte funktionieren:
+- Aufsteigend sortieren → wirkt nachweislich
+- Absteigend sortieren → vorhanden
+- Spalte ausblenden → wirkt
+- Breite zurücksetzen → vorhanden
+- Bearbeiten / Duplizieren / Löschen → vorhanden
 
-Javascript tool
-
-Konsolennachrichten lesen
-
-Javascript tool
-
-Konsolennachrichten lesen
-
-Zu http://127.0.0.1:4321/app/mitg... navigieren
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Nach unten scrollen
-Screenshot-Vorschaubild
-
-Suchen: "VerteinsSignIn link or button ..."
-
-Suchen: "email input field for login"
-
-Suchen: "password input field for login"
-
-Eingabe auf "fcp_demoadmin@fishin..." setzen
-
-Eingabe auf "FCP1admin" setzen
-
-Suchen: "login submit button in main fo..."
-
-Klicken
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Klicken
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Zu http://127.0.0.1:4321/app/mitg... navigieren
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Klicken
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Nach unten scrollen
-Screenshot-Vorschaubild
-
-Nach unten scrollen
-Screenshot-Vorschaubild
-
-Taste drücken: cmd+minus
-
-Fenstergröße ändern
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Javascript tool
-
-Javascript tool
-
-Javascript tool
-
-Javascript tool
-
-Javascript tool
-
-Javascript tool
-
-Javascript tool
-
-Javascript tool
-
-Javascript tool
-
-Javascript tool
-
-Javascript tool
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Zoom
-Screenshot-Vorschaubild
-
-Suchen: "Hell button theme switcher"
-
-Klicken
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Zoom
-Screenshot-Vorschaubild
-
-Javascript tool
-
-Suchen: "header column menu button ⋯ or..."
-
-Klicken
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Javascript tool
-
-Zoom
-Screenshot-Vorschaubild
-
-Suchen: "Aufsteigend sortieren menu ite..."
-
-Klicken
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Rechtsklick
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Javascript tool
-
-Zoom
-Screenshot-Vorschaubild
-
-Suchen: "Spalte ausblenden menu item"
-
-Klicken
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Taste drücken: Escape
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Klicken
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Hover
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Javascript tool
-
-Zoom
-Screenshot-Vorschaubild
-
-Klicken
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Javascript tool
-
-Zoom
-Screenshot-Vorschaubild
-
-Taste drücken: Escape
-
-Rechtsklick
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Javascript tool
-
-Zoom
-Screenshot-Vorschaubild
-
-Taste drücken: Escape
-
-Klicken
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Nach unten scrollen
-Screenshot-Vorschaubild
-
-Javascript tool
-
-Javascript tool
-
-Zoom
-Screenshot-Vorschaubild
-
-Taste drücken: Escape
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Klicken
-
-Javascript tool
-
-Javascript tool
-
-Klicken
-
-Javascript tool
-
-Screenshot erstellen
-Screenshot-Vorschaubild
-
-Klicken
-```
+Menüpositionierung ist in Hell- und Dunkel-Modus identisch korrekt (beide getestet und gemessen).
 
 ---
 
-## 4. Strukturierte Extraktion
+### FEHLER 3 (Hell/Dunkel ohne sichtbare Wirkung): **real behoben**
 
-### 4.1 Geprüfter Einstieg
+**Vorher (Dok 07):** `data-rd-theme` wechselt nur als Attribut, visuell keine Wirkung.
 
-- Route / Einstieg:
-  - `http://127.0.0.1:4321/`
-  - `http://127.0.0.1:4321/app/mitg...` (vermutlich Mitgliederverwaltung / Inline-Data-Table-Kontext; genaue Route in der Rohspur gekürzt)
-- Testkontext:
-  - lokaler Runtime-Smoke-Test über Claude Cowork / Browser-Interaktion
-- verwendete Daten / Zustand:
-  - Login mit Demo-Admin-Daten aus Rohspur:
-    - E-Mail gekürzt: `fcp_demoadmin@fishin...`
-    - Passwort: `FCP1admin`
+**Jetzt:** Sichtbarer Unterschied zwischen beiden Modi klar erkennbar und getestet:
 
-### 4.2 Beobachtungen
-
-| Beobachtung | Datei / Route / UI-Bezug | Relevanz für Smoke-Test | Status |
-|---|---|---|---|
-| Lokale App wurde geöffnet | `http://127.0.0.1:4321/` | Runtime-Test wurde real gestartet | roh belegt |
-| Zielroute der Mitglieder-/Inline-Data-Table wurde geöffnet | `http://127.0.0.1:4321/app/mitg...` | relevanter Smoke-Test-Einstieg wurde angesteuert | roh belegt, Route gekürzt |
-| Login-Felder wurden gesucht und befüllt | Login UI | Auth-Gate wurde im Test durchlaufen | roh belegt |
-| Mehrere Screenshots wurden erstellt | Browser-Test / Vorschau | visuelle Belege existierten im Cowork-Lauf | roh belegt, Dateien/Links fehlen |
-| Scroll, Zoom und Fenstergröße wurden genutzt | UI/Viewport | Responsivität / Sichtbarkeit wurde explorativ geprüft | roh belegt |
-| Theme-Switcher „Hell“ wurde gesucht und geklickt | UI Theme Switcher | Theme-/Darstellungszustand wurde geprüft | roh belegt |
-| Header-Spaltenmenü wurde gesucht/geöffnet | Inline-Data-Table Header | Kernfunktion der Tabelle wurde geprüft | roh belegt |
-| „Aufsteigend sortieren“ wurde gesucht/geclickt | Spaltenmenü | Sortierfunktion wurde geprüft | roh belegt |
-| Rechtsklick wurde genutzt | Tabellen-/Kontextmenü | Kontextmenüverhalten wurde geprüft | roh belegt |
-| „Spalte ausblenden“ wurde gesucht/geclickt | Spaltenmenü | Column-Visibility-Funktion wurde geprüft | roh belegt |
-| Escape, Hover und weitere Klicks wurden genutzt | UI Interaktion | Menü-/Focus-/Overlay-Verhalten wurde explorativ geprüft | roh belegt |
-
-### 4.3 Fehler / Risiken
-
-| Risiko / Fehler | Beleg / Quelle | Auswirkung | Nächster Schritt |
-|---|---|---|---|
-| Screenshots sind in der übergebenen Rohspur nur als Vorschau erwähnt, aber nicht als Dateien/Links verfügbar | Rohspur enthält mehrfach `Screenshot-Vorschaubild` | Visuelle Beweisführung im Repo noch nicht belastbar | Screenshots aus Claude/Paperclip exportieren oder Cowork bitten, Screenshots/Artefaktpfade zu liefern |
-| Zielroute ist gekürzt (`/app/mitg...`) | Rohspur | Exakter Testeinstieg ist nicht vollständig belegt | Exakte URL aus Cowork-Session oder Browser-Historie nachtragen |
-| Ergebnisstatus fehlt | Rohspur enthält Ablauf, aber keine abschließende Bewertung | Test kann noch nicht als bestanden/fehlgeschlagen markiert werden | Cowork-Abschlussantwort mit Befund ergänzen |
-| Viele JS-Tool-Aufrufe ohne sichtbare Ausgabe | Rohspur | Technische Befunde aus DOM/Konsole sind nicht interpretierbar | Konsolen-/JS-Ergebnisse separat exportieren lassen |
-
-### 4.4 Positive Bestätigung
-
-| Bestätigung | Beleg / Quelle | Bedeutung |
+| Element | Hell-Modus | Dunkel-Modus |
 |---|---|---|
-| Runtime-Test wurde tatsächlich durchgeführt | Ablauf mit Navigation, Login, Screenshots, Klicks | Smoke-Test ist nicht nur geplant, sondern gelaufen |
-| Tabellenfunktionen wurden aktiv angesteuert | Sortieren, Spaltenmenü, Spalte ausblenden, Rechtsklick | Test zielte auf reale Inline-Data-Table-Interaktionen |
-| Visuelle Belege wurden während des Laufs erzeugt | mehrfach `Screenshot erstellen` / `Screenshot-Vorschaubild` | Belege sollten grundsätzlich in der Cowork-Session vorhanden sein |
+| Tabellen-Hintergrund | beige/cremig `#f0ece2` | fast-schwarz `~#2a2d24` |
+| Zelltext | `rgb(42, 45, 36)` dunkel | `rgb(236, 234, 217)` cremig-weiß |
+| Header | beige-goldton | dunkelgrau mit heller Schrift |
+| Buttons | helle Füllung, dunkle Icons | dunkle Füllung, hell abgesetzte Icons |
+| Hover-Zeile (Hell): | `rgba(221, 212, 194, 0.62)` (dunkler beige) | — |
+| Hover-Zeile (Dunkel): | — | `rgba(~53, ~58, ~48, 0.83)` (etwas aufgehellt) |
+
+Die Umschaltung ist keine Attrappe mehr.
 
 ---
 
-## 5. Entscheidung / Folgestatus
+### FEHLER 4 (ESC / Klick-außen): **real behoben**
 
-Status nach Cowork-Rückmeldung:
+**Vorher (Dok 07):** ESC und Klick-außen schlossen den Editor nicht.
 
-- [ ] bestanden
-- [x] teilweise bestanden
-- [ ] blockiert
-- [ ] unklar / weitere Prüfung nötig
+**Jetzt:**
+- ESC schließt offenen Edit-Zustand → **bestätigt**
+- Klick außerhalb (auf Seitennavigation) schließt Edit-Zustand → **bestätigt**
+- ESC schließt Create-Zustand (Neues Mitglied) → **bestätigt**
+- Klick außerhalb schließt Create-Zustand → **bestätigt**
 
-Begründung:
-
-Der Smoke-Test wurde real ausgeführt und relevante Inline-Data-Table-Interaktionen wurden angesteuert. Für eine belastbare Bewertung fehlen jedoch noch die visuellen Belege, die exakte Zielroute sowie eine abschließende Cowork-Bewertung mit Ergebnisstatus.
-
----
-
-## 6. Nächster konkreter Eintrittspunkt
-
-Nächste Aktion:
-
-Screenshots und/oder Artefaktpfade aus dem Cowork-Lauf sichern. Danach diese Datei um Beleglinks, exakte Route und finalen Ergebnisstatus ergänzen.
-
-Zuständig / passend für:
-
-- [x] Michael
-- [x] ChatGPT / Struktur
-- [x] Claude Cowork
-- [ ] Codex / Repo-Umsetzung
-- [ ] anderer Agent
+Kein unbeabsichtigtes Schließen bei legitimer Interaktion innerhalb des Editors beobachtet.
 
 ---
 
-## 7. Quellenstatus
+### FEHLER 5 (Row-Actions Viewport-Verankerung): **real behoben (im wesentlichen)**
 
-- Cowork-Rückmeldung: als Rohspur erfasst
-- Repo-Belege: Datei im Produktrepo vorhanden
-- UI-/Runtime-Belege: in Rohspur erwähnt, aber Screenshots/Links fehlen noch
-- offene GAPs:
-  - exakte Zielroute
-  - Screenshot-Dateien/Artefakte
-  - abschließender Cowork-Befund
-  - Konsolen-/JS-Ausgaben
+**Vorher (Dok 07):** Row-Actions in voller Spaltenansicht weit außerhalb des Viewports.
+
+**Jetzt:** Row-Actions haben `position: sticky` mit `right: 8px`. Bei maximalem horizontalen Scroll (scrollLeft: 2970px, Tabelleninhalt 3890px breit) saßen Row-Actions bei `left: 914`, `right: 970` — innerhalb des 1061px breiten Viewports. Sie bleiben immer 8px vom rechten Container-Rand entfernt und sind damit unabhängig vom horizontalen Scroll erreichbar.
 
 ---
 
-## 8. Änderungsnotiz
+### FEHLER 6 (Hover-Kontrast): **real verbessert**
 
-2026-04-24:
-- Datei als nächste Rückmeldungsdatei für den laufenden Inline-Data-Table-Smoke-Test im Produktrepo `Lauemi/VDANMemberPortal` angelegt.
-- Rohspur aus Claude-Cowork-Lauf eingetragen.
-- Erste strukturierte Extraktion ergänzt.
-- Status auf `rohspur-erfasst` gesetzt.
+**Hell-Modus Hover:** Hintergrund `rgba(221, 212, 194, 0.62)`, Text `rgb(42, 45, 36)` — ausreichend Kontrast, Text klar lesbar.
+
+**Dunkel-Modus Hover:** Hintergrund `rgba(~53, ~58, ~48, 0.83)`, Text `rgb(236, 234, 217)` — klarer Kontrast, Text klar lesbar.
+
+Kein Hell-auf-Hell oder Dunkel-auf-Dunkel-Problem mehr feststellbar.
+
+---
+
+### Overflow/Containment: **weiterhin sauber**
+
+`body.scrollWidth: 1046px` < `window.innerWidth: 1061px` → kein horizontales Seiten-Overflow. Horizontaler Scroll bleibt im Tabellencontainer begrenzt. Aus Dok 07 bekannte Verbesserung hält.
+
+---
+
+## 3. TEILWEISE_BEHOBEN
+
+### Editor-Zeile: Speichern/Abbrechen-Buttons nicht direkt erreichbar
+
+**Was funktioniert:** Editor öffnet sich korrekt unter der Zeile, Felder sind bearbeitbar, Dismiss per ESC und Klick-außen funktioniert.
+
+**Was nicht produktreif ist:** Die Speichern- und Abbrechen-Buttons sitzen im Grid-Layout am **rechten Ende der gesamten Tabellenbreite** (`left: 3372px` / `left: 3491px` bei einem Viewport von 1061px). Um sie per Maus zu erreichen, muss man den Tabellencontainer weit nach rechts scrollen. Das ist kein produktreif nutzbarer Workflow. 
+
+Der Editor ist damit functional offen/schließbar, aber das primäre Ziel eines Inline-Editors — direktes Speichern bearbeiteter Werte — ist ohne Workaround nicht erreichbar.
+
+---
+
+## 4. WEITERHIN_OFFEN
+
+### RESTFEHLER 1 – Kritisch: Speichern/Abbrechen im Editor nicht direkt erreichbar
+
+- Editor-Row ist ein CSS-Grid mit der vollen Tabellenbreite (3885px)
+- Speichern-Button: `left: 3372px`, außerhalb des 1061px Viewports
+- Abbrechen-Button: `left: 3491px`, außerhalb des Viewports
+- Kein automatisches Scroll-to-Buttons beim Öffnen des Editors
+- Einzige funktionierende Abbruchmethode: ESC oder Klick-außen
+- Einzige funktionierende Speichermethode: derzeit nicht direkt nutzbar ohne manuellen horizontalen Scroll bis ans Ende der Tabelle
+- Das ist **funktional nicht produktreif** für den Haupt-Editierweg
+
+**Erwarteter Zielzustand laut Commit:** Editor mit Speichern/Abbrechen direkt benutzbar.
+
+---
+
+## 5. SCREENSHOT-HINWEISE
+
+| Screenshot-ID | Inhalt |
+|---|---|
+| `ss_83703vccv` | Dunkel-Modus Gesamtansicht der Tabelle (initial) |
+| `ss_6692lclx3` | Hell-Modus nach Umschaltung — sichtbarer Unterschied zum Dunkel-Modus |
+| `ss_1371y6vfo` | Header-⋯ Menü geöffnet, lokal am Name-Header, position: fixed top:380 left:728 |
+| `ss_4299qbaky` | Header-Rechtsklick-Menü, lokal am Trigger, position: fixed top:364 left:699 |
+| `ss_73537b3gp` | Zeilen-⋯ Menü geöffnet, lokal an der Zeile, position: fixed top:482 left:928 |
+| `ss_64523t3is` | Zeilen-Rechtsklick-Menü, lokal am Klickpunkt, position: fixed top:446 left:556 |
+| `ss_361264isa` | Inline-Edit offen unter Lauenroth-Zeile (Hell-Modus) |
+| `ss_8378cvpha` | Nach ESC: Editor geschlossen, Tabelle wieder normal |
+| `ss_7357ejnjv` | Nach Klick außerhalb: Editor geschlossen |
+| `ss_94998vtew` | Create-Zustand (Neues Mitglied) geöffnet mit leerer Editor-Zeile |
+| `ss_03411ja13` | Dunkel-Modus Hover — Zeile mit lesbarem Kontrast und sichtbaren Row-Actions |
+| `ss_05087c1wi` | Breiter Tabellenzustand (far-right scroll), Row-Actions noch sichtbar im Container |
+| `ss_4362p0w1f` | Header-⋯ Menü im Dunkel-Modus, korrekt positioniert |
+| `ss_6822yycto` | Editor offen im Dunkel-Modus, Speichern/Abbrechen links außerhalb des sichtbaren Bereichs abgeschnitten |
+
+---
+
+## 6. GESAMTURTEIL
+
+**→ für nächsten Schritt brauchbar**
+
+### Begründung
+
+Commit `030e510` hat den Primärfehler aus Dok 07 real geschlossen: `rd-popover` landet nicht mehr mit `position: static` am Seitenende, sondern sitzt mit `position: fixed` korrekt am Trigger. Das wurde für alle vier Menü-Typen gemessen und bestätigt.
+
+Hell/Dunkel erzeugt jetzt echte, sichtbare UI-Unterschiede — kein Attrappen-Wechsel mehr.
+
+ESC und Klick-außen schließen den Editor und den Create-Zustand zuverlässig.
+
+Row-Actions bleiben via `position: sticky; right: 8px` auch bei maximalem horizontalen Scroll im Viewport.
+
+Hover-Kontrast ist in beiden Modi lesbar.
+
+**Offener Blocker:** Die Speichern/Abbrechen-Buttons im Editor sind wegen des Grid-Layouts (3885px breit) nicht direkt erreichbar. Das verhindert den normalen Editier-Workflow. ESC und Klick-außen als einzige Dismiss-Wege sind kein produktreifer Ersatz für direkt erreichbares Speichern.
+
+**Für nächsten Schritt brauchbar** bedeutet: Die Grundlage (Popover, Theme, Dismiss, Row-Actions, Kontrast) ist jetzt belastbar genug für den Weiterbau — aber der Restfehler mit den Editor-Buttons muss als nächster Fixpunkt adressiert werden, bevor der Inline-Edit-Flow als produktiv nutzbar gilt.
+
+---
+
+## Kurzfazit
+
+**Real behoben durch Commit 030e510:**
+1. Popover-Verankerung (Primärfehler) — `position: fixed` statt `static`
+2. Hell/Dunkel — echter sichtbarer UI-Unterschied
+3. ESC und Klick-außen — schließen Edit- und Create-Zustand
+4. Row-Actions — sticky-Verankerung, auch in breiter Ansicht erreichbar
+5. Hover-Kontrast — lesbar in beiden Modi
+
+**Noch offen:**
+1. Speichern/Abbrechen-Buttons im Editor liegen bei `left: ~3400px` außerhalb des Viewports — der Editier-Workflow ist damit nicht direkt abschließbar

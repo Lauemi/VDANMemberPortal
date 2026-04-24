@@ -1038,7 +1038,7 @@
                   "valuePath": "record.workspace.club_data.street",
                   "payloadKey": "street",
                   "group": "club",
-                  "displaySpan": null,
+                  "displaySpan": "full",
                   "order": 20,
                   "placeholder": "Strasse und Hausnummer",
                   "helpText": "",
@@ -1138,7 +1138,7 @@
                   "valuePath": "record.workspace.club_data.contact_phone",
                   "payloadKey": "contact_phone",
                   "group": "contact",
-                  "displaySpan": "full",
+                  "displaySpan": null,
                   "order": 70,
                   "placeholder": "+49 ...",
                   "helpText": "",
@@ -1183,7 +1183,7 @@
           "id": "club_settings_club_approvals_inline_preview",
           "title": "Freigaben im Vereinskontext",
           "renderMode": "table",
-          "componentType": "data-table",
+          "componentType": "inline-data-table",
           "contentArea": "main",
           "flowType": "standard",
           "permissions": {
@@ -1939,7 +1939,9 @@
                 "kind": "rpc",
                 "target": "public.admin_permit_card_types_for_club",
                 "path": "rpc:public.admin_permit_card_types_for_club",
-                "payloadDefaults": { "p_club_id": "{club_id}" },
+                "payloadDefaults": {
+                  "p_club_id": "{club_id}"
+                },
                 "valueKey": "card_type_key",
                 "labelKey": "card_title"
               }
@@ -2165,13 +2167,34 @@
                 "label": "Status",
                 "type": "select",
                 "options": [
-                  { "value": "", "label": "Alle" },
-                  { "value": "active", "label": "Aktiv" },
-                  { "value": "inactive", "label": "Inaktiv" },
-                  { "value": "invited", "label": "Invited" },
-                  { "value": "blocked", "label": "Blocked" },
-                  { "value": "Aktiv", "label": "Aktiv (Legacy)" },
-                  { "value": "Passiv", "label": "Passiv (Legacy)" }
+                  {
+                    "value": "",
+                    "label": "Alle"
+                  },
+                  {
+                    "value": "active",
+                    "label": "Aktiv"
+                  },
+                  {
+                    "value": "inactive",
+                    "label": "Inaktiv"
+                  },
+                  {
+                    "value": "invited",
+                    "label": "Invited"
+                  },
+                  {
+                    "value": "blocked",
+                    "label": "Blocked"
+                  },
+                  {
+                    "value": "Aktiv",
+                    "label": "Aktiv (Legacy)"
+                  },
+                  {
+                    "value": "Passiv",
+                    "label": "Passiv (Legacy)"
+                  }
                 ]
               },
               {
@@ -2179,11 +2202,26 @@
                 "label": "Karte",
                 "type": "select",
                 "options": [
-                  { "value": "", "label": "Alle" },
-                  { "value": "Innenwasser", "label": "Innenwasser" },
-                  { "value": "Innenwasser + Rheinlos", "label": "Innenwasser + Rheinlos" },
-                  { "value": "Rheinlos", "label": "Rheinlos" },
-                  { "value": "-", "label": "-" }
+                  {
+                    "value": "",
+                    "label": "Alle"
+                  },
+                  {
+                    "value": "Innenwasser",
+                    "label": "Innenwasser"
+                  },
+                  {
+                    "value": "Innenwasser + Rheinlos",
+                    "label": "Innenwasser + Rheinlos"
+                  },
+                  {
+                    "value": "Rheinlos",
+                    "label": "Rheinlos"
+                  },
+                  {
+                    "value": "-",
+                    "label": "-"
+                  }
                 ]
               },
               {
@@ -2472,7 +2510,9 @@
                 "kind": "rpc",
                 "target": "public.admin_permit_card_types_for_club",
                 "path": "rpc:public.admin_permit_card_types_for_club",
-                "payloadDefaults": { "p_club_id": "{club_id}" },
+                "payloadDefaults": {
+                  "p_club_id": "{club_id}"
+                },
                 "valueKey": "card_type_key",
                 "labelKey": "card_title"
               }

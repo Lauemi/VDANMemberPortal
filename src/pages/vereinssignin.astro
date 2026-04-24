@@ -19,7 +19,17 @@ const clubDisplayName = inviteClubName || "Verein";
         {hasInviteContext ? (
           <>
             <h1>{clubDisplayName} beitreten</h1>
-            <p class="small register-flow__lede">Einladung prüfen, Zugang anlegen, beitreten.</p>
+            <p class="small register-flow__lede">Du wurdest eingeladen. Prüfe deine Daten, lege deinen Zugang an und schließe den Beitritt ab.</p>
+            <div id="registerInviteContext" class="register-note register-note--invite-context small">
+              <strong id="registerInviteContextTitle">Einladung erkannt</strong>
+              <span id="registerInviteContextCopy">Du trittst dem Verein {clubDisplayName} bei.</span>
+            </div>
+            <p class="register-flow__context small">
+              Diese Angaben werden für die sichere Zuordnung zu deinem Vereinsprofil benötigt. Nach dem Absenden bestätigst du deine E-Mail und wirst dann zur Erstaktivierung weitergeleitet.
+            </p>
+            <p class="register-flow__context small">
+              Die technische Abwicklung erfolgt über das Fishing Club Portal.
+            </p>
           </>
         ) : (
           <>
@@ -34,7 +44,14 @@ const clubDisplayName = inviteClubName || "Verein";
             </p>
           </>
         )}
-        <a class="register-flow__mobile-anchor feed-btn feed-btn--ghost" href="#registerSubmitBtn">Direkt zum Abschluss</a>
+        <a
+          id="registerMobileSubmitAnchor"
+          class="register-flow__mobile-anchor register-flow__mobile-anchor--submit feed-btn feed-btn--ghost"
+          href="#registerSubmitBtn"
+          data-anchor-target="registerSubmitBtn"
+        >
+          Direkt zu Verein beitreten
+        </a>
       </div>
 
       <form
@@ -58,7 +75,7 @@ const clubDisplayName = inviteClubName || "Verein";
               </div>
             </div>
           ) : (
-            <p class="small register-flow__section-label"><strong>Dein Zugang</strong></p>
+            <p class="small register-flow__section-label"><strong>Lege deinen Zugang zum VDAN-Mitgliederportal an.</strong></p>
           )}
           <div class="register-grid">
             <label id="registerEmailField">
@@ -87,10 +104,12 @@ const clubDisplayName = inviteClubName || "Verein";
               </div>
             </div>
           )}
-          <div id="registerInviteContext" class="register-note small hidden" hidden>
-            {!hasInviteContext && <strong id="registerInviteContextTitle">Einladung erkannt</strong>}
-            <span id="registerInviteContextCopy"></span>
-          </div>
+          {!hasInviteContext && (
+            <div id="registerInviteContext" class="register-note register-note--invite-context small hidden" hidden>
+              <strong id="registerInviteContextTitle">Einladung erkannt</strong>
+              <span id="registerInviteContextCopy"></span>
+            </div>
+          )}
           {!hasInviteContext && (
             <div class="register-note small">
               Bitte verwende die E-Mail-Adresse, die deinem Verein bereits bekannt ist.
@@ -104,7 +123,7 @@ const clubDisplayName = inviteClubName || "Verein";
             <label>
               <span>Mitgliedsnummer</span>
               <input id="registerMemberNo" name="member_no" type="text" inputmode="text" autocomplete="username" />
-              <small class="small">Pflichtfeld. Verwende die Mitgliedsnummer, die dir dein Verein mit der Einladung zugeordnet hat.</small>
+              <small class="small">Pflichtfeld. Verwende die Mitgliedsnummer aus deiner Einladung, z. B. OT-1024.</small>
             </label>
           </div>
           {!hasInviteContext && (
@@ -138,7 +157,7 @@ const clubDisplayName = inviteClubName || "Verein";
 
         <div class="register-flow__actions">
           <button id="registerSubmitBtn" class="feed-btn fcp-brand-btn--primary" type="submit">
-            Konto anlegen
+            {hasInviteContext ? "Verein beitreten" : "Konto anlegen"}
           </button>
           <a class="register-flow__secondary-link" href={`/login/?next=${encodeURIComponent(nextTarget)}`}>Zur Anmeldung</a>
           <span id="registerMsg" class="small" aria-live="polite"></span>

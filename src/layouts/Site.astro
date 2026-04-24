@@ -144,6 +144,8 @@ const showPortalTermsLink = isAppPath || isTermsPath;
 const needsMemberGuard = (isAppPath && !isScannerPath) || isTermsPath;
 const showHeaderAuthCta = false;
 const showHeaderBetaBadge = isBetaChannel && !isExternalInvitePath;
+const hideHeaderQuickLogin = isExternalInvitePath;
+const hidePortalQuickEntry = isExternalInvitePath;
 const robotsMeta = staticPageBlocked
   ? "noindex,nofollow"
   : String(robots || "index").includes(",")
@@ -213,6 +215,7 @@ const publicMenuLinks = isFcpMode
     data-site-mode={resolvedSiteMode}
     data-static-web-route={staticPageEntry?.route || ""}
     data-static-web-brand={staticPageInitialBrand}
+    data-external-invite-path={isExternalInvitePath ? "1" : "0"}
     data-superadmin-user-ids={APP.superAdminUserIds.join(",")}
   >
     <header class="header">
@@ -245,7 +248,7 @@ const publicMenuLinks = isFcpMode
             {showHeaderBetaBadge && <span class="app-beta-badge header-brand-fcp__badge" aria-label={`Beta-Version ${appVersion}`}>BETA</span>}
           </div>
           <div class="header-utility">
-            <div id="headerLoginEntryWrap" class="header-login-entry" data-ui-session-skip>
+            <div id="headerLoginEntryWrap" class={`header-login-entry${hideHeaderQuickLogin ? " hidden" : ""}`} hidden={hideHeaderQuickLogin} data-ui-session-skip>
               <button
                 type="button"
                 id="headerLoginEntryToggle"
@@ -327,17 +330,18 @@ const publicMenuLinks = isFcpMode
     <button
       type="button"
       id="portalQuickToggle"
-      class="portal-quick-toggle"
+      class={`portal-quick-toggle${hidePortalQuickEntry ? " hidden" : ""}`}
+      hidden={hidePortalQuickEntry}
       data-ui-session-skip
       aria-label="Portal öffnen"
     >
       <span aria-hidden="true">⌂</span>
       <span id="portalQuickUserBadge" class="portal-quick-user-badge hidden" hidden aria-hidden="true"></span>
     </button>
-    <aside id="portalRail" class="portal-rail hidden" hidden data-ui-session-skip aria-label="Portal-Kurzmenü">
+    <aside id="portalRail" class={`portal-rail hidden${hidePortalQuickEntry ? " is-disabled-by-route" : ""}`} hidden data-ui-session-skip aria-label="Portal-Kurzmenü">
       <div id="portalRailItems" class="portal-rail__items"></div>
     </aside>
-    <div id="portalQuickDrawer" class="portal-quick-drawer hidden" hidden data-ui-session-skip>
+    <div id="portalQuickDrawer" class={`portal-quick-drawer hidden${hidePortalQuickEntry ? " is-disabled-by-route" : ""}`} hidden data-ui-session-skip>
       <section id="portalQuickPanel" class="portal-quick-panel" aria-label="Portal Kurzmenü">
         <div class="portal-quick-panel__head">
           <h2>Fishing-Club-Portal</h2>

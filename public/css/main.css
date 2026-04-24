@@ -7076,6 +7076,16 @@ body[data-app-theme="fcp_tactical"] .header-notification-badge{
   max-width:48ch;
 }
 
+.register-flow__mobile-anchor{
+  display:none;
+  align-items:center;
+  gap:6px;
+}
+
+.register-flow__mobile-anchor--submit{
+  font-weight:700;
+}
+
 .register-flow__section-label{
   margin:0;
   color:var(--text);
@@ -7239,18 +7249,24 @@ body[data-app-theme="fcp_tactical"] .header-notification-badge{
   font-size:.85rem;
 }
 
+.register-note--invite-context{
+  display:grid;
+  gap:4px;
+  padding:12px 14px;
+  border-color:rgba(255,166,74,.28);
+  background:linear-gradient(180deg, rgba(255,166,74,.12), rgba(255,255,255,.04));
+}
+
+.register-note--invite-context strong{
+  font-size:.8rem;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
 .register-step__foot{
   color:var(--muted);
   font-size:.82rem;
   line-height:1.4;
-}
-
-body[data-app-theme="fcp_brand"] #registerForm[data-register-mode="create_club"] .register-step--join{
-  display:none;
-}
-
-body[data-app-theme="fcp_brand"] #registerForm[data-register-mode="join_club"] .register-step--create{
-  display:none;
 }
 
 .register-internal-entry{
@@ -7327,6 +7343,47 @@ body[data-app-theme="fcp_brand"] #registerForm[data-register-mode="join_club"] .
   flex-wrap:wrap;
 }
 
+.register-flow-card--invite .register-flow{
+  gap:18px;
+}
+
+.register-form--invite{
+  gap:12px;
+}
+
+.register-form--invite .register-step{
+  gap:10px;
+  padding:12px 0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+
+.register-form--invite .register-step.is-active{
+  border:0;
+  background:transparent;
+  box-shadow:none;
+}
+
+.register-form--invite .register-step + .register-step{
+  border-top:1px solid rgba(232,217,181,.14);
+}
+
+.register-form--invite .register-step__head h2{
+  font-size:.98rem;
+}
+
+.register-form--invite .register-step--legal{
+  gap:8px;
+  padding-top:14px;
+}
+
+.register-flow-card--invite .register-flow__actions{
+  padding-top:14px;
+  border-top:1px solid rgba(232,217,181,.14);
+}
+
 .register-flow__secondary-link{
   color:var(--muted);
   font-size:.92em;
@@ -7366,6 +7423,11 @@ body[data-app-theme="fcp_brand"] #registerForm[data-register-mode="join_club"] .
 
 .register-step--legal .register-check{
   gap:6px;
+}
+
+.register-step--legal-compact{
+  padding:12px 0 0;
+  border-top:1px solid rgba(232,217,181,.14);
 }
 
 body[data-app-theme="fcp_brand"] .register-flow-card{
@@ -7597,6 +7659,11 @@ body[data-app-theme="fcp_brand"] .register-billing-preview{
   box-shadow:none;
 }
 
+body[data-app-theme="fcp_brand"] .register-note--invite-context{
+  border-color:rgba(198,173,103,.26);
+  background:linear-gradient(180deg, rgba(255,241,213,.66), rgba(255,249,232,.56));
+}
+
 body[data-app-theme="fcp_brand"] .register-note{
   font-size:.84rem;
 }
@@ -7635,27 +7702,42 @@ body[data-app-theme="fcp_brand"] .register-flow__actions{
   align-items:center;
 }
 
+body[data-app-theme="fcp_brand"] .register-form--invite .register-step{
+  gap:10px;
+  padding:10px 0;
+}
+
+body[data-app-theme="fcp_brand"] .register-form--invite .register-step + .register-step{
+  border-top:1px solid rgba(170,134,74,.14);
+}
+
+body[data-app-theme="fcp_brand"] .register-form--invite .register-step__head h2{
+  font-size:.96rem;
+  margin-bottom:2px;
+}
+
+body[data-app-theme="fcp_brand"] .register-flow-card--invite .register-flow__actions{
+  padding-top:14px;
+}
+
 body[data-app-theme="fcp_brand"] .register-flow__actions .feed-btn--ghost{
   border-color:rgba(170,134,74,.14);
   background:rgba(255,252,247,.7);
   color:#5a5143;
 }
 
-body[data-app-theme="fcp_brand"] #registerForm[data-auth-bypass="true"][data-register-mode="create_club"] #registerAuthSection{
-  gap:8px;
+body[data-external-invite-path="1"] .header{
+  box-shadow:none;
 }
 
-body[data-app-theme="fcp_brand"] #registerForm[data-auth-bypass="true"][data-register-mode="create_club"] #registerAuthSection .register-grid{
-  display:none;
+body[data-external-invite-path="1"] .header-login-entry{
+  display:none !important;
 }
 
-body[data-app-theme="fcp_brand"] #registerForm[data-auth-bypass="true"][data-register-mode="create_club"] #registerPasswordHint{
-  margin:0;
-  padding:12px 14px;
-  border:1px solid rgba(198,173,103,.16);
-  border-radius:14px;
-  background:rgba(255,249,232,.42);
-  color:rgba(76,70,58,.86);
+body[data-external-invite-path="1"] .portal-quick-toggle,
+body[data-external-invite-path="1"] .portal-rail,
+body[data-external-invite-path="1"] .portal-quick-drawer{
+  display:none !important;
 }
 
 @media (max-width: 760px){
@@ -7666,6 +7748,16 @@ body[data-app-theme="fcp_brand"] #registerForm[data-auth-bypass="true"][data-reg
   .register-grid,
   .register-mode-grid{
     grid-template-columns:1fr;
+  }
+
+  .register-form--invite .register-step{
+    padding:10px 0;
+  }
+
+  .register-flow__mobile-anchor{
+    display:inline-flex;
+    width:max-content;
+    margin-top:6px;
   }
 }
 

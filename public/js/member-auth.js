@@ -311,14 +311,6 @@
     return configuredSuperadmins().includes(uid);
   }
 
-  function readRegisterMode() {
-    const hiddenInput = document.getElementById("registerModeValue");
-    const hiddenValue = String(hiddenInput?.value || "").trim();
-    if (hiddenValue) return hiddenValue;
-    const checked = document.querySelector('input[name="registration_mode"]:checked');
-    return String(checked?.value || "create_club").trim();
-  }
-
   function readInviteContextHints() {
     const registerForm = document.getElementById("registerForm");
     const query = new URLSearchParams(window.location.search || "");
@@ -364,6 +356,9 @@
         wrap.hidden = false;
         wrap.classList.remove("hidden");
         copy.textContent = `Du trittst dem Verein ${clubName} bei.`;
+      } else if (String(copy.textContent || "").trim()) {
+        wrap.hidden = false;
+        wrap.classList.remove("hidden");
       } else {
         wrap.hidden = true;
         wrap.classList.add("hidden");
@@ -375,16 +370,6 @@
       tokenField.classList.add("hidden");
       tokenInput.readOnly = true;
     }
-  }
-
-  function writeRegisterMode(mode) {
-    const normalized = String(mode || "create_club").trim() || "create_club";
-    const hiddenInput = document.getElementById("registerModeValue");
-    if (hiddenInput) hiddenInput.value = normalized;
-    const modeInput = document.querySelector(`input[name="registration_mode"][value="${normalized}"]`);
-    if (modeInput && "checked" in modeInput) modeInput.checked = true;
-    syncRegisterModeUi();
-    updateRegisterPasswordFeedback();
   }
 
   function isRegistrationPath(pathname = "") {
@@ -424,137 +409,40 @@
     return message;
   }
 
-  function syncRegisterModeUi() {
-    const mode = readRegisterMode();
-    const hasActiveSession = Boolean(loadSession()?.access_token);
-    const authBypass = hasActiveSession && mode === "create_club";
+  function initializeJoinOnlyRegisterUi() {
     const registerForm = document.getElementById("registerForm");
     const joinSection = document.getElementById("registerJoinSection");
-    const createSection = document.getElementById("registerCreateSection");
-    const joinCard = document.getElementById("registerModeJoinCardWrap");
-    const createCard = document.getElementById("registerModeCreateCard");
-    const createLockedNote = document.getElementById("registerCreateLockedNote");
-    const createFieldset = document.getElementById("registerCreateFieldset");
-    const currentPathLabel = document.getElementById("registerCurrentPathLabel");
-    const introTitle = document.getElementById("registerIntroTitle");
-    const hint = document.getElementById("registerModeHint");
-    const context = document.getElementById("registerModeContext");
-    const authTitle = document.getElementById("registerAuthTitle");
-    const authCopy = document.getElementById("registerAuthCopy");
-    const legalTitle = document.getElementById("registerLegalTitle");
-    const legalCopy = document.getElementById("registerLegalCopy");
+    const hiddenInput = document.getElementById("registerModeValue");
     const submitBtn = document.getElementById("registerSubmitBtn");
-    const passwordHint = document.getElementById("registerPasswordHint");
-    const emailInput = document.getElementById("registerEmail");
-    const passInput = document.getElementById("registerPass");
-    const pass2Input = document.getElementById("registerPass2");
-    const emailField = document.getElementById("registerEmailField");
-    const passField = document.getElementById("registerPasswordField");
-    const pass2Field = document.getElementById("registerPasswordRepeatField");
-    const internalEntry = document.getElementById("registerInternalEntry");
-    const showCreateBtn = document.getElementById("registerShowCreateFlow");
-    const backToJoinBtn = document.getElementById("registerBackToJoinFlow");
+    const hasInviteContext = registerForm?.dataset?.hasInviteContext === "true";
 
+    if (hiddenInput) hiddenInput.value = "join_club";
     if (joinSection) {
-      const isJoin = mode === "join_club";
-      joinSection.hidden = !isJoin;
-      joinSection.classList.toggle("hidden", !isJoin);
-      joinSection.classList.toggle("is-active", isJoin);
-    }
-    if (createSection) {
-      const isCreate = mode === "create_club";
-      createSection.hidden = !isCreate;
-      createSection.classList.toggle("hidden", !isCreate);
-      createSection.classList.toggle("is-active", isCreate);
+      joinSection.hidden = false;
+      joinSection.classList.remove("hidden");
+      joinSection.classList.add("is-active");
     }
     if (registerForm) {
-      registerForm.dataset.registerMode = mode;
-      registerForm.dataset.authBypass = authBypass ? "true" : "false";
+      registerForm.dataset.registerMode = "join_club";
+      registerForm.dataset.authBypass = "false";
     }
-    if (joinCard) {
-      joinCard.classList.toggle("is-active", mode === "join_club");
+    if (submitBtn) {
+      submitBtn.textContent = hasInviteContext ? "Verein beitreten" : "Konto anlegen";
     }
-    if (createCard) {
-      createCard.classList.toggle("is-active", mode === "create_club");
-      createCard.classList.remove("is-locked");
-      createCard.setAttribute("aria-disabled", "false");
-    }
-    if (createLockedNote) {
-      createLockedNote.hidden = true;
-      createLockedNote.classList.add("hidden");
-    }
-    if (createFieldset) {
-      createFieldset.disabled = false;
-      createFieldset.classList.remove("is-locked");
-    }
-    if (internalEntry) {
-      internalEntry.hidden = true;
-      internalEntry.classList.add("hidden");
-    }
-    if (showCreateBtn) {
-      showCreateBtn.hidden = mode === "create_club";
-    }
-    if (backToJoinBtn) {
-      backToJoinBtn.hidden = mode !== "create_club";
-    }
-    if (hint) {
-      hint.textContent = mode === "create_club"
-        ? hasActiveSession
-          ? "Du fragst jetzt einen Verein an. Da du bereits authentifiziert bist, wird die Anfrage sofort freigegeben und du wirst Admin im neuen Verein."
-          : "Du fragst jetzt einen Verein an. Nach Auth und Mail-Bestaetigung wird die Anfrage gespeichert und zur Pruefung vorgelegt."
-        : "Tritt mit deiner Einladung einem bestehenden Verein bei. Fuer neue Vereine nutzt du den separaten Anfrage-Flow.";
-    }
-    if (currentPathLabel) {
-      currentPathLabel.textContent = mode === "create_club" ? "Aktiver Pfad: Verein anfragen" : "Aktiver Pfad: VereinsSignIn";
-    }
-    if (introTitle) {
-      introTitle.textContent = mode === "create_club" ? "Verein anfragen" : "VereinsSignIn";
-    }
-    if (context) {
-      context.textContent = mode === "create_club"
-        ? "Du befindest dich im Anfrageprozess fuer neue Vereine. Invite- und Mitgliedsdaten spielen hier keine Rolle."
-        : "Du befindest dich im Beitrittsprozess fuer bestehende Vereine. Es werden nur Invite- und Mitgliedsdaten abgefragt.";
-    }
-    if (authTitle) {
-      authTitle.textContent = mode === "create_club" ? "Zugang fuer die Vereinsanfrage" : "Zugang fuer den VereinsSignIn";
-    }
-    if (authCopy) {
-      authCopy.textContent = mode === "create_club"
-        ? "Zuerst legen wir den Auth-Zugang fuer die anfragende Person an. Danach folgt direkt die eigentliche Vereinsanfrage."
-        : "Zuerst legen wir den Zugang fuer den Vereinsbeitritt an. Danach pruefen wir Invite-Token und Vereins-Mitgliedsnummer.";
-    }
-    if (legalTitle) {
-      legalTitle.textContent = mode === "create_club" ? "Rechtstexte fuer die Vereinsanfrage" : "Rechtstexte fuer den VereinsSignIn";
-    }
-    if (legalCopy) {
-      legalCopy.textContent = mode === "create_club"
-        ? "Ohne bestätigte Rechtstexte wird die Vereinsanfrage nicht gespeichert."
-        : "Ohne bestätigte Rechtstexte wird der Vereinsbeitritt nicht abgeschlossen.";
-    }
-    if (submitBtn && registerForm?.dataset?.hasInviteContext !== "true") {
-      submitBtn.textContent = mode === "create_club" ? "Verein anfragen" : "VereinsSignIn starten";
-    }
-    if (emailInput) emailInput.required = mode === "create_club" ? !authBypass : true;
-    if (passInput) passInput.required = mode === "create_club" ? !authBypass : true;
-    if (pass2Input) pass2Input.required = mode === "create_club" ? !authBypass : true;
-    if (emailField) {
-      emailField.hidden = authBypass && mode === "create_club";
-      emailField.classList.toggle("hidden", authBypass && mode === "create_club");
-    }
-    if (passField) {
-      passField.hidden = authBypass && mode === "create_club";
-      passField.classList.toggle("hidden", authBypass && mode === "create_club");
-    }
-    if (pass2Field) {
-      pass2Field.hidden = authBypass && mode === "create_club";
-      pass2Field.classList.toggle("hidden", authBypass && mode === "create_club");
-    }
-    if (passwordHint && authBypass && mode === "create_club") {
-      passwordHint.textContent = "Du bist bereits eingeloggt. Fuer die Vereinsanfrage wird dein bestehender Auth-Zugang verwendet.";
-      passwordHint.dataset.state = "info";
-    } else if (passwordHint && !String(passwordHint.dataset.state || "").trim()) {
-      passwordHint.textContent = "";
-    }
+  }
+
+  function initializeMobileRegisterSubmitAnchor() {
+    const cta = document.getElementById("registerMobileSubmitAnchor");
+    const submitBtn = document.getElementById("registerSubmitBtn");
+    if (!cta || !submitBtn) return;
+    cta.hidden = false;
+    cta.classList.remove("hidden");
+    cta.addEventListener("click", (event) => {
+      event.preventDefault();
+      submitBtn.scrollIntoView({ behavior: "smooth", block: "center" });
+      submitBtn.focus({ preventScroll: true });
+      window.location.hash = "registerSubmitBtn";
+    });
   }
 
   function updateRegisterPasswordFeedback() {
@@ -565,15 +453,6 @@
 
     const pass = String(passInput.value || "");
     const pass2 = String(pass2Input.value || "");
-    const authBypass = Boolean(loadSession()?.access_token) && readRegisterMode() === "create_club";
-
-    if (authBypass && !pass && !pass2) {
-      hint.textContent = "Du bist bereits eingeloggt. Fuer die Vereinsanfrage wird kein neues Passwort benoetigt.";
-      hint.dataset.state = "info";
-      pass2Input.setCustomValidity("");
-      return true;
-    }
-
     if (!pass && !pass2) {
       hint.textContent = "";
       hint.dataset.state = "";
@@ -1324,25 +1203,10 @@
       const passInput = document.getElementById("registerPass");
       const pass2Input = document.getElementById("registerPass2");
       const prefilledInviteToken = String(document.getElementById("registerInviteToken")?.value || "").trim();
-      const modeInputs = Array.from(document.querySelectorAll('input[name="registration_mode"]'));
-      const showCreateBtn = document.getElementById("registerShowCreateFlow");
-      const backToJoinBtn = document.getElementById("registerBackToJoinFlow");
-      if (prefilledInviteToken) {
-        writeRegisterMode("join_club");
-      }
-      modeInputs.forEach((input) => input.addEventListener("change", () => {
-        syncRegisterModeUi();
-        updateRegisterPasswordFeedback();
-      }));
-      if (showCreateBtn) {
-        showCreateBtn.addEventListener("click", () => writeRegisterMode("create_club"));
-      }
-      if (backToJoinBtn) {
-        backToJoinBtn.addEventListener("click", () => writeRegisterMode("join_club"));
-      }
+      initializeJoinOnlyRegisterUi();
+      initializeMobileRegisterSubmitAnchor();
       if (passInput) passInput.addEventListener("input", updateRegisterPasswordFeedback);
       if (pass2Input) pass2Input.addEventListener("input", updateRegisterPasswordFeedback);
-      syncRegisterModeUi();
       updateRegisterPasswordFeedback();
       if (prefilledInviteToken) {
         prepareJoinInviteContext().catch((err) => {
@@ -1354,40 +1218,13 @@
       registerForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         if (regMsg) regMsg.textContent = "â€¦";
-        const mode = readRegisterMode();
         const memberNo = normalizeMemberNo(document.getElementById("registerMemberNo")?.value || "");
         const emailRaw = String(document.getElementById("registerEmail")?.value || "").trim().toLowerCase();
         const inviteToken = String(document.getElementById("registerInviteToken")?.value || "").trim();
         const pass = String(document.getElementById("registerPass")?.value || "");
-        const pass2 = String(document.getElementById("registerPass2")?.value || "");
         const accepted = Boolean(document.getElementById("registerAccept")?.checked);
-        const clubName = String(document.getElementById("registerClubName")?.value || "").trim();
-        const clubZip = String(document.getElementById("registerClubZip")?.value || "").trim();
-        const clubCity = String(document.getElementById("registerClubCity")?.value || "").trim();
-        const clubAddress = String(document.getElementById("registerClubAddress")?.value || "").trim();
-        const responsibleName = String(document.getElementById("registerResponsibleName")?.value || "").trim();
-        const responsibleRole = String(document.getElementById("registerResponsibleRole")?.value || "").trim();
-        const responsibleEmail = String(document.getElementById("registerResponsibleEmail")?.value || "").trim().toLowerCase();
-        const clubSize = String(document.getElementById("registerClubSize")?.value || "").trim();
-        const clubMailConfirm = Boolean(document.getElementById("registerClubMailConfirm")?.checked);
-        const legalAuthorityConfirm = Boolean(document.getElementById("registerLegalAuthorityConfirm")?.checked);
         const firstName = "";
         const lastName = "";
-        const clubRequestPayload = {
-          registration_mode: "club_request_pending",
-          onboarding_path: "club_request",
-          club_name: clubName,
-          club_location: clubCity,
-          zip: clubZip,
-          city: clubCity,
-          club_address: clubAddress,
-          responsible_name: responsibleName,
-          responsible_role: responsibleRole,
-          responsible_email: responsibleEmail,
-          club_size: clubSize,
-          club_mail_confirmed: clubMailConfirm,
-          legal_confirmed: legalAuthorityConfirm,
-        };
 
         if (!accepted) {
           if (regMsg) regMsg.textContent = "Bitte Nutzungsbedingungen und DatenschutzerklÃ¤rung bestÃ¤tigen.";
@@ -1399,27 +1236,26 @@
           return;
         }
         try {
-          if (mode === "join_club") {
-            if (!inviteToken) throw new Error("FÃ¼r den Vereinsbeitritt ist aktuell ein Invite-Token erforderlich.");
-            const verify = await verifyInviteToken(inviteToken);
-            applyInviteContextUi(verify);
-            const inviteMemberNo = extractInviteMemberNo(verify);
-            const effectiveMemberNo = inviteMemberNo || memberNo;
-            if (inviteMemberNo && memberNo && inviteMemberNo !== memberNo) throw new Error("Mitgliedsnummer passt nicht zur Einladung.");
-            if (!effectiveMemberNo) throw new Error("Bitte die Vereins-Mitgliedsnummer angeben.");
+          if (!inviteToken) throw new Error("FÃ¼r den Vereinsbeitritt ist aktuell ein Invite-Token erforderlich.");
+          const verify = await verifyInviteToken(inviteToken);
+          applyInviteContextUi(verify);
+          const inviteMemberNo = extractInviteMemberNo(verify);
+          const effectiveMemberNo = inviteMemberNo || memberNo;
+          if (inviteMemberNo && memberNo && inviteMemberNo !== memberNo) throw new Error("Mitgliedsnummer passt nicht zur Einladung.");
+          if (!effectiveMemberNo) throw new Error("Bitte die Vereins-Mitgliedsnummer angeben.");
 
-            const clubCode = String(verify?.club_code || "").trim();
-            if (!clubCode) throw new Error("Einladung ohne Vereinsbezug ist ungueltig.");
+          const clubCode = String(verify?.club_code || "").trim();
+          if (!clubCode) throw new Error("Einladung ohne Vereinsbezug ist ungueltig.");
 
-            if (!emailRaw || !isLikelyEmail(emailRaw)) {
-              throw new Error("Bitte die im Verein hinterlegte E-Mail-Adresse eingeben.");
-            }
-            const claimPayload = {
-              invite_token: inviteToken,
-              member_no: effectiveMemberNo,
-              first_name: firstName,
-              last_name: lastName,
-            };
+          if (!emailRaw || !isLikelyEmail(emailRaw)) {
+            throw new Error("Bitte die im Verein hinterlegte E-Mail-Adresse eingeben.");
+          }
+          const claimPayload = {
+            invite_token: inviteToken,
+            member_no: effectiveMemberNo,
+            first_name: firstName,
+            last_name: lastName,
+          };
           // GAP[supabase-redirect-whitelist]: This URL must be listed under
           // Supabase Auth → URL Configuration → Additional Redirect URLs.
           // If it is not whitelisted, Supabase silently falls back to SITE_URL,
@@ -1427,109 +1263,27 @@
           // Supabase dashboard configuration step — not fixable repo-side.
           const inviteConfirmUrl = `${window.location.origin}/auth/invite-confirm/?email=${encodeURIComponent(emailRaw)}`;
           const result = await signUpWithPassword(emailRaw, pass, {
-              registration_mode: "join_club",
-              ...claimPayload,
-              club_code: clubCode,
-              club_name: String(verify?.club_name || "").trim(),
-            }, { emailRedirectTo: inviteConfirmUrl });
-            writePendingInvite(claimPayload);
-            if (result?.access_token) {
-              await acceptCurrentLegal(result.access_token);
-              await ensureProfileBootstrap(result.access_token, {
-                preferred_member_no: effectiveMemberNo,
-                first_name: firstName,
-                last_name: lastName,
-              });
-              await claimInviteToken(claimPayload, result.access_token);
-              if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Du wirst jetzt zur verpflichtenden Erstaktivierung weitergeleitet.";
-              clearPendingInvite();
-              const next = postAuthTarget(DEFAULT_CORE_HOME);
-              window.location.assign(`/app/zugang-pruefen/?next=${encodeURIComponent(next)}`);
-              return;
-            }
-            if (regMsg) regMsg.textContent = "Registrierung gespeichert. Bitte E-Mail bestaetigen. Danach folgt automatisch die Erstaktivierung mit Datenabgleich.";
-            return;
-          }
-
-          const activeSession = loadSession();
-          const createAuthBypass = Boolean(activeSession?.access_token);
-          if (!createAuthBypass && (!emailRaw || !isLikelyEmail(emailRaw))) {
-            throw new Error("Bitte eine gueltige E-Mail eingeben.");
-          }
-          if (!clubName) {
-            throw new Error("Bitte den Vereinsnamen angeben.");
-          }
-          if (!clubZip) {
-            throw new Error("Bitte die PLZ des Vereins angeben.");
-          }
-          if (!clubCity) {
-            throw new Error("Bitte den Ort des Vereins angeben.");
-          }
-          if (!clubAddress) {
-            throw new Error("Bitte die Vereinsanschrift angeben.");
-          }
-          if (!responsibleName) {
-            throw new Error("Bitte die verantwortliche Person angeben.");
-          }
-          if (!responsibleRole) {
-            throw new Error("Bitte die Funktion der verantwortlichen Person angeben.");
-          }
-          if (!responsibleEmail || !isLikelyEmail(responsibleEmail)) {
-            throw new Error("Bitte eine gueltige E-Mail-Adresse der verantwortlichen Person angeben.");
-          }
-          if (!clubSize) {
-            throw new Error("Bitte die Vereinsgroesse auswaehlen.");
-          }
-          if (!clubMailConfirm) {
-            throw new Error("Bitte den Hinweis zur Vereinsadministrator-E-Mail bestaetigen.");
-          }
-          if (!legalAuthorityConfirm) {
-            throw new Error("Bitte die Berechtigung fuer die Vereinsanfrage bestaetigen.");
-          }
-
-          if (createAuthBypass) {
-            const data = await callEdgeFunction("club-request-submit", {
-              club_name: clubName,
-              club_location: clubCity,
-              zip: clubZip,
-              city: clubCity,
-              club_address: clubAddress,
-              responsible_name: responsibleName,
-              responsible_role: responsibleRole,
-              responsible_email: responsibleEmail,
-              club_size: clubSize,
-              club_mail_confirmed: clubMailConfirm,
-              legal_confirmed: legalAuthorityConfirm,
-              auto_approve: true,
-            }, activeSession?.access_token || "");
-            clearPendingClubRequest();
-            if (regMsg) regMsg.textContent = "Vereinsanfrage erfolgreich verarbeitet. Du wirst jetzt ins Portal geleitet.";
-            const approvedClubId = String(data?.club_id || "").trim();
-            const nextUrl = approvedClubId ? `/app/?club_id=${encodeURIComponent(approvedClubId)}` : "/app/";
-            window.location.assign(nextUrl);
-            return;
-          }
-
-          writePendingClubRequest(clubRequestPayload);
-          const result = await signUpWithPassword(emailRaw, pass, {
-            ...clubRequestPayload,
-            billing_status: "billing_pending",
-          });
+            registration_mode: "join_club",
+            ...claimPayload,
+            club_code: clubCode,
+            club_name: String(verify?.club_name || "").trim(),
+          }, { emailRedirectTo: inviteConfirmUrl });
+          writePendingInvite(claimPayload);
           if (result?.access_token) {
-            await acceptCurrentLegal(result.access_token).catch(() => null);
+            await acceptCurrentLegal(result.access_token);
             await ensureProfileBootstrap(result.access_token, {
+              preferred_member_no: effectiveMemberNo,
               first_name: firstName,
               last_name: lastName,
             });
-            await submitClubRequestIfNeeded(result.access_token, {
-              payload: clubRequestPayload,
-              autoApprove: false,
-            }).catch(() => null);
-            if (regMsg) regMsg.textContent = "Dein Verein wurde erfolgreich angefragt.";
-            window.location.assign("/app/anfrage-offen/");
+            await claimInviteToken(claimPayload, result.access_token);
+            if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Du wirst jetzt zur verpflichtenden Erstaktivierung weitergeleitet.";
+            clearPendingInvite();
+            const next = postAuthTarget(DEFAULT_CORE_HOME);
+            window.location.assign(`/app/zugang-pruefen/?next=${encodeURIComponent(next)}`);
             return;
           }
-          if (regMsg) regMsg.textContent = "Registrierung gespeichert. Bitte E-Mail bestaetigen. Danach landest du auf der Seite fuer deine Vereinsanfrage.";
+          if (regMsg) regMsg.textContent = "Registrierung gespeichert. Bitte E-Mail bestaetigen. Danach folgt automatisch die Erstaktivierung mit Datenabgleich.";
         } catch (err) {
           if (regMsg) regMsg.textContent = mapRegistrationErrorMessage(err);
         }

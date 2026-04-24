@@ -7032,7 +7032,8 @@ body[data-app-theme="fcp_tactical"] .header-notification-badge{
 
 .register-current-path{
   display:inline-flex;
-  width:max-content;
+  width:fit-content;
+  max-width:100%;
   align-items:center;
   padding:7px 12px;
   border-radius:999px;
@@ -7043,6 +7044,8 @@ body[data-app-theme="fcp_tactical"] .header-notification-badge{
   font-weight:800;
   letter-spacing:.08em;
   text-transform:uppercase;
+  white-space:normal;
+  overflow-wrap:anywhere;
 }
 
 .register-flow__intro h1{
@@ -7080,10 +7083,25 @@ body[data-app-theme="fcp_tactical"] .header-notification-badge{
   display:none;
   align-items:center;
   gap:6px;
+  text-decoration:none;
+  cursor:pointer;
 }
 
 .register-flow__mobile-anchor--submit{
-  font-weight:700;
+  font-weight:800;
+  border:1px solid rgba(255,166,74,.52);
+  background:linear-gradient(180deg, rgba(255,166,74,.26), rgba(255,166,74,.12));
+  color:#ffe3b8;
+  box-shadow:0 8px 20px rgba(8,10,8,.2);
+  transition:border-color .16s ease, background .16s ease, color .16s ease, box-shadow .16s ease;
+}
+
+.register-flow__mobile-anchor--submit:hover,
+.register-flow__mobile-anchor--submit:focus-visible{
+  border-color:rgba(255,203,132,.78);
+  background:linear-gradient(180deg, rgba(255,166,74,.34), rgba(255,166,74,.18));
+  color:#fff4df;
+  box-shadow:0 10px 24px rgba(8,10,8,.24);
 }
 
 .register-flow__section-label{
@@ -7726,6 +7744,19 @@ body[data-app-theme="fcp_brand"] .register-flow__actions .feed-btn--ghost{
   color:#5a5143;
 }
 
+body[data-app-theme="fcp_brand"] .register-flow__mobile-anchor--submit{
+  border-color:rgba(170,134,74,.46);
+  background:linear-gradient(180deg, rgba(240,195,121,.26), rgba(240,195,121,.14));
+  color:#5b4730;
+}
+
+body[data-app-theme="fcp_brand"] .register-flow__mobile-anchor--submit:hover,
+body[data-app-theme="fcp_brand"] .register-flow__mobile-anchor--submit:focus-visible{
+  border-color:rgba(170,134,74,.64);
+  background:linear-gradient(180deg, rgba(240,195,121,.34), rgba(240,195,121,.2));
+  color:#463623;
+}
+
 body[data-external-invite-path="1"] .header{
   box-shadow:none;
 }
@@ -7741,6 +7772,14 @@ body[data-external-invite-path="1"] .portal-quick-drawer{
 }
 
 @media (max-width: 760px){
+  .register-flow{
+    min-width:0;
+  }
+
+  .register-flow > *{
+    min-width:0;
+  }
+
   .register-flow-card .card__body{
     padding:16px;
   }
@@ -7750,14 +7789,28 @@ body[data-external-invite-path="1"] .portal-quick-drawer{
     grid-template-columns:1fr;
   }
 
+  .register-grid > *{
+    min-width:0;
+  }
+
+  .register-flow p,
+  .register-flow span,
+  .register-flow small,
+  .register-flow label{
+    overflow-wrap:anywhere;
+  }
+
   .register-form--invite .register-step{
     padding:10px 0;
   }
 
   .register-flow__mobile-anchor{
     display:inline-flex;
-    width:max-content;
+    width:100%;
     margin-top:6px;
+    justify-content:center;
+    text-align:center;
+    white-space:normal;
   }
 }
 

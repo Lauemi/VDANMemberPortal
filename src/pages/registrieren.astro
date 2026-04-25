@@ -4,8 +4,18 @@ import { APP } from "../config/app";
 
 const nextRaw = Astro.url.searchParams.get("next") ?? "/app/";
 const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
+const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
+const inviteClubId = String(Astro.url.searchParams.get("club_id") ?? "").trim();
+const inviteClubCode = String(Astro.url.searchParams.get("club_code") ?? "").trim().toUpperCase();
+const inviteClubName = String(Astro.url.searchParams.get("club_name") ?? "").trim();
+const loginQuery = new URLSearchParams({ next: nextTarget });
+if (inviteToken) loginQuery.set("invite", inviteToken);
+if (inviteClubId) loginQuery.set("club_id", inviteClubId);
+if (inviteClubCode) loginQuery.set("club_code", inviteClubCode);
+if (inviteClubName) loginQuery.set("club_name", inviteClubName);
 const clubRequestHref = `/verein-anfragen/?next=${encodeURIComponent(nextTarget)}`;
 const clubSignInHref = `/vereinssignin/?next=${encodeURIComponent(nextTarget)}`;
+const loginHref = `/login/?${loginQuery.toString()}`;
 ---
 
 <Site title={`Registrieren • ${APP.name}`} description="Einstieg in den passenden Onboarding-Pfad." robots="noindex" density="compact">
@@ -49,7 +59,7 @@ const clubSignInHref = `/vereinssignin/?next=${encodeURIComponent(nextTarget)}`;
         <div class="register-flow__actions">
           <a class="feed-btn fcp-brand-btn--primary" href={clubRequestHref}>Verein anfragen</a>
           <a class="feed-btn feed-btn--ghost" href={clubSignInHref}>Zum VereinsSignIn</a>
-          <a class="register-flow__secondary-link" href={`/login/?next=${encodeURIComponent(nextTarget)}`}>Zur Anmeldung</a>
+          <a class="register-flow__secondary-link" href={loginHref}>Zur Anmeldung</a>
         </div>
       </div>
     </div>

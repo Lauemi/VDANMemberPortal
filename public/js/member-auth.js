@@ -345,6 +345,29 @@
     }
   }
 
+  function stagePendingInviteFromCurrentContext() {
+    const query = new URLSearchParams(window.location.search || "");
+    const inviteToken = String(
+      document.getElementById("registerInviteToken")?.value
+      || query.get("invite")
+      || ""
+    ).trim();
+    if (!inviteToken) return;
+
+    const memberNo = normalizeMemberNo(
+      document.getElementById("registerMemberNo")?.value
+      || query.get("member_no")
+      || ""
+    );
+
+    writePendingInvite({
+      invite_token: inviteToken,
+      member_no: memberNo || "",
+      first_name: "",
+      last_name: "",
+    });
+  }
+
   function applyInviteContextUi(payload = {}) {
     const wrap = document.getElementById("registerInviteContext");
     const copy = document.getElementById("registerInviteContextCopy");
@@ -1172,6 +1195,7 @@
         ).trim();
         const password = String(document.getElementById("loginPass")?.value || "");
         try {
+          stagePendingInviteFromCurrentContext();
           const sessionData = await loginWithPassword(memberNo, password);
           await submitClubRequestIfNeeded(sessionData?.access_token || "", { autoApprove: false }).catch(() => null);
           await ensureProfileBootstrap(sessionData?.access_token || "", {

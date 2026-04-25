@@ -1025,11 +1025,28 @@
   border-color: var(--rd-gold);
 }
 
+/* ═══ 8c · QFM SETTINGS FORM PANEL (Scoped rollout) ════════════════════════ */
+#settingsQfmRoot .qfp-shell[data-mask-family="QFM"] .qfp-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+
+#settingsQfmRoot .qfp-shell[data-mask-family="QFM"] .qfp-form-field.is-full {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 680px) {
   .fcp-adm-shell .qfp-form-grid {
     grid-template-columns: 1fr;
   }
   .fcp-adm-shell .qfp-form-field.is-full {
+    grid-column: 1;
+  }
+  #settingsQfmRoot .qfp-shell[data-mask-family="QFM"] .qfp-form-grid {
+    grid-template-columns: 1fr;
+  }
+  #settingsQfmRoot .qfp-shell[data-mask-family="QFM"] .qfp-form-field.is-full {
     grid-column: 1;
   }
   .is-redesign .cards-view {

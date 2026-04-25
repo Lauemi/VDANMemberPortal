@@ -2060,7 +2060,7 @@
             "gridTemplateColumns": "",
             "rowInteractionMode": "inline",
             "selectionMode": "single",
-            "viewMode": "table",
+            "viewMode": "both",
             "layoutVersion": "members-redesign-v2",
             "sortKey": "last_name",
             "sortDir": "asc",
@@ -2128,6 +2128,16 @@
             "showMetaBar": true,
             "metaLabel": "Mitglieder",
             "metaHint": "Live-Ansicht der Vereinsverwaltung",
+            "cardConfig": {
+              "titleKey": "last_name",
+              "subtitleKeys": [
+                "club_member_no",
+                "email",
+                "status",
+                "role",
+                "city"
+              ]
+            },
             "redesign": true,
             "createLabel": "Neues Mitglied",
             "rowActions": [
@@ -3257,7 +3267,7 @@
           "id": "club_settings_cards_table",
           "title": "Ausweise",
           "renderMode": "table",
-          "componentType": "data-table",
+          "componentType": "inline-data-table",
           "contentArea": "main",
           "flowType": "standard",
           "permissions": {
@@ -3879,9 +3889,19 @@
             "gridTemplateColumns": "",
             "rowInteractionMode": "dialog",
             "selectionMode": "single",
-            "viewMode": "table",
+            "viewMode": "both",
             "sortKey": "updated_at",
             "sortDir": "desc",
+            "primaryColumnKey": "member_label",
+            "cardConfig": {
+              "titleKey": "member_label",
+              "subtitleKeys": [
+                "water_name",
+                "trip_date",
+                "status",
+                "updated_at"
+              ]
+            },
             "filterFields": [
               {
                 "key": "water_name",

@@ -3373,6 +3373,7 @@
             "gridTemplateColumns": "",
             "rowInteractionMode": "dialog",
             "selectionMode": "single",
+            "rowActions": ["edit"],
             "viewMode": "table",
             "sortKey": "club_member_no",
             "sortDir": "asc",

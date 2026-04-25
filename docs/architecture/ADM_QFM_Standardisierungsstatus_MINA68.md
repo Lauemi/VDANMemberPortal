@@ -73,8 +73,9 @@ MINA-68 hat drei konkrete Systemregeln etabliert: (1) 2-Spalten-Layout für ADM-
 - Technisch funktionsfähig: `fcp-inline-data-table-v2.js` unterstützt `viewMode: "cards"` / `"both"`
 - CSS: `redesign.css` hat `.is-redesign .cards-view` Grid-Layout bereits
 - Umgesetzt:
-  - `club_settings_members_registry`: `viewMode: "both"` + `cardConfig` + bestehender `primaryColumnKey`
-  - `club_settings_approvals_table`: `viewMode: "both"` + `primaryColumnKey` + `cardConfig`
+  - `club_settings_members_registry`: `viewMode: "both"` + bestehender `primaryColumnKey`
+  - `club_settings_approvals_table`: `viewMode: "both"` + `primaryColumnKey`
+  - `cardConfig` ist aktuell als future-facing Dokumentationsstruktur hinterlegt; die runtime-wirksame Umschaltung erfolgt ueber `viewMode`.
 - Ergebnis: Kartenansicht ist fuer die zwei priorisierten ADM-Panels aktivierbar, ohne globale Nebenwirkungen.
 
 ### P3 — Backlog, erst evaluieren

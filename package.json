@@ -18,6 +18,8 @@
     "check:xss-guard": "node scripts/check-xss-guard.mjs",
     "check:studio-contract": "node scripts/check-studio-contract.mjs",
     "check:governance-health": "node scripts/governance-health-gate.mjs",
+    "test:smoke:invite-375": "node scripts/run-smoke-invite-375.mjs",
+    "test:smoke:invite-375:ci": "npm run build && playwright test -c playwright.config.ts --reporter=line",
     "deploy:vercel": "gh workflow run deploy-vercel.yml --ref main",
     "deploy:ionos": "gh workflow run deploy-ionos.yml --ref main",
     "deploy": "npm run deploy:vercel && npm run deploy:ionos",
@@ -29,5 +31,8 @@
     "@astrojs/sitemap": "^3.6.0",
     "@astrojs/vercel": "^9.0.4",
     "astro": "^5.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
   }
 }

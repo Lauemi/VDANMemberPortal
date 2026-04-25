@@ -9,3 +9,6 @@ dist/
 docs/supabase/44_set_encryption_key_example.sql
 supabase/.temp/
 .vercel
+playwright-report/
+test-results/
+test-results-local/

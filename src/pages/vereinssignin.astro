@@ -73,6 +73,10 @@ const loginHref = `/login/?${loginQuery.toString()}`;
               <input id="loginMemberNo" name="identifier" type="text" inputmode="email" autocomplete="username" placeholder="name@beispiel.de" required />
             </label>
             <label class="ui-field">
+              <span>Mitgliedsnummer</span>
+              <input id="loginInviteMemberNo" name="invite_member_no" type="text" inputmode="text" autocomplete="off" placeholder="z. B. 9999" required />
+            </label>
+            <label class="ui-field">
               <span>Passwort</span>
               <input id="loginPass" name="password" type="password" autocomplete="current-password" required />
             </label>

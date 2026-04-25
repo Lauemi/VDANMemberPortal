@@ -1283,7 +1283,7 @@
             window.location.assign(`/app/zugang-pruefen/?next=${encodeURIComponent(next)}`);
             return;
           }
-          if (regMsg) regMsg.textContent = "Registrierung gespeichert. Bitte E-Mail bestaetigen. Danach folgt automatisch die Erstaktivierung mit Datenabgleich.";
+          if (regMsg) regMsg.textContent = "Registrierung gespeichert. Bitte E-Mail verifizieren. Danach folgt automatisch die Erstaktivierung mit Datenabgleich.";
         } catch (err) {
           if (regMsg) regMsg.textContent = mapRegistrationErrorMessage(err);
         }

@@ -338,12 +338,12 @@
     const userId = uid();
     if (!userId) return null;
     const [profileRows, identityRows] = await Promise.all([
-      sb(`/rest/v1/profiles?select=id,member_no,first_name,last_name,email,club_id&limit=1&id=eq.${encodeURIComponent(userId)}`, { method: "GET" }, true).catch(() => []),
+      sb(`/rest/v1/profiles?select=id,member_no,first_name,last_name,email,club_id,active_club_id&limit=1&id=eq.${encodeURIComponent(userId)}`, { method: "GET" }, true).catch(() => []),
       sb(`/rest/v1/club_member_identities?select=club_id,member_no&user_id=eq.${encodeURIComponent(userId)}`, { method: "GET" }, true).catch(() => []),
     ]);
     const profile = Array.isArray(profileRows) && profileRows[0] ? profileRows[0] : null;
     const identities = Array.isArray(identityRows) ? identityRows : [];
-    const preferredClubId = val(profile?.club_id) || val(identities[0]?.club_id);
+    const preferredClubId = val(profile?.active_club_id) || val(profile?.club_id) || val(identities[0]?.club_id);
     const preferredIdentity = identities.find((row) => val(row?.club_id) === preferredClubId) || identities[0] || null;
     const internalMemberNo = val(preferredIdentity?.member_no) || val(profile?.member_no);
 

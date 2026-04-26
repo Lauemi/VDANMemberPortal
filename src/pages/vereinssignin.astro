@@ -25,16 +25,16 @@ const loginHref = `/login/?${loginQuery.toString()}`;
         {hasInviteContext ? (
           <>
             <h1>{clubDisplayName} beitreten</h1>
-            <p class="small register-flow__lede">Du wurdest eingeladen. Prüfe deine Daten, lege deinen Zugang an und schließe den Beitritt ab.</p>
+            <p class="small register-flow__lede">Du wurdest eingeladen. Wähle jetzt den passenden Pfad: bestehendes Konto anmelden oder neues Konto anlegen.</p>
             <div id="registerInviteContext" class="register-note register-note--invite-context small">
               <strong id="registerInviteContextTitle">Einladung erkannt</strong>
               <span id="registerInviteContextCopy">Du trittst dem Verein {clubDisplayName} bei.</span>
             </div>
             <p class="register-flow__context small">
-              Diese Angaben werden für die sichere Zuordnung zu deinem Vereinsprofil benötigt. Nach dem Absenden bestätigst du deine E-Mail und wirst dann zur Erstaktivierung weitergeleitet.
+              Für bestehende Konten gilt Login-first: erst einloggen, dann Invite-Claim.
             </p>
             <p class="register-flow__context small">
-              Die technische Abwicklung erfolgt über das Fishing Club Portal.
+              Nur wenn du noch kein Konto hast, nutze den zweiten Pfad zur Kontoanlage.
             </p>
           </>
         ) : (
@@ -43,10 +43,10 @@ const loginHref = `/login/?${loginQuery.toString()}`;
             <div id="registerCurrentPathLabel" class="register-current-path">Vereinsbeitritt per Einladung</div>
             <h1 id="registerIntroTitle">Bestehendem Verein beitreten</h1>
             <p id="registerModeHint" class="small register-flow__lede">
-              Gib deine Zugangsdaten und Einladungsdaten ein, dann erstellen wir dein Konto.
+              Wähle den passenden Pfad für deinen Beitritt: bestehendes Konto oder neues Konto.
             </p>
             <p id="registerModeContext" class="register-flow__context small">
-              Für neue Vereine gibt es einen separaten Anfragepfad.
+              Für neue Vereine gibt es weiterhin den separaten Anfragepfad.
             </p>
           </>
         )}
@@ -63,9 +63,13 @@ const loginHref = `/login/?${loginQuery.toString()}`;
         <form id="loginForm" class="register-flow__form form-shell__section register-step register-step--auth is-active" data-next-target={nextTarget}>
           <div class="register-step__head">
             <div>
-              <h2>Bereits ein Konto?</h2>
-              <p>Logge dich mit deinem bestehenden Zugang ein, um den Invite-Claim ohne neuen Signup fortzusetzen.</p>
+              <h2>Pfad A: Bestehendes Konto (Login-first)</h2>
+              <p>Wenn du bereits einen Zugang hast, melde dich mit deiner E-Mail und deinem Passwort an. Der Invite wird danach automatisch beansprucht.</p>
             </div>
+          </div>
+          <div id="existingInviteContext" class="register-note register-note--invite-context small hidden" hidden>
+            <strong>Einladung erkannt</strong>
+            <span id="existingInviteContextCopy">Du trittst einem Verein bei.</span>
           </div>
           <div class="register-grid">
             <label class="ui-field">
@@ -82,7 +86,7 @@ const loginHref = `/login/?${loginQuery.toString()}`;
             </label>
           </div>
           <div class="ui-actions">
-            <button class="feed-btn feed-btn--ghost" type="submit">Einloggen und Invite fortsetzen</button>
+            <button class="feed-btn fcp-brand-btn--primary" type="submit">Einloggen und Verein beitreten</button>
             <span id="loginMsg" class="small" aria-live="polite"></span>
           </div>
           <p class="small"><a href="/passwort-vergessen/">Passwort vergessen?</a></p>
@@ -100,6 +104,12 @@ const loginHref = `/login/?${loginQuery.toString()}`;
         data-has-invite-context={hasInviteContext ? "true" : "false"}
       >
         <input id="registerModeValue" type="hidden" name="registration_mode" value="join_club" />
+        <div class="register-step__head">
+          <div>
+            <h2>Pfad B: Neues Konto anlegen</h2>
+            <p>Nur nutzen, wenn du noch keinen Zugang besitzt.</p>
+          </div>
+        </div>
 
         <section id="registerAuthSection" class="register-step register-step--auth">
           {!hasInviteContext ? (

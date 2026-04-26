@@ -325,8 +325,7 @@
     const registerForm = document.getElementById("registerForm");
     const tokenInput = document.getElementById("registerInviteToken");
     const memberNoInput = document.getElementById("registerMemberNo");
-    const existingTokenInput = document.getElementById("existingInviteToken");
-    const existingMemberNoInput = document.getElementById("existingMemberNo");
+    const existingMemberNoInput = document.getElementById("loginInviteMemberNo") || document.getElementById("existingMemberNo");
     const query = new URLSearchParams(window.location.search || "");
     const invite = String(query.get("invite") || "").trim();
     const clubId = String(query.get("club_id") || "").trim();
@@ -341,9 +340,6 @@
     }
     if (tokenInput && invite && !String(tokenInput.value || "").trim()) {
       tokenInput.value = invite;
-    }
-    if (existingTokenInput && invite && !String(existingTokenInput.value || "").trim()) {
-      existingTokenInput.value = invite;
     }
     if (memberNoInput && memberNo && !String(memberNoInput.value || "").trim()) {
       memberNoInput.value = memberNo;
@@ -423,7 +419,6 @@
   function applyExistingInviteContextUi(payload = {}) {
     const wrap = document.getElementById("existingInviteContext");
     const copy = document.getElementById("existingInviteContextCopy");
-    const tokenInput = document.getElementById("existingInviteToken");
     const clubName = String(payload?.club_name || "").trim();
     if (wrap && copy) {
       if (clubName) {
@@ -431,7 +426,7 @@
         wrap.classList.remove("hidden");
         copy.textContent = `Du trittst dem Verein ${clubName} bei.`;
       } else {
-        const hasToken = Boolean(String(tokenInput?.value || "").trim());
+        const hasToken = Boolean(readJoinInviteToken());
         if (hasToken) {
           wrap.hidden = false;
           wrap.classList.remove("hidden");
@@ -610,6 +605,26 @@
     return String(raw || "").trim().toUpperCase();
   }
 
+  function readJoinInviteToken() {
+    const query = new URLSearchParams(window.location.search || "");
+    const queryInvite = String(query.get("invite") || "").trim();
+    if (queryInvite) return queryInvite;
+    const registerInvite = String(document.getElementById("registerInviteToken")?.value || "").trim();
+    if (registerInvite) return registerInvite;
+    return String(document.getElementById("existingInviteToken")?.value || "").trim();
+  }
+
+  function readJoinInviteMemberNo() {
+    const query = new URLSearchParams(window.location.search || "");
+    const queryMemberNo = normalizeMemberNo(query.get("member_no"));
+    if (queryMemberNo) return queryMemberNo;
+    return normalizeMemberNo(
+      document.getElementById("loginInviteMemberNo")?.value
+      || document.getElementById("existingMemberNo")?.value
+      || ""
+    );
+  }
+
   function extractInviteMemberNo(verifyPayload = {}) {
     const direct = normalizeMemberNo(verifyPayload?.member_no);
     if (direct) return direct;
@@ -659,8 +674,7 @@
   async function prepareExistingJoinInviteContext() {
     const path = String(window.location.pathname || "");
     if (!path.startsWith("/vereinssignin")) return null;
-    const tokenInput = document.getElementById("existingInviteToken");
-    const inviteToken = String(tokenInput?.value || "").trim();
+    const inviteToken = readJoinInviteToken();
     const hints = readInviteContextHints();
     if (!inviteToken) {
       applyExistingInviteContextUi(hints);
@@ -683,14 +697,14 @@
     const path = String(window.location.pathname || "");
     if (!path.startsWith("/vereinssignin")) return null;
 
-    const inviteToken = String(document.getElementById("existingInviteToken")?.value || "").trim();
-    if (!inviteToken) throw new Error("Für den Vereinsbeitritt ist ein Invite-Token erforderlich.");
+    const inviteToken = readJoinInviteToken();
+    if (!inviteToken) return null;
 
     const verify = await verifyInviteToken(inviteToken);
     applyExistingInviteContextUi(verify);
     applyInviteContextUi(verify);
 
-    const enteredMemberNo = normalizeMemberNo(document.getElementById("existingMemberNo")?.value || "");
+    const enteredMemberNo = readJoinInviteMemberNo();
     const inviteMemberNo = extractInviteMemberNo(verify);
     const effectiveMemberNo = inviteMemberNo || enteredMemberNo;
     if (inviteMemberNo && enteredMemberNo && inviteMemberNo !== enteredMemberNo) {
@@ -1362,7 +1376,7 @@
       } else {
         applyInviteContextUi(readInviteContextHints());
       }
-      const existingInviteToken = String(document.getElementById("existingInviteToken")?.value || "").trim();
+      const existingInviteToken = readJoinInviteToken();
       if (existingInviteToken && hasSupabaseConfig) {
         prepareExistingJoinInviteContext().catch((err) => {
           if (regMsg) regMsg.textContent = mapRegistrationErrorMessage(err);

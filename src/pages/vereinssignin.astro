@@ -10,6 +10,12 @@ const inviteClubCode = String(Astro.url.searchParams.get("club_code") ?? "").tri
 const inviteClubName = String(Astro.url.searchParams.get("club_name") ?? "").trim();
 const hasInviteContext = Boolean(inviteToken || inviteClubId || inviteClubName);
 const clubDisplayName = inviteClubName || "Verein";
+const loginQuery = new URLSearchParams({ next: nextTarget });
+if (inviteToken) loginQuery.set("invite", inviteToken);
+if (inviteClubId) loginQuery.set("club_id", inviteClubId);
+if (inviteClubCode) loginQuery.set("club_code", inviteClubCode);
+if (inviteClubName) loginQuery.set("club_name", inviteClubName);
+const loginHref = `/login/?${loginQuery.toString()}`;
 ---
 
 <Site title={hasInviteContext ? `${clubDisplayName} beitreten • ${APP.name}` : `VereinsSignIn • ${APP.name}`} description="Getrennter Einstieg für bestehende Vereine." robots="noindex" density="compact">
@@ -53,6 +59,35 @@ const clubDisplayName = inviteClubName || "Verein";
           Direkt zu Verein beitreten
         </a>
       </div>
+      {hasInviteContext && (
+        <form id="loginForm" class="register-flow__form form-shell__section register-step register-step--auth is-active" data-next-target={nextTarget}>
+          <div class="register-step__head">
+            <div>
+              <h2>Bereits ein Konto?</h2>
+              <p>Logge dich mit deinem bestehenden Zugang ein, um den Invite-Claim ohne neuen Signup fortzusetzen.</p>
+            </div>
+          </div>
+          <div class="register-grid">
+            <label class="ui-field">
+              <span>E-Mail</span>
+              <input id="loginMemberNo" name="identifier" type="text" inputmode="email" autocomplete="username" placeholder="name@beispiel.de" required />
+            </label>
+            <label class="ui-field">
+              <span>Mitgliedsnummer</span>
+              <input id="loginInviteMemberNo" name="invite_member_no" type="text" inputmode="text" autocomplete="off" placeholder="z. B. 9999" required />
+            </label>
+            <label class="ui-field">
+              <span>Passwort</span>
+              <input id="loginPass" name="password" type="password" autocomplete="current-password" required />
+            </label>
+          </div>
+          <div class="ui-actions">
+            <button class="feed-btn feed-btn--ghost" type="submit">Einloggen und Invite fortsetzen</button>
+            <span id="loginMsg" class="small" aria-live="polite"></span>
+          </div>
+          <p class="small"><a href="/passwort-vergessen/">Passwort vergessen?</a></p>
+        </form>
+      )}
 
       <form
         id="registerForm"
@@ -123,7 +158,6 @@ const clubDisplayName = inviteClubName || "Verein";
             <label>
               <span>Mitgliedsnummer</span>
               <input id="registerMemberNo" name="member_no" type="text" inputmode="text" autocomplete="username" />
-              <small class="small">Pflichtfeld. Verwende die Mitgliedsnummer aus deiner Einladung, z. B. OT-1024.</small>
             </label>
           </div>
           {!hasInviteContext && (
@@ -159,7 +193,7 @@ const clubDisplayName = inviteClubName || "Verein";
           <button id="registerSubmitBtn" class="feed-btn fcp-brand-btn--primary" type="submit">
             {hasInviteContext ? "Verein beitreten" : "Konto anlegen"}
           </button>
-          <a class="register-flow__secondary-link" href={`/login/?next=${encodeURIComponent(nextTarget)}`}>Zur Anmeldung</a>
+          <a class="register-flow__secondary-link" href={loginHref}>Zur Anmeldung</a>
           <span id="registerMsg" class="small" aria-live="polite"></span>
         </div>
       </form>

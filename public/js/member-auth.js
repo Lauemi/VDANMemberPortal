@@ -353,6 +353,46 @@
     }
   }
 
+  function stagePendingInviteFromCurrentContext() {
+    const path = String(window.location.pathname || "").toLowerCase();
+    const query = new URLSearchParams(window.location.search || "");
+    const inviteToken = String(
+      document.getElementById("registerInviteToken")?.value
+      || query.get("invite")
+      || ""
+    ).trim();
+    if (!inviteToken) return;
+
+    const memberNo = normalizeMemberNo(
+      document.getElementById("loginInviteMemberNo")?.value
+      || document.getElementById("registerMemberNo")?.value
+      || query.get("member_no")
+      || ""
+    );
+
+    if (path.startsWith("/vereinssignin") && !memberNo) {
+      throw new Error("Bitte die Vereins-Mitgliedsnummer eingeben, um den Invite-Claim fortzusetzen.");
+    }
+
+    writePendingInvite({
+      invite_token: inviteToken,
+      member_no: memberNo,
+      first_name: "",
+      last_name: "",
+    });
+  }
+
+  function stagePendingInviteFromCurrentContextIfPresent() {
+    const query = new URLSearchParams(window.location.search || "");
+    const inviteToken = String(
+      document.getElementById("registerInviteToken")?.value
+      || query.get("invite")
+      || ""
+    ).trim();
+    if (!inviteToken) return;
+    stagePendingInviteFromCurrentContext();
+  }
+
   function applyInviteContextUi(payload = {}) {
     const wrap = document.getElementById("registerInviteContext");
     const copy = document.getElementById("registerInviteContextCopy");
@@ -1275,6 +1315,8 @@
           const existingInviteClaimPayload = await buildExistingInviteClaimPayloadFromForm();
           if (existingInviteClaimPayload) {
             writePendingInvite(existingInviteClaimPayload);
+          } else {
+            stagePendingInviteFromCurrentContextIfPresent();
           }
           const sessionData = await loginWithPassword(memberNo, password);
           await submitClubRequestIfNeeded(sessionData?.access_token || "", { autoApprove: false }).catch(() => null);
@@ -1408,7 +1450,7 @@
             window.location.assign(`/app/zugang-pruefen/?next=${encodeURIComponent(next)}`);
             return;
           }
-          if (regMsg) regMsg.textContent = "Registrierung gespeichert. Bitte E-Mail bestaetigen. Danach folgt automatisch die Erstaktivierung mit Datenabgleich.";
+          if (regMsg) regMsg.textContent = "Registrierung gespeichert. Bitte E-Mail verifizieren. Danach folgt automatisch die Erstaktivierung mit Datenabgleich.";
         } catch (err) {
           if (regMsg) regMsg.textContent = mapRegistrationErrorMessage(err);
         }

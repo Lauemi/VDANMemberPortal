@@ -18,7 +18,7 @@
     "check:xss-guard": "node scripts/check-xss-guard.mjs",
     "check:studio-contract": "node scripts/check-studio-contract.mjs",
     "check:governance-health": "node scripts/governance-health-gate.mjs",
-    "test:smoke:invite-375": "playwright test -c playwright.config.ts",
+    "test:smoke:invite-375": "node scripts/run-smoke-invite-375.mjs",
     "test:smoke:invite-375:ci": "npm run build && playwright test -c playwright.config.ts --reporter=line",
     "deploy:vercel": "gh workflow run deploy-vercel.yml --ref main",
     "deploy:ionos": "gh workflow run deploy-ionos.yml --ref main",

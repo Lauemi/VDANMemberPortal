@@ -880,6 +880,7 @@
 
 .is-redesign .cards-view {
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 12px;
   padding: 14px;
   background: transparent;
@@ -890,6 +891,17 @@
   border-radius: 12px;
   background: linear-gradient(180deg, color-mix(in srgb, var(--rd-surface-hi) 90%, transparent), color-mix(in srgb, var(--rd-surface) 88%, transparent));
   box-shadow: 0 12px 28px -18px rgba(0, 0, 0, .28);
+  display: flex;
+  flex-direction: column;
+}
+
+.is-redesign .inline-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--rd-line);
 }
 
 .is-redesign .inline-card__head > strong {
@@ -899,14 +911,130 @@
   letter-spacing: -0.01em;
 }
 
+.is-redesign .inline-card__body {
+  padding: 8px 14px 12px;
+  display: grid;
+  gap: 2px;
+}
+
 .is-redesign .inline-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--rd-line);
+  font-size: 13px;
   color: var(--rd-muted);
+}
+
+.is-redesign .inline-card__meta:last-child {
+  border-bottom: 0;
+}
+
+.is-redesign .inline-card__meta > span {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--rd-muted-soft);
+  flex-shrink: 0;
 }
 
 .is-redesign .inline-card__meta strong {
   color: var(--rd-ink);
   text-align: right;
   word-break: break-word;
+  font-weight: 500;
+}
+
+/* ═══ 8b · ADM FORM PANEL (Vereinsdaten) ═══════════════════════════════════ */
+.fcp-adm-shell .qfp-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+
+.fcp-adm-shell .qfp-form-field {
+  display: grid;
+  gap: 5px;
+}
+
+.fcp-adm-shell .qfp-form-field.is-full {
+  grid-column: 1 / -1;
+}
+
+.fcp-adm-shell .qfp-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--rd-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fcp-adm-shell .qfp-form-field :where(input, select, textarea) {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--rd-line-strong);
+  border-radius: var(--rd-radius-sm);
+  background: var(--rd-surface-hi);
+  color: var(--rd-ink);
+  font: inherit;
+  font-size: 14px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fcp-adm-shell .qfp-form-field textarea {
+  min-height: 88px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.fcp-adm-shell .qfp-form-field :where(input, select, textarea):focus {
+  outline: none;
+  border-color: var(--rd-gold);
+  box-shadow: 0 0 0 2px var(--rd-gold-soft);
+}
+
+.fcp-adm-shell .qfp-action-bar {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 6px;
+}
+
+.fcp-adm-shell .qfp-btn--primary {
+  min-height: 40px;
+  padding: 0 22px;
+  border-radius: var(--rd-radius-sm);
+  border: 1px solid color-mix(in srgb, var(--rd-gold-lo) 70%, transparent);
+  background: var(--rd-gold);
+  color: #1f1a10;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.fcp-adm-shell .qfp-btn--primary:hover {
+  background: var(--rd-gold-hi);
+  border-color: var(--rd-gold);
+}
+
+@media (max-width: 680px) {
+  .fcp-adm-shell .qfp-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .fcp-adm-shell .qfp-form-field.is-full {
+    grid-column: 1;
+  }
+  .is-redesign .cards-view {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ═══ 9 · INLINE-EDIT-ZEILE ════════════════════════════════════════════════ */

@@ -5,10 +5,19 @@ import { resolveSiteMode } from "../config/site-mode";
 
 const nextRaw = Astro.url.searchParams.get("next") ?? "/";
 const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/";
+const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();
+const inviteClubId = String(Astro.url.searchParams.get("club_id") ?? "").trim();
+const inviteClubCode = String(Astro.url.searchParams.get("club_code") ?? "").trim().toUpperCase();
+const inviteClubName = String(Astro.url.searchParams.get("club_name") ?? "").trim();
+const joinQuery = new URLSearchParams({ next: nextTarget });
+if (inviteToken) joinQuery.set("invite", inviteToken);
+if (inviteClubId) joinQuery.set("club_id", inviteClubId);
+if (inviteClubCode) joinQuery.set("club_code", inviteClubCode);
+if (inviteClubName) joinQuery.set("club_name", inviteClubName);
 const showDemoHint = Boolean(import.meta.env.DEV);
 const isFcpMode = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
 const clubRequestHref = `/verein-anfragen/?next=${encodeURIComponent(nextTarget)}`;
-const clubSignInHref = `/vereinssignin/?next=${encodeURIComponent(nextTarget)}`;
+const clubSignInHref = `/vereinssignin/?${joinQuery.toString()}`;
 ---
 
 <Site title={`Login • ${APP.name}`} description="Login zum Memberbereich." robots="noindex" density="compact">

@@ -191,7 +191,7 @@ Deno.serve(async (req: Request) => {
     const email = txt((actor as { email?: string })?.email).toLowerCase() || null;
 
     const profileRes = await sbServiceFetch(
-      `/rest/v1/profiles?select=id,member_no,club_id,email,display_name,first_name,last_name,member_card_id,member_card_key,member_card_valid,member_card_valid_from,member_card_valid_until,fishing_card_type&limit=1&id=eq.${encodeURIComponent(userId)}`,
+      `/rest/v1/profiles?select=id,member_no,club_id,active_club_id,email,display_name,first_name,last_name,member_card_id,member_card_key,member_card_valid,member_card_valid_from,member_card_valid_until,fishing_card_type&limit=1&id=eq.${encodeURIComponent(userId)}`,
       { method: "GET" },
     );
     const profileRows = await profileRes.json().catch(() => []);
@@ -214,6 +214,7 @@ Deno.serve(async (req: Request) => {
           first_name: firstName || null,
           last_name: lastName || null,
           member_no: memberNo,
+          active_club_id: resolvedClubId || null,
           club_id: resolvedClubId || null,
           member_card_id: memberCardIdFromUserId(userId),
           member_card_key: generateMemberCardKey(),
@@ -224,7 +225,13 @@ Deno.serve(async (req: Request) => {
         }]),
       });
 
-      return new Response(JSON.stringify({ ok: true, created: true, member_no: memberNo, club_id: resolvedClubId || null }), {
+      return new Response(JSON.stringify({
+        ok: true,
+        created: true,
+        member_no: memberNo,
+        active_club_id: resolvedClubId || null,
+        club_id: resolvedClubId || null,
+      }), {
         status: 200,
         headers: { ...headers, "Content-Type": "application/json" },
       });
@@ -248,6 +255,12 @@ Deno.serve(async (req: Request) => {
     if (!txt(existing.member_card_valid_until)) patch.member_card_valid_until = validUntil;
     if (!txt(existing.fishing_card_type)) patch.fishing_card_type = "-";
 
+    if (!txt(existing.active_club_id) && resolvedClubId) {
+      patch.active_club_id = resolvedClubId;
+    } else if (resolvedClubId && txt(existing.active_club_id) !== resolvedClubId) {
+      patch.active_club_id = resolvedClubId;
+    }
+
     if (!txt(existing.club_id) && resolvedClubId) {
       patch.club_id = resolvedClubId;
     }
@@ -270,6 +283,7 @@ Deno.serve(async (req: Request) => {
       ok: true,
       created: false,
       member_no: txt((patch.member_no as string) || existing.member_no),
+      active_club_id: txt((patch.active_club_id as string) || existing.active_club_id) || null,
       club_id: txt((patch.club_id as string) || existing.club_id) || null,
     }), {
       status: 200,

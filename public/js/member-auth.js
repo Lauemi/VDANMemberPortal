@@ -325,6 +325,8 @@
     const registerForm = document.getElementById("registerForm");
     const tokenInput = document.getElementById("registerInviteToken");
     const memberNoInput = document.getElementById("registerMemberNo");
+    const existingTokenInput = document.getElementById("existingInviteToken");
+    const existingMemberNoInput = document.getElementById("existingMemberNo");
     const query = new URLSearchParams(window.location.search || "");
     const invite = String(query.get("invite") || "").trim();
     const clubId = String(query.get("club_id") || "").trim();
@@ -340,8 +342,14 @@
     if (tokenInput && invite && !String(tokenInput.value || "").trim()) {
       tokenInput.value = invite;
     }
+    if (existingTokenInput && invite && !String(existingTokenInput.value || "").trim()) {
+      existingTokenInput.value = invite;
+    }
     if (memberNoInput && memberNo && !String(memberNoInput.value || "").trim()) {
       memberNoInput.value = memberNo;
+    }
+    if (existingMemberNoInput && memberNo && !String(existingMemberNoInput.value || "").trim()) {
+      existingMemberNoInput.value = memberNo;
     }
   }
 
@@ -369,6 +377,31 @@
       tokenField.hidden = true;
       tokenField.classList.add("hidden");
       tokenInput.readOnly = true;
+    }
+  }
+
+  function applyExistingInviteContextUi(payload = {}) {
+    const wrap = document.getElementById("existingInviteContext");
+    const copy = document.getElementById("existingInviteContextCopy");
+    const tokenInput = document.getElementById("existingInviteToken");
+    const clubName = String(payload?.club_name || "").trim();
+    if (wrap && copy) {
+      if (clubName) {
+        wrap.hidden = false;
+        wrap.classList.remove("hidden");
+        copy.textContent = `Du trittst dem Verein ${clubName} bei.`;
+      } else {
+        const hasToken = Boolean(String(tokenInput?.value || "").trim());
+        if (hasToken) {
+          wrap.hidden = false;
+          wrap.classList.remove("hidden");
+          copy.textContent = "Invite erkannt. Nach Login wird der Beitritt automatisch abgeschlossen.";
+        } else {
+          wrap.hidden = true;
+          wrap.classList.add("hidden");
+          copy.textContent = "";
+        }
+      }
     }
   }
 
@@ -507,6 +540,7 @@
         member_no: String(parsed.member_no || "").trim().toUpperCase(),
         first_name: String(parsed.first_name || "").trim(),
         last_name: String(parsed.last_name || "").trim(),
+        preferred_club_id: String(parsed.preferred_club_id || "").trim(),
       };
     } catch {
       return null;
@@ -519,6 +553,7 @@
       member_no: String(data?.member_no || "").trim().toUpperCase(),
       first_name: String(data?.first_name || "").trim(),
       last_name: String(data?.last_name || "").trim(),
+      preferred_club_id: String(data?.preferred_club_id || "").trim(),
       saved_at: new Date().toISOString(),
     }));
   }
@@ -581,12 +616,71 @@
     return merged;
   }
 
+  async function prepareExistingJoinInviteContext() {
+    const path = String(window.location.pathname || "");
+    if (!path.startsWith("/vereinssignin")) return null;
+    const tokenInput = document.getElementById("existingInviteToken");
+    const inviteToken = String(tokenInput?.value || "").trim();
+    const hints = readInviteContextHints();
+    if (!inviteToken) {
+      applyExistingInviteContextUi(hints);
+      return hints;
+    }
+    const verified = await verifyInviteToken(inviteToken);
+    const merged = {
+      ...hints,
+      club_id: String(verified?.club_id || hints.club_id || "").trim(),
+      club_code: String(verified?.club_code || hints.club_code || "").trim().toUpperCase(),
+      club_name: String(verified?.club_name || hints.club_name || "").trim(),
+      expires_at: String(verified?.expires_at || "").trim(),
+      remaining_uses: verified?.remaining_uses,
+    };
+    applyExistingInviteContextUi(merged);
+    return merged;
+  }
+
+  async function buildExistingInviteClaimPayloadFromForm() {
+    const path = String(window.location.pathname || "");
+    if (!path.startsWith("/vereinssignin")) return null;
+
+    const inviteToken = String(document.getElementById("existingInviteToken")?.value || "").trim();
+    if (!inviteToken) throw new Error("Für den Vereinsbeitritt ist ein Invite-Token erforderlich.");
+
+    const verify = await verifyInviteToken(inviteToken);
+    applyExistingInviteContextUi(verify);
+    applyInviteContextUi(verify);
+
+    const enteredMemberNo = normalizeMemberNo(document.getElementById("existingMemberNo")?.value || "");
+    const inviteMemberNo = extractInviteMemberNo(verify);
+    const effectiveMemberNo = inviteMemberNo || enteredMemberNo;
+    if (inviteMemberNo && enteredMemberNo && inviteMemberNo !== enteredMemberNo) {
+      throw new Error("Mitgliedsnummer passt nicht zur Einladung.");
+    }
+    if (!effectiveMemberNo) throw new Error("Bitte die Vereins-Mitgliedsnummer angeben.");
+
+    return {
+      invite_token: inviteToken,
+      member_no: effectiveMemberNo,
+      first_name: "",
+      last_name: "",
+      preferred_club_id: String(verify?.club_id || "").trim(),
+    };
+  }
+
   async function claimPendingInviteIfPresent(accessToken = "") {
     const pending = readPendingInvite();
     if (!pending?.invite_token) return null;
     const token = String(accessToken || "").trim() || String(loadSession()?.access_token || "").trim();
     if (!token) return null;
     const claimed = await claimInviteToken(pending, token);
+    const preferredClubId = String(claimed?.club_id || pending?.preferred_club_id || "").trim();
+    const preferredMemberNo = normalizeMemberNo(claimed?.member_no || pending?.member_no || "");
+    await ensureProfileBootstrap(token, {
+      preferred_member_no: preferredMemberNo,
+      preferred_club_id: preferredClubId,
+      first_name: String(pending?.first_name || "").trim(),
+      last_name: String(pending?.last_name || "").trim(),
+    }).catch(() => null);
     clearPendingInvite();
     return claimed;
   }
@@ -601,6 +695,7 @@
     try {
       return await callEdgeFunction("profile-bootstrap", {
         preferred_member_no: String(payload?.preferred_member_no || "").trim(),
+        preferred_club_id: String(payload?.preferred_club_id || "").trim(),
         first_name: String(payload?.first_name || "").trim(),
         last_name: String(payload?.last_name || "").trim(),
       }, token);
@@ -612,6 +707,7 @@
         if (retryToken) {
           return callEdgeFunction("profile-bootstrap", {
             preferred_member_no: String(payload?.preferred_member_no || "").trim(),
+            preferred_club_id: String(payload?.preferred_club_id || "").trim(),
             first_name: String(payload?.first_name || "").trim(),
             last_name: String(payload?.last_name || "").trim(),
           }, retryToken).catch(() => null);
@@ -1111,6 +1207,7 @@
     const passwordForm = document.getElementById("passwordChangeForm");
     const logoutBtn = document.getElementById("logoutBtn");
     const msg = document.getElementById("loginMsg");
+    const hasSupabaseConfig = hasConfig();
 
     if (logoutBtn) {
       logoutBtn.addEventListener("click", async () => {
@@ -1120,50 +1217,53 @@
       });
     }
 
-    if (!hasConfig()) {
-      if (msg) msg.textContent = "Supabase ENV fehlt (PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY).";
-      return;
-    }
+    if (hasSupabaseConfig) {
+      const callbackResult = await consumeAuthCallbackFromUrl().catch(() => null);
+      // invite-confirm.astro owns its post-callback claim flow and surfaces errors explicitly.
+      if (window.location.pathname.startsWith("/auth/invite-confirm")) return;
+      if (callbackResult?.ok && callbackResult?.session?.access_token) {
+        const callbackToken = String(callbackResult.session.access_token || "");
 
-    const callbackResult = await consumeAuthCallbackFromUrl().catch(() => null);
-    // invite-confirm.astro owns its post-callback claim flow and surfaces errors explicitly.
-    if (window.location.pathname.startsWith("/auth/invite-confirm")) return;
-    if (callbackResult?.ok && callbackResult?.session?.access_token) {
-      const callbackToken = String(callbackResult.session.access_token || "");
+        // If a pending invite claim exists and the callback did NOT land on /auth/invite-confirm
+        // (e.g. Supabase SITE_URL override redirected here instead), send the user to the
+        // invite-confirm page so that claim errors surface explicitly rather than being swallowed.
+        const _hasPendingInvite = (() => {
+          try { return Boolean(localStorage.getItem(INVITE_PENDING_KEY)); } catch { return false; }
+        })();
+        if (_hasPendingInvite) {
+          const _sessionEmail = String(callbackResult.session?.user?.email || "").trim();
+          const _confirmPath = _sessionEmail
+            ? "/auth/invite-confirm/?email=" + encodeURIComponent(_sessionEmail)
+            : "/auth/invite-confirm/";
+          window.location.replace(_confirmPath);
+          return;
+        }
 
-      // If a pending invite claim exists and the callback did NOT land on /auth/invite-confirm
-      // (e.g. Supabase SITE_URL override redirected here instead), send the user to the
-      // invite-confirm page so that claim errors surface explicitly rather than being swallowed.
-      const _hasPendingInvite = (() => {
-        try { return Boolean(localStorage.getItem(INVITE_PENDING_KEY)); } catch { return false; }
-      })();
-      if (_hasPendingInvite) {
-        const _sessionEmail = String(callbackResult.session?.user?.email || "").trim();
-        const _confirmPath = _sessionEmail
-          ? "/auth/invite-confirm/?email=" + encodeURIComponent(_sessionEmail)
-          : "/auth/invite-confirm/";
-        window.location.replace(_confirmPath);
-        return;
+        await submitClubRequestIfNeeded(callbackToken, { autoApprove: false }).catch(() => null);
+        await acceptCurrentLegal(callbackToken).catch(() => null);
+        await ensureProfileBootstrap(callbackToken).catch(() => null);
+        await claimPendingInviteIfPresent(callbackToken).catch(() => null);
+        if (await enforceClubRequestPendingIfNeeded(callbackToken, { allowRegisterPage: true })) return;
+        if (await enforcePortalAccessStateIfNeeded(callbackToken, DEFAULT_CORE_HOME)) return;
+        if (isRegistrationPath(window.location.pathname || "")) {
+          const target = postAuthTarget(DEFAULT_CORE_HOME);
+          if (await enforceIdentityVerificationIfNeeded(callbackToken, target)) return;
+          if (await enforceLegalAcceptanceIfNeeded(callbackToken, target)) return;
+          window.location.assign(target);
+          return;
+        }
       }
-
-      await submitClubRequestIfNeeded(callbackToken, { autoApprove: false }).catch(() => null);
-      await acceptCurrentLegal(callbackToken).catch(() => null);
-      await ensureProfileBootstrap(callbackToken).catch(() => null);
-      await claimPendingInviteIfPresent(callbackToken).catch(() => null);
-      if (await enforceClubRequestPendingIfNeeded(callbackToken, { allowRegisterPage: true })) return;
-      if (await enforcePortalAccessStateIfNeeded(callbackToken, DEFAULT_CORE_HOME)) return;
-      if (isRegistrationPath(window.location.pathname || "")) {
-        const target = postAuthTarget(DEFAULT_CORE_HOME);
-        if (await enforceIdentityVerificationIfNeeded(callbackToken, target)) return;
-        if (await enforceLegalAcceptanceIfNeeded(callbackToken, target)) return;
-        window.location.assign(target);
-        return;
-      }
+    } else if (msg) {
+      msg.textContent = "Supabase ENV fehlt (PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY).";
     }
 
     if (form) {
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
+        if (!hasSupabaseConfig) {
+          if (msg) msg.textContent = "Supabase ENV fehlt (PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY).";
+          return;
+        }
         if (msg) msg.textContent = "â€¦";
         const memberNo = String(
           document.getElementById("loginMemberNo")?.value ||
@@ -1172,10 +1272,15 @@
         ).trim();
         const password = String(document.getElementById("loginPass")?.value || "");
         try {
+          const existingInviteClaimPayload = await buildExistingInviteClaimPayloadFromForm();
+          if (existingInviteClaimPayload) {
+            writePendingInvite(existingInviteClaimPayload);
+          }
           const sessionData = await loginWithPassword(memberNo, password);
           await submitClubRequestIfNeeded(sessionData?.access_token || "", { autoApprove: false }).catch(() => null);
           await ensureProfileBootstrap(sessionData?.access_token || "", {
             preferred_member_no: isLikelyEmail(memberNo) ? "" : memberNo,
+            preferred_club_id: String(existingInviteClaimPayload?.preferred_club_id || "").trim(),
           });
           await claimPendingInviteIfPresent(sessionData?.access_token || "");
           const profile = await getOwnProfile();
@@ -1208,15 +1313,27 @@
       if (passInput) passInput.addEventListener("input", updateRegisterPasswordFeedback);
       if (pass2Input) pass2Input.addEventListener("input", updateRegisterPasswordFeedback);
       updateRegisterPasswordFeedback();
-      if (prefilledInviteToken) {
+      if (prefilledInviteToken && hasSupabaseConfig) {
         prepareJoinInviteContext().catch((err) => {
           if (regMsg) regMsg.textContent = mapRegistrationErrorMessage(err);
         });
       } else {
         applyInviteContextUi(readInviteContextHints());
       }
+      const existingInviteToken = String(document.getElementById("existingInviteToken")?.value || "").trim();
+      if (existingInviteToken && hasSupabaseConfig) {
+        prepareExistingJoinInviteContext().catch((err) => {
+          if (regMsg) regMsg.textContent = mapRegistrationErrorMessage(err);
+        });
+      } else {
+        applyExistingInviteContextUi(readInviteContextHints());
+      }
       registerForm.addEventListener("submit", async (e) => {
         e.preventDefault();
+        if (!hasSupabaseConfig) {
+          if (regMsg) regMsg.textContent = "Supabase ENV fehlt (PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY).";
+          return;
+        }
         if (regMsg) regMsg.textContent = "â€¦";
         const memberNo = normalizeMemberNo(document.getElementById("registerMemberNo")?.value || "");
         const emailRaw = String(document.getElementById("registerEmail")?.value || "").trim().toLowerCase();
@@ -1255,6 +1372,7 @@
             member_no: effectiveMemberNo,
             first_name: firstName,
             last_name: lastName,
+            preferred_club_id: String(verify?.club_id || "").trim(),
           };
           // GAP[supabase-redirect-whitelist]: This URL must be listed under
           // Supabase Auth → URL Configuration → Additional Redirect URLs.
@@ -1273,10 +1391,17 @@
             await acceptCurrentLegal(result.access_token);
             await ensureProfileBootstrap(result.access_token, {
               preferred_member_no: effectiveMemberNo,
+              preferred_club_id: String(verify?.club_id || "").trim(),
               first_name: firstName,
               last_name: lastName,
             });
-            await claimInviteToken(claimPayload, result.access_token);
+            const claimed = await claimInviteToken(claimPayload, result.access_token);
+            await ensureProfileBootstrap(result.access_token, {
+              preferred_member_no: normalizeMemberNo(claimed?.member_no || effectiveMemberNo),
+              preferred_club_id: String(claimed?.club_id || verify?.club_id || "").trim(),
+              first_name: firstName,
+              last_name: lastName,
+            }).catch(() => null);
             if (regMsg) regMsg.textContent = "Registrierung erfolgreich. Du wirst jetzt zur verpflichtenden Erstaktivierung weitergeleitet.";
             clearPendingInvite();
             const next = postAuthTarget(DEFAULT_CORE_HOME);
@@ -1294,6 +1419,10 @@
       const msgEl = document.getElementById("passwordChangeMsg");
       passwordForm.addEventListener("submit", async (e) => {
         e.preventDefault();
+        if (!hasSupabaseConfig) {
+          if (msgEl) msgEl.textContent = "Supabase ENV fehlt (PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY).";
+          return;
+        }
         const p1 = String(document.getElementById("newPassword")?.value || "");
         const p2 = String(document.getElementById("newPasswordRepeat")?.value || "");
         if (p1.length < 8) {

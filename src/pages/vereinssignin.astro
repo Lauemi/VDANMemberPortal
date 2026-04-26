@@ -59,39 +59,37 @@ const loginHref = `/login/?${loginQuery.toString()}`;
           Direkt zu Verein beitreten
         </a>
       </div>
-      {hasInviteContext && (
-        <form id="loginForm" class="register-flow__form form-shell__section register-step register-step--auth is-active" data-next-target={nextTarget}>
-          <div class="register-step__head">
-            <div>
-              <h2>Pfad A: Bestehendes Konto (Login-first)</h2>
-              <p>Wenn du bereits einen Zugang hast, melde dich mit deiner E-Mail und deinem Passwort an. Der Invite wird danach automatisch beansprucht.</p>
-            </div>
+      <form id="loginForm" class="register-flow__form form-shell__section register-step register-step--auth is-active" data-next-target={nextTarget}>
+        <div class="register-step__head">
+          <div>
+            <h2>Pfad A: Bestehendes Konto (Login-first)</h2>
+            <p>Wenn du bereits einen Zugang hast, melde dich mit deiner E-Mail und deinem Passwort an. Der Invite wird danach automatisch beansprucht.</p>
           </div>
-          <div id="existingInviteContext" class="register-note register-note--invite-context small hidden" hidden>
-            <strong>Einladung erkannt</strong>
-            <span id="existingInviteContextCopy">Du trittst einem Verein bei.</span>
-          </div>
-          <div class="register-grid">
-            <label class="ui-field">
-              <span>E-Mail</span>
-              <input id="loginMemberNo" name="identifier" type="text" inputmode="email" autocomplete="username" placeholder="name@beispiel.de" required />
-            </label>
-            <label class="ui-field">
-              <span>Mitgliedsnummer</span>
-              <input id="loginInviteMemberNo" name="invite_member_no" type="text" inputmode="text" autocomplete="off" placeholder="z. B. 9999" required />
-            </label>
-            <label class="ui-field">
-              <span>Passwort</span>
-              <input id="loginPass" name="password" type="password" autocomplete="current-password" required />
-            </label>
-          </div>
-          <div class="ui-actions">
-            <button class="feed-btn fcp-brand-btn--primary" type="submit">Einloggen und Verein beitreten</button>
-            <span id="loginMsg" class="small" aria-live="polite"></span>
-          </div>
-          <p class="small"><a href="/passwort-vergessen/">Passwort vergessen?</a></p>
-        </form>
-      )}
+        </div>
+        <div id="existingInviteContext" class="register-note register-note--invite-context small hidden" hidden>
+          <strong>Einladung erkannt</strong>
+          <span id="existingInviteContextCopy">Du trittst einem Verein bei.</span>
+        </div>
+        <div class="register-grid">
+          <label class="ui-field">
+            <span>E-Mail</span>
+            <input id="loginMemberNo" name="identifier" type="text" inputmode="email" autocomplete="username" placeholder="name@beispiel.de" required />
+          </label>
+          <label class="ui-field">
+            <span>Mitgliedsnummer</span>
+            <input id="loginInviteMemberNo" name="invite_member_no" type="text" inputmode="text" autocomplete="off" placeholder="z. B. 9999" required />
+          </label>
+          <label class="ui-field">
+            <span>Passwort</span>
+            <input id="loginPass" name="password" type="password" autocomplete="current-password" required />
+          </label>
+        </div>
+        <div class="ui-actions">
+          <button class="feed-btn fcp-brand-btn--primary" type="submit">Einloggen und Verein beitreten</button>
+          <span id="loginMsg" class="small" aria-live="polite"></span>
+        </div>
+        <p class="small"><a href="/passwort-vergessen/">Passwort vergessen?</a></p>
+      </form>
 
       <form
         id="registerForm"

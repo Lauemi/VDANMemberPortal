@@ -2,7 +2,6 @@
   const STORAGE_COLS = "admin:member_registry:cols:v1";
   const STORAGE_SORT = "admin:member_registry:sort:v1";
   const STORAGE_PAGE = "admin:member_registry:page:v1";
-  const STORAGE_ACL = "club:registry:acl_stub:v1";
   const STORAGE_CLUB_DATA_DRAFT_PREFIX = "club:registry:club_data_draft:v1:";
   const ACL_EDITABLE_KEYS = ["write", "update", "delete"];
   const ACL_PERMISSION_KEYS = ["read", "write", "update", "delete"];
@@ -476,19 +475,121 @@
   }
 
   function loadAcl() {
-    try {
-      const raw = JSON.parse(localStorage.getItem(STORAGE_ACL) || "{}");
-      state.acl = ensureAclShape(raw);
-    } catch {
-      state.acl = ensureAclShape(null);
-    }
+    state.acl = ensureAclShape(null);
     if (!state.acl.roles.includes(state.aclRole)) {
       state.aclRole = state.acl.roles.includes("admin") ? "admin" : state.acl.roles[0];
     }
   }
 
-  function saveAcl() {
-    localStorage.setItem(STORAGE_ACL, JSON.stringify(state.acl));
+  async function loadAclForClub(clubIdRaw) {
+    const clubId = String(clubIdRaw || "").trim();
+    if (!clubId) {
+      loadAcl();
+      return;
+    }
+    const [roleRows, permissionRows] = await Promise.all([
+      sb(`/rest/v1/club_roles?select=role_key,is_active&club_id=eq.${encodeURIComponent(clubId)}&is_active=eq.true&order=is_core.desc,role_key.asc`, { method: "GET" }, true),
+      sb(`/rest/v1/club_role_permissions?select=role_key,module_key,can_view,can_read,can_write,can_update,can_delete&club_id=eq.${encodeURIComponent(clubId)}`, { method: "GET" }, true),
+    ]);
+    const roles = [];
+    (Array.isArray(roleRows) ? roleRows : []).forEach((row) => {
+      if (!row?.is_active) return;
+      const roleId = normalizeRoleId(row?.role_key);
+      if (!roleId || roles.includes(roleId)) return;
+      roles.push(roleId);
+    });
+    if (!roles.length) {
+      loadAcl();
+      return;
+    }
+    const matrix = {};
+    roles.forEach((roleId) => {
+      matrix[roleId] = {};
+      ACL_MODULES.forEach((moduleEntry) => {
+        matrix[roleId][moduleEntry.id] = aclSanitizePerms({ view: false, read: false, write: false, update: false, delete: false });
+      });
+    });
+    (Array.isArray(permissionRows) ? permissionRows : []).forEach((row) => {
+      const roleId = normalizeRoleId(row?.role_key);
+      const moduleId = String(row?.module_key || "").trim();
+      if (!roleId || !moduleId || !roles.includes(roleId) || !ACL_MODULES.some((m) => m.id === moduleId)) return;
+      matrix[roleId][moduleId] = aclSanitizePerms({
+        view: Boolean(row?.can_view ?? row?.can_read),
+        read: Boolean(row?.can_read),
+        write: Boolean(row?.can_write),
+        update: Boolean(row?.can_update),
+        delete: Boolean(row?.can_delete),
+      });
+    });
+    state.acl = ensureAclShape({ roles, matrix });
+    if (!state.acl.roles.includes(state.aclRole)) {
+      state.aclRole = state.acl.roles.includes("admin") ? "admin" : state.acl.roles[0];
+    }
+  }
+
+  async function reloadAclForCurrentClub() {
+    const clubId = currentFocusClubId();
+    try {
+      await loadAclForClub(clubId);
+      refreshAclUi();
+    } catch (err) {
+      loadAcl();
+      refreshAclUi();
+      throw err;
+    }
+  }
+
+  async function upsertAclPermission(clubIdRaw, roleIdRaw, moduleIdRaw, permsRaw) {
+    const clubId = String(clubIdRaw || "").trim();
+    const roleId = normalizeRoleId(roleIdRaw);
+    const moduleId = String(moduleIdRaw || "").trim();
+    if (!clubId || !roleId || !moduleId) throw new Error("acl_context_missing");
+    const perms = aclSanitizePerms(permsRaw);
+    await sb("/rest/v1/club_role_permissions?on_conflict=club_id,role_key,module_key", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify([{
+        club_id: clubId,
+        role_key: roleId,
+        module_key: moduleId,
+        can_view: perms.view,
+        can_read: perms.read,
+        can_write: perms.write,
+        can_update: perms.update,
+        can_delete: perms.delete,
+      }]),
+    }, true);
+  }
+
+  async function addAclRoleRemote(clubIdRaw, roleIdRaw, labelRaw) {
+    const clubId = String(clubIdRaw || "").trim();
+    const roleId = normalizeRoleId(roleIdRaw);
+    const label = String(labelRaw || roleId).trim() || roleId;
+    if (!clubId || !roleId) throw new Error("acl_context_missing");
+    await sb("/rest/v1/club_roles?on_conflict=club_id,role_key", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify([{
+        club_id: clubId,
+        role_key: roleId,
+        label,
+        is_core: false,
+        is_active: true,
+      }]),
+    }, true);
+    for (const moduleEntry of ACL_MODULES) {
+      await upsertAclPermission(clubId, roleId, moduleEntry.id, { view: false, read: false, write: false, update: false, delete: false });
+    }
+  }
+
+  async function deleteAclRoleRemote(clubIdRaw, roleIdRaw) {
+    const clubId = String(clubIdRaw || "").trim();
+    const roleId = normalizeRoleId(roleIdRaw);
+    if (!clubId || !roleId) throw new Error("acl_context_missing");
+    await sb(`/rest/v1/club_roles?club_id=eq.${encodeURIComponent(clubId)}&role_key=eq.${encodeURIComponent(roleId)}`, {
+      method: "DELETE",
+      headers: { Prefer: "return=minimal" },
+    }, true);
   }
 
   function isCoreRole(roleId) {
@@ -547,38 +648,44 @@
     renderAclMatrix();
   }
 
-  function addAclRole(labelRaw) {
+  async function addAclRole(labelRaw) {
     const roleId = normalizeRoleId(labelRaw);
     if (!roleId) throw new Error("Bitte einen Rollennamen eingeben.");
     if (state.acl.roles.includes(roleId)) throw new Error("Diese Rolle existiert bereits.");
+    const clubId = currentFocusClubId();
+    if (!clubId) throw new Error("Bitte zuerst einen Verein auswählen.");
+    await addAclRoleRemote(clubId, roleId, labelRaw);
     state.acl.roles.push(roleId);
     state.acl.matrix[roleId] = {};
     ACL_MODULES.forEach((m) => {
       state.acl.matrix[roleId][m.id] = { view: false, read: false, write: false, update: false, delete: false };
     });
     state.aclRole = roleId;
-    saveAcl();
     refreshAclUi();
     setAclMsg(`Rolle angelegt: ${roleId}`);
   }
 
-  function deleteAclRole(roleIdRaw) {
+  async function deleteAclRole(roleIdRaw) {
     const roleId = normalizeRoleId(roleIdRaw);
     if (!roleId || !state.acl.roles.includes(roleId)) return;
     if (isCoreRole(roleId)) throw new Error("Kernrollen können nicht gelöscht werden.");
+    const clubId = currentFocusClubId();
+    if (!clubId) throw new Error("Bitte zuerst einen Verein auswählen.");
+    await deleteAclRoleRemote(clubId, roleId);
     state.acl.roles = state.acl.roles.filter((id) => id !== roleId);
     delete state.acl.matrix[roleId];
     state.aclRole = state.acl.roles.includes("admin") ? "admin" : (state.acl.roles[0] || "member");
-    saveAcl();
     refreshAclUi();
     setAclMsg(`Rolle gelöscht: ${roleId}`);
   }
 
-  function updateAclPermission(moduleId, permissionKey, value) {
+  async function updateAclPermission(moduleId, permissionKey, value) {
     if (!ACL_MODULES.some((m) => m.id === moduleId)) return;
     if (permissionKey !== "view" && !ACL_EDITABLE_KEYS.includes(permissionKey)) return;
     const roleId = state.aclRole;
     if (!roleId) return;
+    const clubId = currentFocusClubId();
+    if (!clubId) throw new Error("Bitte zuerst einen Verein auswählen.");
     if (!state.acl.matrix[roleId]) state.acl.matrix[roleId] = {};
     const current = aclNormalizePermObject(state.acl.matrix[roleId][moduleId], null);
     if (permissionKey === "view") {
@@ -594,7 +701,7 @@
       current[permissionKey] = Boolean(value);
     }
     state.acl.matrix[roleId][moduleId] = aclSanitizePerms(current);
-    saveAcl();
+    await upsertAclPermission(clubId, roleId, moduleId, state.acl.matrix[roleId][moduleId]);
     const stateLabel = Boolean(value) ? "an" : "aus";
     setAclMsg(`Rechte gespeichert: ${roleId} -> ${moduleId}.${permissionKey} = ${stateLabel}`);
     refreshAclUi();
@@ -2100,6 +2207,12 @@
     state.clubIdentityById = scopedClubIdentityById;
     state.clubAclCountsById = scopedClubAclCountsById;
     renderClubOverview();
+    try {
+      await reloadAclForCurrentClub();
+      setAclMsg("");
+    } catch {
+      setAclMsg("Rollenmodell konnte nicht geladen werden.", true);
+    }
     await loadClubWorkspace(currentFocusClubId()).catch(() => {
       renderWatersPanel();
     });
@@ -2247,28 +2360,32 @@
       refreshAclUi();
       setAclMsg("");
     });
-    document.getElementById("roleAclAddRoleBtn")?.addEventListener("click", () => {
+    document.getElementById("roleAclAddRoleBtn")?.addEventListener("click", async () => {
       try {
         const input = document.getElementById("roleAclNewRole");
-        addAclRole(input?.value || "");
+        await addAclRole(input?.value || "");
         if (input) input.value = "";
       } catch (err) {
         setAclMsg(err?.message || "Rolle konnte nicht angelegt werden.", true);
       }
     });
-    document.getElementById("roleAclDeleteRoleBtn")?.addEventListener("click", () => {
+    document.getElementById("roleAclDeleteRoleBtn")?.addEventListener("click", async () => {
       try {
-        deleteAclRole(state.aclRole);
+        await deleteAclRole(state.aclRole);
       } catch (err) {
         setAclMsg(err?.message || "Rolle konnte nicht gelöscht werden.", true);
       }
     });
-    document.getElementById("roleAclMatrixRows")?.addEventListener("change", (e) => {
+    document.getElementById("roleAclMatrixRows")?.addEventListener("change", async (e) => {
       const check = e.target.closest("input[type='checkbox'][data-acl-module][data-acl-perm]");
       if (!check) return;
       const moduleId = String(check.getAttribute("data-acl-module") || "");
       const permissionKey = String(check.getAttribute("data-acl-perm") || "");
-      updateAclPermission(moduleId, permissionKey, Boolean(check.checked));
+      try {
+        await updateAclPermission(moduleId, permissionKey, Boolean(check.checked));
+      } catch (err) {
+        setAclMsg(err?.message || "Rechte konnten nicht gespeichert werden.", true);
+      }
     });
     document.getElementById("clubInviteCreateBtn")?.addEventListener("click", () => {
       submitInviteCreate();

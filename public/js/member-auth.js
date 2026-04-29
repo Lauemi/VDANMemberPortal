@@ -477,6 +477,30 @@
     return message;
   }
 
+  function isInviteSignupExistingEmailError(rawError) {
+    const message = String(rawError?.message || rawError || "").trim().toLowerCase();
+    if (!message) return false;
+    return message.includes("user already registered")
+      || message.includes("already registered")
+      || message.includes("already exists")
+      || message.includes("email already")
+      || message.includes("email address is already")
+      || message.includes("duplicate key value")
+      || message.includes("already been registered");
+  }
+
+  function renderInviteSignupExistingEmailGuidance(regMsg, loginHref) {
+    if (!regMsg) return;
+    regMsg.textContent = "";
+    const prefix = document.createTextNode("Diese E-Mail hat bereits ein Konto. Bitte mit Pfad A einloggen und den Invite danach abschliessen. ");
+    regMsg.appendChild(prefix);
+    const link = document.createElement("a");
+    link.href = String(loginHref || "/login/").trim() || "/login/";
+    link.textContent = "Zu Pfad A (Login-first)";
+    link.rel = "noopener noreferrer";
+    regMsg.appendChild(link);
+  }
+
   function initializeJoinOnlyRegisterUi() {
     const registerForm = document.getElementById("registerForm");
     const joinSection = document.getElementById("registerJoinSection");
@@ -1361,6 +1385,7 @@
     if (registerForm) {
       hydrateJoinPageFromUrl();
       const regMsg = document.getElementById("registerMsg");
+      const registerLoginHref = String(registerForm?.dataset?.loginHref || "/login/").trim();
       const passInput = document.getElementById("registerPass");
       const pass2Input = document.getElementById("registerPass2");
       const prefilledInviteToken = String(document.getElementById("registerInviteToken")?.value || "").trim();
@@ -1466,6 +1491,16 @@
           }
           if (regMsg) regMsg.textContent = "Registrierung gespeichert. Bitte E-Mail verifizieren. Danach folgt automatisch die Erstaktivierung mit Datenabgleich.";
         } catch (err) {
+          if (isInviteSignupExistingEmailError(err)) {
+            renderInviteSignupExistingEmailGuidance(regMsg, registerLoginHref);
+            const loginEmail = document.getElementById("loginMemberNo");
+            if (loginEmail && emailRaw) {
+              loginEmail.value = emailRaw;
+              loginEmail.focus({ preventScroll: true });
+            }
+            document.getElementById("loginForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            return;
+          }
           if (regMsg) regMsg.textContent = mapRegistrationErrorMessage(err);
         }
       });

@@ -71,7 +71,8 @@ membership_rows as (
     cm.tenant_id,
     cm.member_no,
     case
-      when upper(coalesce(cm.status, '')) = 'ACTIVE' then 'ACTIVE'
+      when upper(coalesce(cm.status, '')) in ('ACTIVE', 'AKTIV') then 'ACTIVE'
+      when upper(coalesce(cm.status, '')) in ('PASSIVE', 'PASSIV') then 'PASSIVE'
       when upper(coalesce(cm.status, '')) = 'BLOCKED' then 'BLOCKED'
       when upper(coalesce(cm.status, '')) = 'INVITED' then 'INVITED'
       else 'INVITED'
@@ -91,7 +92,8 @@ membership_rows as (
     cm.tenant_id,
     cm.member_no,
     case
-      when upper(coalesce(cm.status, '')) = 'ACTIVE' then 'ACTIVE'
+      when upper(coalesce(cm.status, '')) in ('ACTIVE', 'AKTIV') then 'ACTIVE'
+      when upper(coalesce(cm.status, '')) in ('PASSIVE', 'PASSIV') then 'PASSIVE'
       when upper(coalesce(cm.status, '')) = 'BLOCKED' then 'BLOCKED'
       when upper(coalesce(cm.status, '')) = 'INVITED' then 'INVITED'
       else 'INVITED'

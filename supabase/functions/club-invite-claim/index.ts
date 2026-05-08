@@ -111,12 +111,14 @@ async function ensureProfile(user: Record<string, unknown>, clubId: string, memb
   const userId = txt(user.id);
   const email = txt((user as { email?: string })?.email).toLowerCase();
   const profileRes = await sbServiceFetch(
-    `/rest/v1/profiles?select=id,club_id,member_no,display_name&limit=1&id=eq.${encodeURIComponent(userId)}`,
+    `/rest/v1/profiles?select=id,club_id,member_no,display_name,first_name,last_name&limit=1&id=eq.${encodeURIComponent(userId)}`,
     { method: "GET" },
   );
   const rows = await profileRes.json().catch(() => []);
   const existing = Array.isArray(rows) && rows.length ? rows[0] : null;
-  const displayName = [firstName, lastName].map(txt).filter(Boolean).join(" ") || txt(existing?.display_name) || email || userId;
+  const normalizedFirstName = txt(firstName) || txt(existing?.first_name);
+  const normalizedLastName = txt(lastName) || txt(existing?.last_name);
+  const displayName = [normalizedFirstName, normalizedLastName].map(txt).filter(Boolean).join(" ") || txt(existing?.display_name) || email || userId;
 
   if (!existing?.id) {
     const cardIdSuffix = [...crypto.getRandomValues(new Uint8Array(5))].map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
@@ -127,6 +129,8 @@ async function ensureProfile(user: Record<string, unknown>, clubId: string, memb
       body: JSON.stringify([{
         id: userId,
         display_name: displayName,
+        first_name: normalizedFirstName || null,
+        last_name: normalizedLastName || null,
         email: email || null,
         club_id: clubId,
         member_no: memberNo,
@@ -144,6 +148,8 @@ async function ensureProfile(user: Record<string, unknown>, clubId: string, memb
     headers: { Prefer: "return=minimal" },
     body: JSON.stringify({
       display_name: displayName,
+      first_name: normalizedFirstName || null,
+      last_name: normalizedLastName || null,
       // Keep existing single-profile fields stable; multi-club membership is represented in role/membership tables.
       club_id: txt(existing.club_id) || clubId,
       member_no: txt(existing.member_no) || memberNo,
@@ -156,6 +162,8 @@ async function ensureProfile(user: Record<string, unknown>, clubId: string, memb
 type ClubMemberRecord = {
   member_no: string;
   club_member_no?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
 };
 
 async function resolveClubMemberRecord(clubId: string, inputMemberNo: string): Promise<ClubMemberRecord | null> {
@@ -163,24 +171,28 @@ async function resolveClubMemberRecord(clubId: string, inputMemberNo: string): P
   if (!desiredInput) return null;
 
   const directRows = await loadJson(
-    `/rest/v1/club_members?select=member_no,club_member_no&club_id=eq.${encodeURIComponent(clubId)}&member_no=eq.${encodeURIComponent(desiredInput)}&limit=1`,
+    `/rest/v1/club_members?select=member_no,club_member_no,first_name,last_name&club_id=eq.${encodeURIComponent(clubId)}&member_no=eq.${encodeURIComponent(desiredInput)}&limit=1`,
   );
   const directRow = Array.isArray(directRows) && directRows.length ? directRows[0] : null;
   if (txt(directRow?.member_no)) {
     return {
       member_no: txt(directRow?.member_no).toUpperCase(),
       club_member_no: txt(directRow?.club_member_no).toUpperCase() || null,
+      first_name: txt(directRow?.first_name) || null,
+      last_name: txt(directRow?.last_name) || null,
     };
   }
 
   const externalRows = await loadJson(
-    `/rest/v1/club_members?select=member_no,club_member_no&club_id=eq.${encodeURIComponent(clubId)}&club_member_no=eq.${encodeURIComponent(desiredInput)}&limit=1`,
+    `/rest/v1/club_members?select=member_no,club_member_no,first_name,last_name&club_id=eq.${encodeURIComponent(clubId)}&club_member_no=eq.${encodeURIComponent(desiredInput)}&limit=1`,
   );
   const externalRow = Array.isArray(externalRows) && externalRows.length ? externalRows[0] : null;
   if (txt(externalRow?.member_no)) {
     return {
       member_no: txt(externalRow?.member_no).toUpperCase(),
       club_member_no: txt(externalRow?.club_member_no).toUpperCase() || null,
+      first_name: txt(externalRow?.first_name) || null,
+      last_name: txt(externalRow?.last_name) || null,
     };
   }
 
@@ -202,14 +214,22 @@ async function ensureClubMemberRecord(
   clubId: string,
   _clubCode: string,
   inputMemberNo: string,
-  _firstName: string,
-  _lastName: string,
 ) {
   const desiredInput = txt(inputMemberNo).toUpperCase();
   if (!desiredInput) throw new Error("member_no_required");
   const memberRecord = await resolveClubMemberRecord(clubId, desiredInput);
   if (!memberRecord?.member_no) throw new Error("member_no_not_found_in_club");
-  return memberRecord.member_no;
+
+  const authoritativeRows = await loadJson(
+    `/rest/v1/club_members?select=first_name,last_name&club_id=eq.${encodeURIComponent(clubId)}&member_no=eq.${encodeURIComponent(memberRecord.member_no)}&limit=1`,
+  );
+  const authoritative = Array.isArray(authoritativeRows) && authoritativeRows.length ? authoritativeRows[0] : null;
+
+  return {
+    member_no: memberRecord.member_no,
+    first_name: txt(authoritative?.first_name) || txt(memberRecord.first_name) || null,
+    last_name: txt(authoritative?.last_name) || txt(memberRecord.last_name) || null,
+  };
 }
 
 async function ensureMemberEmailMatch(clubId: string, memberNo: string, actorEmailRaw: string) {
@@ -350,9 +370,6 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const inviteToken = txt((body as { invite_token?: string })?.invite_token);
     const memberNo = txt((body as { member_no?: string })?.member_no).toUpperCase();
-    const firstName = txt((body as { first_name?: string })?.first_name);
-    const lastName = txt((body as { last_name?: string })?.last_name);
-
     if (!inviteToken) throw new Error("invite_token_required");
     const loaded = await loadInviteRecord(inviteToken);
     validateInviteRecord(loaded.record);
@@ -360,19 +377,24 @@ Deno.serve(async (req: Request) => {
     const userId = txt(actor.id);
     const actorEmail = txt((actor as { email?: string })?.email).toLowerCase();
     const record = loaded.record!;
-    const assignedMemberNo = await ensureClubMemberRecord(
+    const memberRecord = await ensureClubMemberRecord(
       record.club_id,
       record.club_code,
       memberNo,
-      firstName,
-      lastName,
     );
+    const assignedMemberNo = memberRecord.member_no;
     await ensureMemberEmailMatch(record.club_id, assignedMemberNo, txt((actor as { email?: string })?.email));
     const usedUsers = Array.isArray(record.used_user_ids) ? record.used_user_ids.map(txt).filter(Boolean) : [];
     const alreadyUsedByActor = usedUsers.includes(userId);
 
     await ensureClubMemberIdentity(userId, record.club_id, assignedMemberNo);
-    await ensureProfile(actor, record.club_id, assignedMemberNo, firstName, lastName);
+    await ensureProfile(
+      actor,
+      record.club_id,
+      assignedMemberNo,
+      txt(memberRecord.first_name),
+      txt(memberRecord.last_name),
+    );
     await ensureMemberRole(userId, record.club_id);
 
     try {

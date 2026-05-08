@@ -22,14 +22,18 @@ RESULT_FILE="$SCRIPT_DIR/results/$(date +%Y%m%d_%H%M%S)_SMOKE1_invite_claim.md"
 ENV_FILE="$(dirname "$SCRIPT_DIR")/../../.env.production.master"
 
 # --- Load env ---
-if [[ ! -f "$ENV_FILE" ]]; then
-  echo "ERROR: .env.production.master not found at $ENV_FILE"
-  exit 1
+if [[ -z "${SUPABASE_URL:-}" || -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
+  if [[ ! -f "$ENV_FILE" ]]; then
+    echo "ERROR: Weder Env-Vars noch .env.production.master gefunden"
+    exit 1
+  fi
+  SUPABASE_URL=$(grep 'SUPABASE_URL=' "$ENV_FILE" | grep -v PUBLIC | cut -d'"' -f2)
+  ANON_KEY=$(grep 'PUBLIC_SUPABASE_ANON_KEY' "$ENV_FILE" | cut -d'"' -f2)
+  SERVICE_KEY=$(grep 'SUPABASE_SERVICE_ROLE_KEY' "$ENV_FILE" | cut -d'"' -f2)
+else
+  ANON_KEY="${PUBLIC_SUPABASE_ANON_KEY:-sb_publishable_X8FFHAA5EPeFywTDYJXPYw_OLaQwwDZ}"
+  SERVICE_KEY="$SUPABASE_SERVICE_ROLE_KEY"
 fi
-
-SUPABASE_URL=$(grep 'PUBLIC_SUPABASE_URL' "$ENV_FILE" | cut -d'"' -f2)
-ANON_KEY=$(grep 'PUBLIC_SUPABASE_ANON_KEY' "$ENV_FILE" | cut -d'"' -f2)
-SERVICE_KEY=$(grep 'SUPABASE_SERVICE_ROLE_KEY' "$ENV_FILE" | cut -d'"' -f2)
 
 if [[ -z "$SUPABASE_URL" || -z "$SERVICE_KEY" ]]; then
   echo "ERROR: Could not read SUPABASE_URL or SERVICE_ROLE_KEY from env"

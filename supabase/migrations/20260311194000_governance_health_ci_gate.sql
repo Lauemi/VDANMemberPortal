@@ -48,7 +48,7 @@ as $$
       cur.club_id,
       cur.user_id
     from public.club_user_roles cur
-    where cur.role_key in ('member', 'vorstand', 'admin')
+    where cur.role_key in ('member', 'vorstand')
     group by cur.club_id, cur.user_id
   ),
   identity_gap_counts as (

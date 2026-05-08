@@ -51,6 +51,7 @@ begin
   if not (
     public.is_service_role_request()
     or public.is_admin_or_vorstand_in_club(p_club_id)
+    or public.current_user_has_role_in_club(p_club_id, array['member'])
     or public.is_admin_in_any_club()
   ) then
     raise exception 'forbidden_club_scope';

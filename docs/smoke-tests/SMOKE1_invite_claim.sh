@@ -19,7 +19,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RESULT_FILE="$SCRIPT_DIR/results/$(date +%Y%m%d_%H%M%S)_SMOKE1_invite_claim.md"
-ENV_FILE="$(dirname "$SCRIPT_DIR")/../../.env.production.master"
+ENV_FILE="$SCRIPT_DIR/../../.env.production.master"
 
 # --- Load env ---
 if [[ -z "${SUPABASE_URL:-}" || -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then

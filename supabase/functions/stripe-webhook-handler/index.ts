@@ -31,12 +31,16 @@ serve(async (req) => {
     return new Response("already_processed", { status: 200 });
   }
 
+  // Extract club_id from metadata when available (checkout.session.completed carries it)
+  const club_id_log = (event.data?.object as { metadata?: { club_id?: string } })?.metadata?.club_id ?? null;
+
   await supabase.from("club_billing_webhook_events").insert({
     event_id: event.id,       // satisfies NOT NULL + unique(provider, event_id)
     stripe_event_id: event.id, // idempotency index compatibility
     event_type: event.type,
     payload: event,
     received_at: new Date().toISOString(),
+    club_id: club_id_log,
   });
 
   // PROCESS

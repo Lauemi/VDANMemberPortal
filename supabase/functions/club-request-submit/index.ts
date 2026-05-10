@@ -116,7 +116,7 @@ Deno.serve(async (req: Request) => {
     const clubSize = txt(body?.club_size);
     const clubMailConfirmed = Boolean(body?.club_mail_confirmed);
     const legalConfirmed = Boolean(body?.legal_confirmed);
-    const autoApprove = body?.auto_approve !== false;
+    const autoApprove = body?.auto_approve === true;
     if (!clubName) throw new Error("club_name_required");
     if (!clubCity) throw new Error("club_location_required");
     if (!clubZip) throw new Error("club_zip_required");

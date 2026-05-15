@@ -252,7 +252,7 @@ Deno.serve(async (req: Request) => {
     await upsertSetting(`club_invite_token:${inviteTokenHash}`, JSON.stringify(inviteRecord));
     await upsertSetting(`club_invite_active:${clubId}`, inviteTokenHash);
 
-    const registerBase = txt(Deno.env.get("REGISTER_BASE_URL")) || txt(req.headers.get("origin"));
+    const registerBase = txt(req.headers.get("origin"));
     const registerQuery = new URLSearchParams({
       invite: inviteToken,
       club_id: clubId,

@@ -72,18 +72,48 @@ const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
           verpflichtet sind oder einer angemessenen gesetzlichen Verschwiegenheitspflicht unterliegen.
         </p>
 
-        <h2>8. Technische und organisatorische Maßnahmen</h2>
-        <p>
-          Der Auftragsverarbeiter trifft angemessene technische und organisatorische Maßnahmen zum Schutz personenbezogener Daten,
-          insbesondere in Bezug auf Zugriffskontrolle, Rollen- und Rechtekonzept, Mandantentrennung, Transportverschlüsselung,
-          Protokollierung sicherheitsrelevanter Ereignisse sowie Schutz vor unbefugter Kenntnisnahme, Veränderung oder Verlust.
+        <h2>8. Technische und organisatorische Maßnahmen (TOMs)</h2>
+        <p>Der Auftragsverarbeiter trifft folgende technische und organisatorische Maßnahmen zum Schutz personenbezogener Daten:</p>
+        <ul>
+          <li><strong>Transportverschlüsselung:</strong> Alle Datenübertragungen zwischen Client und Server erfolgen ausschließlich über HTTPS/TLS.</li>
+          <li><strong>Zugriffskontrolle:</strong> Der Zugang zur Plattform ist passwortgeschützt. Passwörter werden nicht im Klartext gespeichert; die Authentifizierung erfolgt über gehashte Credentials (bcrypt) via Supabase Auth.</li>
+          <li><strong>Rollenbasierte Berechtigungen:</strong> Zugriffe auf Vereinsdaten werden durch ein Rollen- und Rechtekonzept (Admin, Vorstand, Mitglied) gesteuert.</li>
+          <li><strong>Mandantenbezogene Datentrennung:</strong> Vereinsdaten sind mandantenbezogen isoliert; ein Verein hat keinen Zugriff auf Daten anderer Vereine.</li>
+          <li><strong>Row Level Security (RLS):</strong> Auf Datenbankebene sind Zugriffsregeln (Policies) implementiert, die den Datenzugriff auf autorisierte Nutzer und Kontexte beschränken.</li>
+          <li><strong>Secrets-Management:</strong> Zugangsdaten, API-Keys und Service-Role-Credentials werden nicht im Quellcode-Repository abgelegt, sondern über Umgebungsvariablen der Deployment-Plattform verwaltet.</li>
+          <li><strong>Protokollierung von Zustimmungsereignissen:</strong> Rechtsrelevante Akzeptanzereignisse (Nutzungsbedingungen, Datenschutz, AVV, AGB) werden mit Zeitstempel, Versionsbezug und Unterzeichner protokolliert.</li>
+          <li><strong>Verfügbarkeit und Backups:</strong> Datenbankbackups und Infrastrukturverfügbarkeit werden durch die eingesetzten Plattformanbieter (Supabase, Vercel) gewährleistet. Es bestehen keine eigenen SLA-Zusagen des Auftragsverarbeiters über die Leistungen der Infrastrukturanbieter hinaus.</li>
+          <li><strong>Rückgabe und Löschung:</strong> Nach Vertragsende werden Daten gemäß AGB § 12 und Ziffer 11 dieser AVV gelöscht oder exportiert.</li>
+        </ul>
+        <p class="small">
+          Hinweis: Es werden keine Zertifizierungen (ISO 27001 o. ä.), Penetrationstests oder 24/7-Monitoring behauptet, die nicht nachweisbar vorliegen.
         </p>
 
         <h2>9. Unterauftragsverarbeiter</h2>
         <p>
-          Der Auftragsverarbeiter darf Unterauftragsverarbeiter einsetzen, soweit dies für den Plattformbetrieb erforderlich ist. Dazu können
-          insbesondere Hosting-, Datenbank- und Infrastrukturdienstleister gehören. Der Verein ist über eingesetzte
-          Unterauftragsverarbeiter zu informieren.
+          Der Auftragsverarbeiter setzt folgende genehmigte Unterauftragsverarbeiter ein:
+        </p>
+        <ul>
+          <li>
+            <strong>Supabase, Inc.</strong> (Irland / USA) – Datenbank, Authentifizierung, Plattform- und Backenddienste.
+            Datenschutzinformationen: <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">supabase.com/privacy</a>
+          </li>
+          <li>
+            <strong>Vercel, Inc.</strong> (USA) – Hosting und Deployment der Webanwendung.
+            Datenschutzinformationen: <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer">vercel.com/legal/privacy-policy</a>
+          </li>
+          <li>
+            <strong>IONOS SE</strong> (Deutschland) – Domain und Infrastruktur, soweit genutzt.
+            Datenschutzinformationen: <a href="https://www.ionos.de/terms-gtc/datenschutzerklaerung/" target="_blank" rel="noopener noreferrer">ionos.de/terms-gtc/datenschutzerklaerung</a>
+          </li>
+          <li>
+            <strong>Stripe Payments Europe, Ltd.</strong> (Irland) – Zahlungsabwicklung, soweit Zahlungsfunktionen genutzt werden.
+            Datenschutzinformationen: <a href="https://stripe.com/de/privacy" target="_blank" rel="noopener noreferrer">stripe.com/de/privacy</a>
+          </li>
+        </ul>
+        <p>
+          Der Verein stimmt dem Einsatz der genannten Unterauftragsverarbeiter mit Abschluss dieser AVV zu. Über wesentliche Änderungen
+          in der Unterauftragnehmer-Liste wird der Verein vorab informiert.
         </p>
 
         <h2>10. Unterstützung des Verantwortlichen</h2>

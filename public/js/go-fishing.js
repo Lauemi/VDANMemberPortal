@@ -413,7 +413,7 @@
     if (!sessionState?.targets) sessionState.targets = [];
     const existing = sessionState.targets.find((t) => t.fish_species_id === fishId);
     if (existing) existing.count = Math.max(0, Math.trunc(Number(existing.count || 0))) + 1;
-    else sessionState.targets.push({ fish_species_id: fishId, name: String(fish.name || "Fisch"), count: 1 });
+    else sessionState.targets.push({ fish_species_id: fishId, name: String(fish.name || "Fisch"), count: 0 });
     sessionState.targets = normalizeTargets(sessionState.targets);
     saveState();
     renderTargets();

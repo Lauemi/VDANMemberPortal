@@ -674,11 +674,11 @@
     const windWidget = initWidget("portalWindWidget", { eyebrow: "Wind", title: "", subtitle: "", size: "compact", role: "context", kind: "stat", priorityDesktop: 3, priorityMobile: 7 });
     const tempWidget = initWidget("portalTempWidget", { eyebrow: "Temperatur", title: "", subtitle: "", size: "compact", role: "context", kind: "stat", priorityDesktop: 4, priorityMobile: 8 });
     const tasksWidget = initWidget("portalTasksWidget", { eyebrow: "Aufgaben offen", size: "wide", role: "action", kind: "list", clickMode: "deeplink", deeplink: "/app/zustaendigkeiten/", priorityDesktop: 5, priorityMobile: 2 });
-    const eventsWidget = initWidget("portalEventsWidget", { eyebrow: "Nächste Termine", size: "wide", role: "action", kind: "list", clickMode: "deeplink", deeplink: "/app/eventplaner/", priorityDesktop: 6, priorityMobile: 3 });
+    const eventsWidget = initWidget("portalEventsWidget", { eyebrow: "Nächste Termine", size: "wide", role: "action", kind: "list", clickMode: "deeplink", deeplink: "/app/eventplaner-v2/", priorityDesktop: 6, priorityMobile: 3 });
     const catchRatioWidget = initWidget("portalCatchRatioWidget", { eyebrow: "Fang / Kein Fang", size: "compact", role: "identity", kind: "chart", clickMode: "deeplink", deeplink: "/app/fangliste/", priorityDesktop: 7, priorityMobile: 4 });
     const tripDaysWidget = initWidget("portalTripDaysWidget", { eyebrow: "Angeltage", size: "compact", role: "identity", kind: "stat", clickMode: "deeplink", deeplink: "/app/fangliste/", priorityDesktop: 8, priorityMobile: 5 });
     const lastCatchWidget = initWidget("portalLastCatchWidget", { eyebrow: "Letzter Fang", size: "compact", role: "identity", kind: "stat", clickMode: "deeplink", deeplink: "/app/fangliste/", priorityDesktop: 9, priorityMobile: 9 });
-    const calendarWidget = initWidget("portalCalendarWidget", { eyebrow: "Mini-Kalender", size: "compact", role: "context", kind: "calendar", clickMode: "deeplink", deeplink: "/app/eventplaner/", priorityDesktop: 10, priorityMobile: 10 });
+    const calendarWidget = initWidget("portalCalendarWidget", { eyebrow: "Mini-Kalender", size: "compact", role: "context", kind: "calendar", clickMode: "deeplink", deeplink: "/app/eventplaner-v2/", priorityDesktop: 10, priorityMobile: 10 });
     const compassWidget = initWidget("portalCompassWidget", { eyebrow: "Kompass", size: "compact", role: "context", kind: "compass", priorityDesktop: 11, priorityMobile: 11 });
     const sunWidget = initWidget("portalSunWidget", { eyebrow: "Sonnenverlauf", size: "compact", role: "context", kind: "chart", priorityDesktop: 12, priorityMobile: 12 });
 
@@ -767,7 +767,7 @@
         role: "action",
         kind: "list",
         bodyHtml: renderEventsBody(eventsSummary),
-        footerHtml: `<span>${eventsSummary.next?.starts_at ? `${esc(formatDateLong(eventsSummary.next.starts_at))}` : "Keine Termine geplant"}</span>${ctaLink("/app/eventplaner/", "Kalender")}`,
+        footerHtml: `<span>${eventsSummary.next?.starts_at ? `${esc(formatDateLong(eventsSummary.next.starts_at))}` : "Keine Termine geplant"}</span>${ctaLink("/app/eventplaner-v2/", "Kalender")}`,
       });
     }
 
@@ -808,7 +808,7 @@
         role: "context",
         kind: "calendar",
         bodyHtml: renderCalendarBody(eventsSummary),
-        footerHtml: ctaLink("/app/eventplaner/", "Kalender"),
+        footerHtml: ctaLink("/app/eventplaner-v2/", "Kalender"),
       });
     }
 

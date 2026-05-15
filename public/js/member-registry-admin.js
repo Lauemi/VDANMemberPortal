@@ -1900,7 +1900,7 @@
         <label><span>Vereins-Mitgliedsnummer</span><input id="mrClubMemberNo" value="${esc(row.club_member_no || row.member_no || "")}" /></label>
         <label><span>FCP-ID</span><input value="${esc(row.member_no)}" disabled /></label>
         <label><span>Club-Kürzel</span><input value="${esc(row.club_code || "-")}" disabled /></label>
-        <label><span>ClubID</span><input value="${esc(row.club_id || "-")}" disabled /></label>
+        <span data-club-id="${esc(row.club_id || "")}"></span>
         <label><span>Vorname</span><input id="mrFirstName" value="${esc(row.first_name || "")}" /></label>
         <label><span>Name</span><input id="mrLastName" value="${esc(row.last_name || "")}" /></label>
         <label><span>Status</span>

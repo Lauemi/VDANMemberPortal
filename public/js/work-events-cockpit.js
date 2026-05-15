@@ -958,8 +958,8 @@
     historyRoot.innerHTML = "";
 
     if (!rows.length) {
-      activeRoot.innerHTML = `<p class="small">Noch keine Einsätze vorhanden.</p>`;
-      historyRoot.innerHTML = `<p class="small">Noch keine History vorhanden.</p>`;
+      activeRoot.innerHTML = `<p class="empty-state">Noch keine Arbeitseinsätze vorhanden. Lege einen neuen Einsatz über das Formular oben an.</p>`;
+      historyRoot.innerHTML = `<p class="small">Noch keine archivierten Einsätze vorhanden.</p>`;
       return;
     }
 
@@ -971,7 +971,7 @@
 
     const renderInto = (list, root) => {
       if (!list.length) {
-        root.innerHTML = `<p class="small">Keine Einträge.</p>`;
+        root.innerHTML = `<p class="empty-state">Keine Einträge in dieser Kategorie.</p>`;
         return;
       }
       list.forEach((row) => {

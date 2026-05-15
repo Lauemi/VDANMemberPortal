@@ -268,7 +268,7 @@
       const selectedRole = primaryRole(u.roles);
       row.innerHTML = `
         <div>
-          <strong>${escapeHtml(u.name || u.email || u.id)}</strong>
+          <strong>${escapeHtml(u.name || u.email || "–")}</strong>
           <div class="small">${escapeHtml(u.email || "-")}</div>
           <div class="small">${u.isOnline ? "Online" : "Offline"} • Letzte Aktivität: ${escapeHtml(formatTs(u.lastSeenAt))}</div>
           <div class="small">Letzter Login: ${escapeHtml(formatTs(u.lastSignInAt))}</div>
@@ -316,7 +316,7 @@
       card.setAttribute("tabindex", "0");
       card.innerHTML = `
         <div class="ui-karte__kopf">
-          <h3 class="ui-karte__titel">${escapeHtml(u.name || u.email || u.id)}</h3>
+          <h3 class="ui-karte__titel">${escapeHtml(u.name || u.email || "–")}</h3>
           <span class="ui-chip">${u.isOnline ? "Online" : "Offline"}</span>
         </div>
         <p class="small">${escapeHtml(u.email || "-")}</p>
@@ -373,7 +373,7 @@
     const selectedRole = primaryRole(row.roles);
     body.innerHTML = `
       <div class="grid cols2">
-        <p><strong>Name</strong><br>${escapeHtml(row.name || row.email || row.id)}</p>
+        <p><strong>Name</strong><br>${escapeHtml(row.name || row.email || "–")}</p>
         <p><strong>E-Mail</strong><br>${escapeHtml(row.email || "-")}</p>
         <p><strong>Mitglieds-Nr.</strong><br>${escapeHtml(row.memberNo || "-")}</p>
         <p><strong>Status</strong><br>${row.isOnline ? "Online" : "Offline"}</p>

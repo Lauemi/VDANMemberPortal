@@ -448,6 +448,18 @@ const publicMenuLinks = isFcpMode
           Website des VDAN Ottenheim mit angeschlossenem Mitgliederportal
         </p>
         <nav
+          id="siteFooterLinksFcp"
+          class={`site-footer__links${(!isFcpMode || isAppPath) ? " hidden" : ""}`}
+          aria-label="Rechtliche Links"
+          hidden={!isFcpMode || isAppPath}
+          data-brand-block="fcp"
+        >
+            <a href="/kontakt.html/">Kontakt</a>
+            <a href="/datenschutz.html/">Datenschutz</a>
+            <a href="/impressum.html/">Impressum</a>
+            <a href="#" data-open-consent-settings>Datenschutz-Einstellungen</a>
+        </nav>
+        <nav
           id="siteFooterLinksVdan"
           class={`site-footer__links${isFcpMode ? " hidden" : ""}`}
           aria-label="Rechtliche Links"

@@ -41,12 +41,14 @@
     const authorityCheck = document.getElementById("legalAcceptAuthorityCheck");
     const signerNameInput = document.getElementById("legalSignerName");
     const signerFunctionInput = document.getElementById("legalSignerFunction");
+    const agbCheck = document.getElementById("legalAcceptAgbCheck");
     const rows = await sb("/rest/v1/rpc/accept_current_legal", {
       method: "POST",
       body: JSON.stringify({
         p_terms: true,
         p_privacy: true,
         p_avv: Boolean(avvCheck?.checked),
+        p_agb: Boolean(agbCheck?.checked),
         p_user_agent: ua,
         p_authority_confirmed: Boolean(authorityCheck?.checked),
         p_signer_name: String(signerNameInput?.value || "").trim(),
@@ -65,24 +67,32 @@
     const btn = document.getElementById("legalAcceptBtn");
     const avvSection = document.getElementById("legalAvvSection");
     const avvCheck = document.getElementById("legalAcceptAvvCheck");
+    const agbCheck = document.getElementById("legalAcceptAgbCheck");
+    const agbBlock = document.getElementById("legalAgbBlock");
     const authorityCheck = document.getElementById("legalAcceptAuthorityCheck");
     const signerNameInput = document.getElementById("legalSignerName");
     const signerFunctionInput = document.getElementById("legalSignerFunction");
     const target = nextTarget();
     let avvRequired = false;
+    let agbRequired = false;
 
     try {
       const state = await loadState();
       const termsV = String(state?.terms_version || "-");
       const privacyV = String(state?.privacy_version || "-");
       const avvV = String(state?.avv_version || "-");
+      const agbV = String(state?.agb_version || "-");
       avvRequired = Boolean(state?.avv_required && !state?.avv_accepted);
+      agbRequired = Boolean(state?.agb_required && !state?.agb_accepted);
+      const clubDocsRequired = avvRequired || agbRequired;
       if (info) {
-        info.textContent = avvRequired
-          ? `Aktuelle Versionen: Nutzungsbedingungen ${termsV}, Datenschutz ${privacyV}, AVV ${avvV}.`
-          : `Aktuelle Versionen: Nutzungsbedingungen ${termsV}, Datenschutz ${privacyV}.`;
+        const parts = [`Nutzungsbedingungen ${termsV}`, `Datenschutz ${privacyV}`];
+        if (avvRequired) parts.push(`AVV ${avvV}`);
+        if (agbRequired) parts.push(`AGB ${agbV}`);
+        info.textContent = `Aktuelle Versionen: ${parts.join(", ")}.`;
       }
-      if (avvSection) avvSection.style.display = avvRequired ? "block" : "none";
+      if (avvSection) avvSection.style.display = clubDocsRequired ? "block" : "none";
+      if (agbBlock) agbBlock.style.display = agbRequired ? "block" : "none";
       if (!state?.needs_acceptance) {
         window.location.replace(target);
         return;
@@ -98,21 +108,25 @@
         if (msg) msg.textContent = "Bitte bestätige die Bedingungen per Checkbox.";
         return;
       }
-      if (avvRequired) {
-        if (!avvCheck?.checked) {
-          if (msg) msg.textContent = "Bitte bestätige zusätzlich den AVV.";
+      if (avvRequired || agbRequired) {
+        if (avvRequired && !avvCheck?.checked) {
+          if (msg) msg.textContent = "Bitte bestätige den AVV.";
+          return;
+        }
+        if (agbRequired && !agbCheck?.checked) {
+          if (msg) msg.textContent = "Bitte bestätige die AGB.";
           return;
         }
         if (!authorityCheck?.checked) {
-          if (msg) msg.textContent = "Bitte bestätige deine Vertretungs- oder Bevollmächtigungsrolle für den AVV.";
+          if (msg) msg.textContent = "Bitte bestätige deine Vertretungs- oder Bevollmächtigungsrolle.";
           return;
         }
         if (!String(signerNameInput?.value || "").trim()) {
-          if (msg) msg.textContent = "Bitte trage deinen Vor- und Nachnamen für die AVV-Bestätigung ein.";
+          if (msg) msg.textContent = "Bitte trage deinen Vor- und Nachnamen ein.";
           return;
         }
         if (!String(signerFunctionInput?.value || "").trim()) {
-          if (msg) msg.textContent = "Bitte trage deine Funktion im Verein für die AVV-Bestätigung ein.";
+          if (msg) msg.textContent = "Bitte trage deine Funktion im Verein ein.";
           return;
         }
       }

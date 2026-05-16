@@ -52,11 +52,11 @@ serve(async (req) => {
         const club_id = session.metadata?.club_id;
         if (!club_id) break;
 
-        const { count } = await supabase
-          .from("club_members")
-          .select("*", { count: "exact", head: true })
-          .eq("club_id", club_id)
-          .eq("status", "active");
+        // member_count aus Checkout-Metadata verwenden — nicht aus DB re-lesen.
+        // Der Wert wurde beim Checkout-Erstellen fixiert und ist der
+        // abrechnungsrelevante Stand. Ein DB-Re-read würde zwischenzeitliche
+        // Mitgliederänderungen einschleichen und billing_state inkonsistent machen.
+        const memberCountAtCheckout = parseInt(session.metadata?.member_count ?? "0", 10);
 
         await supabase.from("club_billing_subscriptions").upsert({
           club_id,
@@ -64,7 +64,7 @@ serve(async (req) => {
           stripe_subscription_id: session.subscription,
           stripe_price_id: Deno.env.get("STRIPE_FCP_PRICE_ID"),
           billing_state: "active",
-          member_count_at_billing: count ?? 0,
+          member_count_at_billing: memberCountAtCheckout,
         }, { onConflict: "club_id" });
         break;
       }

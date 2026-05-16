@@ -1,9 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-function getBillingUnits(count: number): number {
-  return Math.max(50, Math.ceil(count / 50) * 50);
-}
+import { getBillingUnits } from "../_shared/billing-config.ts";
 
 serve(async (req) => {
   if (req.method !== "POST") {

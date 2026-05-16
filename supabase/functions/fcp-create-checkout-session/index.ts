@@ -103,9 +103,12 @@ serve(async (req) => {
   const session = await stripeRes.json();
 
   // billing_state = 'checkout_open' — 'active' comes only via webhook
+  // checkout_state = 'open' — 'completed' set by stripe-webhook-handler on checkout.session.completed
   await supabase.from("club_billing_subscriptions").upsert({
     club_id,
     billing_state: "checkout_open",
+    checkout_state: "open",
+    stripe_checkout_session_id: session.id,
     stripe_price_id: priceId,
     member_count_at_billing: memberCount,
     billing_units: billingUnits,

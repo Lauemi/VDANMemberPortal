@@ -64,7 +64,10 @@ serve(async (req) => {
           stripe_subscription_id: session.subscription,
           stripe_price_id: Deno.env.get("STRIPE_FCP_PRICE_ID"),
           billing_state: "active",
+          checkout_state: "completed",
           member_count_at_billing: memberCountAtCheckout,
+          last_event_id: event.id,
+          last_event_type: event.type,
         }, { onConflict: "club_id" });
         break;
       }
@@ -79,6 +82,8 @@ serve(async (req) => {
             billing_state: "active",
             current_period_start: new Date(invoice.period_start * 1000).toISOString(),
             current_period_end: new Date(invoice.period_end * 1000).toISOString(),
+            last_event_id: event.id,
+            last_event_type: event.type,
           })
           .eq("stripe_subscription_id", sub_id);
         break;
@@ -90,7 +95,7 @@ serve(async (req) => {
         if (!sub_id) break;
 
         await supabase.from("club_billing_subscriptions")
-          .update({ billing_state: "past_due" })
+          .update({ billing_state: "past_due", last_event_id: event.id, last_event_type: event.type })
           .eq("stripe_subscription_id", sub_id);
         break;
       }
@@ -98,7 +103,7 @@ serve(async (req) => {
       case "customer.subscription.deleted": {
         const sub = event.data.object;
         await supabase.from("club_billing_subscriptions")
-          .update({ billing_state: "canceled" })
+          .update({ billing_state: "canceled", canceled_at: new Date().toISOString(), last_event_id: event.id, last_event_type: event.type })
           .eq("stripe_subscription_id", sub.id);
         break;
       }

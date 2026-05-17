@@ -85,6 +85,7 @@ serve(async (req) => {
       "line_items[0][quantity]": String(billingUnits),
       "metadata[club_id]": club_id,
       "metadata[member_count]": String(memberCount),
+      "subscription_data[description]": `FCP-Vereinslizenz – ${memberCount} aktive Mitglieder, ${billingUnits} Abrechnungseinheiten à 2 € netto/Jahr`,
       "success_url": successUrl,
       "cancel_url": cancelUrl,
     }),

@@ -338,6 +338,19 @@
     return raw === "tab" ? "\t" : String(raw || ",");
   }
 
+  function getBillingUnitsEstimate(memberCount) {
+    const count = Math.max(0, Number(memberCount) || 0);
+    const MIN = 50, STEP = 50;
+    return Math.max(MIN, Math.ceil(count / STEP) * STEP);
+  }
+
+  function nextBillingTier(memberCount) {
+    const count = Math.max(0, Number(memberCount) || 0);
+    const STEP = 50;
+    const currentTierMax = Math.ceil(Math.max(count, 1) / STEP) * STEP;
+    return currentTierMax + 1;
+  }
+
   function clubDataReady(snapshot) {
     return Boolean(
       snapshot
@@ -795,14 +808,38 @@
             : "Die FCP-Vereinslizenz ist der Freigabeschritt für Gewässer, Angelkarten und Mitglieder.";
     }
 
+    const memberCount = Number(snapshot.member_directory_count) || 0;
+    const estimatedUnits = getBillingUnitsEstimate(memberCount);
+    const estimatedPrice = estimatedUnits * 2;
+    const nextTierAt = nextBillingTier(memberCount);
+
+    const actualUnits = Number(billing?.billing_units) || 0;
+    const actualMemberCount = Number(billing?.member_count_at_billing) || 0;
+
     const items = [
       `Setup-State: ${snapshot.setup_state || "-"}`,
       `Billing-State: ${billingState || "-"}`,
       `Checkout-State: ${checkoutState || "-"}`,
-      billing?.current_period_end ? `Abrechnungsperiode bis ${new Date(billing.current_period_end).toLocaleString("de-DE")}` : "Noch kein period_end vorhanden.",
-      billing?.canceled_at ? `Beendet am ${new Date(billing.canceled_at).toLocaleString("de-DE")}` : "Keine Beendigung hinterlegt.",
-      "FCP-Billing betrifft nur die Vereinslizenz, nicht die Angelkartenpreise des Vereins.",
     ];
+
+    if (billingStateLower === "active" && actualUnits > 0) {
+      items.push(`Abgerechnete Einheiten: ${actualUnits} (${actualMemberCount} Mitglieder zum Zeitpunkt der Buchung)`);
+      items.push(`Abgerechneter Betrag: ${(actualUnits * 2).toLocaleString("de-DE")} € netto/Jahr`);
+    } else if (billingStateLower !== "active") {
+      items.push(`Mitglieder im Verzeichnis: ${memberCount}`);
+      items.push(`Geschätzte Abrechnungseinheiten: ${estimatedUnits} (Minimum 50, Schritte à 50)`);
+      items.push(`Geschätzter Betrag: ca. ${estimatedPrice.toLocaleString("de-DE")} € netto/Jahr (2 €/Einheit)`);
+      items.push(`Nächste Preisstufe ab ${nextTierAt} Mitgliedern: ${estimatedUnits + 50} Einheiten / ${(estimatedUnits + 50) * 2} € netto/Jahr`);
+    }
+
+    if (billing?.current_period_end) {
+      items.push(`Abrechnungsperiode bis ${new Date(billing.current_period_end).toLocaleString("de-DE")}`);
+    }
+    if (billing?.canceled_at) {
+      items.push(`Beendet am ${new Date(billing.canceled_at).toLocaleString("de-DE")}`);
+    }
+    items.push("FCP-Billing betrifft nur die Vereinslizenz, nicht die Angelkartenpreise des Vereins.");
+
     facts.innerHTML = items.map((item) => `<li>${esc(item)}</li>`).join("");
 
     if (licenseState) {
@@ -819,13 +856,15 @@
     }
 
     if (checkoutMeta) {
-      checkoutMeta.textContent = !locks.clubReady
-        ? "Erst Vereinsdaten abschließen, dann kann die FCP-Vereinslizenz aktiviert werden."
-        : billingStateLower === "active"
-          ? "Die FCP-Vereinslizenz ist aktiv. Gewässer, Karten und Mitglieder sind freigeschaltet."
-          : billingStateLower === "checkout_open"
-            ? "Ein Stripe-Checkout wurde bereits vorbereitet. Du kannst den Checkout erneut öffnen."
-            : "Der Checkout nutzt den bestehenden Stripe-Pfad für die FCP-Vereinslizenz des Vereins.";
+      if (!locks.clubReady) {
+        checkoutMeta.textContent = "Erst Vereinsdaten abschließen, dann kann die FCP-Vereinslizenz aktiviert werden.";
+      } else if (billingStateLower === "active") {
+        checkoutMeta.textContent = "Die FCP-Vereinslizenz ist aktiv. Gewässer, Karten und Mitglieder sind freigeschaltet.";
+      } else if (billingStateLower === "checkout_open") {
+        checkoutMeta.textContent = "Ein Stripe-Checkout wurde bereits vorbereitet. Du kannst den Checkout erneut öffnen.";
+      } else {
+        checkoutMeta.textContent = `Preismodell: 2 € netto/Mitglied/Jahr, mindestens 50 Einheiten, in 50er-Schritten. Bei ${memberCount} Mitgliedern: ${estimatedUnits} Einheiten, ca. ${estimatedPrice} € netto/Jahr. Die genaue Zahl aktiver Mitglieder wird beim Checkout ermittelt.`;
+      }
     }
   }
 

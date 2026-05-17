@@ -162,7 +162,7 @@ Deno.serve(async (req: Request) => {
       }),
       // Billing: direct table query with service role — RLS is bypassed, no guard function involved.
       sbServiceFetch(
-        `/rest/v1/club_billing_subscriptions?select=club_id,billing_state,checkout_state,current_period_end,canceled_at,updated_at&club_id=eq.${encodeURIComponent(clubId)}&limit=1`,
+        `/rest/v1/club_billing_subscriptions?select=club_id,billing_state,checkout_state,current_period_end,canceled_at,updated_at,member_count_at_billing,billing_units&club_id=eq.${encodeURIComponent(clubId)}&limit=1`,
         { method: "GET" },
       ).then((r) => r.json()).catch(() => []),
       sbServiceFetch(`/rest/v1/rpc/get_work_hours_config`, {

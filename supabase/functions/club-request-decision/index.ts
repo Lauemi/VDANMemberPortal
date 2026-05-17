@@ -207,9 +207,8 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const bearerHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
     const customToken = String(req.headers.get("x-vdan-access-token") || "").trim();
-    const authHeader = customToken ? `Bearer ${customToken}` : bearerHeader;
+    const reqPayload = (requestRow.request_payload || {}) as Record<string, unknown>;
     const setupRes = await fetch(`${supabaseUrl}/functions/v1/club-admin-setup`, {
       method: "POST",
       headers: {
@@ -226,7 +225,9 @@ Deno.serve(async (req: Request) => {
         waters: [],
         make_public_active: false,
         assign_creator_roles: true,
-        street: txt(requestRow.club_address),
+        street: txt(reqPayload.street as string) || txt(requestRow.club_address),
+        zip: txt(reqPayload.zip as string),
+        city: txt(reqPayload.city as string) || txt(reqPayload.club_location as string),
         contact_name: txt(requestRow.responsible_name),
         contact_email: txt(requestRow.responsible_email),
         responsible_name: txt(requestRow.responsible_name),
@@ -273,7 +274,7 @@ Deno.serve(async (req: Request) => {
       p_action_url: "/app/",
     }).catch(() => null);
 
-    const origin = txt(req.headers.get("origin"));
+    const origin = txt(req.headers.get("origin")) || txt(Deno.env.get("FCP_PLATFORM_URL"));
     const loginUrl = origin ? `${origin.replace(/\/+$/, "")}/login/?next=%2Fapp%2F` : "/login/?next=%2Fapp%2F";
     const mailResult = await sendClubRequestDecisionMail({
       to: txt(requestRow.requester_email),

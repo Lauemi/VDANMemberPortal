@@ -9,8 +9,12 @@
   }
 
   function resetRedirectUrl() {
-    const next = encodeURIComponent("/app/");
-    return `${window.location.origin}/auth/callback?next=${next}`;
+    // No query params — Supabase URL-allowlist matching is exact on the path.
+    // Adding ?next=... caused the entry "…/auth/callback" to not match,
+    // forcing Supabase to fall back to SITE_URL (homepage) and creating
+    // an extra redirect hop. auth-callback.js handles the recovery redirect
+    // target internally (always /app/passwort-aendern/ in VDAN mode).
+    return `${window.location.origin}/auth/callback/`;
   }
 
   function bind() {

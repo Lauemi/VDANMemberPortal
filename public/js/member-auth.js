@@ -1296,13 +1296,18 @@
     }
 
     if (hasSupabaseConfig) {
-      // Early recovery redirect: if the URL hash contains type=recovery and we are NOT on
-      // /auth/callback/, redirect there immediately — without consuming the token first.
-      // This handles the case where Supabase falls back to SITE_URL (e.g. /auth/callback is not
-      // in the Additional Redirect URLs allowlist), landing the user on the wrong page.
-      // auth-callback.js on /auth/callback/ then handles the token and redirects to /app/passwort-aendern/.
+      // auth-callback.js is the sole owner of token handling on /auth/callback/.
+      // Returning here prevents member-auth.js from consuming the hash payload
+      // (access_token, type=recovery, etc.) before auth-callback.js runs.
+      // Without this guard, member-auth.js consumes the token first and
+      // auth-callback.js receives null — causing the recovery flow to silently drop.
+      if (window.location.pathname.startsWith("/auth/callback")) return;
+
+      // Early recovery redirect: if type=recovery is in the URL hash but we are on
+      // the wrong page (e.g. Supabase fell back to SITE_URL), redirect to /auth/callback
+      // without consuming the token — auth-callback.js then handles it correctly.
       const _earlyPayload = parseUrlAuthPayload();
-      if (_earlyPayload.type === "recovery" && !window.location.pathname.startsWith("/auth/callback")) {
+      if (_earlyPayload.type === "recovery") {
         window.location.replace(`/auth/callback/${window.location.search}${window.location.hash}`);
         return;
       }

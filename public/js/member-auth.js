@@ -1296,6 +1296,17 @@
     }
 
     if (hasSupabaseConfig) {
+      // Early recovery redirect: if the URL hash contains type=recovery and we are NOT on
+      // /auth/callback/, redirect there immediately — without consuming the token first.
+      // This handles the case where Supabase falls back to SITE_URL (e.g. /auth/callback is not
+      // in the Additional Redirect URLs allowlist), landing the user on the wrong page.
+      // auth-callback.js on /auth/callback/ then handles the token and redirects to /app/passwort-aendern/.
+      const _earlyPayload = parseUrlAuthPayload();
+      if (_earlyPayload.type === "recovery" && !window.location.pathname.startsWith("/auth/callback")) {
+        window.location.replace(`/auth/callback/${window.location.search}${window.location.hash}`);
+        return;
+      }
+
       const callbackResult = await consumeAuthCallbackFromUrl().catch(() => null);
       // invite-confirm.astro owns its post-callback claim flow and surfaces errors explicitly.
       if (window.location.pathname.startsWith("/auth/invite-confirm")) return;

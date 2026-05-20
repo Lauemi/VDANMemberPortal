@@ -91,6 +91,10 @@
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       if (reloadingForSw) return;
+      // Never interrupt auth-sensitive flows. On /auth/callback/ the page is in
+      // the middle of consuming a one-time token (recovery, invite, email-change).
+      // A forced SW-reload here destroys the hash payload and the token is lost.
+      if (window.location.pathname.startsWith("/auth/")) return;
       reloadingForSw = true;
       const u = new URL(window.location.href);
       u.searchParams.set("vdan_sw", String(Date.now()));

@@ -481,26 +481,26 @@ const publicMenuLinks = isFcpMode
     </footer>
 
     <script is:inline src="/js/runtime-guard.js"></script>
-    <script src="/js/app-env.js" defer></script>
-    <script src="/js/offline-data-store.js" defer></script>
-    <script src="/js/offline-sync.js" defer></script>
-    <script src="/js/consent-manager.js" defer></script>
-    <script src="/js/member-auth.js" defer></script>
-    {isAppPath && <script src="/js/app-brand-runtime.js" defer></script>}
-    {!isAppPath && <script src="/js/static-web-runtime.js" defer></script>}
-    <script src="/js/ui-standards-runtime.js" defer></script>
-    {needsMemberGuard && <script src="/js/member-guard.js" defer></script>}
-    <script src="/js/ui-session.js" defer></script>
-    <script src="/js/header-auth-cta.js" defer></script>
-    <script src="/js/header-login-entry.js" defer></script>
-    <script src="/js/header-brand-scroll.js" defer></script>
-    <script src="/js/notifications-center.js" defer></script>
-    <script src="/js/nav-burger.js" defer></script>
-    <script src="/js/portal-quick.js" defer></script>
-    <script src="/js/studio-inspector-bridge.js" defer></script>
-    <script src="/js/go-fishing.js" defer></script>
-    <script src="/js/dialog-ux-guard.js" defer></script>
-    <script src="/js/pwa-register.js" defer></script>
+    <script src={`/js/app-env.js?v=${assetVersion}`} defer></script>
+    <script src={`/js/offline-data-store.js?v=${assetVersion}`} defer></script>
+    <script src={`/js/offline-sync.js?v=${assetVersion}`} defer></script>
+    <script src={`/js/consent-manager.js?v=${assetVersion}`} defer></script>
+    <script src={`/js/member-auth.js?v=${assetVersion}`} defer></script>
+    {isAppPath && <script src={`/js/app-brand-runtime.js?v=${assetVersion}`} defer></script>}
+    {!isAppPath && <script src={`/js/static-web-runtime.js?v=${assetVersion}`} defer></script>}
+    <script src={`/js/ui-standards-runtime.js?v=${assetVersion}`} defer></script>
+    {needsMemberGuard && <script src={`/js/member-guard.js?v=${assetVersion}`} defer></script>}
+    <script src={`/js/ui-session.js?v=${assetVersion}`} defer></script>
+    <script src={`/js/header-auth-cta.js?v=${assetVersion}`} defer></script>
+    <script src={`/js/header-login-entry.js?v=${assetVersion}`} defer></script>
+    <script src={`/js/header-brand-scroll.js?v=${assetVersion}`} defer></script>
+    <script src={`/js/notifications-center.js?v=${assetVersion}`} defer></script>
+    <script src={`/js/nav-burger.js?v=${assetVersion}`} defer></script>
+    <script src={`/js/portal-quick.js?v=${assetVersion}`} defer></script>
+    <script src={`/js/studio-inspector-bridge.js?v=${assetVersion}`} defer></script>
+    <script src={`/js/go-fishing.js?v=${assetVersion}`} defer></script>
+    <script src={`/js/dialog-ux-guard.js?v=${assetVersion}`} defer></script>
+    <script src={`/js/pwa-register.js?v=${assetVersion}`} defer></script>
     <!-- <script src="/js/maintenance-gate.js" defer></script> -->
   </body>
 </html>

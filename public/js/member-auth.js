@@ -1318,6 +1318,17 @@
       if (callbackResult?.ok && callbackResult?.session?.access_token) {
         const callbackToken = String(callbackResult.session.access_token || "");
 
+        // Safety-net: if this is a recovery callback that landed on any page OTHER than
+        // /auth/callback/ (e.g. old cached member-auth.js before the early-redirect guard,
+        // or Supabase SITE_URL fallback without the early redirect firing), redirect to the
+        // password-change page so the recovery flow completes correctly.
+        if (String(callbackResult.type || "").toLowerCase() === "recovery" &&
+            !window.location.pathname.startsWith("/app/passwort-aendern")) {
+          const next = encodeURIComponent("/app/");
+          window.location.replace(`/app/passwort-aendern/?next=${next}`);
+          return;
+        }
+
         // If a pending invite claim exists and the callback did NOT land on /auth/invite-confirm
         // (e.g. Supabase SITE_URL override redirected here instead), send the user to the
         // invite-confirm page so that claim errors surface explicitly rather than being swallowed.

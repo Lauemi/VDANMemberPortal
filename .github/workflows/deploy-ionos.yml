@@ -41,6 +41,7 @@ jobs:
           PUBLIC_APP_BRAND: VDAN
           PUBLIC_APP_THEME: vdan_default
           PUBLIC_SUPERADMIN_USER_IDS: ${{ secrets.PUBLIC_SUPERADMIN_USER_IDS }}
+          PUBLIC_ENABLE_PASSWORD_RESET: ${{ secrets.PUBLIC_ENABLE_PASSWORD_RESET }}
         run: npm run build
 
       - name: Sync Supabase function secrets

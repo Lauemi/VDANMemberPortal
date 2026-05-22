@@ -82,7 +82,21 @@
     previewRows: [],
     presentFields: [],
     errors: [],
+    // Billing-Overflow-State
+    billingUnits: null,
+    billingState: null,
+    activeBefore: 0,
+    activeAfter: 0,
+    billingOverflow: false,
+    billingAcknowledged: false,
+    neededUnits: 0,
   };
+
+  function getBillingUnits(memberCount) {
+    const MIN = 50;
+    const STEP = 50;
+    return Math.max(MIN, Math.ceil(memberCount / STEP) * STEP);
+  }
 
   function cfg() {
     const body = document.body;
@@ -365,8 +379,38 @@
       };
     });
 
+    const activeBefore = rows.filter(
+      (r) => normalizeStatus(String(r?.status || "")) === "active"
+    ).length;
+
+    const activeByNum = new Map(
+      rows
+        .map((r) => [
+          stripClubPrefix(r?.club_member_no || r?.member_number),
+          normalizeStatus(String(r?.status || "")),
+        ])
+        .filter(([k]) => Boolean(k))
+    );
+
+    let activeAfterCount = activeBefore;
+    previewRows.forEach((row) => {
+      if (row.excluded) return;
+      const num = row.member_number;
+      const newStatus = normalizeStatus(String(row.status || ""));
+      if (row.action === "create") {
+        if (newStatus === "active") activeAfterCount += 1;
+      } else if (row.action === "update" && num) {
+        const oldStatus = activeByNum.get(num) ?? "active";
+        if (oldStatus !== "active" && newStatus === "active") activeAfterCount += 1;
+        else if (oldStatus === "active" && newStatus !== "active") activeAfterCount -= 1;
+      }
+    });
+    const activeAfter = Math.max(0, activeAfterCount);
+
     return {
       previewRows,
+      activeBefore,
+      activeAfter,
       errors: [],
       headerWarnings: unknownHeaders.length ? [`Unbekannte Spalten: ${unknownHeaders.join(", ")}`] : [],
       presentFields: [...presentFields],
@@ -440,6 +484,11 @@
       if (target?.matches?.("[data-vv-delimiter]")) {
         dialogState.delimiter = text(target.value) || ";";
       }
+      if (target?.matches?.("[data-vv-billing-ack]")) {
+        dialogState.billingAcknowledged = !!target.checked;
+        renderDialog(dialog);
+        return;
+      }
       if (target?.matches?.("[data-vv-exclude]")) {
         const rowIndex = Number(target.getAttribute("data-vv-exclude") ?? -1);
         if (rowIndex >= 0 && dialogState.previewRows[rowIndex]) {
@@ -488,6 +537,16 @@
       }
       if (target?.closest?.("[data-vv-confirm]")) {
         await confirmImport(dialog);
+        return;
+      }
+      if (target?.closest?.("[data-vv-upgrade]")) {
+        await executeBillingUpgrade(dialog);
+        return;
+      }
+      if (target?.closest?.("[data-vv-upgrade-skip]")) {
+        dialog.close();
+        dialogState.open = false;
+        return;
       }
     });
 
@@ -547,6 +606,41 @@
       : HEADER_EXPORT.filter(([key]) => !NON_EDITABLE_IN_PREVIEW.has(key));
     const totalCols = 4 + editableFields.length + 1;
 
+    let billingBlock = "";
+    if (
+      dialogState.billingState === "active" &&
+      dialogState.billingUnits !== null &&
+      dialogState.previewRows.length > 0
+    ) {
+      const overflow = dialogState.billingOverflow;
+      const before = dialogState.activeBefore;
+      const after = dialogState.activeAfter;
+      const current = dialogState.billingUnits;
+      const needed = dialogState.neededUnits;
+      if (overflow) {
+        const diffUnits = needed - current;
+        const diffPriceNet = diffUnits * 2;
+        billingBlock = `
+          <div class="vv-billing-impact vv-billing-impact--overflow">
+            <strong>⚠ Billing-Auswirkung:</strong>
+            Aktive Mitglieder: ${before} → ${after} ·
+            Stufe: ${current} → ${needed} Units ·
+            Jahresdifferenz: ${diffPriceNet} € netto (Stripe berechnet anteilig bis Verlängerung)
+            <label class="vv-billing-ack-label">
+              <input type="checkbox" data-vv-billing-ack="true" ${dialogState.billingAcknowledged ? "checked" : ""} />
+              Ich habe die Billing-Auswirkung zur Kenntnis genommen
+            </label>
+          </div>
+        `;
+      } else {
+        billingBlock = `
+          <div class="vv-billing-impact vv-billing-impact--ok">
+            Aktive Mitglieder nach Import: ${after} · Stufe bleibt: ${current} Units ✓
+          </div>
+        `;
+      }
+    }
+
     const previewRows = dialogState.previewRows.map((row, index) => {
       const isExcluded = row.excluded;
       const editableCells = editableFields.map(([key, label]) => `
@@ -589,6 +683,7 @@
       ${isPartial ? `<p class="small vv-import-partial-hint">Teilmengenimport – nur die im CSV vorhandenen Felder werden bearbeitet und aktualisiert. Fehlende Felder bleiben unverändert.</p>` : ""}
       ${dialogState.errors.length ? `<div class="qfp-inline-error">${esc(dialogState.errors.join(" · "))}</div>` : ""}
       ${summaryParts.length ? `<div class="vv-import-summary small">${summaryParts.join(" · ")}</div>` : ""}
+      ${billingBlock}
       ${dialogState.previewRows.length ? `
       <div class="vv-import-bulk-actions">
         <button type="button" class="feed-btn feed-btn--ghost" data-vv-select-all="true">Alle freigeben</button>
@@ -627,6 +722,15 @@
     dialogState.previewRows = result.previewRows;
     dialogState.presentFields = result.presentFields || [];
     dialogState.errors = result.errors.concat(result.headerWarnings || []);
+    dialogState.activeBefore = result.activeBefore ?? 0;
+    dialogState.activeAfter = result.activeAfter ?? 0;
+    dialogState.neededUnits = getBillingUnits(dialogState.activeAfter);
+    dialogState.billingOverflow = (
+      dialogState.billingState === "active" &&
+      dialogState.billingUnits !== null &&
+      dialogState.neededUnits > dialogState.billingUnits
+    );
+    dialogState.billingAcknowledged = false;
     renderDialog(dialog);
   }
 
@@ -636,6 +740,13 @@
     );
     if (!importable.length) {
       dialogState.errors = ["Keine importierbaren Zeilen vorhanden (create oder update)."];
+      renderDialog(dialog);
+      return;
+    }
+    if (dialogState.billingOverflow && !dialogState.billingAcknowledged) {
+      dialogState.errors = [
+        "Billing-Auswirkung bitte bestätigen (Checkbox unterhalb der Übersicht) bevor der Import übernommen wird.",
+      ];
       renderDialog(dialog);
       return;
     }
@@ -661,15 +772,71 @@
         method: "POST",
         body: JSON.stringify({ p_club_id: dialogState.clubId, p_rows: rowsPayload }),
       }, true);
-      dialogState.open = false;
-      dialog.close();
-      dialogState.onMessage?.("CSV-Import bestätigt.");
       await dialogState.reload?.();
+      if (dialogState.billingOverflow) {
+        dialogState.onMessage?.("Import abgeschlossen. Billing-Upgrade ausstehend.");
+        renderUpgradePrompt(dialog);
+      } else {
+        dialogState.open = false;
+        dialog.close();
+        dialogState.onMessage?.("CSV-Import bestätigt.");
+      }
     } catch (error) {
       dialogState.errors = [error instanceof Error ? error.message : "CSV-Import fehlgeschlagen."];
       renderDialog(dialog);
     } finally {
       dialogState.busy = false;
+    }
+  }
+
+  function renderUpgradePrompt(dialog) {
+    const body = dialog.querySelector(".vv-import-dialog__body");
+    if (!body) return;
+    const current = dialogState.billingUnits ?? 0;
+    const needed = dialogState.neededUnits;
+    const diffUnits = needed - current;
+    const diffPriceNet = diffUnits * 2;
+    body.innerHTML = `
+      <div class="vv-billing-impact vv-billing-impact--overflow" style="margin-bottom:12px;">
+        <strong>Import abgeschlossen.</strong>
+        <p class="small" style="margin:6px 0 0;">
+          Dein Verein hat jetzt <strong>${dialogState.activeAfter}</strong> aktive Mitglieder.<br>
+          Gebuchte Stufe: <strong>${current} Units</strong> (${current * 2} € netto/Jahr)<br>
+          Erforderliche Stufe: <strong>${needed} Units</strong> (${needed * 2} € netto/Jahr)<br>
+          Upgrade-Differenz: <strong>${diffPriceNet} € netto/Jahr</strong> — Stripe berechnet den anteiligen Betrag bis zum nächsten Verlängerungsdatum.
+        </p>
+      </div>
+      <p class="small">Das Upgrade aktualisiert deine laufende Stripe-Subscription sofort. Stripe erstellt eine separate Differenzrechnung (Proration).</p>
+      <div class="catch-dialog__actions" style="margin-top:12px;">
+        <button type="button" class="feed-btn" data-vv-upgrade="true">Upgrade jetzt durchführen</button>
+        <button type="button" class="feed-btn feed-btn--ghost" data-vv-upgrade-skip="true">Später erledigen</button>
+      </div>
+      <p id="vvUpgradeMsg" class="small" aria-live="polite" style="margin-top:8px;"></p>
+    `;
+  }
+
+  async function executeBillingUpgrade(dialog) {
+    const msgEl = dialog.querySelector("#vvUpgradeMsg");
+    const setMsg = (t) => { if (msgEl) msgEl.textContent = t; };
+    setMsg("Upgrade wird durchgeführt…");
+    try {
+      const result = await sb(
+        "/functions/v1/fcp-execute-billing-upgrade",
+        { method: "POST", body: JSON.stringify({ club_id: dialogState.clubId }) },
+        true
+      );
+      if (result?.already_correct) {
+        setMsg(`Stufe war bereits korrekt (${result.billing_units} Units). Kein Upgrade nötig.`);
+        return;
+      }
+      setMsg(
+        `Upgrade erfolgreich: ${result.old_units} → ${result.new_units} Units. ` +
+        `Stripe-Differenzrechnung wurde erstellt.`
+      );
+      dialog.querySelectorAll("[data-vv-upgrade]").forEach((btn) => btn.setAttribute("disabled", ""));
+      dialogState.onMessage?.(`Billing-Upgrade abgeschlossen: ${result.new_units} Units.`);
+    } catch (err) {
+      setMsg(`Upgrade fehlgeschlagen: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
@@ -701,8 +868,36 @@
       dialogState.delimiter = ";";
       dialogState.onMessage = typeof detail.onMessage === "function" ? detail.onMessage : null;
       dialogState.reload = typeof detail.reload === "function" ? detail.reload : null;
+      dialogState.billingUnits = null;
+      dialogState.billingState = null;
+      dialogState.activeBefore = 0;
+      dialogState.activeAfter = 0;
+      dialogState.billingOverflow = false;
+      dialogState.billingAcknowledged = false;
+      dialogState.neededUnits = 0;
       renderDialog(dialog);
       dialog.showModal();
+      const cid = dialogState.clubId;
+      if (cid) {
+        sb(
+          `/rest/v1/club_billing_subscriptions?club_id=eq.${encodeURIComponent(cid)}&select=billing_units,billing_state`,
+          {},
+          true
+        ).then((data) => {
+          const row = Array.isArray(data) ? data[0] : null;
+          dialogState.billingUnits = row?.billing_units ?? null;
+          dialogState.billingState = row?.billing_state ?? null;
+          if (dialogState.previewRows.length > 0) {
+            dialogState.neededUnits = getBillingUnits(dialogState.activeAfter);
+            dialogState.billingOverflow = (
+              dialogState.billingState === "active" &&
+              dialogState.billingUnits !== null &&
+              dialogState.neededUnits > dialogState.billingUnits
+            );
+            renderDialog(dialog);
+          }
+        }).catch(() => {});
+      }
     }
   }
 

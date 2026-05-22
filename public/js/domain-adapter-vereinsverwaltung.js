@@ -317,7 +317,41 @@
         await pattern.loadPanel(section.id, panelId).catch(() => null);
       }
       message("Mitglied gespeichert.");
+      // Non-blocking: Billing-Overflow-Hinweis nach Einzelanlage.
+      // Nur bei aktiven Mitgliedern prüfen (Standard ist active).
+      const newMemberStatus = String(draft?.status || "Aktiv").toLowerCase();
+      if (newMemberStatus !== "passiv" && newMemberStatus !== "passive" && newMemberStatus !== "inactive") {
+        checkSingleMemberBillingOverflow(clubId).catch(() => {});
+      }
       return true;
+    }
+
+    async function checkSingleMemberBillingOverflow(clubId) {
+      if (!clubId) return;
+      const baseUrl = String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, "");
+      const apiKey = String(window.__APP_SUPABASE_KEY || "").trim();
+      const token = await authToken(false).catch(() => null);
+      if (!token) return;
+      const headers = { apikey: apiKey, Authorization: `Bearer ${token}`, Accept: "application/json" };
+      const [subRes, countRes] = await Promise.all([
+        fetch(`${baseUrl}/rest/v1/club_billing_subscriptions?club_id=eq.${encodeURIComponent(clubId)}&select=billing_units,billing_state`, { headers }),
+        fetch(`${baseUrl}/rest/v1/club_members?club_id=eq.${encodeURIComponent(clubId)}&status=eq.active&select=id`, { headers: { ...headers, "Prefer": "count=exact", "Range": "0-0" } }),
+      ]).catch(() => [null, null]);
+      if (!subRes?.ok || !countRes?.ok) return;
+      const subData = await subRes.json().catch(() => []);
+      const sub = Array.isArray(subData) ? subData[0] : null;
+      if (!sub || sub.billing_state !== "active" || !sub.billing_units) return;
+      const countHeader = countRes.headers.get("content-range") || "";
+      const totalMatch = countHeader.match(/\/(\d+)$/);
+      const memberCount = totalMatch ? parseInt(totalMatch[1], 10) : 0;
+      const MIN = 50; const STEP = 50;
+      const neededUnits = Math.max(MIN, Math.ceil(memberCount / STEP) * STEP);
+      if (neededUnits > sub.billing_units) {
+        message(
+          `Hinweis: ${memberCount} aktive Mitglieder überschreiten die gebuchte Stufe (${sub.billing_units} Units). ` +
+          `Neue Stufe erforderlich: ${neededUnits} Units. Bitte Billing-Upgrade prüfen.`
+        );
+      }
     }
 
     async function updateMemberRegistryRow(row, draft) {

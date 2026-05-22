@@ -238,6 +238,7 @@
         this.root.append(this.refs.status);
       }
 
+      this.refs.shell.classList.toggle("fcp-adm-shell--hosted", Boolean(this.root.closest(".card__body")));
       this.renderNav();
       this.renderContent();
       this.renderStatus();

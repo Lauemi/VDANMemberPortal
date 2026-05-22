@@ -230,6 +230,7 @@
           className: "admin-board__nav",
           attrs: { "aria-label": this.config.navLabel || "Workspace Navigation" },
         });
+        this.refs.nav.setAttribute("data-nav-mode", "top-grid");
         this.refs.content = createElement("div", { className: "admin-board__content" });
         this.refs.status = createElement("div", { className: "qfp-mask-status", attrs: { "aria-live": "polite" } });
         this.root.append(this.refs.shell);
@@ -332,8 +333,13 @@
         className: `admin-card__header${isAccordion ? " admin-card__header--accordion" : ""}`,
       });
       const titleWrap = createElement("div", { className: "admin-card__header-main" });
-      titleWrap.append(createElement("h3", { text: panel.title || panel.id }));
-      header.append(titleWrap);
+      const panelTitle = String(panel?.title || panel?.id || "").trim();
+      const sectionTitle = String(section?.title || "").trim();
+      const shouldRenderPanelTitle = panelTitle && panelTitle !== sectionTitle;
+      if (shouldRenderPanelTitle) {
+        titleWrap.append(createElement("h3", { text: panelTitle }));
+        header.append(titleWrap);
+      }
       const side = createElement("div", { className: "admin-card__header-side" });
       if (panelState?.label) {
         side.append(

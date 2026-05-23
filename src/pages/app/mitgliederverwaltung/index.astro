@@ -24,7 +24,34 @@ const admConfig = {
 const admConfigJson = JSON.stringify(admConfig);
 ---
 
-<Site title={`Vereinsverwaltung • ${APP.name}`} description="ADM: Vereinsverwaltung" robots="noindex" containerClass="container container--admin-wide">
+<Site title={`Vereinsverwaltung • ${APP.name}`} description="ADM: Vereinsverwaltung" robots="noindex" containerClass="container container--admin-wide" admBreadcrumbs={["ClubSettings", "Vereinsverwaltung"]}>
+
+  {/*
+    Phase B — Workspace-Header
+    WAS WAR: Kein eigener Page-Level-Header. Der ADM-Renderer erzeugte
+             direkt seinen ersten Section-Titel (h2, ~28px) als oberste
+             Ueberschrift — ohne Kicker, ohne Beschreibung, ohne Scope.
+    WARUM: Ein Workspace-Header ordnet die Seite: Kicker benennt den
+           Kontext (Onboarding Workspace), Titel benennt den Bereich,
+           Beschreibung erklaert was hier passiert.
+           Quelle: resolvedMask.header aus ADM_clubSettings.json.
+    ACHTUNG: Dieser Header ist statisch-gerendert (Astro SSR).
+             Er veraendert keine JS-Logik und keinen Renderer-State.
+  */}
+  <div class="adm-workspace-header">
+    <div class="adm-workspace-header__text">
+      {resolvedMask?.header?.kicker && (
+        <p class="adm-workspace-header__kicker">{resolvedMask.header.kicker}</p>
+      )}
+      <h1 class="adm-workspace-header__title">
+        {resolvedMask?.header?.title ?? "Vereinsverwaltung"}
+      </h1>
+      {resolvedMask?.header?.description && (
+        <p class="adm-workspace-header__desc">{resolvedMask.header.description}</p>
+      )}
+    </div>
+  </div>
+
   <section class="card">
     <div class="card__body">
       <div id="clubSettingsAdmRoot" class="fcp-table-root"></div>

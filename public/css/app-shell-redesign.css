@@ -1,0 +1,893 @@
+/*
+ * app-shell-redesign.css — Phase B ADM Shell
+ * ============================================
+ * Geladen nur auf /app/* Routen (isAppPath, Site.astro).
+ * Laedt nach app-shell.css und redesign.css — wirkt als Override-Layer.
+ *
+ * PHILOSOPHIE:
+ *   Kein Renderer-Code wird angefasst. Kein JSON. Keine Routen.
+ *   Wir tauschen die Huelle, nicht den Inhalt.
+ *   Der ADM-Workspace saß bisher in einer Card-Huelle die aus dem
+ *   oeffentlichen VDAN-Layout stammt und nie fuer ADM redesigned wurde.
+ *   Phase B macht den Workspace zur ersten Ebene.
+ *
+ * RUECKSPRUNG:
+ *   git checkout pre-phase-b
+ *   (Tag gesetzt vor Beginn Phase B, 2026-05-23)
+ *
+ * AENDERUNGSPROTOKOLL:
+ *   2026-05-23 — Phase B initiiert nach Claude Design Spec
+ *                Spec: /Users/michaellauenroth/Downloads/spec.html
+ *   Autor: Claude Code (Michael Lauenroth)
+ */
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCHRITT 2 — Astro-Card neutralisieren
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR: <Site containerClass="container--admin-wide"> rendert
+            eine <section class="card"><div class="card__body">.
+            Diese Card erzeugte: sichtbare Border, Background (#0b1018),
+            Padding 1.5rem und Box-Shadow um den gesamten ADM-Workspace.
+            Ergebnis: "Card in Card in Card" — drei Tiefen gleichzeitig.
+
+   WARUM GEAENDERT: Die Astro-Card ist fuer den oeffentlichen VDAN-Auftritt
+            gebaut. Fuer den ADM-Workspace ist sie eine leere Huelle die
+            nur visuellen Lärm erzeugt. Phase B macht den Workspace selbst
+            zur ersten sichtbaren Ebene.
+
+   WAS BLEIBT: Das HTML-Element bleibt im DOM (kein JS-Bruch).
+            Nur visuelle Eigenschaften werden entfernt.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.container--admin-wide > section.card,
+.container--admin-wide > section.card > .card__body {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* App-Hintergrund auf /app/* Routen: warme Arbeitsflaeche */
+body[data-app-theme="fcp_tactical"] .container--admin-wide {
+  background: var(--rd-bg, #f6f1e5);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCHRITT 5 — Navigation leise stellen
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR: .admin-board__nav hatte Card-Optik:
+            border: 1px solid var(--line), border-radius: 12px,
+            background: rgba(255,255,255,.03), padding: 8px.
+            Optisch: eine Card als Nav-Container mit 11 Button-Items
+            die jeweils eigene Border und Background hatten.
+            sticky top: 84px — dieser Wert stammt aus dem oeffentlichen
+            Layout-Header (VDAN public header ~84px hoch).
+
+   WARUM GEAENDERT: Navigation soll fluestern, nicht schreien.
+            Der Button-Stapel-Look kommuniziert "Formular" statt
+            "Navigation". Phase B: Rail mit Trennlinie statt Card,
+            Links statt Buttons, Gold-Stripe fuer Aktiv-State.
+            top: 18px weil der ADM-eigene Topbar schlanker ist.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Spezifitaet 0,2,0 — schlaegt app-shell.css (0,1,0) im gleichen Cascade-Slot */
+body[data-app-theme="fcp_tactical"] .admin-board {
+  grid-template-columns: 236px 1fr;
+  gap: 0;
+}
+
+body[data-app-theme="fcp_tactical"] .admin-board__nav {
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
+  border-radius: 0;
+  padding: 6px 16px 24px 0;
+  top: 18px;
+}
+
+/* Spezifitaet 0,2,0 — schlaegt app-shell.css .admin-nav-btn (0,1,0) */
+body[data-app-theme="fcp_tactical"] .admin-nav-btn {
+  border: 0;
+  background: transparent;
+  color: var(--rd-ink-2, #4a4e40);
+  border-radius: 7px;
+  min-height: 30px;
+  padding: 6px 12px;
+  font-size: 13px;
+  position: relative;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+body[data-app-theme="fcp_tactical"] .admin-nav-btn:hover {
+  background: var(--rd-gold-softer, rgba(183, 154, 99, 0.06));
+  color: var(--rd-ink, #2a2d24);
+}
+
+/* WAS WAR: .is-active nutzte --accent-cool-soft (blaustichig, dunkel)
+   WARUM: Gold-Soft passt zur Produktsprache — warm, nicht kuehltechnisch.
+          Der 2px-Stripe links signalisiert Aktiv-Zustand ohne Flaeche. */
+body[data-app-theme="fcp_tactical"] .admin-nav-btn.is-active {
+  background: var(--rd-gold-soft, rgba(183, 154, 99, 0.12));
+  color: var(--rd-gold-lo, #9c8148);
+  font-weight: 500;
+  border-color: transparent;
+}
+
+body[data-app-theme="fcp_tactical"] .admin-nav-btn.is-active::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--rd-gold, #b79a63);
+  border-radius: 2px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCHRITT 6 — Panels (admin-card) als primaere Card definieren
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR: .admin-card hatte RGBA-Glass-Look:
+            background: rgba(255,255,255,.03) — kaum sichtbar auf dunkel,
+            border: 1px solid var(--line), border-radius: 12px,
+            padding: 10px — Inhalt hatte kein eigenes Padding.
+            Kollision: glass-dark-Card umschloss helle cream-Tabelle
+            → zwei Farbsprachen prallten aufeinander.
+
+   WARUM GEAENDERT: Das Panel soll die primaere Datenflaeche sein.
+            Weiss, klare Border, kein Padding nach aussen —
+            das Innenleben (Form, Tabelle, Readonly) bringt eigenes
+            Padding mit. Inline-Data-Table v2 sitzt jetzt in seinem
+            natuerlichen Habitat.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.admin-card {
+  background: #fff;
+  border: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
+  border-radius: 10px;
+  padding: 0;
+  gap: 0;
+}
+
+.admin-card__header {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
+}
+
+/* WAS WAR: h3 in admin-card__header hatte ca. 17px — konkurrierte mit
+            Section-h2 und Tabellen-h1 auf gleicher Aughoehe.
+   WARUM: 13.5px Semibold als Panel-Titel ordnet sich unter dem
+          Workspace-Header ein, ohne zu verschwinden. */
+.admin-card__header h3 {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--rd-ink, #2a2d24);
+  margin: 0;
+}
+
+/* WAS WAR: Section-Heading h2 war ~28px — zu dominant neben Tabellen-h1.
+   WARUM: 15px mit Border-Bottom macht den Section-Header zum
+          Cluster-Trenner, nicht zum konkurrierenden Titel. */
+.qfp-section-heading h2 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--rd-ink, #2a2d24);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
+  margin-bottom: 14px;
+}
+
+/* State-Badges: vorher RGBA-Pillen die auf dunkel kaum lesbar waren.
+   Jetzt semantische Soft-Farben aus dem rd-* System. */
+.admin-state-badge.is-live {
+  background: var(--rd-ok-soft, #e4ecd6);
+  color: var(--rd-ok, #6b8f4c);
+  border: 1px solid transparent;
+}
+
+.admin-state-badge.is-preview {
+  background: var(--rd-warn-soft, #f5ebd0);
+  color: var(--rd-warn, #b88a2a);
+  border: 1px solid transparent;
+}
+
+.admin-state-badge.is-gap,
+.admin-state-badge.is-partial {
+  background: var(--rd-surface-2, #efe8d7);
+  color: var(--rd-muted, #7a7c68);
+  border: 1px solid transparent;
+}
+
+/* Section-Wrapper: kein eigener Background mehr, nur Gap */
+.admin-section.is-active {
+  gap: 14px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCHRITT 7 — Sticky-Offset-Patch
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR: top: 84px / scroll-margin-top: 108px
+            Diese Werte stammen aus dem oeffentlichen VDAN-Layout-Header
+            (Hoehe ca. 60-84px) und wurden nie auf den ADM-Kontext
+            angepasst. Im ADM-eigenen Topbar-Kontext ist der Offset
+            deutlich kleiner.
+
+   WARUM GEAENDERT: Mit dem schlankeren ADM-Topbar (54px) und
+            dem Workspace-Header passt top: 18px.
+            scroll-margin-top: 24px reicht fuer den Section-Wechsel.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.admin-board__nav {
+  top: 18px;
+}
+
+.admin-section {
+  scroll-margin-top: 24px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCHRITT 4 — Workspace-Header (page-level, vor dem admin-board)
+   ───────────────────────────────────────────────────────────────────
+   Neu in index.astro eingefuegt. Liest aus resolvedMask.header
+   (Kicker, Titel, Beschreibung) — statisch gerendert, kein JS.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.adm-workspace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 22px 0 18px;
+}
+
+.adm-workspace-header__kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rd-muted, #7a7c68);
+  margin: 0 0 6px;
+}
+
+.adm-workspace-header__title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--rd-ink, #2a2d24);
+  margin: 0 0 6px;
+}
+
+.adm-workspace-header__desc {
+  font-size: 13.5px;
+  color: var(--rd-muted, #7a7c68);
+  margin: 0;
+  max-width: 680px;
+  line-height: 1.5;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   DARK/LIGHT TOGGLE — bleibt fuer den Tabellen-Body intakt
+   ───────────────────────────────────────────────────────────────────
+   Die Inline-Data-Table v2 hat einen eigenen Dark/Light-Toggle.
+   Dieser betrifft nur den Tabellen-Body — die Aussenwelt bleibt hell.
+   Keine Ueberschreibung noetig — redesign.css handhabt das bereits
+   via [data-rd-theme="dark"] innerhalb .is-redesign.
+   ═══════════════════════════════════════════════════════════════════ */
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   HOSTED-SHELL KRÜCKE — neutralisiert durch Card-Neutralisierung
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR: .fcp-adm-shell--hosted nutzte negative margin
+            (calc(-1 * var(--card-padding, 1.5rem))) um den ADM-Workspace
+            aus der Astro-Card-Huelle herauszuzwingen.
+            Das war eine Krücke weil die Card-Huelle nie entfernt wurde.
+
+   JETZT: Die Card-Huelle ist transparent (Schritt 2).
+          Die negative-margin-Krücke kann auf 0 gesetzt werden.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.fcp-adm-shell--hosted {
+  margin: 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCHRITT 3 — ADM Topbar (Phase B Step 3)
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR: header.header war der oeffentliche VDAN/FCP Siteheader —
+            dunkel (#090d15 mit Blur), 60px hoch, sticky top:0.
+            Auf /app/* Routen ist dieser Header fehl am Platz: er zeigt
+            Login, Burger-Menue und oeffentliche Links fuer einen
+            bereits eingeloggten Admin-User.
+
+   WARUM GEAENDERT: Phase B ersetzt ihn auf /app/* durch einen
+            ADM-eigenen Topbar — 54px, hell (#fbf7ee), mit FCP-Brand,
+            BETA-Badge, kontextbezogenen Breadcrumbs und User-Pill.
+            Der alte Header bleibt im DOM (display:none ≠ removed),
+            damit member-auth.js, notifications-center.js etc. weiter
+            ihre Elemente finden koennen.
+
+   ROLLBACK: git checkout pre-phase-b (Tag vor Phase B gesetzt)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Alter Header: nur visuell entfernen — DOM bleibt fuer JS intakt */
+body[data-app-theme="fcp_tactical"] header.header {
+  display: none;
+}
+
+/* Footer: auf /app/* nicht relevant — entfernen */
+body[data-app-theme="fcp_tactical"] footer.site-footer {
+  display: none;
+}
+
+/* Main: kein top-padding noetig — Topbar ist im Flow, schiebt Content selbst runter */
+body[data-app-theme="fcp_tactical"] .main {
+  padding-top: 0;
+}
+
+/* ADM Topbar — Layout */
+.adm-topbar {
+  height: 54px;
+  background: var(--rd-surface, #fbf7ee);
+  border-bottom: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Brand-Block: Logo + Name + Beta */
+.adm-topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.adm-topbar__logo-link {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  text-decoration: none;
+  /* Feste Box — verhindert SVG/PNG-Overflow */
+  width: 30px;
+  height: 30px;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.adm-topbar__logo {
+  display: block;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+/* Direkt-Klasse (wird in Site.astro gesetzt) */
+.adm-topbar__logo-img {
+  width: 30px;
+  height: 30px;
+  display: block;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+/* Fallback für altes Markup (img ohne Klasse) */
+.adm-topbar__logo img {
+  width: 30px;
+  height: 30px;
+  display: block;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.adm-topbar__name {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--rd-ink, #2a2d24);
+  white-space: nowrap;
+}
+
+.adm-topbar__beta {
+  font-size: 9.5px;
+  padding: 2px 6px;
+  border: 1px solid var(--rd-gold, #b79a63);
+  border-radius: 4px;
+  color: var(--rd-gold-lo, #9c8148);
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Spacer: schiebt Breadcrumbs in die Mitte */
+.adm-topbar__sp {
+  flex: 1;
+}
+
+/* Breadcrumbs — zentriert */
+.adm-topbar__crumbs {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--rd-muted, #7a7c68);
+  flex: 0 0 auto;
+}
+
+.adm-topbar__sep {
+  color: var(--rd-muted-soft, #9b9c88);
+  font-size: 11px;
+}
+
+.adm-topbar__crumb {
+  color: var(--rd-ink-2, #4a4e40);
+  font-weight: 400;
+}
+
+/* WAS: kein aktiver Crumb. WARUM: letzter Eintrag = aktuelle Seite,
+   Gold signalisiert Kontext ohne zu schreien. */
+.adm-topbar__crumb--active {
+  color: var(--rd-gold-lo, #9c8148);
+  font-weight: 600;
+}
+
+/* Utility-Bereich rechts */
+.adm-topbar__util {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.adm-topbar__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
+  border-radius: 7px;
+  background: #fff;
+  font-size: 12.5px;
+  color: var(--rd-ink-2, #4a4e40);
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+/* User-Avatar: Gold-Kreis mit Initialen */
+.adm-topbar__av {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #c6ad67, #9c8148);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  font-style: normal;
+}
+
+.adm-topbar__username {
+  font-size: 12.5px;
+  color: var(--rd-ink-2, #4a4e40);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCHRITT 7 PATCH — Sticky-Offsets neu kalibriert auf Topbar-Hoehe
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR (Schritt 7): top: 18px — kalibriert auf Szenario ohne Topbar.
+   JETZT: Topbar ist 54px hoch. Nav soll 18px Luft unter dem Topbar
+          haben → top: 54px + 18px = 72px.
+          scroll-margin-top: Topbar-Hoehe + Section-Gap = ~78px.
+   Hoehere Spezifizitaet (body[...]) ueberschreibt Schritt 7 korrekt.
+   ═══════════════════════════════════════════════════════════════════ */
+
+body[data-app-theme="fcp_tactical"] .admin-board__nav {
+  top: 72px;
+}
+
+body[data-app-theme="fcp_tactical"] .admin-section {
+  scroll-margin-top: 78px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE OVERRIDE — Sidebar bleibt bei schmalen Viewports
+   ───────────────────────────────────────────────────────────────────
+   app-shell.css bricht bei max-width: 1180px das admin-board auf
+   grid-template-columns: 1fr auf und gibt der Nav 2 Spalten.
+   FCP Admin Shell ist kein Mobile-Tool — wir halten die Sidebar-
+   Struktur auch mit DevTools-Panel oder auf Laptops mit ~900px.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 1180px) {
+  body[data-app-theme="fcp_tactical"] .admin-board {
+    grid-template-columns: 200px 1fr;
+    gap: 0;
+  }
+
+  body[data-app-theme="fcp_tactical"] .admin-board__nav {
+    position: sticky;
+    top: 72px;
+    max-height: calc(100dvh - 120px);
+    grid-template-columns: 1fr; /* 1-spaltig — kein Mehrspalten-Responsive */
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ADM NAV ENHANCER — Gruppen-Labels und Icons
+   ───────────────────────────────────────────────────────────────────
+   Erzeugt von adm-nav-enhancer.js nach dem ADM-Renderer-Run.
+   Renderer bleibt unangetastet — wir ergänzen nur visuell.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Gruppen-Label (z. B. "CLUBSETTINGS", "OPERATIV", "SYSTEM") */
+.adm-nav__group {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rd-muted-soft, #9b9c88);
+  padding: 14px 12px 6px 12px;
+  user-select: none;
+  grid-column: 1 / -1; /* Volle Breite — unabhaengig von Nav-Grid-Spalten */
+}
+
+.adm-nav__group:first-child {
+  padding-top: 6px;
+}
+
+/* Icon vor dem Navigationseintrag */
+.adm-nav__ic {
+  width: 16px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 11px;
+  color: var(--rd-muted-soft, #9b9c88);
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+/* Aktiver Nav-Button: Icon erbt Gold */
+body[data-app-theme="fcp_tactical"] .admin-nav-btn.is-active .adm-nav__ic {
+  color: var(--rd-gold-lo, #9c8148);
+}
+
+/* Nav-Buttons als Flex für Icon-Ausrichtung */
+body[data-app-theme="fcp_tactical"] .admin-nav-btn {
+  display: flex;
+  align-items: center;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ADM TABELLE — Compact-Dichte
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR: redesign.css Standard-Dichte: --rd-row-h: 40px,
+            --rd-font: 14px, --rd-cell-px: 14px.
+   WARUM GEAENDERT: Im ADM-Workspace stehen viele Datenspalten.
+            Compact-Zeilen (32px) erlauben mehr Daten auf einmal
+            und entsprechen dem Spec-Look.
+   METHODE: CSS-Variable-Override auf .is-redesign im ADM-Kontext.
+            Kein JS, kein density-Prop, kein Renderer-Eingriff.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Tabellen-Kompaktheit: alle data-table-shell auf /app/* Routen.
+   app-shell-redesign.css ist der Scope-Gate — diese Datei laed
+   nur auf isAppPath-Routen. body[fcp_tactical] hier ist sicher. */
+body[data-app-theme="fcp_tactical"] .is-redesign,
+body[data-app-theme="fcp_tactical"] .data-table-shell {
+  --rd-row-h:    32px;
+  --rd-cell-px:  10px;
+  --rd-font:     12.5px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ADM WORKSPACE — Compact-Rhythmus fuer ALLE Komponenten
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR: --control-height: 48px (ui-standards.css), Scope: .admin-board.
+            Dieser enge Scope brach die Grundregel:
+            "JEDE inline-data-table und JEDE QFM-Komponente muss
+             optisch identisch sein — egal auf welcher Seite."
+            ADM-Mask, inline-data-table, QFM-Felder und direkte
+            HTML-Inputs auf /app/* Routen koennen ALLE unabhaengig
+            voneinander gerendert werden. Nur ein gemeinsamer Scope
+            garantiert visuelle Konsistenz.
+
+   LOESUNG: CSS-Variable --control-height auf .container--admin-wide
+            (dem einzigen Layout-Wrapper, der ALLE /app/* Inhalte
+            umschliesst). Alle Komponenten erben automatisch.
+
+   SCOPE-ENTSCHEIDUNG:
+     .container--admin-wide  ← korrekt: nur /app/* Seiten
+     body[fcp_tactical]      ← zu breit: trifft statische Seiten
+     .admin-board            ← zu eng: nur ADM-Renderer-Root
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* 1. CSS-Variable global fuer alle /app/* Inhalte.
+      app-shell-redesign.css laed NUR auf isAppPath-Routen —
+      oeffentliche Seiten (Login, Kontakt, Datenschutz) sind
+      nicht betroffen, auch wenn sie data-app-theme="fcp_tactical"
+      tragen. Diese Datei ist der Scope-Gate. */
+body[data-app-theme="fcp_tactical"] {
+  --control-height: 34px;
+  --form-control-height: 34px;
+}
+
+/* 2. Direkte Input-Overrides — gilt fuer Fangliste, ADM, QFM,
+      inline-data-table, alle Seiten unter /app/* gleichermassen */
+body[data-app-theme="fcp_tactical"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+body[data-app-theme="fcp_tactical"] select,
+body[data-app-theme="fcp_tactical"] textarea {
+  min-height: 34px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  font-size: 13px;
+}
+
+/* 3. Inline-Data-Table Editoren: noch kompakter (innerhalb Tabellenzelle) */
+body[data-app-theme="fcp_tactical"] .data-table__editor-cell input:not([type="checkbox"]):not([type="radio"]),
+body[data-app-theme="fcp_tactical"] .data-table__editor-cell select,
+body[data-app-theme="fcp_tactical"] .data-table__editor-cell textarea,
+body[data-app-theme="fcp_tactical"] .cell-input,
+body[data-app-theme="fcp_tactical"] .cell-select {
+  min-height: 28px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  font-size: 12.5px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ADM TOPBAR — Burger-Button Styling
+   ───────────────────────────────────────────────────────────────────
+   Der Burger ist aus dem header.header in den Topbar gewandert.
+   Standard .burger-toggle ist fuer den dunklen Header gestylt —
+   im hellen Topbar (#fbf7ee) braucht er eine andere Farbe.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.adm-topbar__burger {
+  position: relative;
+}
+
+/* Spezifizitaet: body[...] .adm-topbar .burger-toggle > body[...] .burger-toggle */
+body[data-app-theme="fcp_tactical"] .adm-topbar .burger-toggle,
+.adm-topbar__burger-btn {
+  background: transparent;
+  border: 1px solid var(--rd-line, rgba(108, 112, 91, 0.18));
+  border-radius: 6px;
+  color: var(--rd-ink-2, #4a4e40);
+  min-height: 30px;
+  width: auto;
+  height: auto;
+  padding: 0 9px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+body[data-app-theme="fcp_tactical"] .adm-topbar .burger-toggle span,
+.adm-topbar__burger-btn span {
+  color: var(--rd-ink-2, #4a4e40);
+}
+
+body[data-app-theme="fcp_tactical"] .adm-topbar .burger-toggle:hover,
+.adm-topbar__burger-btn:hover {
+  background: rgba(108, 112, 91, 0.08);
+}
+
+/* Burger-Popover: Position relativ zum Topbar-Burger */
+.adm-topbar__burger .burger-popover {
+  top: calc(100% + 6px);
+  right: 0;
+  left: auto;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   WORKSPACE BACKGROUND — Alle /app/* Seiten: helle Arbeitsflaeche
+   ───────────────────────────────────────────────────────────────────
+   PROBLEM: body[fcp_tactical] setzt in main.css:
+     background: linear-gradient(180deg, #2f352a 0%, #252b21 100%)
+   Seiten MIT .container--admin-wide (mitgliederverwaltung etc.)
+   bekommen bereits den hellen Override (Regel weiter oben).
+   Seiten OHNE (Fangliste, Arbeitseinsaetze, Zustaendigkeiten)
+   zeigen den dunklen Koerper-Hintergrund — wirkt wie dunkle Seite.
+
+   LOESUNG: .main ist der gemeinsame Wrapper aller /app/* Seiten
+   (Site.astro: <main class="main">). Er erhaelt den hellen Hintergrund.
+   .workscreen (Fangliste, Zustaendigkeiten) bekommt ihn explizit dazu.
+
+   Scope-Sicherheit: app-shell-redesign.css laedt NUR auf /app/* —
+   oeffentliche Seiten sind nie betroffen.
+   ═══════════════════════════════════════════════════════════════════ */
+
+body[data-app-theme="fcp_tactical"] .main,
+body[data-app-theme="fcp_tactical"] .workscreen {
+  background: var(--rd-bg, #f6f1e5);
+}
+
+/* min-height: Kein dunkler body-bg am Seitenende wenn Inhalt kurz ist. */
+body[data-app-theme="fcp_tactical"] .main {
+  min-height: calc(100vh - 54px);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ADM WORKSPACE HEADER — SaaS-kompakt
+   ───────────────────────────────────────────────────────────────────
+   Kicker "Onboarding Workspace" = internes Dev-Label → weg.
+   Description = Dev-Kontext-Text → weg.
+   Titel bleibt als 16px page-level-Anker, aber kompakt.
+   Redundanz zur Topbar-Breadcrumb wird damit aufgeloest.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.adm-workspace-header__kicker,
+.adm-workspace-header__desc {
+  display: none;
+}
+
+.adm-workspace-header {
+  padding: 8px 0 10px;
+}
+
+.adm-workspace-header__title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   HEADING SIZES — Standalone /app/* Seiten
+   ───────────────────────────────────────────────────────────────────
+   Fangliste, Arbeitseinsätze, Zuständigkeiten: h1 ist zu gross.
+   Standard-Browser-h1 (~32px) wirkt wie eine Webseite, nicht SaaS.
+   app-shell-redesign.css ist Scope-Gate — keine oeffentlichen Seiten
+   betroffen.
+   ═══════════════════════════════════════════════════════════════════ */
+
+body[data-app-theme="fcp_tactical"] .main h1 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+body[data-app-theme="fcp_tactical"] .main h2:not(.adm-workspace-header__title):not(.qfp-section-heading h2) {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ADMIN-CARD — Padding straffer
+   ───────────────────────────────────────────────────────────────────
+   14px/18px/12px wirkt zu luftig fuer ein SaaS-Tool.
+   10px/14px/8px: gleiche Hierarchie, weniger Raum-Verschwendung.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.admin-card__header {
+  padding: 10px 14px 8px;
+}
+
+/* Weniger Gap zwischen Sektionen */
+.admin-section.is-active {
+  gap: 10px;
+}
+
+/* Section-Header selbst braucht weniger Luft nach oben */
+.qfp-section-header-simple {
+  padding-top: 4px;
+  padding-bottom: 0;
+}
+
+/* Info-Trigger (i-Button) klein und inline */
+.qfp-info-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--rd-surface-2, #efe8d7);
+  border: 1px solid var(--rd-line, rgba(108,112,91,.18));
+  color: var(--rd-muted, #7a7c68);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  vertical-align: middle;
+  margin-left: 6px;
+  padding: 0;
+  line-height: 1;
+}
+
+/* Section-Heading: h2 + i-Button nebeneinander als Flex-Zeile */
+.qfp-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ADM FORM FIELDS — Compact Override gegen redesign.css 44px
+   ───────────────────────────────────────────────────────────────────
+   redesign.css setzt .fcp-adm-shell .qfp-form-field input auf 44px.
+   Spezifitaet: 0,2,0 (2 Klassen via :where).
+   Diese Regel: body[attr] + 2 Klassen = 0,3,1 → gewinnt immer.
+   Gilt nur auf /app/* weil app-shell-redesign.css Scope-Gate ist.
+   ═══════════════════════════════════════════════════════════════════ */
+
+body[data-app-theme="fcp_tactical"] .fcp-adm-shell .qfp-form-field :where(input, select, textarea) {
+  min-height: 34px;
+  border-radius: 6px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  font-size: 13px;
+}
+
+body[data-app-theme="fcp_tactical"] .fcp-adm-shell .qfp-form-field textarea {
+  min-height: 72px;
+}
+
+/* Form-Grid: kompaktere Spalten-/Zeilenabstaende */
+body[data-app-theme="fcp_tactical"] .fcp-adm-shell .qfp-form-grid {
+  gap: 6px 12px;
+}
+
+/* Form-Field: Abstand zwischen Label und Input */
+body[data-app-theme="fcp_tactical"] .fcp-adm-shell .qfp-form-field {
+  gap: 3px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ADM CARD CONTENT — Innenabstand + Readonly-Grid
+   ───────────────────────────────────────────────────────────────────
+   .admin-card__content hat kein CSS. Readonly/Form-Inhalt
+   schwimmt ohne Abstand zum Card-Rand.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.admin-card__content {
+  padding: 10px 14px 12px;
+}
+
+/* Readonly-Items: stacked, kompakter Abstand */
+.fcp-adm-shell .qfp-readonly-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.fcp-adm-shell .qfp-readonly-item {
+  display: grid;
+  gap: 2px;
+}

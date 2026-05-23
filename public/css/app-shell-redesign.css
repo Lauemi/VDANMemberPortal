@@ -1030,3 +1030,134 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-b
   background: var(--rd-gold-hi, #a08842);
   border-color: var(--rd-gold-hi, #a08842);
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ACCOUNT MENU — ADM Topbar User Pill + Dropdown
+   ───────────────────────────────────────────────────────────────────
+   Nur auf /app/* Routen (Scope-Gate: app-shell-redesign.css).
+   Portal-Menü (Haus + Fav = portal-quick) bleibt unberührt.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Wrapper: Positionierungskontext für das Dropdown */
+.adm-topbar__user-wrap {
+  position: relative;
+}
+
+/* Pill als Button: Cursor zeigt Interaktivität */
+.adm-topbar__pill.adm-topbar__user {
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  gap: 6px;
+}
+
+/* Chevron: minimal, rotiert wenn expanded */
+.adm-topbar__chevron {
+  font-size: 10px;
+  opacity: 0.6;
+  transition: transform 0.15s ease;
+  margin-left: 2px;
+}
+.adm-topbar__user[aria-expanded="true"] .adm-topbar__chevron {
+  transform: rotate(180deg);
+}
+
+/* Dropdown-Menü: cream, Schatten, rechts ausgerichtet */
+.adm-account-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: var(--rd-bg, #f6f1e5);
+  border: 1px solid var(--rd-line, rgba(108, 112, 91, 0.18));
+  border-radius: 12px;
+  box-shadow:
+    0 4px 24px rgba(62, 56, 34, 0.13),
+    0 1px 4px rgba(62, 56, 34, 0.08);
+  padding: 6px;
+  z-index: 9999;
+  /* hidden by default via [hidden] — keine transition nötig da Pill selten geklickt */
+}
+
+/* Menu-Header: Initialen-Avatar + Name */
+.adm-account-menu__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
+  margin-bottom: 4px;
+}
+.adm-account-menu__av {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--rd-gold-soft, rgba(183, 154, 99, 0.15));
+  color: var(--rd-gold-lo, #9c8148);
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.adm-account-menu__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rd-ink, #2a2d24);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Navigations-Links */
+.adm-account-menu__links {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.adm-account-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--rd-ink, #2a2d24);
+  text-decoration: none;
+  transition: background 0.1s ease;
+}
+.adm-account-menu__item:hover {
+  background: var(--rd-surface-2, #efe8d7);
+  color: var(--rd-ink, #2a2d24);
+}
+
+/* Trennlinie vor Logout */
+.adm-account-menu__sep {
+  height: 1px;
+  background: var(--rd-line, rgba(108, 112, 91, 0.14));
+  margin: 4px 4px;
+}
+
+/* Logout-Button: diskrete Darstellung, Rot bei Hover */
+.adm-account-menu__logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  color: var(--rd-ink-2, #4a4e40);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+.adm-account-menu__logout:hover {
+  background: rgba(180, 60, 60, 0.08);
+  color: #b43c3c;
+}

@@ -3,7 +3,7 @@ import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
 ---
 
-<Site title={`Meine Zuständigkeiten • ${APP.name}`} description="Meine Aufgaben und Leitungen" robots="noindex" density="compact">
+<Site title={`Meine Zuständigkeiten • ${APP.name}`} description="Meine Aufgaben und Leitungen" robots="noindex" density="compact" admBreadcrumbs={["Zuständigkeiten"]}>
   <div class="workscreen catch-screen">
     <section class="workscreen__header catch-screen__header">
       <div class="catch-table-toolbar ui-toolbar">

@@ -3,7 +3,7 @@ import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
 ---
 
-<Site title={`Fangliste • ${APP.name}`} description="Digitale Fangliste" robots="noindex" density="compact">
+<Site title={`Fangliste • ${APP.name}`} description="Digitale Fangliste" robots="noindex" density="compact" admBreadcrumbs={["Fangliste"]}>
   <div class="workscreen catch-screen">
   <section class="workscreen__header catch-screen__header" data-studio-component-id="fangliste-header-card" data-studio-component-type="section" data-studio-slot="main">
     <div class="catch-table-toolbar ui-toolbar" data-studio-component-id="fangliste-header-content" data-studio-component-type="section" data-studio-slot="main">

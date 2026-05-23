@@ -6,7 +6,7 @@ const nextRaw = Astro.url.searchParams.get("next") ?? "/app/";
 const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
 ---
 
-<Site title={`Passwort ändern • ${APP.name}`} description="Passwortänderung für den Mitgliederbereich." robots="noindex" density="compact">
+<Site title={`Passwort ändern • ${APP.name}`} description="Passwortänderung für den Mitgliederbereich." robots="noindex" density="compact" admBreadcrumbs={["System", "Passwort ändern"]}>
   <section class="card ui-card register-flow-card form-shell" style="max-width:720px;margin:0 auto;">
     <div class="card__body ui-card__body register-flow">
       <div class="register-flow__intro">

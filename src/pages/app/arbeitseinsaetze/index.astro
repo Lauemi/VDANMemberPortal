@@ -3,7 +3,7 @@ import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
 ---
 
-<Site title={`Termine / Events • ${APP.name}`} description="Gemeinsame Tabellenansicht für Termine und Arbeitseinsätze" robots="noindex">
+<Site title={`Termine / Events • ${APP.name}`} description="Gemeinsame Tabellenansicht für Termine und Arbeitseinsätze" robots="noindex" admBreadcrumbs={["Arbeitseinsätze"]}>
   <section class="card" data-studio-component-id="events-overview-shell" data-studio-component-type="section" data-studio-slot="main">
     <div class="card__body" data-studio-component-id="events-overview-content" data-studio-component-type="section" data-studio-slot="main">
       <div class="catch-table-toolbar">

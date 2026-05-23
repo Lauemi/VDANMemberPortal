@@ -2213,6 +2213,11 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
   align-items:center;
 }
 
+/* ── FCP Orange — Homepage-only Akzent (statt Gold im Portal) ──────
+   Scope: .fcp-brand-home → Startseite. Portal bleibt --rd-gold (#b79a63).
+   Spezifität: 0,3,0 — identisch zum bestehenden Hero-Rule, aber später → gewinnt. */
+.fcp-brand-home{ --fcp-o:#d46a20; --fcp-o-dark:#b85c18; }
+
 /* .fcp-brand-hero .feed-btn.fcp-brand-btn--primary: 0,3,0 — beats body[fcp_tactical] .feed-btn (0,2,1) */
 .fcp-brand-hero .feed-btn.fcp-brand-btn--primary{
   background:linear-gradient(180deg, #c6ad67 0%, #9c8148 100%);
@@ -2220,6 +2225,18 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
   border-color:transparent;
   text-decoration:none;
   box-shadow:0 8px 24px rgba(155,129,72,.32);
+}
+/* Orange override — Startseite. 0,3,0 — nach Gold-Rule = gewinnt */
+.fcp-brand-home .feed-btn.fcp-brand-btn--primary{
+  background:linear-gradient(180deg, #e07e3a 0%, #b85c18 100%);
+  color:#fff;
+  border-color:transparent;
+  text-decoration:none;
+  box-shadow:0 8px 24px rgba(184,92,24,.35);
+}
+.fcp-brand-home .feed-btn.fcp-brand-btn--primary:hover{
+  background:linear-gradient(180deg, #d46a20 0%, #a35018 100%);
+  box-shadow:0 10px 28px rgba(184,92,24,.42);
 }
 span.fcp-brand-soon-note,
 a.feed-btn.feed-btn--ghost[href="/login/"] {
@@ -8599,6 +8616,360 @@ body[data-app-theme="fcp_tactical"] .ui-chip{
   border-color: rgba(108,112,91,.35);
   background: rgba(243,239,229,.9);
   color: var(--text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FCP STARTSEITE — Phase C Redesign
+   Neue Sektionen: Pain, Pricing, Steps, Closing-CTA
+   Visuelle Sprache: cream + orange (--fcp-o) statt reines Dunkel.
+   Alle neuen Sektionen hellen Hintergrund → Portal-Kohärenz.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Kicker-Varianten ───────────────────────────────────────────── */
+/* Standard: gold auf Dunkel (bestehend via var(--accent-warm))     */
+/* --light: orange auf Cream, --dark: orange auf Dunkel             */
+.fcp-brand-kicker--light{
+  color:#d46a20;
+  font-size:.75rem;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  margin-bottom:8px;
+  display:block;
+}
+.fcp-brand-kicker--dark{
+  color:#d46a20;
+  font-size:.75rem;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  margin-bottom:8px;
+  display:block;
+}
+
+/* ── Section-Headline (auf dunklen Sektionen) ───────────────────── */
+.fcp-brand-section-headline{
+  margin:0 0 28px;
+  color:var(--accent-warm);
+  font-size:clamp(1.5rem, 2.8vw, 2.6rem);
+  line-height:1.04;
+  letter-spacing:-.03em;
+  text-wrap:balance;
+}
+
+/* ── Hero — Trust-Badges unter CTA ─────────────────────────────── */
+.fcp-brand-hero__trust{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 16px;
+  list-style:none;
+  padding:0;
+  margin:4px 0 0;
+}
+.fcp-brand-hero__trust li{
+  font-size:.82rem;
+  color:rgba(232,223,205,.65);
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+.fcp-brand-hero__trust li::before{
+  content:"✓";
+  color:#d46a20;
+  font-weight:700;
+}
+
+/* ── Pain-Sektion (cream Hintergrund) ──────────────────────────── */
+.fcp-brand-pain{
+  background:#f6f1e5;
+  padding:72px 0 64px;
+  border-top:1px solid rgba(108,112,91,.1);
+}
+.fcp-brand-pain .fcp-brand-kicker--light{
+  margin-bottom:12px;
+}
+.fcp-brand-pain h2{
+  margin:0 0 40px;
+  color:#1c1f1a;
+  font-size:clamp(1.7rem, 3.2vw, 3rem);
+  line-height:1.04;
+  letter-spacing:-.03em;
+  text-wrap:balance;
+  max-width:26ch;
+}
+.fcp-brand-pain__grid{
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+  gap:16px;
+}
+.fcp-brand-pain-item{
+  display:grid;
+  gap:10px;
+  padding:24px;
+  border-radius:18px;
+  border:1px solid rgba(108,112,91,.14);
+  background:#fff;
+  align-content:start;
+}
+.fcp-brand-pain-item--solution{
+  background:linear-gradient(160deg, #fdf7ee 0%, #f6f0e2 100%);
+  border-color:#d46a20;
+  border-width:2px;
+}
+.fcp-brand-pain-item__icon{
+  font-size:1.6rem;
+  line-height:1;
+}
+.fcp-brand-pain-item strong{
+  font-size:1rem;
+  font-weight:700;
+  color:#1c1f1a;
+}
+.fcp-brand-pain-item p{
+  margin:0;
+  font-size:.88rem;
+  color:#5a5e50;
+  line-height:1.65;
+}
+.fcp-brand-pain-item--solution strong{
+  color:#b85c18;
+}
+
+/* ── Feature-Cards — Headline auf dunklem Band ──────────────────── */
+.fcp-brand-band .fcp-brand-section-headline{
+  margin-bottom:28px;
+}
+/* h3 in cards (statt h2 — SEO-saubere Hierarchie) */
+.fcp-brand-card h3{
+  margin:0;
+  color:var(--accent-warm);
+  font-size:clamp(1.2rem, 2vw, 1.9rem);
+  line-height:1.08;
+  letter-spacing:-.025em;
+  text-wrap:balance;
+  overflow-wrap:anywhere;
+}
+
+/* ── Pricing-Sektion (cream, Portal-Kohärenz) ───────────────────── */
+.fcp-brand-pricing{
+  background:#ece5d4;
+  padding:80px 0 72px;
+  border-top:1px solid rgba(108,112,91,.12);
+  border-bottom:1px solid rgba(108,112,91,.12);
+}
+.fcp-brand-pricing .fcp-brand-kicker--light{
+  margin-bottom:12px;
+}
+.fcp-brand-pricing h2{
+  margin:0 0 12px;
+  color:#1c1f1a;
+  font-size:clamp(1.8rem, 3.2vw, 3rem);
+  line-height:1.04;
+  letter-spacing:-.03em;
+  text-wrap:balance;
+}
+.fcp-brand-pricing__sub{
+  margin:0 0 44px;
+  color:#5a5e50;
+  font-size:1.05rem;
+  line-height:1.7;
+  max-width:56ch;
+}
+.fcp-brand-pricing__grid{
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+  gap:16px;
+  margin-bottom:24px;
+}
+.fcp-brand-tier{
+  display:grid;
+  gap:8px;
+  align-content:start;
+  padding:28px 22px;
+  border-radius:18px;
+  border:1px solid rgba(108,112,91,.18);
+  background:#fff;
+  position:relative;
+}
+.fcp-brand-tier--featured{
+  border-color:#d46a20;
+  border-width:2px;
+  background:linear-gradient(160deg, #fff8f2 0%, #fff 100%);
+}
+.fcp-brand-tier__badge{
+  position:absolute;
+  top:-12px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#d46a20;
+  color:#fff;
+  font-size:.72rem;
+  font-weight:800;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding:4px 12px;
+  border-radius:999px;
+  white-space:nowrap;
+}
+.fcp-brand-tier__range{
+  font-size:.82rem;
+  font-weight:700;
+  color:#7a7c68;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+.fcp-brand-tier__price{
+  font-size:2.2rem;
+  font-weight:800;
+  color:#1c1f1a;
+  letter-spacing:-.04em;
+  line-height:1;
+}
+.fcp-brand-tier__price span{
+  font-size:.95rem;
+  font-weight:500;
+  color:#7a7c68;
+  letter-spacing:0;
+}
+.fcp-brand-tier--featured .fcp-brand-tier__price{
+  color:#b85c18;
+}
+.fcp-brand-tier__label{
+  font-size:.83rem;
+  color:#5a5e50;
+}
+.fcp-brand-pricing__overflow{
+  margin:0 0 40px;
+  font-size:.9rem;
+  color:#7a7c68;
+}
+.fcp-brand-pricing__overflow a{
+  color:#d46a20;
+  font-weight:600;
+  text-decoration:none;
+}
+.fcp-brand-pricing__overflow a:hover{
+  text-decoration:underline;
+}
+.fcp-brand-pricing__cta{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:14px 20px;
+}
+.fcp-brand-pricing__trust{
+  font-size:.84rem;
+  color:#7a7c68;
+}
+
+/* ── Steps-Sektion (dunkel, Kontrast zum Cream) ─────────────────── */
+.fcp-brand-steps{
+  padding:80px 0 72px;
+  background:linear-gradient(180deg, #080908 0%, #0e100e 100%);
+}
+.fcp-brand-steps .fcp-brand-kicker--dark{
+  margin-bottom:12px;
+}
+.fcp-brand-steps h2{
+  margin:0 0 48px;
+  color:var(--accent-warm);
+  font-size:clamp(1.7rem, 3vw, 2.8rem);
+  line-height:1.04;
+  letter-spacing:-.03em;
+  text-wrap:balance;
+}
+.fcp-brand-steps__grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:24px;
+}
+.fcp-brand-step{
+  display:grid;
+  gap:14px;
+  padding:28px;
+  border:1px solid rgba(232,217,181,.1);
+  border-radius:22px;
+  background:linear-gradient(180deg, rgba(245,241,232,.06), rgba(12,14,11,.92));
+  align-content:start;
+}
+.fcp-brand-step__num{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:#d46a20;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.1rem;
+  font-weight:800;
+  flex-shrink:0;
+}
+.fcp-brand-step h3{
+  margin:0;
+  color:var(--accent-warm);
+  font-size:1.25rem;
+  font-weight:700;
+  line-height:1.2;
+}
+.fcp-brand-step p{
+  margin:0;
+  color:var(--muted);
+  font-size:.92rem;
+  line-height:1.7;
+}
+
+/* ── Closing CTA ────────────────────────────────────────────────── */
+.fcp-brand-cta-close{
+  padding:88px 0;
+  background:#f6f1e5;
+  border-top:1px solid rgba(108,112,91,.12);
+  text-align:center;
+}
+.fcp-brand-cta-close__inner{
+  display:grid;
+  gap:16px;
+  justify-items:center;
+  max-width:600px;
+  margin-inline:auto;
+}
+.fcp-brand-cta-close h2{
+  margin:0;
+  color:#1c1f1a;
+  font-size:clamp(1.8rem, 3vw, 2.8rem);
+  line-height:1.06;
+  letter-spacing:-.03em;
+  text-wrap:balance;
+}
+.fcp-brand-cta-close p{
+  margin:0;
+  color:#5a5e50;
+  font-size:1.05rem;
+}
+
+/* ── Responsive — Startseite ────────────────────────────────────── */
+@media(max-width:900px){
+  .fcp-brand-pain__grid,
+  .fcp-brand-pricing__grid{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+  }
+  .fcp-brand-steps__grid{
+    grid-template-columns:minmax(0, 1fr);
+    gap:16px;
+  }
+  .fcp-brand-card-grid{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+  }
+}
+@media(max-width:580px){
+  .fcp-brand-pain__grid,
+  .fcp-brand-pricing__grid,
+  .fcp-brand-card-grid{
+    grid-template-columns:minmax(0, 1fr);
+  }
+  .fcp-brand-pricing .fcp-brand-tier--featured{
+    order:-1;
+  }
 }
 
 body[data-app-theme="fcp_tactical"] .ui-chip.ui-chip--success{

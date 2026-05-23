@@ -31,7 +31,13 @@ const clubRequestHref = "/verein-anfragen/";
 const clubJoinHref = "/vereinssignin/";
 ---
 
-<Site title={APP.name} description="Neuigkeiten aus dem Verein" containerClass={isFcp ? "container--fcp-brand" : "container"}>
+<Site
+  title={isFcp ? `Vereinssoftware für Angelvereine | ${APP.name}` : APP.name}
+  description={isFcp
+    ? "Fishing-Club-Portal – digitale Vereinsverwaltung für Angelvereine. Mitglieder, Termine, Arbeitseinsätze und Dokumente in einem System. Ab 100 € pro Jahr."
+    : "Neuigkeiten aus dem Verein"}
+  containerClass={isFcp ? "container--fcp-brand" : "container"}
+>
   {isFcp ? (
     isFcpLockdown ? (
       <section class="card" style="max-width:780px;margin:0 auto;">
@@ -48,179 +54,167 @@ const clubJoinHref = "/vereinssignin/";
       </section>
     ) : (
       <div class="fcp-brand-home">
-        <section class="fcp-brand-hero">
+
+        {/* ── HERO ─────────────────────────────────────────────────── */}
+        <section class="fcp-brand-hero" aria-label="Fishing-Club-Portal – Vereinssoftware für Angelvereine">
           <div class="fcp-brand-hero__media">
             <img src="/Bilder/Hero1.jpg" alt="Angelruten am See bei intensivem Sonnenaufgang" loading="eager" decoding="async" />
           </div>
-          <div class="fcp-brand-hero__overlay"></div>
+          <div class="fcp-brand-hero__overlay" aria-hidden="true"></div>
           <div class="container fcp-brand-hero__content">
-            <h1>Vereinsbetrieb digital organisieren. Ohne Chat-Chaos, Excel-Wildwuchs und Tool-Brüche.</h1>
+            <div class="fcp-brand-kicker">Vereinssoftware für Angelvereine</div>
+            <h1>Weniger Chaos im Verein.<br />Mehr Zeit zum Angeln.</h1>
             <p>
-              Fishing-Club-Portal ist die zentrale Plattform für Angelvereine, die Mitglieder, Termine,
-              Arbeitseinsätze, Dokumente und Zugänge an einem Ort organisieren wollen, klar, nachvollziehbar
-              und direkt im Alltag nutzbar.
+              Mitglieder, Termine, Arbeitseinsätze und Dokumente — in einem Portal statt verteilt
+              über WhatsApp, Excel und Papier. Ab&nbsp;100&nbsp;€ pro Jahr für den ganzen Verein.
             </p>
             <div class="fcp-brand-hero__actions">
-              <a class="feed-btn fcp-brand-btn--primary" href={clubRequestHref}>Verein anfragen</a>
-              <a class="feed-btn feed-btn--ghost fcp-brand-btn--ghost" href={clubJoinHref}>Bestehendem Verein beitreten</a>
-              <span class="fcp-brand-soon-note">Smoke-Test Einstieg aktiv</span>
+              <a class="feed-btn fcp-brand-btn--primary" href={clubRequestHref}>Jetzt Verein anmelden</a>
+              <a class="feed-btn feed-btn--ghost fcp-brand-btn--ghost" href="#wie-es-funktioniert">Wie es funktioniert</a>
             </div>
-            <div class="fcp-brand-hero__metrics">
-              <div class="fcp-brand-metric">
-                <strong>1</strong>
-                <span>Ein System statt vieler Einzellösungen</span>
+            <ul class="fcp-brand-hero__trust">
+              <li>Keine Einrichtungsgebühr</li>
+              <li>Setup in einem Tag</li>
+              <li>Jährlich kündbar</li>
+            </ul>
+          </div>
+        </section>
+
+        {/* ── PAIN — Was FCP ersetzt ───────────────────────────────── */}
+        <section class="fcp-brand-pain" aria-labelledby="pain-hl">
+          <div class="container">
+            <span class="fcp-brand-kicker--light">Das kennt jeder Verein</span>
+            <h2 id="pain-hl">WhatsApp, Excel, Papierlisten.<br />Und trotzdem Chaos.</h2>
+            <div class="fcp-brand-pain__grid">
+              <div class="fcp-brand-pain-item">
+                <span class="fcp-brand-pain-item__icon" aria-hidden="true">💬</span>
+                <strong>Chat-Gruppen</strong>
+                <p>Termine verschwinden im Chat. Wer hat zugesagt? Wer kommt zum Arbeitseinsatz? Niemand weiß es sicher.</p>
               </div>
-              <div class="fcp-brand-metric">
-                <strong>3</strong>
-                <span>Setup, Mitglieder und Planung in einem Ablauf</span>
+              <div class="fcp-brand-pain-item">
+                <span class="fcp-brand-pain-item__icon" aria-hidden="true">📊</span>
+                <strong>Excel-Tabellen</strong>
+                <p>Mitgliederliste von vor zwei Jahren. Bezahlt oder nicht? Wer ist noch aktiv? Jeder führt seine eigene Version.</p>
               </div>
-              <div class="fcp-brand-metric">
-                <strong>Praxisnah</strong>
-                <span>Entwickelt für echte Vereinsarbeit, nicht für Demos</span>
+              <div class="fcp-brand-pain-item">
+                <span class="fcp-brand-pain-item__icon" aria-hidden="true">📋</span>
+                <strong>Papier & PDFs</strong>
+                <p>Arbeitseinsätze auf Listen, Fangmeldungen auf Formularen, Ausweise beim Drucker. Alles ein eigenes System.</p>
+              </div>
+              <div class="fcp-brand-pain-item fcp-brand-pain-item--solution">
+                <span class="fcp-brand-pain-item__icon" aria-hidden="true">⚡</span>
+                <strong>Mit FCP — ein Portal</strong>
+                <p>Mitglieder, Termine, Einsätze, Ausweise, Dokumente. Alles an einem Ort. Ein Login für den ganzen Verein.</p>
               </div>
             </div>
           </div>
         </section>
 
-        <section class="fcp-brand-band">
+        {/* ── FEATURES ─────────────────────────────────────────────── */}
+        <section class="fcp-brand-band" aria-labelledby="features-hl">
           <div class="container">
+            <h2 id="features-hl" class="fcp-brand-section-headline">Was FCP für deinen Angelverein macht</h2>
             <div class="fcp-brand-card-grid">
               <article class="fcp-brand-card">
-                <span class="fcp-brand-card__eyebrow">Vereinsstart</span>
-                <h2>Sauber starten statt später aufräumen</h2>
-                <p>Neue Vereine, Mitglieder, Gewässer, Karten und Grunddaten folgen einem geführten Einstieg. So entsteht von Anfang an Struktur statt späterem Datenchaos.</p>
+                <span class="fcp-brand-card__eyebrow">Mitgliederverwaltung</span>
+                <h3>Mitgliederliste, Import, digitale Ausweise.</h3>
+                <p>CSV-Import, Rollenvergabe, Mitgliedskarten — geführt, ohne Datenpflege-Chaos. Ausweise direkt im Portal, immer aktuell.</p>
               </article>
               <article class="fcp-brand-card">
-                <span class="fcp-brand-card__eyebrow">Eventplanung</span>
-                <h2>Planung statt Nachrichten-Pingpong</h2>
-                <p>Termine, Arbeitseinsätze, Helferbedarf und Freigaben liegen an einem Ort, nicht verteilt über WhatsApp, Listen und Zurufe.</p>
+                <span class="fcp-brand-card__eyebrow">Termine & Arbeitseinsätze</span>
+                <h3>Kein Nachrichten-Pingpong mehr.</h3>
+                <p>Einsätze planen, Helfer zuweisen, Teilnahme bestätigen — alles an einem Ort, ohne WhatsApp-Koordination.</p>
               </article>
               <article class="fcp-brand-card">
-                <span class="fcp-brand-card__eyebrow">Zugriffe &amp; Rollen</span>
-                <h2>Jeder sieht, was zu seiner Rolle gehört</h2>
-                <p>Vorstand, Verwaltung und Mitglieder arbeiten im selben System, aber mit klar geregelten Zuständigkeiten und Zugriffswegen.</p>
+                <span class="fcp-brand-card__eyebrow">Gewässer & Fangliste</span>
+                <h3>Berechtigungen, Fänge, Regelwerke.</h3>
+                <p>Gewässer mit Zugangsregeln verwalten, digitale Fangmeldungen erfassen — strukturiert und mobil nutzbar.</p>
               </article>
               <article class="fcp-brand-card fcp-brand-card--accent">
-                <span class="fcp-brand-card__eyebrow">Im Alltag nutzbar</span>
-                <h2>Nicht für die Theorie gebaut</h2>
-                <p>FCP ist für echte Vereinsarbeit gedacht: mobil erreichbar, direkt verständlich und so aufgebaut, dass Prozesse im Alltag funktionieren und nicht nur in der Demo.</p>
+                <span class="fcp-brand-card__eyebrow">Rollen & Dokumente</span>
+                <h3>Jeder sieht, was zu seiner Rolle gehört.</h3>
+                <p>Vorstand, Admin und Mitglieder arbeiten im selben System mit klar geregelten Zuständigkeiten. Dokumente zentral, zugänglich.</p>
               </article>
             </div>
           </div>
         </section>
 
-        <section class="fcp-brand-showcase">
-          <div class="container fcp-brand-showcase__grid">
-            <div class="fcp-brand-showcase__copy">
-              <div class="fcp-brand-kicker">Produktfokus</div>
-              <h2>Die wichtigsten Vereinsprozesse. In einem klaren System.</h2>
-              <p>
-                FCP verbindet öffentliche Vereinsdarstellung und geschütztes Portal zu einer gemeinsamen Arbeitsstruktur.
-                Mitgliederzugang, Eventplanung, Dokumente, Vereinssetup und Vereinsabläufe greifen ineinander,
-                statt in getrennten Tools auseinanderzufallen.
-              </p>
-              <ul class="fcp-brand-list">
-                <li>Geführter Vereinsstart mit kontrollierter Freischaltung</li>
-                <li>Eventplaner für Termine, Helfer, Einsätze und Freigaben</li>
-                <li>Mitgliederzugang über Einladung, Login und geregelte Rollen</li>
-                <li>Dokumente, Ausweise und weitere Kernmodule in derselben Plattform</li>
-                <li>Saubere Vereinskontexte statt verstreuter Einzellogik</li>
-              </ul>
+        {/* ── PRICING ──────────────────────────────────────────────── */}
+        <section class="fcp-brand-pricing" id="preise" aria-labelledby="pricing-hl">
+          <div class="container">
+            <span class="fcp-brand-kicker--light">Preise</span>
+            <h2 id="pricing-hl">Faire Staffelpreise. Keine versteckten Kosten.</h2>
+            <p class="fcp-brand-pricing__sub">
+              2&nbsp;€ pro aktivem Mitglied und Jahr — abgerechnet in 50er-Stufen.
+              Transparente Kalkulation, kein Kleingedrucktes, keine Einrichtungsgebühr.
+            </p>
+            <div class="fcp-brand-pricing__grid">
+              <div class="fcp-brand-tier">
+                <div class="fcp-brand-tier__range">Bis 50 Mitglieder</div>
+                <div class="fcp-brand-tier__price">100&nbsp;€<span>/Jahr</span></div>
+                <div class="fcp-brand-tier__label">Kleiner Verein</div>
+              </div>
+              <div class="fcp-brand-tier fcp-brand-tier--featured">
+                <div class="fcp-brand-tier__badge">Beliebt</div>
+                <div class="fcp-brand-tier__range">Bis 100 Mitglieder</div>
+                <div class="fcp-brand-tier__price">200&nbsp;€<span>/Jahr</span></div>
+                <div class="fcp-brand-tier__label">Für die meisten Vereine</div>
+              </div>
+              <div class="fcp-brand-tier">
+                <div class="fcp-brand-tier__range">Bis 150 Mitglieder</div>
+                <div class="fcp-brand-tier__price">300&nbsp;€<span>/Jahr</span></div>
+                <div class="fcp-brand-tier__label">Großer Verein</div>
+              </div>
+              <div class="fcp-brand-tier">
+                <div class="fcp-brand-tier__range">Bis 200 Mitglieder</div>
+                <div class="fcp-brand-tier__price">400&nbsp;€<span>/Jahr</span></div>
+                <div class="fcp-brand-tier__label">Etablierter Club</div>
+              </div>
             </div>
-            <div class="fcp-brand-showcase__visual">
-              <div class="fcp-brand-panel">
-                <div class="fcp-brand-panel__top">
-                  <span class="fcp-brand-dot"></span>
-                  <span class="fcp-brand-dot"></span>
-                  <span class="fcp-brand-dot"></span>
-                </div>
-                <div class="fcp-brand-panel__body">
-                  <div class="fcp-brand-panel__hero">
-                    <div>
-                      <span class="fcp-brand-kicker">Systemüberblick</span>
-                      <h3>Setup. Mitglieder. Planung. Betrieb.</h3>
-                    </div>
-                    <span class="fcp-brand-chip">fcp_beta</span>
-                  </div>
-                  <div class="fcp-brand-panel__stats">
-                    <div><strong>Setup</strong><span>Vereinsdaten, Gewässer, Karten, Mitglieder</span></div>
-                    <div><strong>Betrieb</strong><span>Termine, Einsätze, Eventpfade und Zusammenarbeit</span></div>
-                    <div><strong>Governance</strong><span>Rollen, Module, Rechte und nachvollziehbare Zuständigkeiten</span></div>
-                  </div>
-                  <div class="fcp-brand-panel__tiles">
-                    <div class="fcp-brand-tile"><span>VS</span><strong>Vereinssetup</strong></div>
-                    <div class="fcp-brand-tile"><span>EP</span><strong>Eventplaner</strong></div>
-                    <div class="fcp-brand-tile"><span>MG</span><strong>Mitglieder</strong></div>
-                    <div class="fcp-brand-tile"><span>DK</span><strong>Dokumente</strong></div>
-                  </div>
-                </div>
+            <p class="fcp-brand-pricing__overflow">
+              Mehr als 200 Mitglieder? <a href={clubRequestHref}>Auf Anfrage — wir finden eine faire Lösung.</a>
+            </p>
+            <div class="fcp-brand-pricing__cta">
+              <a class="feed-btn fcp-brand-btn--primary" href={clubRequestHref}>Jetzt Verein anmelden</a>
+              <span class="fcp-brand-pricing__trust">Keine Einrichtungsgebühr · Erster Monat inklusive · Jährlich kündbar</span>
+            </div>
+          </div>
+        </section>
+
+        {/* ── HOW IT WORKS ─────────────────────────────────────────── */}
+        <section class="fcp-brand-steps" id="wie-es-funktioniert" aria-labelledby="steps-hl">
+          <div class="container">
+            <span class="fcp-brand-kicker--dark">So startet ein Verein</span>
+            <h2 id="steps-hl">Drei Schritte bis zum laufenden Portal.</h2>
+            <div class="fcp-brand-steps__grid">
+              <div class="fcp-brand-step">
+                <div class="fcp-brand-step__num" aria-hidden="true">1</div>
+                <h3>Verein anmelden</h3>
+                <p>Vereinsdaten eingeben, Antrag absenden. Kein Vertrag vorab, keine Kreditkarte, kein Risiko.</p>
+              </div>
+              <div class="fcp-brand-step">
+                <div class="fcp-brand-step__num" aria-hidden="true">2</div>
+                <h3>Setup & Freischaltung</h3>
+                <p>Geführter Einstieg: Mitglieder importieren, Gewässer anlegen, Berechtigungen konfigurieren — in einem Tag erledigt.</p>
+              </div>
+              <div class="fcp-brand-step">
+                <div class="fcp-brand-step__num" aria-hidden="true">3</div>
+                <h3>Portal läuft</h3>
+                <p>Mitglieder einladen, Portal sofort nutzen — mobil erreichbar, direkt verständlich, ohne Schulung.</p>
               </div>
             </div>
           </div>
         </section>
 
-        <section class="fcp-brand-story">
-          <div class="container fcp-brand-story__grid">
-            <div class="fcp-brand-story__media">
-              <img src="/Bilder/20201026_165446.jpg" alt="Wald und Wasser im Abendlicht" loading="lazy" />
-            </div>
-            <div class="fcp-brand-story__copy">
-              <div class="fcp-brand-kicker">Warum FCP</div>
-              <h2>Weniger Reibung. Mehr Klarheit im Vereinsalltag.</h2>
-              <p>
-                Viele Vereine arbeiten digital noch zwischen Chatgruppen, Einzeldateien, Papierlisten und isolierten
-                Tools. FCP wurde entwickelt, um genau diese Reibung zu reduzieren und Vereinsorganisation klarer,
-                nachvollziehbarer und alltagstauglicher zu machen.
-              </p>
-              <div class="fcp-brand-bullets">
-                <div><strong>Klare Zuständigkeiten</strong><span>Vorstand, Admins und Mitglieder arbeiten auf derselben Grundstruktur.</span></div>
-                <div><strong>Weniger Tool-Brüche</strong><span>Wichtige Prozesse liegen nicht mehr verteilt, sondern gebündelt an einem Ort.</span></div>
-                <div><strong>Einführung mit System</strong><span>Onboarding und Freischaltung sind Teil des Produkts und nicht nur ein Projekt nebenbei.</span></div>
-              </div>
-            </div>
+        {/* ── CLOSING CTA ──────────────────────────────────────────── */}
+        <section class="fcp-brand-cta-close" aria-labelledby="cta-hl">
+          <div class="container fcp-brand-cta-close__inner">
+            <h2 id="cta-hl">Bereit für strukturierten Vereinsbetrieb?</h2>
+            <p>Erster Monat inklusive. Geführter Start. Kein Risiko.</p>
+            <a class="feed-btn fcp-brand-btn--primary" href={clubRequestHref}>Verein jetzt anmelden</a>
           </div>
         </section>
 
-        <section class="fcp-brand-about">
-          <div class="container fcp-brand-about__grid">
-            <div class="fcp-brand-about__copy">
-              <div class="fcp-brand-kicker">Über das Projekt</div>
-              <h2>Entstanden nicht aus Theorie, sondern aus echter Praxis.</h2>
-              <p>
-                Fishing-Club-Portal ist aus der Beobachtung entstanden, dass Vereinsarbeit digital an denselben
-                Punkten scheitert: zu viele Nebenwege, zu wenig klare Zuständigkeiten, verstreute Informationen und
-                Prozesse, die am Ende doch wieder über Chat, Papier oder Tabellen laufen.
-              </p>
-              <p>
-                Die Idee war deshalb nie eine weitere Vereinssoftware, sondern eine zusammenhängende Struktur, in der
-                Einstieg, Mitgliederbetrieb, Eventplanung, Dokumente und Verwaltung wirklich ineinandergreifen.
-              </p>
-              <p>
-                FCP entsteht nicht am Reißbrett, sondern aus echter Nutzung, echten Anforderungen und echtem
-                Vereinsalltag, Schritt für Schritt, mit dem Ziel, Vereinsbetrieb digital einfacher, klarer und
-                belastbarer zu machen.
-              </p>
-            </div>
-            <div class="fcp-brand-about__founder">
-              <div class="fcp-brand-kicker">Über den Gründer</div>
-              <h2>Ich entwickle FCP nicht für eine Zielgruppe auf dem Papier, sondern für reale Abläufe.</h2>
-              <p>
-                Ich komme selbst aus der Praxis und sehe jeden Tag, wo Vereinsorganisation digital nicht funktioniert:
-                Informationen sind verteilt, Zuständigkeiten unklar und Prozesse hängen an einzelnen Personen statt
-                an einer Struktur.
-              </p>
-              <p>
-                Als Entwickler ist mein Anspruch nicht, möglichst viele Features zu bauen, sondern ein System, das
-                im Alltag wirklich hilft. Ein System, das nachvollziehbar ist, Prozesse zusammenführt und Vereine
-                dabei unterstützt, sauber und effizient zu arbeiten.
-              </p>
-              <p>
-                FCP ist deshalb kein fertiges Produkt von der Stange, sondern ein System, das mit echter Nutzung
-                wächst, nah an den Vereinen, nah an den Anforderungen und ohne Umwege über theoretische Lösungen.
-              </p>
-            </div>
-          </div>
-        </section>
       </div>
     )
   ) : (

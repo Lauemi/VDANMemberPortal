@@ -1,0 +1,300 @@
+/*
+ * app-shell-redesign.css — Phase B ADM Shell
+ * ============================================
+ * Geladen nur auf /app/* Routen (isAppPath, Site.astro).
+ * Laedt nach app-shell.css und redesign.css — wirkt als Override-Layer.
+ *
+ * PHILOSOPHIE:
+ *   Kein Renderer-Code wird angefasst. Kein JSON. Keine Routen.
+ *   Wir tauschen die Huelle, nicht den Inhalt.
+ *   Der ADM-Workspace saß bisher in einer Card-Huelle die aus dem
+ *   oeffentlichen VDAN-Layout stammt und nie fuer ADM redesigned wurde.
+ *   Phase B macht den Workspace zur ersten Ebene.
+ *
+ * RUECKSPRUNG:
+ *   git checkout pre-phase-b
+ *   (Tag gesetzt vor Beginn Phase B, 2026-05-23)
+ *
+ * AENDERUNGSPROTOKOLL:
+ *   2026-05-23 — Phase B initiiert nach Claude Design Spec
+ *                Spec: /Users/michaellauenroth/Downloads/spec.html
+ *   Autor: Claude Code (Michael Lauenroth)
+ */
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCHRITT 2 — Astro-Card neutralisieren
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR: <Site containerClass="container--admin-wide"> rendert
+            eine <section class="card"><div class="card__body">.
+            Diese Card erzeugte: sichtbare Border, Background (#0b1018),
+            Padding 1.5rem und Box-Shadow um den gesamten ADM-Workspace.
+            Ergebnis: "Card in Card in Card" — drei Tiefen gleichzeitig.
+
+   WARUM GEAENDERT: Die Astro-Card ist fuer den oeffentlichen VDAN-Auftritt
+            gebaut. Fuer den ADM-Workspace ist sie eine leere Huelle die
+            nur visuellen Lärm erzeugt. Phase B macht den Workspace selbst
+            zur ersten sichtbaren Ebene.
+
+   WAS BLEIBT: Das HTML-Element bleibt im DOM (kein JS-Bruch).
+            Nur visuelle Eigenschaften werden entfernt.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.container--admin-wide > section.card,
+.container--admin-wide > section.card > .card__body {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* App-Hintergrund auf /app/* Routen: warme Arbeitsflaeche */
+body[data-app-theme="fcp_tactical"] .container--admin-wide {
+  background: var(--rd-bg, #f6f1e5);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCHRITT 5 — Navigation leise stellen
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR: .admin-board__nav hatte Card-Optik:
+            border: 1px solid var(--line), border-radius: 12px,
+            background: rgba(255,255,255,.03), padding: 8px.
+            Optisch: eine Card als Nav-Container mit 11 Button-Items
+            die jeweils eigene Border und Background hatten.
+            sticky top: 84px — dieser Wert stammt aus dem oeffentlichen
+            Layout-Header (VDAN public header ~84px hoch).
+
+   WARUM GEAENDERT: Navigation soll fluestern, nicht schreien.
+            Der Button-Stapel-Look kommuniziert "Formular" statt
+            "Navigation". Phase B: Rail mit Trennlinie statt Card,
+            Links statt Buttons, Gold-Stripe fuer Aktiv-State.
+            top: 18px weil der ADM-eigene Topbar schlanker ist.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.admin-board {
+  grid-template-columns: 236px 1fr;
+  gap: 0;
+}
+
+.admin-board__nav {
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
+  border-radius: 0;
+  padding: 6px 16px 24px 0;
+  top: 18px;
+}
+
+.admin-nav-btn {
+  border: 0;
+  background: transparent;
+  color: var(--rd-ink-2, #4a4e40);
+  border-radius: 7px;
+  min-height: 30px;
+  padding: 6px 12px;
+  font-size: 13px;
+  position: relative;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.admin-nav-btn:hover {
+  background: var(--rd-gold-softer, rgba(183, 154, 99, 0.06));
+  color: var(--rd-ink, #2a2d24);
+}
+
+/* WAS WAR: .is-active nutzte --accent-cool-soft (blaustichig, dunkel)
+   WARUM: Gold-Soft passt zur Produktsprache — warm, nicht kuehltechnisch.
+          Der 2px-Stripe links signalisiert Aktiv-Zustand ohne Flaeche. */
+.admin-nav-btn.is-active {
+  background: var(--rd-gold-soft, rgba(183, 154, 99, 0.12));
+  color: var(--rd-gold-lo, #9c8148);
+  font-weight: 500;
+  border-color: transparent;
+}
+
+.admin-nav-btn.is-active::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--rd-gold, #b79a63);
+  border-radius: 2px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCHRITT 6 — Panels (admin-card) als primaere Card definieren
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR: .admin-card hatte RGBA-Glass-Look:
+            background: rgba(255,255,255,.03) — kaum sichtbar auf dunkel,
+            border: 1px solid var(--line), border-radius: 12px,
+            padding: 10px — Inhalt hatte kein eigenes Padding.
+            Kollision: glass-dark-Card umschloss helle cream-Tabelle
+            → zwei Farbsprachen prallten aufeinander.
+
+   WARUM GEAENDERT: Das Panel soll die primaere Datenflaeche sein.
+            Weiss, klare Border, kein Padding nach aussen —
+            das Innenleben (Form, Tabelle, Readonly) bringt eigenes
+            Padding mit. Inline-Data-Table v2 sitzt jetzt in seinem
+            natuerlichen Habitat.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.admin-card {
+  background: #fff;
+  border: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
+  border-radius: 10px;
+  padding: 0;
+  gap: 0;
+}
+
+.admin-card__header {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
+}
+
+/* WAS WAR: h3 in admin-card__header hatte ca. 17px — konkurrierte mit
+            Section-h2 und Tabellen-h1 auf gleicher Aughoehe.
+   WARUM: 13.5px Semibold als Panel-Titel ordnet sich unter dem
+          Workspace-Header ein, ohne zu verschwinden. */
+.admin-card__header h3 {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--rd-ink, #2a2d24);
+  margin: 0;
+}
+
+/* WAS WAR: Section-Heading h2 war ~28px — zu dominant neben Tabellen-h1.
+   WARUM: 15px mit Border-Bottom macht den Section-Header zum
+          Cluster-Trenner, nicht zum konkurrierenden Titel. */
+.qfp-section-heading h2 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--rd-ink, #2a2d24);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
+  margin-bottom: 14px;
+}
+
+/* State-Badges: vorher RGBA-Pillen die auf dunkel kaum lesbar waren.
+   Jetzt semantische Soft-Farben aus dem rd-* System. */
+.admin-state-badge.is-live {
+  background: var(--rd-ok-soft, #e4ecd6);
+  color: var(--rd-ok, #6b8f4c);
+  border: 1px solid transparent;
+}
+
+.admin-state-badge.is-preview {
+  background: var(--rd-warn-soft, #f5ebd0);
+  color: var(--rd-warn, #b88a2a);
+  border: 1px solid transparent;
+}
+
+.admin-state-badge.is-gap,
+.admin-state-badge.is-partial {
+  background: var(--rd-surface-2, #efe8d7);
+  color: var(--rd-muted, #7a7c68);
+  border: 1px solid transparent;
+}
+
+/* Section-Wrapper: kein eigener Background mehr, nur Gap */
+.admin-section.is-active {
+  gap: 14px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCHRITT 7 — Sticky-Offset-Patch
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR: top: 84px / scroll-margin-top: 108px
+            Diese Werte stammen aus dem oeffentlichen VDAN-Layout-Header
+            (Hoehe ca. 60-84px) und wurden nie auf den ADM-Kontext
+            angepasst. Im ADM-eigenen Topbar-Kontext ist der Offset
+            deutlich kleiner.
+
+   WARUM GEAENDERT: Mit dem schlankeren ADM-Topbar (54px) und
+            dem Workspace-Header passt top: 18px.
+            scroll-margin-top: 24px reicht fuer den Section-Wechsel.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.admin-board__nav {
+  top: 18px;
+}
+
+.admin-section {
+  scroll-margin-top: 24px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCHRITT 4 — Workspace-Header (page-level, vor dem admin-board)
+   ───────────────────────────────────────────────────────────────────
+   Neu in index.astro eingefuegt. Liest aus resolvedMask.header
+   (Kicker, Titel, Beschreibung) — statisch gerendert, kein JS.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.adm-workspace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 22px 0 18px;
+}
+
+.adm-workspace-header__kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rd-muted, #7a7c68);
+  margin: 0 0 6px;
+}
+
+.adm-workspace-header__title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--rd-ink, #2a2d24);
+  margin: 0 0 6px;
+}
+
+.adm-workspace-header__desc {
+  font-size: 13.5px;
+  color: var(--rd-muted, #7a7c68);
+  margin: 0;
+  max-width: 680px;
+  line-height: 1.5;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   DARK/LIGHT TOGGLE — bleibt fuer den Tabellen-Body intakt
+   ───────────────────────────────────────────────────────────────────
+   Die Inline-Data-Table v2 hat einen eigenen Dark/Light-Toggle.
+   Dieser betrifft nur den Tabellen-Body — die Aussenwelt bleibt hell.
+   Keine Ueberschreibung noetig — redesign.css handhabt das bereits
+   via [data-rd-theme="dark"] innerhalb .is-redesign.
+   ═══════════════════════════════════════════════════════════════════ */
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   HOSTED-SHELL KRÜCKE — neutralisiert durch Card-Neutralisierung
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR: .fcp-adm-shell--hosted nutzte negative margin
+            (calc(-1 * var(--card-padding, 1.5rem))) um den ADM-Workspace
+            aus der Astro-Card-Huelle herauszuzwingen.
+            Das war eine Krücke weil die Card-Huelle nie entfernt wurde.
+
+   JETZT: Die Card-Huelle ist transparent (Schritt 2).
+          Die negative-margin-Krücke kann auf 0 gesetzt werden.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.fcp-adm-shell--hosted {
+  margin: 0;
+}

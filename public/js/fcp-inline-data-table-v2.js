@@ -306,8 +306,9 @@
       if (explicit === "light" || explicit === "dark") return explicit;
       const rootTheme = String(root?.dataset?.rdTheme || "").trim().toLowerCase();
       if (rootTheme === "light" || rootTheme === "dark") return rootTheme;
-      const appTheme = String(document.body?.dataset?.appTheme || "").trim().toLowerCase();
-      return appTheme === "fcp_tactical" ? "dark" : "light";
+      // Phase B: fcp_tactical workspace is now cream (#f6f1e5), not dark.
+      // Default to "light" — user can still toggle to "dark" via the Hell/Dunkel button.
+      return "light";
     }
 
     function rowKey(row) {

@@ -891,3 +891,142 @@ body[data-app-theme="fcp_tactical"] .fcp-adm-shell .qfp-form-field {
   display: grid;
   gap: 2px;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   CATCH-DIALOG — FCP Tactical Light Theme
+   ───────────────────────────────────────────────────────────────────
+   Das catch-dialog wird direkt in document.body gehaengt
+   (nicht in .fcp-adm-shell). Daher eigene Selektoren noetig.
+   main.css: dark gradient background → hier: cream-light ersetzen.
+   Scope-Gate: app-shell-redesign.css laed NUR auf /app/* Routen.
+   Impact: KEIN Einfluss auf GoFishing-Dialog, Feed-Dialog etc.
+   (diese laufen nicht auf /app/* mit app-shell-redesign.css)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Dialog-Rahmen: dezente Border + Schatten statt hartem Dark-Rand */
+body[data-app-theme="fcp_tactical"] .catch-dialog {
+  border-left: 1px solid var(--rd-line, rgba(108, 112, 91, 0.18));
+  box-shadow: -6px 0 32px rgba(62, 56, 34, 0.12);
+}
+
+/* Dialog-Form: Dark-Gradient → Cream */
+body[data-app-theme="fcp_tactical"] .catch-dialog__form {
+  background: var(--rd-bg, #f6f1e5);
+  color: var(--rd-ink, #2a2d24);
+}
+
+/* Titel-Zeile: h3 als Titelbalken mit Trennlinie nach unten */
+body[data-app-theme="fcp_tactical"] .catch-dialog__form h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--rd-ink, #2a2d24);
+  margin: 0 0 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rd-line, rgba(108, 112, 91, 0.18));
+  letter-spacing: -0.01em;
+}
+
+/* Readonly-Grid: 2-spaltig im Dialog (wie Fangliste-Detail) */
+body[data-app-theme="fcp_tactical"] .catch-dialog__body.qfp-readonly-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin-top: 14px;
+}
+
+/* Einzelnes Readonly-Item */
+body[data-app-theme="fcp_tactical"] .catch-dialog__body .qfp-readonly-item {
+  display: grid;
+  gap: 2px;
+}
+
+/* Full-width Items */
+body[data-app-theme="fcp_tactical"] .catch-dialog__body .qfp-readonly-item.is-full {
+  grid-column: 1 / -1;
+}
+
+/* Label im Readonly */
+body[data-app-theme="fcp_tactical"] .catch-dialog__body .qfp-field-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rd-muted, #7a7c68);
+}
+
+/* Wert im Readonly */
+body[data-app-theme="fcp_tactical"] .catch-dialog__body .qfp-field-value {
+  font-size: 13.5px;
+  color: var(--rd-ink, #2a2d24);
+  line-height: 1.4;
+}
+
+/* Form-Grid (editierbarer Modus): 1-spaltig, kompakt */
+body[data-app-theme="fcp_tactical"] .catch-dialog__body.qfp-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* Inputs im Dialog (nicht in .fcp-adm-shell — globale Regel greift nicht) */
+body[data-app-theme="fcp_tactical"] .catch-dialog__body .qfp-form-field :where(input, select, textarea) {
+  min-height: 34px;
+  border-radius: 6px;
+  font-size: 13px;
+  background: rgba(243, 239, 229, 0.98);
+  border: 1px solid rgba(108, 112, 91, 0.28);
+  color: var(--rd-ink, #2a2d24);
+  padding: 0 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+body[data-app-theme="fcp_tactical"] .catch-dialog__body .qfp-form-field :where(input, select, textarea):focus {
+  outline: none;
+  border-color: var(--rd-gold, #b79a63);
+  box-shadow: 0 0 0 2px var(--rd-gold-soft, rgba(183, 154, 99, 0.12));
+}
+
+/* Label im Form-Dialog */
+body[data-app-theme="fcp_tactical"] .catch-dialog__body .qfp-form-field .qfp-field-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rd-muted, #7a7c68);
+}
+
+/* Aktions-Zeile: Trennlinie oben, Button-Reihe */
+body[data-app-theme="fcp_tactical"] .catch-dialog__actions {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rd-line, rgba(108, 112, 91, 0.18));
+}
+
+/* Schliessen-Button: ghost-Stil, FCP-warm */
+body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn--ghost {
+  background: transparent;
+  border: 1px solid var(--rd-line-strong, rgba(108, 112, 91, 0.28));
+  color: var(--rd-ink-2, #4a4e40);
+  border-radius: 7px;
+}
+
+body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn--ghost:hover {
+  background: var(--rd-surface-2, #efe8d7);
+}
+
+/* Speichern-Button: gold primary */
+body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-btn--ghost) {
+  background: var(--rd-gold, #b79a63);
+  border: 1px solid var(--rd-gold, #b79a63);
+  color: #fff;
+  border-radius: 7px;
+  font-weight: 600;
+}
+
+body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-btn--ghost):hover {
+  background: var(--rd-gold-hi, #a08842);
+  border-color: var(--rd-gold-hi, #a08842);
+}

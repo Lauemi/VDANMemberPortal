@@ -2258,11 +2258,15 @@ a.feed-btn.feed-btn--ghost[href="/login/"] {
 
 /* .fcp-brand-hero .feed-btn.fcp-brand-btn--ghost: 0,3,0 — beats body[fcp_tactical] .feed-btn--ghost:not() (0,3,0) by later position */
 .fcp-brand-hero .feed-btn.fcp-brand-btn--ghost{
-  background:rgba(8,11,8,.52);
-  border:1px solid rgba(232,217,181,.28);
+  background:rgba(8,11,8,.45);
+  border:1.5px solid rgba(232,217,181,.65);
   color:#f5f1e8;
   text-decoration:none;
-  box-shadow:none;
+  box-shadow:0 0 0 1px rgba(232,217,181,.12);
+}
+.fcp-brand-hero .feed-btn.fcp-brand-btn--ghost:hover{
+  background:rgba(8,11,8,.62);
+  border-color:rgba(232,217,181,.9);
 }
 
 .fcp-brand-hero__metrics{
@@ -8967,9 +8971,7 @@ body[data-app-theme="fcp_tactical"] .ui-chip{
   .fcp-brand-card-grid{
     grid-template-columns:minmax(0, 1fr);
   }
-  .fcp-brand-pricing .fcp-brand-tier--featured{
-    order:-1;
-  }
+  /* Behalte natürliche DOM-Reihenfolge auf Mobile: 50→100→150→200 */
 }
 
 body[data-app-theme="fcp_tactical"] .ui-chip.ui-chip--success{

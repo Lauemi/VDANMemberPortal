@@ -504,6 +504,10 @@ const publicMenuLinks = isFcpMode
       </div>
     )}
 
+    {/* KPI-Strip — Phase B. Befüllt via adm-kpi-loader.js aus Supabase.
+        sticky top:54px (direkt unter Topbar). Bleibt hidden bis JS-Daten da. */}
+    {isAppPath && <div id="admKpiStrip" class="adm-kpi-strip" hidden aria-hidden="true" aria-label="Workspace-Kennzahlen"></div>}
+
     <div id="memberNotificationsDrawer" class="member-notifications-drawer hidden" hidden data-ui-session-skip>
       <section id="memberNotificationsPanel" class="member-notifications-panel" aria-label="Benachrichtigungen">
         <div class="member-notifications-panel__head">
@@ -676,6 +680,7 @@ const publicMenuLinks = isFcpMode
     <script src={`/js/member-auth.js?v=${assetVersion}`} defer></script>
     {isAppPath && <script src={`/js/app-brand-runtime.js?v=${assetVersion}`} defer></script>}
     {isAppPath && <script src={`/js/adm-nav-enhancer.js?v=${assetVersion}`} defer></script>}
+    {isAppPath && <script src={`/js/adm-kpi-loader.js?v=${assetVersion}`} defer></script>}
     {!isAppPath && <script src={`/js/static-web-runtime.js?v=${assetVersion}`} defer></script>}
     <script src={`/js/ui-standards-runtime.js?v=${assetVersion}`} defer></script>
     {needsMemberGuard && <script src={`/js/member-guard.js?v=${assetVersion}`} defer></script>}

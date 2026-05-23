@@ -1161,3 +1161,91 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-b
   background: rgba(180, 60, 60, 0.08);
   color: #b43c3c;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   KPI-STRIP — Phase B ADM Shell
+   Thin secondary bar sticky below topbar (top: 54px).
+   Befüllt via adm-kpi-loader.js aus Supabase.
+   Bleibt hidden=[true] bis JS-Daten vorhanden sind.
+   ═══════════════════════════════════════════════════════════════════ */
+.adm-kpi-strip {
+  position: sticky;
+  top: 54px;
+  z-index: 99;
+  background: var(--rd-surface-2, #ece5d4);
+  border-bottom: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
+  height: 30px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 0;
+  overflow: hidden;
+}
+
+.adm-kpi-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--rd-ink-2, #4a4e40);
+  white-space: nowrap;
+  padding: 0 2px;
+}
+
+.adm-kpi-pill--alert {
+  font-weight: 600;
+}
+
+.adm-kpi-pill__icon {
+  font-size: 10px;
+  opacity: 0.55;
+}
+
+.adm-kpi-pill__value {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--rd-ink, #2a2d24);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.adm-kpi-pill--alert .adm-kpi-pill__value {
+  color: #b05a1a;
+}
+
+.adm-kpi-pill__label {
+  font-size: 11px;
+  color: var(--rd-muted, #7a7c68);
+  letter-spacing: 0.01em;
+}
+
+.adm-kpi-sep {
+  font-size: 10px;
+  color: var(--rd-line-strong, rgba(108, 112, 91, 0.35));
+  padding: 0 10px;
+  user-select: none;
+  line-height: 1;
+}
+
+/* ── Nav-Rail Badges ──────────────────────────────────────────────── */
+/*
+ * Injiziert via adm-kpi-loader.js nach adm-nav-enhancer.js.
+ * .admin-nav-btn hat display:flex → Badge mit margin-left:auto drückt
+ * ihn an den rechten Rand.
+ */
+.adm-nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #b05a1a;
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1;
+  margin-left: auto;
+  flex-shrink: 0;
+  letter-spacing: 0;
+}

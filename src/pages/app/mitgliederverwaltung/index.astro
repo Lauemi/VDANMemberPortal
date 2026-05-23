@@ -24,7 +24,7 @@ const admConfig = {
 const admConfigJson = JSON.stringify(admConfig);
 ---
 
-<Site title={`Vereinsverwaltung • ${APP.name}`} description="ADM: Vereinsverwaltung" robots="noindex" containerClass="container container--admin-wide">
+<Site title={`Vereinsverwaltung • ${APP.name}`} description="ADM: Vereinsverwaltung" robots="noindex" containerClass="container container--admin-wide" admBreadcrumbs={["ClubSettings", "Vereinsverwaltung"]}>
 
   {/*
     Phase B — Workspace-Header

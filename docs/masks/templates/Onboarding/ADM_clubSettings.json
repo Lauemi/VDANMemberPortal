@@ -6,14 +6,8 @@
   "workspaceNav": {
     "enabled": true,
     "position": "left",
-    "defaultSectionId": "club_settings_overview",
+    "defaultSectionId": "club_settings_club_data",
     "items": [
-      {
-        "id": "nav_club_settings_overview",
-        "label": "Overview",
-        "targetSectionId": "club_settings_overview",
-        "icon": "grid"
-      },
       {
         "id": "nav_club_settings_club_data",
         "label": "Vereinsdaten",
@@ -111,9 +105,9 @@
     "serverValidated": true
   },
   "header": {
-    "kicker": "Onboarding Workspace",
-    "title": "ClubSettings",
-    "description": "ADM-Workspace fuer den operativen ClubSettings-Bereich nach Billing oder Freigabe. Der Workspace nutzt bestehende RPCs und Edge Functions fuer Prozesskontext, Stammdaten, Vereinsverwaltung und Gewaesser."
+    "kicker": "",
+    "title": "Vereinsverwaltung",
+    "description": ""
   },
   "toolbar": {
     "enabled": true,

@@ -18,6 +18,7 @@ const {
   containerClass = "container",
   density,
   appThemeOverride,
+  admBreadcrumbs,
 } = Astro.props as {
   title?: string;
   description?: string;
@@ -26,6 +27,11 @@ const {
   containerClass?: string;
   density?: "comfortable" | "compact";
   appThemeOverride?: string;
+  /** Phase B — Breadcrumbs fuer den ADM Topbar (nur /app/* Routen).
+   *  Letzter Eintrag = aktive Seite (gold), alle davor = grau.
+   *  Beispiel: ["ClubSettings", "Vereinsverwaltung"]
+   *  → Workspace › ClubSettings › Vereinsverwaltung */
+  admBreadcrumbs?: string[];
 };
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
@@ -304,23 +310,124 @@ const publicMenuLinks = isFcpMode
             <div class="nav-actions header-menu">
               <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
               {showHeaderAuthCta && <a id="headerAuthCta" class="header-auth-cta" href="/login/" data-ui-session-skip>Sign in</a>}
-              <div class="burger-menu" id="burgerMenu">
-                <button type="button" id="burgerToggle" class="burger-toggle" aria-label="Menü">
-                  <span>☰</span>
-                </button>
-                <div id="burgerPopover" class="burger-popover hidden" hidden data-runtime-menu-scope={isFcpMode ? "fcp" : "vdan"}>
-                  {publicMenuLinks.map((link) => (
-                    (link.label === "Nutzungsbedingungen" && !showPortalTermsLink)
-                      ? null
-                      : <a href={link.href}>{link.label}</a>
-                  ))}
+              {/* Burger-Menu: auf /app/* Routen in den Topbar verschoben (s.u.),
+                  damit er sichtbar bleibt wenn header.header display:none ist. */}
+              {!isAppPath && (
+                <div class="burger-menu" id="burgerMenu">
+                  <button type="button" id="burgerToggle" class="burger-toggle" aria-label="Menü">
+                    <span>☰</span>
+                  </button>
+                  <div id="burgerPopover" class="burger-popover hidden" hidden data-runtime-menu-scope={isFcpMode ? "fcp" : "vdan"}>
+                    {publicMenuLinks.map((link) => (
+                      (link.label === "Nutzungsbedingungen" && !showPortalTermsLink)
+                        ? null
+                        : <a href={link.href}>{link.label}</a>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </nav>
       </div>
     </header>
+
+    {/*
+      Phase B — ADM Topbar (nur /app/* Routen)
+      WAS WAR: Oeffentlicher VDAN/FCP Siteheader (dunkel, 60px) — passt
+               nicht zum ADM-Workspace-Kontext.
+      JETZT: Schlanker, heller Topbar (54px, #fbf7ee) mit FCP-Brand,
+             BETA-Badge, kontextbezogenen Breadcrumbs und User-Pill.
+             Alter header.header bleibt im DOM (CSS display:none),
+             JS-Mechanismen (notifications, auth) bleiben intakt.
+      PROP: admBreadcrumbs?: string[] — letzter Eintrag wird gold markiert.
+      ROLLBACK: git checkout pre-phase-b
+    */}
+    {isAppPath && (
+      <div id="admTopbar" class="adm-topbar" role="banner" aria-label="ADM Workspace Navigation">
+        <div class="adm-topbar__brand">
+          <a href="/app/" class="adm-topbar__logo-link" aria-label="FCP Workspace Home">
+            {/* FCP Icon — hardcoded, unabhaengig von isFcpMode/PUBLIC_APP_BRAND.
+                Der Topbar ist immer FCP-Workspace-Kontext (/app/* Routen). */}
+            <img class="adm-topbar__logo-img" src="/Branding/FCPIcons/icon-192.png" alt="" loading="eager" decoding="async" aria-hidden="true" />
+          </a>
+          <span class="adm-topbar__name">Fishing-Club-Portal</span>
+          {isBetaChannel && <span class="adm-topbar__beta" aria-label="Beta-Version">BETA</span>}
+        </div>
+
+        <div class="adm-topbar__sp"></div>
+
+        {admBreadcrumbs && admBreadcrumbs.length > 0 && (
+          <nav class="adm-topbar__crumbs" aria-label="Seitennavigation">
+            <span class="adm-topbar__crumb">Workspace</span>
+            {admBreadcrumbs.map((crumb, i) => [
+              <span class="adm-topbar__sep" aria-hidden="true">›</span>,
+              i < admBreadcrumbs.length - 1
+                ? <span class="adm-topbar__crumb">{crumb}</span>
+                : <b class="adm-topbar__crumb adm-topbar__crumb--active">{crumb}</b>
+            ])}
+          </nav>
+        )}
+
+        <div class="adm-topbar__sp"></div>
+
+        <div class="adm-topbar__util">
+          <div class="adm-topbar__pill adm-topbar__user" id="admTopbarUser" aria-label="Angemeldeter Nutzer">
+            <b class="adm-topbar__av" id="admTopbarAv" aria-hidden="true">·</b>
+            <span class="adm-topbar__username" id="admTopbarName"></span>
+          </div>
+          {/* Burger-Menu im Topbar für /app/* Routen.
+              Gleiche IDs wie im non-app Header → nav-burger.js findet sie.
+              data-runtime-menu-scope="fcp" — ADM-Workspace ist immer FCP. */}
+          <div class="burger-menu adm-topbar__burger" id="burgerMenu">
+            <button type="button" id="burgerToggle" class="burger-toggle adm-topbar__burger-btn" aria-label="Menü">
+              <span aria-hidden="true">☰</span>
+            </button>
+            <div id="burgerPopover" class="burger-popover hidden" hidden data-runtime-menu-scope="fcp">
+              {publicMenuLinks.map((link) => (
+                (link.label === "Nutzungsbedingungen" && !showPortalTermsLink)
+                  ? null
+                  : <a href={link.href}>{link.label}</a>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <script is:inline>
+          /* Phase B — User-Pill befuellen aus VDAN_AUTH Session.
+             Liest first_name + last_name aus user_metadata (gesetzt beim Signup).
+             Fallback: E-Mail-Prefix. VDAN_AUTH ist via defer-Script gesetzt,
+             daher DOMContentLoaded + load als Trigger. */
+          (function () {
+            function fillAdmUser() {
+              try {
+                var sess = window.VDAN_AUTH && window.VDAN_AUTH.loadSession && window.VDAN_AUTH.loadSession();
+                if (!sess || !sess.user) return;
+                var meta = sess.user.user_metadata || {};
+                var fn = String(meta.first_name || "").trim();
+                var ln = String(meta.last_name || "").trim();
+                var email = String(sess.user.email || "").trim();
+                var initials = fn && ln
+                  ? (fn[0] + ln[0]).toUpperCase()
+                  : fn ? fn.slice(0, 2).toUpperCase()
+                  : email ? email[0].toUpperCase()
+                  : "?";
+                var name = fn
+                  ? (ln ? fn + " " + ln[0] + "." : fn)
+                  : email.split("@")[0];
+                var av = document.getElementById("admTopbarAv");
+                var nm = document.getElementById("admTopbarName");
+                if (av) av.textContent = initials;
+                if (nm) nm.textContent = name;
+              } catch (e) {}
+            }
+            document.addEventListener("DOMContentLoaded", fillAdmUser);
+            window.addEventListener("load", fillAdmUser);
+          })();
+        </script>
+      </div>
+    )}
+
     <div id="memberNotificationsDrawer" class="member-notifications-drawer hidden" hidden data-ui-session-skip>
       <section id="memberNotificationsPanel" class="member-notifications-panel" aria-label="Benachrichtigungen">
         <div class="member-notifications-panel__head">
@@ -492,6 +599,7 @@ const publicMenuLinks = isFcpMode
     <script src={`/js/consent-manager.js?v=${assetVersion}`} defer></script>
     <script src={`/js/member-auth.js?v=${assetVersion}`} defer></script>
     {isAppPath && <script src={`/js/app-brand-runtime.js?v=${assetVersion}`} defer></script>}
+    {isAppPath && <script src={`/js/adm-nav-enhancer.js?v=${assetVersion}`} defer></script>}
     {!isAppPath && <script src={`/js/static-web-runtime.js?v=${assetVersion}`} defer></script>}
     <script src={`/js/ui-standards-runtime.js?v=${assetVersion}`} defer></script>
     {needsMemberGuard && <script src={`/js/member-guard.js?v=${assetVersion}`} defer></script>}

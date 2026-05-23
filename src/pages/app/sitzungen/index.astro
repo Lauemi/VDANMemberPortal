@@ -3,7 +3,7 @@ import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
 ---
 
-<Site title={`Sitzungen • ${APP.name}`} description="Sitzungen und Sitzungstasks verwalten" robots="noindex">
+<Site title={`Sitzungen • ${APP.name}`} description="Sitzungen und Sitzungstasks verwalten" robots="noindex" admBreadcrumbs={["Sitzungen"]}>
   <section class="card" data-manager-only>
     <div class="card__body">
       <h1>Sitzungen & Aufgaben</h1>

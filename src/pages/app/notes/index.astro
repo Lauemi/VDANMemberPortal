@@ -3,7 +3,7 @@ import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
 ---
 
-<Site title={`Notes • ${APP.name}`} description="CRUD Demo." robots="noindex">
+<Site title={`Notes • ${APP.name}`} description="CRUD Demo." robots="noindex" admBreadcrumbs={["Notes"]}>
   <section class="card">
     <div class="card__body">
       <h1>Notes (Demo)</h1>

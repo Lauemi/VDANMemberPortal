@@ -6,7 +6,7 @@ import { resolveSiteMode } from "../../../config/site-mode";
 const isVdanMode = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "vdan";
 ---
 
-<Site title={`Mitgliedsausweis • ${APP.name}`} description="Digitaler Mitgliedsausweis" robots="noindex">
+<Site title={`Mitgliedsausweis • ${APP.name}`} description="Digitaler Mitgliedsausweis" robots="noindex" admBreadcrumbs={["Mitgliedsausweis"]}>
   <section class="card" style="max-width:760px;margin:0 auto;">
     <div class="card__body">
       <h1>Mitgliedsausweis</h1>

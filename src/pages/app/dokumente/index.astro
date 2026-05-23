@@ -3,7 +3,7 @@ import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
 ---
 
-<Site title={`Dokumente verwalten • ${APP.name}`} description="Dokumente anlegen, bearbeiten, ausblenden" robots="noindex">
+<Site title={`Dokumente verwalten • ${APP.name}`} description="Dokumente anlegen, bearbeiten, ausblenden" robots="noindex" admBreadcrumbs={["Dokumente"]}>
   <section class="card">
     <div class="card__body">
       <h1>Dokumente verwalten</h1>

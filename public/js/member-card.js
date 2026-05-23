@@ -181,83 +181,96 @@
   async function renderCard(profile, waters, cardLabel) {
     const box = document.getElementById("memberCardBox");
     if (!box) return;
+
     const isValid = Boolean(profile.member_card_valid);
-    const validFrom = profile.member_card_valid_from;
-    const validUntil = profile.member_card_valid_until;
-    const validityText = isValid
-      ? `Gültig vom ${asDate(validFrom)} bis ${asDate(validUntil)}`
-      : "Aktuell ungültig";
     const cardId = String(profile.member_card_id || "-");
     const cardKey = String(profile.member_card_key || "-");
     const checkedAt = profile.member_card_checked_at;
     const checkedBy = String(profile.member_card_checked_by_label || "").trim();
+    const displayName = String(profile.display_name || "Mitglied");
+    const memberNo = String(profile.member_no || "-");
+    const initials = displayName.split(/\s+/).filter(Boolean).map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "M";
+
     const qrUrl = new URL("/app/ausweis/verifizieren/", window.location.origin);
     qrUrl.searchParams.set("card", cardId);
     qrUrl.searchParams.set("key", cardKey);
     const offlineToken = await getOfflineVerifyToken().catch(() => null);
     if (offlineToken) qrUrl.searchParams.set("ot", offlineToken);
     const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(qrUrl.toString())}`;
-    const waterRows = (Array.isArray(waters) ? waters : []).map((w) => {
+
+    const waterItems = (Array.isArray(waters) ? waters : []).map((w) => {
       const allowed = Boolean(w.is_allowed);
-      const bg = allowed ? "rgba(56, 184, 98, .17)" : "rgba(191, 66, 66, .16)";
-      const border = allowed ? "rgba(56, 184, 98, .42)" : "rgba(191, 66, 66, .42)";
-      return `
-        <li style="display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid ${border};border-radius:8px;background:${bg};">
-          <span>${escapeHtml(w.name || "-")}</span>
-          <strong>${allowed ? "Erlaubt" : "Verboten"}</strong>
-        </li>
-      `;
+      const bg = allowed ? "rgba(56,184,98,.13)" : "rgba(191,66,66,.13)";
+      const border = allowed ? "rgba(56,184,98,.35)" : "rgba(191,66,66,.35)";
+      const color = allowed ? "#3ab862" : "#bf4242";
+      return `<li style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border:1px solid ${border};border-radius:8px;background:${bg};">
+        <span>${escapeHtml(w.name || "-")}</span>
+        <strong style="color:${color};font-size:.76rem;">${allowed ? "✓ Erlaubt" : "✗ Verboten"}</strong>
+      </li>`;
     }).join("");
 
-    box.style.borderColor = isValid ? "rgba(56, 184, 98, .45)" : "rgba(191, 66, 66, .45)";
+    // Reset container
+    box.removeAttribute("style");
+    box.className = "mc-card-shell";
+
     box.innerHTML = `
-      <div class="card__body member-card-body">
-        <div class="member-card-top">
-          <div class="member-card-meta">
-            <div><strong>${escapeHtml(profile.display_name || "Mitglied")}</strong></div>
-            <div class="small">Mitgliedsnummer: <strong>${escapeHtml(profile.member_no || "-")}</strong></div>
-            <div class="small">Ausweis-ID: <strong>${escapeHtml(cardId)}</strong></div>
-            <div class="small">Gültigkeitsschlüssel: <strong>${escapeHtml(cardKey)}</strong></div>
-            <div class="small">Karte: <strong>${escapeHtml(cardLabel || "-")}</strong></div>
-            <div class="small">Status: <strong>${isValid ? "Gültig" : "Ungültig"}</strong></div>
-            <div class="small">${escapeHtml(validityText)}</div>
-            <div class="small">Kontrolliert am: <strong>${escapeHtml(asDateTime(checkedAt))}</strong>${checkedBy ? ` · durch <strong>${escapeHtml(checkedBy)}</strong>` : ""}</div>
+      <div class="mc-card ${isValid ? "mc-card--valid" : "mc-card--invalid"}">
+        <div class="mc-card__header">
+          <div class="mc-card__header-brand">
+            <span class="mc-card__logo-text">FCP</span>
+            <span class="mc-card__type">${escapeHtml(cardLabel || "Mitglied")}</span>
+          </div>
+          <div class="mc-card__validity ${isValid ? "mc-card__validity--valid" : "mc-card__validity--invalid"}">
+            ${isValid ? "✓ Gültig" : "✗ Ungültig"}
+          </div>
+        </div>
+
+        <div class="mc-card__body">
+          <div class="mc-card__identity">
+            <div class="mc-card__avatar">${escapeHtml(initials)}</div>
+            <div class="mc-card__identity-text">
+              <div class="mc-card__name">${escapeHtml(displayName)}</div>
+              <div class="mc-card__member-no">Mitgl.-Nr. ${escapeHtml(memberNo)}</div>
+              <div class="mc-card__validity-range">${asDate(profile.member_card_valid_from)} – ${asDate(profile.member_card_valid_until)}</div>
+            </div>
           </div>
           <div class="card-qr-flip" data-qr-flip>
             <div class="card-qr-flip__inner">
               <div class="card-qr-flip__face card-qr-flip__face--front">
-                <button type="button" class="feed-btn" data-qr-toggle>Kontrolle</button>
+                <span class="mc-card__qr-hint">Zur Kontrolle</span>
+                <button type="button" class="feed-btn" data-qr-toggle style="margin-top:8px;">QR anzeigen</button>
               </div>
               <div class="card-qr-flip__face card-qr-flip__face--back">
                 <img src="${escapeHtml(qrImg)}" width="140" height="140" alt="QR zur Ausweisverifikation" />
-                <button type="button" class="feed-btn feed-btn--ghost" data-qr-toggle style="margin-top:8px;">Zurück</button>
+                <button type="button" class="feed-btn feed-btn--ghost" data-qr-toggle style="margin-top:6px;">Zurück</button>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="small member-card-legal">
-          Dieser digitale Mitgliedsausweis ist personenbezogen und nur in Verbindung mit einem amtlichen Ausweis gültig.
-          Die Berechtigung gilt ausschließlich im angegebenen Zeitraum und kann durch Vorstand/Admin jederzeit digital verifiziert werden.
+        <div class="mc-card__footer">
+          <span>ID: ${escapeHtml(cardId)}</span>
+          ${checkedAt ? `<span>Kontrolliert: ${escapeHtml(asDate(checkedAt))}${checkedBy ? " · " + escapeHtml(checkedBy) : ""}</span>` : ""}
         </div>
-
-        <details>
-          <summary style="cursor:pointer;font-weight:600;">Gewässer-Berechtigung anzeigen</summary>
-          <div style="margin-top:8px;">
-            <ul style="list-style:none;margin:0;padding:0;display:grid;gap:6px;">
-              ${waterRows || `<li class="small">Keine Gewässer gefunden.</li>`}
-            </ul>
-          </div>
-        </details>
       </div>
+
+      ${waters.length > 0 ? `
+      <details class="mc-waters">
+        <summary>Gewässer-Berechtigung (${escapeHtml(String(waters.length))})</summary>
+        <ul style="list-style:none;margin:0;padding:0 12px 12px;display:grid;gap:6px;">
+          ${waterItems || `<li class="small" style="padding:8px;">Keine Gewässer gefunden.</li>`}
+        </ul>
+      </details>` : ""}
+
+      <p class="mc-legal">
+        Dieser digitale Mitgliedsausweis ist personenbezogen und nur in Verbindung mit einem amtlichen Ausweis gültig.
+        Die Berechtigung gilt ausschließlich im angegebenen Zeitraum.
+      </p>
     `;
 
     const flip = box.querySelector("[data-qr-flip]");
-    const toggles = box.querySelectorAll("[data-qr-toggle]");
-    toggles.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        flip?.classList.toggle("is-revealed");
-      });
+    box.querySelectorAll("[data-qr-toggle]").forEach((btn) => {
+      btn.addEventListener("click", () => flip?.classList.toggle("is-revealed"));
     });
   }
 

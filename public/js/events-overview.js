@@ -243,7 +243,7 @@
     const body = document.getElementById("eventsOverviewTableBody");
     if (!body) return;
     if (!state.rows.length) {
-      body.innerHTML = `<p class="small" style="padding:12px;">Keine passenden Termine oder Arbeitseinsätze gefunden.</p>`;
+      body.innerHTML = `<p class="small" style="padding:12px 0;">Keine passenden Termine oder Arbeitseinsätze gefunden.</p>`;
       return;
     }
 
@@ -252,31 +252,65 @@
       const config = configForRow(row);
       const myRegistration = myRegistrationForRow(row);
       const isStructured = String(config?.planning_mode || "") === "structured";
-      const rsvpLabel = myRegistration ? "Zusage zurücknehmen" : "Zum Termin zusagen";
+      const canRsvp = Boolean(config) && state.plannerAvailable && !isStructured;
+      const rsvpLabel = myRegistration ? "Zusage zurücknehmen" : "Zusagen";
       const availabilityText = !state.plannerAvailable
-        ? "Teilnahmefunktion ist in dieser Umgebung noch nicht aktiv."
+        ? "Teilnahmefunktion noch nicht aktiv."
         : !config
-          ? "Für diesen Termin ist die Teilnahme noch nicht freigeschaltet."
+          ? "Teilnahme noch nicht freigeschaltet."
           : isStructured
-            ? "Für diesen Termin läuft die Teilnahme über die Helferplanung mit Slots."
-          : registrationStatusLabel(myRegistration?.status);
+            ? "Teilnahme über Helferplanung mit Slots."
+            : registrationStatusLabel(myRegistration?.status);
+
+      // Date display
+      const d = new Date(row.starts_at);
+      const isValidDate = !Number.isNaN(d.getTime());
+      const day = isValidDate ? d.getDate() : "-";
+      const month = isValidDate ? d.toLocaleDateString("de-DE", { month: "short" }) : "";
+
+      // Kind chip
+      const kindLower = String(row.kindLabel || "").toLowerCase();
+      const isArbeit = kindLower.includes("arbeit");
+      const kindChipClass = isArbeit ? "event-chip--arbeitseinsatz" : "event-chip--termin";
+
+      // Status chip
+      const statusLbl = statusLabel(row.status);
+      const statusLower = String(row.status || "").toLowerCase();
+      const statusChipClass = statusLower.includes("abgesagt") || statusLower.includes("abgebrochen")
+        ? "event-chip--warn"
+        : statusLower === "aktiv" || statusLower === "geplant" || statusLower === "offen"
+          ? "event-chip--ok"
+          : "event-chip--neutral";
+
+      const timeStr = formatTimeRange(row.starts_at, row.ends_at);
+      const metaParts = [timeStr, row.location ? esc(row.location) : ""].filter(Boolean).join(" · ");
+
       return `
-        <button type="button" class="catch-table__row events-overview__row${isOpen ? " is-open" : ""}" data-open-row="${esc(row.rowId)}" style="grid-template-columns:1fr .9fr 1.6fr 1fr 1fr .8fr;">
-          <span>${esc(formatDate(row.starts_at))}</span>
-          <span>${esc(formatTimeRange(row.starts_at, row.ends_at))}</span>
-          <span><strong>${esc(row.title || "-")}</strong></span>
-          <span>${esc(row.kindLabel)}</span>
-          <span>${esc(row.location || "-")}</span>
-          <span>${esc(statusLabel(row.status))}</span>
+        <button type="button" class="event-row events-overview__row${isOpen ? " is-open" : ""}" data-open-row="${esc(row.rowId)}">
+          <div class="event-row__datebox">
+            <span class="event-row__day">${day}</span>
+            <span class="event-row__month">${esc(month)}</span>
+          </div>
+          <div class="event-row__main">
+            <div class="event-row__title">${esc(row.title || "-")}</div>
+            <div class="event-row__meta">${metaParts}</div>
+          </div>
+          <div class="event-row__chips">
+            <span class="event-chip ${kindChipClass}">${esc(row.kindLabel)}</span>
+            <span class="event-chip ${statusChipClass}">${esc(statusLbl)}</span>
+          </div>
         </button>
         ${isOpen ? `
-          <div class="events-overview__detail">
-            <div class="events-overview__detail-copy">
+          <div class="event-row__detail">
+            <div class="event-row__detail-info">
               <strong>${esc(row.title || "-")}</strong>
-              <span>${esc(row.kindLabel)} am ${esc(formatDate(row.starts_at))} um ${esc(formatTimeRange(row.starts_at, row.ends_at))}</span>
+              <span>${esc(row.kindLabel)} · ${esc(formatDate(row.starts_at))} · ${esc(timeStr)}</span>
+              ${row.location ? `<span>📍 ${esc(row.location)}</span>` : ""}
               <span>${esc(availabilityText)}</span>
             </div>
-            <button type="button" class="feed-btn" data-rsvp-row="${esc(row.rowId)}" ${!config || !state.plannerAvailable || isStructured ? "disabled" : ""}>${esc(rsvpLabel)}</button>
+            <div class="event-row__detail-actions">
+              <button type="button" class="feed-btn" data-rsvp-row="${esc(row.rowId)}" ${!canRsvp ? "disabled" : ""}>${esc(rsvpLabel)}</button>
+            </div>
           </div>
         ` : ""}
       `;

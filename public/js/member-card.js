@@ -196,7 +196,7 @@
     qrUrl.searchParams.set("key", cardKey);
     const offlineToken = await getOfflineVerifyToken().catch(() => null);
     if (offlineToken) qrUrl.searchParams.set("ot", offlineToken);
-    const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(qrUrl.toString())}`;
+    const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrUrl.toString())}`;
 
     const waterItems = (Array.isArray(waters) ? waters : []).map((w) => {
       const allowed = Boolean(w.is_allowed);
@@ -234,17 +234,9 @@
               <div class="mc-card__validity-range">${asDate(profile.member_card_valid_from)} – ${asDate(profile.member_card_valid_until)}</div>
             </div>
           </div>
-          <div class="card-qr-flip" data-qr-flip>
-            <div class="card-qr-flip__inner">
-              <div class="card-qr-flip__face card-qr-flip__face--front">
-                <span class="mc-card__qr-hint">Zur Kontrolle</span>
-                <button type="button" class="feed-btn" data-qr-toggle style="margin-top:8px;">QR anzeigen</button>
-              </div>
-              <div class="card-qr-flip__face card-qr-flip__face--back">
-                <img src="${escapeHtml(qrImg)}" width="140" height="140" alt="QR zur Ausweisverifikation" />
-                <button type="button" class="feed-btn feed-btn--ghost" data-qr-toggle style="margin-top:6px;">Zurück</button>
-              </div>
-            </div>
+          <div class="mc-card__qr">
+            <img class="mc-card__qr-img" src="${escapeHtml(qrImg)}" width="80" height="80" alt="QR zur Ausweisverifikation" loading="lazy" />
+            <span class="mc-card__qr-label">Scan zur Kontrolle</span>
           </div>
         </div>
 
@@ -268,10 +260,6 @@
       </p>
     `;
 
-    const flip = box.querySelector("[data-qr-flip]");
-    box.querySelectorAll("[data-qr-toggle]").forEach((btn) => {
-      btn.addEventListener("click", () => flip?.classList.toggle("is-revealed"));
-    });
   }
 
   async function init() {

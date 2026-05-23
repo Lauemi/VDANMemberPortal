@@ -3648,7 +3648,7 @@ body[data-portal-rail-side="left"] .catch-dialog--panel .catch-dialog__form{
 .mc-card__body{
   display:flex;
   justify-content:space-between;
-  align-items:flex-start;
+  align-items:center;
   gap:16px;
   padding:22px 22px 18px;
 }
@@ -3658,6 +3658,27 @@ body[data-portal-rail-side="left"] .catch-dialog--panel .catch-dialog__form{
   align-items:center;
   flex:1;
   min-width:0;
+}
+.mc-card__qr{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
+  flex-shrink:0;
+}
+.mc-card__qr-img{
+  display:block;
+  width:80px;
+  height:80px;
+  border-radius:6px;
+  background:#fff;
+  padding:4px;
+}
+.mc-card__qr-label{
+  font-size:.62rem;
+  color:rgba(245,241,232,.35);
+  text-align:center;
+  letter-spacing:.03em;
 }
 .mc-card__avatar{
   width:52px;
@@ -7163,26 +7184,11 @@ body[data-portal-rail-side="left"] .catch-fab-stack{
   }
 
   .mc-card__body{
-    flex-direction:column;
-    gap:14px;
+    gap:12px;
   }
-  .mc-card__identity{
-    flex-direction:row;
-  }
-  .card-qr-flip{
-    width:100%;
-    max-width:190px;
-    min-height:172px;
-  }
-  .card-qr-flip__inner{
-    min-height:172px;
-  }
-  .card-qr-flip__face{
-    padding:8px;
-  }
-  .card-qr-flip__face img{
-    width:120px;
-    height:120px;
+  .mc-card__qr-img{
+    width:64px;
+    height:64px;
   }
   .event-row{
     grid-template-columns:44px 1fr;

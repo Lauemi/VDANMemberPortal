@@ -201,6 +201,11 @@ const publicMenuLinks = isFcpMode
     <link rel="stylesheet" href="/css/ui-standards.css" />
     <link rel="stylesheet" href="/css/main.css" />
     <link rel="stylesheet" href="/css/consent-manager.css" />
+    {/* Phase B — ADM Shell Redesign: nur auf /app/* Routen laden.
+        Ueberschreibt app-shell.css fuer den ADM-Workspace.
+        Oeffentliche Seiten (Landing, Datenschutz, etc.) sind nicht betroffen.
+        Ruecksprung: git checkout pre-phase-b */}
+    {isAppPath && <link rel="stylesheet" href="/css/app-shell-redesign.css" />}
     <slot name="head" />
   </head>
   <body

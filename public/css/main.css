@@ -2213,10 +2213,13 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
   align-items:center;
 }
 
-.fcp-brand-btn--primary{
-  background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 84%, #fff) 0%, color-mix(in srgb, var(--accent-strong) 94%, #2d2f23) 100%);
-  color:#f5f1e8;
+/* .fcp-brand-hero .feed-btn.fcp-brand-btn--primary: 0,3,0 — beats body[fcp_tactical] .feed-btn (0,2,1) */
+.fcp-brand-hero .feed-btn.fcp-brand-btn--primary{
+  background:linear-gradient(180deg, #c6ad67 0%, #9c8148 100%);
+  color:#fff;
   border-color:transparent;
+  text-decoration:none;
+  box-shadow:0 8px 24px rgba(155,129,72,.32);
 }
 span.fcp-brand-soon-note,
 a.feed-btn.feed-btn--ghost[href="/login/"] {
@@ -2236,8 +2239,13 @@ a.feed-btn.feed-btn--ghost[href="/login/"] {
   box-shadow:0 14px 30px rgba(9,10,8,.28);
 }
 
-.fcp-brand-btn--ghost{
-  background:rgba(8,11,8,.6);
+/* .fcp-brand-hero .feed-btn.fcp-brand-btn--ghost: 0,3,0 — beats body[fcp_tactical] .feed-btn--ghost:not() (0,3,0) by later position */
+.fcp-brand-hero .feed-btn.fcp-brand-btn--ghost{
+  background:rgba(8,11,8,.52);
+  border:1px solid rgba(232,217,181,.28);
+  color:#f5f1e8;
+  text-decoration:none;
+  box-shadow:none;
 }
 
 .fcp-brand-hero__metrics{

@@ -1701,10 +1701,25 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
     pointer-events: auto;
   }
 
-  /* Originaler Burger-Toggle (≡ public links) auf Mobile ADM-Seiten ausblenden —
-     unser adm-nav-mob-burger übernimmt seinen Platz in derselben Div. */
-  body[data-app-theme="fcp_tactical"] #burgerToggle {
+  /* Originaler Burger-Toggle (≡ public links) NUR ausblenden wenn ADM-Nav aktiv ist.
+     body.has-adm-nav wird per JS gesetzt wenn adm-nav-mob-burger injiziert wird
+     → betrifft nur /app/mitgliederverwaltung/ & Co., NICHT fangliste etc. */
+  body.has-adm-nav #burgerToggle {
     display: none;
+  }
+
+  /* Nav: fixed von RECHTS eingehend (Toggle ist rechts → Drawer kommt von rechts) */
+  body[data-app-theme="fcp_tactical"] .admin-board__nav {
+    right: 0;
+    left: auto;
+    border-left: 1px solid var(--rd-line, rgba(108, 112, 91, .14));
+    border-right: 0;
+    box-shadow: -4px 0 24px rgba(62, 56, 34, .18);
+    transform: translateX(110%);
+  }
+
+  body[data-app-theme="fcp_tactical"] .admin-board.adm-nav-open .admin-board__nav {
+    transform: translateX(0);
   }
 
   /* Hamburger-Button im Topbar */

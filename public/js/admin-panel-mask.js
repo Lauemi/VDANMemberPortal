@@ -299,6 +299,8 @@
             if (brand) brand.insertAdjacentElement("afterend", burger);
             else topbar.prepend(burger);
           }
+          /* Klasse am Body: scoped CSS-Hide für #burgerToggle NUR auf ADM-Seiten */
+          document.body.classList.add("has-adm-nav");
         }
 
         /* ── Mobile Nav: Klick auf Backdrop (admin-board außerhalb Nav) schließt ── */

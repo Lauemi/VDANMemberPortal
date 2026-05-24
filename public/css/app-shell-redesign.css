@@ -23,6 +23,21 @@
 
 
 /* ═══════════════════════════════════════════════════════════════════
+   FCP ORANGE — Akzentfarbe ersetzt Gold-Fallbacks
+   ───────────────────────────────────────────────────────────────────
+   Alle var(--rd-gold, #b79a63) Fallbacks werden durch FCP Orange
+   ersetzt. Definiert als Custom Properties damit künftige Änderungen
+   an einem Ort passieren. FCP Orange: #d46a20 (--fcp-o aus main.css).
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --rd-gold:        #d46a20;                   /* FCP Orange, war #b79a63 */
+  --rd-gold-lo:     #c05818;                   /* gemäßigt/text, war #9c8148 */
+  --rd-gold-hi:     #bf5414;                   /* hover/pressed, war #a08842 */
+  --rd-gold-soft:   rgba(212, 106, 32, .12);   /* Tint, war rgba(183,154,99,.12) */
+  --rd-gold-softer: rgba(212, 106, 32, .06);   /* Hauch, war rgba(183,154,99,.06) */
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    SCHRITT 2 — Astro-Card neutralisieren
    ───────────────────────────────────────────────────────────────────
    WAS WAR: <Site containerClass="container--admin-wide"> rendert
@@ -790,8 +805,13 @@ body[data-app-theme="fcp_tactical"] .main h2:not(.adm-workspace-header__title):n
 }
 
 /* Weniger Gap zwischen Sektionen */
+/* align-content:start verhindert dass der Grid-Container die Rows
+   streckt wenn admin-board__content höher ist als Sectioninhalt.
+   Root Cause: admin-board__content wird auf Navigationshöhe gestretched,
+   admin-section.is-active erbt die Höhe → Tab-Strip wächst mit (Bug).  */
 .admin-section.is-active {
   gap: 10px;
+  align-content: start;
 }
 
 /* Section-Header selbst braucht weniger Luft nach oben */
@@ -1199,7 +1219,7 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-b
 }
 
 .adm-kpi-pill--alert .adm-kpi-pill__value {
-  color: #b05a1a;
+  color: var(--rd-gold, #d46a20);
 }
 
 .adm-kpi-pill__label {
@@ -1230,7 +1250,7 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-b
   height: 16px;
   padding: 0 4px;
   border-radius: 8px;
-  background: #b05a1a;
+  background: var(--rd-gold, #d46a20);
   color: #fff;
   font-size: 9.5px;
   font-weight: 700;

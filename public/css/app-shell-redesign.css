@@ -1561,3 +1561,57 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
   color: var(--rd-muted, rgba(61,64,45,.55));
   font-weight: 400;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE TOPBAR — ≤ 600 px
+   ───────────────────────────────────────────────────────────────────
+   Problem: Topbar-Kinder haben alle flex:0 0 auto + white-space:nowrap.
+   Summe (Brand ~160px + Crumbs ~100px + Util ~80px + padding 48px)
+   übersteigt 320 px → horizontaler Overflow.
+
+   Lösung: Brand-Text ausblenden, Crumbs darf schrumpfen + truncaten,
+   Padding halbieren. Util bleibt sichtbar (Bell + Avatar = wichtig).
+   KPI-Strip: Padding angleichen, bereits overflow:hidden.
+
+   Phase C (Mobile Nav) ist explizit nach First Money — dies ist nur
+   der kritische Layout-Overflow-Fix.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  .adm-topbar {
+    padding: 0 12px;
+    gap: 6px;
+  }
+
+  /* Logo-Icon bleibt, App-Name + Beta-Badge verschwinden */
+  .adm-topbar__name,
+  .adm-topbar__beta {
+    display: none;
+  }
+
+  /* Spacer-Flex reduzieren — Crumbs brauchen mehr Platz */
+  .adm-topbar__sp {
+    flex: 0 0 8px;
+  }
+
+  /* Crumbs darf shrinkbar werden + Overflow via Ellipsis */
+  .adm-topbar__crumbs {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    gap: 4px;
+  }
+
+  .adm-topbar__crumb,
+  .adm-topbar__crumb--active,
+  .adm-topbar__crumb--section {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+  }
+
+  /* KPI-Strip: Padding auf 12px, analog Topbar */
+  .adm-kpi-strip {
+    padding: 0 12px;
+  }
+}

@@ -3251,7 +3251,7 @@
           "id": "club_settings_cards_table",
           "title": "Ausweise",
           "renderMode": "table",
-          "componentType": "data-table",
+          "componentType": "inline-data-table",
           "contentArea": "main",
           "flowType": "standard",
           "permissions": {
@@ -3321,45 +3321,62 @@
           "columns": [
             {
               "key": "club_member_no",
-              "label": "Vereinsnummer",
-              "type": "text"
+              "label": "Nr.",
+              "type": "primary",
+              "width": "minmax(70px, 0.6fr)",
+              "sortable": true
             },
             {
               "key": "member_name",
               "label": "Mitglied",
-              "type": "text"
+              "type": "text",
+              "width": "minmax(140px, 1.6fr)",
+              "sortable": true
             },
             {
               "key": "fishing_card_type",
               "label": "Ausweistyp",
-              "type": "text"
+              "type": "text",
+              "width": "minmax(120px, 1.2fr)",
+              "sortable": true
             },
             {
               "key": "status",
               "label": "Status",
-              "type": "text"
+              "type": "text",
+              "width": "minmax(80px, 0.8fr)",
+              "sortable": true
             },
             {
               "key": "validity_label",
-              "label": "Gueltigkeit",
-              "type": "text"
+              "label": "Gültigkeit",
+              "type": "text",
+              "width": "minmax(130px, 1.1fr)",
+              "sortable": false
             },
             {
               "key": "updated_at",
-              "label": "Zuletzt aktualisiert",
-              "type": "datetime"
+              "label": "Aktualisiert",
+              "type": "datetime",
+              "cellClass": "data-table__cell--meta",
+              "width": "minmax(110px, 0.9fr)",
+              "sortable": true
             }
           ],
           "rowsPath": "rows",
           "tableConfig": {
             "tableId": "adm-club-settings-cards",
-            "rowKeyField": "member_no",
+            "rowKeyField": "club_member_no",
             "gridTemplateColumns": "",
-            "rowInteractionMode": "dialog",
-            "selectionMode": "single",
+            "rowInteractionMode": "none",
+            "selectionMode": "none",
             "viewMode": "table",
             "sortKey": "club_member_no",
             "sortDir": "asc",
+            "showToolbar": true,
+            "showFilterButton": true,
+            "showCreateButton": false,
+            "showResetButton": false,
             "filterFields": [
               {
                 "key": "club_member_no",

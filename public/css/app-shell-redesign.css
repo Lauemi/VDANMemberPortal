@@ -185,25 +185,13 @@ body[data-app-theme="fcp_tactical"] .admin-nav-btn.is-active::before {
   margin-bottom: 14px;
 }
 
-/* State-Badges: vorher RGBA-Pillen die auf dunkel kaum lesbar waren.
-   Jetzt semantische Soft-Farben aus dem rd-* System. */
-.admin-state-badge.is-live {
-  background: var(--rd-ok-soft, #e4ecd6);
-  color: var(--rd-ok, #6b8f4c);
-  border: 1px solid transparent;
-}
-
-.admin-state-badge.is-preview {
-  background: var(--rd-warn-soft, #f5ebd0);
-  color: var(--rd-warn, #b88a2a);
-  border: 1px solid transparent;
-}
-
-.admin-state-badge.is-gap,
-.admin-state-badge.is-partial {
-  background: var(--rd-surface-2, #efe8d7);
-  color: var(--rd-muted, #7a7c68);
-  border: 1px solid transparent;
+/* State-Badges: "Live" / "Vertrag offen" / "Vorschau" sind
+   interne Entwickler-Indikatoren, kein Vereinsadmin braucht sie.
+   Vollstaendig ausgeblendet — bleiben im DOM fuer Entwicklertools,
+   sichtbar nur ueber DevTools oder falls ein kuenftiger Superadmin-
+   Modus die Klasse .adm-devmode am root setzt. */
+.admin-state-badge {
+  display: none;
 }
 
 /* Section-Wrapper: kein eigener Background mehr, nur Gap */
@@ -1248,4 +1236,105 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-b
   margin-left: auto;
   flex-shrink: 0;
   letter-spacing: 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ADM — Form-Group Verbesserungen
+   ───────────────────────────────────────────────────────────────────
+   WAS WAR: .qfp-form-group CSS galt nur fuer OFM/QFM.
+            Im ADM-Kontext zeigte <details>/<summary> den nativen
+            Browser-Pfeil (▼) und hatte kein Layout.
+   WARUM: Saubere Accordion-Karten ohne Browser-Artefakte.
+          Eigene Chevron-Anzeige via ::after.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Native Disclosure-Dreiecke unterdrücken */
+.fcp-adm-shell .qfp-form-group {
+  border: 1px solid var(--rd-line, rgba(108,112,91,.14));
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--rd-surface-2, #f7f4ee);
+  grid-column: 1 / -1;
+}
+
+.fcp-adm-shell .qfp-form-group__summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 11px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  user-select: none;
+}
+
+.fcp-adm-shell .qfp-form-group__summary::-webkit-details-marker {
+  display: none;
+}
+
+.fcp-adm-shell .qfp-form-group__summary::marker {
+  content: "";
+}
+
+/* Eigener Chevron als ::after */
+.fcp-adm-shell .qfp-form-group__summary::after {
+  content: "+";
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(108,112,91,.1);
+  color: var(--rd-muted, #7a7c68);
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: background .15s;
+}
+
+.fcp-adm-shell .qfp-form-group[open] .qfp-form-group__summary::after {
+  content: "−";
+}
+
+.fcp-adm-shell .qfp-form-group__summary-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fcp-adm-shell .qfp-form-group__title {
+  font-size: .83rem;
+  font-weight: 600;
+  color: var(--rd-ink, #2a2d24);
+}
+
+.fcp-adm-shell .qfp-form-group__hint {
+  font-size: .76rem;
+  color: var(--rd-muted, #7a7c68);
+  line-height: 1.4;
+}
+
+.fcp-adm-shell .qfp-form-group__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--rd-line, rgba(108,112,91,.14));
+}
+
+.fcp-adm-shell .qfp-form-group__grid--ungrouped {
+  grid-column: 1 / -1;
+  padding: 0;
+  border-top: 0;
+}
+
+/* admin-card Speichern-Button in Form-Panels */
+.fcp-adm-shell .admin-card .admin-card__save-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--rd-line, rgba(108,112,91,.14));
 }

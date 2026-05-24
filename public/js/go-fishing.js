@@ -371,6 +371,7 @@
         <button type="button" class="feed-btn feed-btn--ghost" data-gofishing-action="dec" data-fish-id="${esc(t.fish_species_id)}">-</button>
         <span class="portal-gofishing-target__count">${Number(t.count || 0)}</span>
         <button type="button" class="feed-btn" data-gofishing-action="inc" data-fish-id="${esc(t.fish_species_id)}">+</button>
+        <button type="button" class="portal-gofishing-target__remove" data-gofishing-action="remove" data-fish-id="${esc(t.fish_species_id)}" aria-label="Zielfisch entfernen" title="Entfernen">✕</button>
       </div>
     `).join("");
   }
@@ -429,6 +430,16 @@
     const next = Math.trunc(Number(t.count || 0)) + Math.trunc(Number(delta || 0));
     t.count = Math.max(0, next);
     sessionState.targets = normalizeTargets(sessionState.targets);
+    saveState();
+    renderTargets();
+    syncDraftSignal(false);
+  }
+
+  function removeTarget(fishId) {
+    ensureSession();
+    const id = String(fishId || "").trim();
+    if (!id || !sessionState?.targets) return;
+    sessionState.targets = sessionState.targets.filter((x) => x.fish_species_id !== id);
     saveState();
     renderTargets();
     syncDraftSignal(false);
@@ -703,6 +714,7 @@
       if (!fishId) return;
       if (action === "inc") updateTargetCount(fishId, 1);
       if (action === "dec") updateTargetCount(fishId, -1);
+      if (action === "remove") removeTarget(fishId);
     });
     document.getElementById("goFishingWaterFavorites")?.addEventListener("click", (e) => {
       const officialBtn = e.target.closest("[data-gofishing-water-quick]");

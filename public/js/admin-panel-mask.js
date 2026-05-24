@@ -122,7 +122,13 @@
       if (!section) return;
       this.state.activeSectionId = sectionId;
       this._updateBreadcrumb(section.label || section.title || "");
-      this.render();
+      /* Nav sofort aktiv markieren — kein vollständiges render(), damit keine
+         leeren Panels durchblinken. Content wird erst nach dem Laden gezeigt. */
+      this.renderNav();
+      if (this.refs.content) {
+        this.refs.content.innerHTML = "";
+        this.refs.content.classList.add("adm-content--loading");
+      }
       await this.hydrateActiveSection();
     }
 
@@ -140,6 +146,11 @@
       }
 
       if (!sectionLabel) return;
+
+      /* Nicht einfügen, wenn der letzte statische Crumb denselben Text hat
+         (SSR-Breadcrumb enthält bereits den Sektionsnamen → kein Duplikat). */
+      const lastStaticCrumb = crumbNav.querySelector(".adm-topbar__crumb--active");
+      if (lastStaticCrumb && lastStaticCrumb.textContent.trim() === sectionLabel.trim()) return;
 
       const sep = document.createElement("span");
       sep.className = "adm-topbar__sep";
@@ -295,6 +306,7 @@
 
     renderContent() {
       this.refs.content.innerHTML = "";
+      this.refs.content.classList.remove("adm-content--loading");
       const activeSection = this.getActiveSection();
       if (!activeSection) {
         this.refs.content.append(createElement("section", { className: "admin-section is-active" }));
@@ -305,8 +317,6 @@
         className: "admin-section is-active",
         attrs: { "data-section-id": activeSection.id },
       });
-
-      sectionNode.append(this.renderSectionHeader(activeSection));
 
       /* Gap-Panels überspringen — kein DB-Backend, nur Entwickler-Platzhalter */
       const livePanels = (activeSection.panels || []).filter((panel) => {

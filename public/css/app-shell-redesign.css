@@ -189,8 +189,10 @@ body[data-app-theme="fcp_tactical"] .admin-nav-btn.is-active::before {
    interne Entwickler-Indikatoren, kein Vereinsadmin braucht sie.
    Vollstaendig ausgeblendet — bleiben im DOM fuer Entwicklertools,
    sichtbar nur ueber DevTools oder falls ein kuenftiger Superadmin-
-   Modus die Klasse .adm-devmode am root setzt. */
-.admin-state-badge {
+   Modus die Klasse .adm-devmode am root setzt.
+   Spezifitaet: (0,2,0) — schlaegt app-shell.css .admin-state-badge.is-live (0,2,0)
+   da app-shell-redesign.css spaeter geladen wird. */
+.fcp-adm-shell .admin-state-badge {
   display: none;
 }
 
@@ -1541,10 +1543,17 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
 }
 
 /* ── Section-Header H2 im Content ausblenden ───────────────────────
-   Mit Tabs und dynamischem Breadcrumb ist die h2 im Content redundant.
-   Die Beschreibung (i-Button) bleibt für Sektionen ohne Tabs erhalten. */
+   renderSectionHeader() wird im JS nicht mehr aufgerufen — diese Regel
+   ist ein Safety-Net falls ein anderer Codepfad den Header rendert. */
 .fcp-adm-shell .admin-section.is-active > .qfp-section-header-simple {
   display: none;
+}
+
+/* ── Loading-State: Content-Bereich leer während Daten geladen werden ───
+   Klasse adm-content--loading wird von activateSection() gesetzt und
+   von renderContent() entfernt. Verhindert den Flash leerer Panels. */
+.fcp-adm-shell .admin-board__content.adm-content--loading {
+  min-height: 120px;
 }
 
 /* Breadcrumb Section-Segment — gleicher Stil wie bestehende Crumbs */

@@ -313,7 +313,7 @@
               p.hidden = p.dataset.tabPanel !== panel.id;
             });
             /* Nav-Submenu aktiven Tab markieren */
-            const navEl = this.refs.root?.querySelector(".admin-board__nav");
+            const navEl = this.refs.nav;
             if (navEl) {
               navEl.querySelectorAll(".adm-nav-subitem").forEach((s) => s.classList.remove("is-active"));
               const target = navEl.querySelector(`.adm-nav-subitem[data-tab-id="${panel.id}"]`);
@@ -345,7 +345,7 @@
 
     /* ── Tab-Submenu: Sub-Items unter dem aktiven Nav-Button ─────────── */
     _injectTabSubnav(section, panels) {
-      const navEl = this.refs.root?.querySelector(".admin-board__nav");
+      const navEl = this.refs.nav;
       if (!navEl) return;
 
       /* Alte Sub-Items entfernen */

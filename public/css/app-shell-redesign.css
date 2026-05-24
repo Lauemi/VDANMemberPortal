@@ -1507,3 +1507,48 @@ body[data-app-theme="fcp_tactical"] .qfp-shell[data-mask-family="QFM"] {
   font-size: 0.875rem;
   font-style: italic;
 }
+
+/* ── Punkt 4: Inline-Data-Table Toolbar — kompakte Buttons im ADM ──
+   .feed-btn erbt --control-height:34px aber lib-btn-font-size bleibt
+   1rem was die Buttons optisch zu groß macht. Hier explizit reduzieren. */
+body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .feed-btn,
+body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .feed-btn--ghost,
+body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
+  min-height: 32px;
+  height: 32px;
+  padding-inline: 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
+  width: 32px;
+  padding-inline: 0;
+  font-size: 0.9rem;
+}
+
+/* ── Maske fade-in — dämpft den Flash beim Sektionswechsel ─────────
+   innerHTML = "" → Repaint ist unvermeidbar, aber opacity-Animation
+   macht den Übergang weniger hart. */
+.fcp-adm-shell .admin-section.is-active {
+  animation: adm-fadein 0.1s ease-out both;
+}
+
+@keyframes adm-fadein {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Section-Header H2 im Content ausblenden ───────────────────────
+   Mit Tabs und dynamischem Breadcrumb ist die h2 im Content redundant.
+   Die Beschreibung (i-Button) bleibt für Sektionen ohne Tabs erhalten. */
+.fcp-adm-shell .admin-section.is-active > .qfp-section-header-simple {
+  display: none;
+}
+
+/* Breadcrumb Section-Segment — gleicher Stil wie bestehende Crumbs */
+.adm-topbar__crumb--section {
+  color: var(--rd-muted, rgba(61,64,45,.55));
+  font-weight: 400;
+}

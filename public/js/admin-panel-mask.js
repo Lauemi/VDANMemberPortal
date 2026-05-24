@@ -121,8 +121,36 @@
       const section = this.findSection(sectionId);
       if (!section) return;
       this.state.activeSectionId = sectionId;
+      this._updateBreadcrumb(section.label || section.title || "");
       this.render();
       await this.hydrateActiveSection();
+    }
+
+    /* ── Dynamische Breadcrumb-Erweiterung ───────────────────────── */
+    _updateBreadcrumb(sectionLabel) {
+      const crumbNav = document.querySelector(".adm-topbar__crumbs");
+      if (!crumbNav) return;
+
+      /* Altes dynamisches Segment entfernen */
+      const old = crumbNav.querySelector(".adm-topbar__crumb--section");
+      if (old) {
+        const oldSep = old.previousElementSibling;
+        if (oldSep?.classList.contains("adm-topbar__sep")) oldSep.remove();
+        old.remove();
+      }
+
+      if (!sectionLabel) return;
+
+      const sep = document.createElement("span");
+      sep.className = "adm-topbar__sep";
+      sep.setAttribute("aria-hidden", "true");
+      sep.textContent = "›";
+
+      const crumb = document.createElement("span");
+      crumb.className = "adm-topbar__crumb adm-topbar__crumb--section";
+      crumb.textContent = sectionLabel;
+
+      crumbNav.append(sep, crumb);
     }
 
     async hydrateVisiblePanels() {

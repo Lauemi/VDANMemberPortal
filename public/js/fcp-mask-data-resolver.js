@@ -1546,6 +1546,20 @@
   async function executeBinding(binding, payload = null) {
     if (!binding || !binding.kind) return normalizeBindingResult({ kind: "none" }, []);
 
+    /* ── Direkter Supabase-Tabellen-Read via REST (kein RPC nötig) ── */
+    if (binding.kind === "table") {
+      const tableName = String(binding.target || "").trim().replace(/^public\./, "");
+      const select = String(binding.select || "*").trim();
+      const filters = binding.filter && typeof binding.filter === "object" ? binding.filter : {};
+      const filterQs = Object.entries(filters)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join("&");
+      const qs = `select=${encodeURIComponent(select)}${filterQs ? "&" + filterQs : ""}`;
+      const result = await sb(`/rest/v1/${tableName}?${qs}`, { method: "GET" }, true);
+      const rows = Array.isArray(result) ? result : (result?.rows || []);
+      return normalizeBindingResult(binding, { rows });
+    }
+
     if (binding.kind === "rpc") {
       const rpcName = String(binding.target || "").trim();
       const body = normalizeRpcPayload(rpcName, payload);

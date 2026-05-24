@@ -280,11 +280,27 @@
 
       sectionNode.append(this.renderSectionHeader(activeSection));
 
+      /* Gap-Panels überspringen — kein DB-Backend, nur Entwickler-Platzhalter */
+      const livePanels = (activeSection.panels || []).filter((panel) => {
+        const state = resolvePanelSurfaceState(panel);
+        return !state || state.key !== "gap";
+      });
+
+      if (!livePanels.length) {
+        sectionNode.append(
+          createElement("p", {
+            className: "adm-section-empty",
+            text: "Dieser Bereich ist noch in Vorbereitung.",
+          })
+        );
+        this.refs.content.append(sectionNode);
+        return;
+      }
+
       if (activeSection.sectionLayout === "tabs") {
         /* ── Tab-Layout: Strip + one visible panel at a time ─────────── */
-        const panels = activeSection.panels || [];
         const strip = createElement("nav", { className: "adm-section-tabs" });
-        panels.forEach((panel, idx) => {
+        livePanels.forEach((panel, idx) => {
           const btn = createElement("button", {
             className: "adm-section-tab" + (idx === 0 ? " is-active" : ""),
             text: panel.title || panel.id,
@@ -296,11 +312,18 @@
             sectionNode.querySelectorAll("[data-tab-panel]").forEach((p) => {
               p.hidden = p.dataset.tabPanel !== panel.id;
             });
+            /* Nav-Submenu aktiven Tab markieren */
+            const navEl = this.refs.root?.querySelector(".admin-board__nav");
+            if (navEl) {
+              navEl.querySelectorAll(".adm-nav-subitem").forEach((s) => s.classList.remove("is-active"));
+              const target = navEl.querySelector(`.adm-nav-subitem[data-tab-id="${panel.id}"]`);
+              if (target) target.classList.add("is-active");
+            }
           });
           strip.append(btn);
         });
         sectionNode.append(strip);
-        panels.forEach((panel, idx) => {
+        livePanels.forEach((panel, idx) => {
           const wrap = createElement("div", {
             attrs: { "data-tab-panel": panel.id },
           });
@@ -308,14 +331,48 @@
           wrap.append(this.renderPanel(activeSection, panel));
           sectionNode.append(wrap);
         });
+        /* Nav-Submenu einmalig nach dem Rendern injizieren */
+        requestAnimationFrame(() => this._injectTabSubnav(activeSection, livePanels));
       } else {
         /* ── Stack-Layout (default) ───────────────────────────────────── */
-        (activeSection.panels || []).forEach((panel) => {
+        livePanels.forEach((panel) => {
           sectionNode.append(this.renderPanel(activeSection, panel));
         });
       }
 
       this.refs.content.append(sectionNode);
+    }
+
+    /* ── Tab-Submenu: Sub-Items unter dem aktiven Nav-Button ─────────── */
+    _injectTabSubnav(section, panels) {
+      const navEl = this.refs.root?.querySelector(".admin-board__nav");
+      if (!navEl) return;
+
+      /* Alte Sub-Items entfernen */
+      navEl.querySelectorAll(".adm-nav-subitem-wrap").forEach((el) => el.remove());
+
+      /* Aktiven Nav-Button finden */
+      const activeBtn = navEl.querySelector(".admin-nav-btn.is-active");
+      if (!activeBtn) return;
+
+      const wrap = createElement("div", { className: "adm-nav-subitem-wrap" });
+      panels.forEach((panel, idx) => {
+        const sub = createElement("button", {
+          className: "adm-nav-subitem" + (idx === 0 ? " is-active" : ""),
+          text: panel.title || panel.id,
+          attrs: { type: "button", "data-tab-id": panel.id },
+        });
+        sub.addEventListener("click", () => {
+          /* Korrespondierenden Tab-Strip-Button klicken */
+          const tabBtn = this.refs.content?.querySelector(
+            `.adm-section-tab[data-tab-target="${panel.id}"]`
+          );
+          if (tabBtn) tabBtn.click();
+        });
+        wrap.append(sub);
+      });
+
+      activeBtn.insertAdjacentElement("afterend", wrap);
     }
 
     renderSectionHeader(section) {

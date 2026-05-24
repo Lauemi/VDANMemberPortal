@@ -1463,3 +1463,47 @@ body[data-app-theme="fcp_tactical"] .qfp-shell[data-mask-family="QFM"] {
   border-bottom-color: #595a3d;
   font-weight: 600;
 }
+
+/* ── Nav-Submenü für Tab-Sektionen ─────────────────────────────────── */
+.fcp-adm-shell .adm-nav-subitem-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 0 6px 28px;
+}
+
+.fcp-adm-shell .adm-nav-subitem {
+  display: block;
+  width: 100%;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  color: var(--rd-muted, rgba(61,64,45,.6));
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  text-align: left;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fcp-adm-shell .adm-nav-subitem:hover {
+  background: rgba(108,112,91,.08);
+  color: var(--rd-text, #1a1d12);
+}
+
+.fcp-adm-shell .adm-nav-subitem.is-active {
+  background: rgba(89,90,61,.12);
+  color: var(--rd-text, #1a1d12);
+  font-weight: 500;
+}
+
+/* ── Leere Sektion (alle Panels gap) ───────────────────────────────── */
+.fcp-adm-shell .adm-section-empty {
+  padding: 32px 24px;
+  color: var(--rd-muted, rgba(61,64,45,.5));
+  font-size: 0.875rem;
+  font-style: italic;
+}

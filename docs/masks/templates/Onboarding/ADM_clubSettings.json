@@ -3413,7 +3413,7 @@
       "title": "Arbeitseinsätze",
       "description": "Planung und Verwaltung von Arbeitseinsätzen.",
       "workspaceSlot": "main",
-      "sectionLayout": "stack",
+      "sectionLayout": "tabs",
       "permissions": {
         "view": true,
         "write": false,
@@ -3786,8 +3786,8 @@
       "scope": "club_override",
       "panels": [
         {
-          "id": "club_settings_approvals_table",
-          "title": "Freigaben",
+          "id": "club_settings_approvals_membership",
+          "title": "Mitgliedsanträge",
           "renderMode": "table",
           "componentType": "inline-data-table",
           "contentArea": "main",
@@ -3795,7 +3795,7 @@
           "permissions": {
             "view": true,
             "write": false,
-            "update": false,
+            "update": true,
             "delete": false,
             "roles": []
           },
@@ -3809,37 +3809,27 @@
               "vorstand",
               "superadmin"
             ],
-            "serverValidated": false
+            "serverValidated": true
           },
           "meta": {
-            "sourceTable": "catch_approvals_contract_pending",
+            "sourceTable": "membership_applications",
             "sourceKind": "table",
-            "sourceOfTruth": "json",
-            "sqlContract": {
-              "sqlFile": "docs/sql-contracts/processes/club-settings/approvals/READ_approvals_overview.sql",
-              "expectedColumns": [
-                "water_name",
-                "member_label",
-                "trip_date",
-                "status",
-                "requires_board_approval",
-                "updated_at"
-              ]
-            },
+            "sourceOfTruth": "sql",
             "scope": "club_override",
             "ownership": "club_override",
-            "metaDisplay": "full",
-            "panelState": "gap",
-            "panelStateLabel": "Vertrag offen",
-            "panelStateHint": "Fangfreigaben sind als Zielbereich angelegt, der finale Live-Vertrag ist aber noch nicht belegt.",
+            "metaDisplay": "auto",
+            "panelState": "live",
             "resolver": {
               "rowsPath": "rows"
             }
           },
           "loadBinding": {
-            "kind": "none",
-            "target": null,
-            "path": "none"
+            "kind": "table",
+            "target": "public.membership_applications",
+            "select": "id,created_at,status,first_name,last_name,fishing_card_type",
+            "filter": {
+              "status": "eq.pending"
+            }
           },
           "saveBinding": {
             "kind": "none",
@@ -3853,64 +3843,58 @@
           },
           "columns": [
             {
-              "key": "water_name",
-              "label": "Gewaesser",
-              "type": "text"
+              "key": "last_name",
+              "label": "Name",
+              "type": "text",
+              "width": "180px"
             },
             {
-              "key": "member_label",
-              "label": "Mitglied",
-              "type": "text"
+              "key": "first_name",
+              "label": "Vorname",
+              "type": "text",
+              "width": "140px"
             },
             {
-              "key": "trip_date",
-              "label": "Datum",
-              "type": "text"
+              "key": "fishing_card_type",
+              "label": "Ausweistyp",
+              "type": "text",
+              "width": "140px"
             },
             {
               "key": "status",
               "label": "Status",
-              "type": "text"
+              "type": "text",
+              "width": "100px"
             },
             {
-              "key": "requires_board_approval",
-              "label": "Vorstand",
-              "type": "boolean"
-            },
-            {
-              "key": "updated_at",
-              "label": "Zuletzt aktualisiert",
-              "type": "text"
+              "key": "created_at",
+              "label": "Eingegangen",
+              "type": "datetime",
+              "width": "160px"
             }
           ],
           "rowsPath": "rows",
           "tableConfig": {
-            "tableId": "adm-club-settings-approvals",
+            "tableId": "adm-club-settings-approvals-membership",
             "rowKeyField": "id",
             "gridTemplateColumns": "",
             "rowInteractionMode": "dialog",
             "selectionMode": "single",
             "viewMode": "table",
-            "sortKey": "updated_at",
-            "sortDir": "desc",
+            "sortKey": "created_at",
+            "sortDir": "asc",
             "filterFields": [
               {
-                "key": "water_name",
-                "label": "Gewaesser",
+                "key": "last_name",
+                "label": "Name",
                 "type": "text",
-                "placeholder": "Name"
+                "placeholder": "Nachname"
               },
               {
-                "key": "status",
-                "label": "Status",
+                "key": "fishing_card_type",
+                "label": "Ausweistyp",
                 "type": "text",
-                "placeholder": "pending / approved"
-              },
-              {
-                "key": "member_label",
-                "label": "Mitglied",
-                "type": "text",
-                "placeholder": "Name"
+                "placeholder": "Typ"
               }
             ]
           }

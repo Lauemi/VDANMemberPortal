@@ -22,7 +22,7 @@
       },
       {
         "id": "nav_club_settings_members",
-        "label": "Vereinsverwaltung",
+        "label": "Mitgliederverwaltung",
         "targetSectionId": "club_settings_members",
         "icon": "users"
       },
@@ -58,7 +58,7 @@
       },
       {
         "id": "nav_club_settings_approvals",
-        "label": "Fangfreigaben",
+        "label": "Freigaben",
         "targetSectionId": "club_settings_approvals",
         "icon": "check"
       },
@@ -106,7 +106,7 @@
   },
   "header": {
     "kicker": "",
-    "title": "Vereinsverwaltung",
+    "title": "Mitgliederverwaltung",
     "description": ""
   },
   "toolbar": {
@@ -1683,8 +1683,8 @@
     },
     {
       "id": "club_settings_members",
-      "label": "Vereinsverwaltung",
-      "title": "Vereinsverwaltung",
+      "label": "Mitgliederverwaltung",
+      "title": "Mitgliederverwaltung",
       "description": "Mitgliederverzeichnis ueber den bestehenden Admin-Registry-RPC.",
       "workspaceSlot": "main",
       "sectionLayout": "stack",
@@ -1712,7 +1712,7 @@
       "panels": [
         {
           "id": "club_settings_members_registry",
-          "title": "Vereinsverwaltung",
+          "title": "Mitgliederverwaltung",
           "renderMode": "table",
           "componentType": "inline-data-table",
           "contentArea": "main",
@@ -3758,9 +3758,9 @@
     },
     {
       "id": "club_settings_approvals",
-      "label": "Fangfreigaben",
-      "title": "Fangfreigaben",
-      "description": "Freigabe- und Pruefbereich fuer Fangmeldungen.",
+      "label": "Freigaben",
+      "title": "Freigaben",
+      "description": "Freigabe- und Pruefbereich fuer Mitgliedsantraege und Arbeitsstunden.",
       "workspaceSlot": "main",
       "sectionLayout": "stack",
       "permissions": {
@@ -3787,7 +3787,7 @@
       "panels": [
         {
           "id": "club_settings_approvals_table",
-          "title": "Fangfreigaben",
+          "title": "Freigaben",
           "renderMode": "table",
           "componentType": "inline-data-table",
           "contentArea": "main",

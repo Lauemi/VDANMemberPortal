@@ -114,7 +114,7 @@
 
   /* Welche Nav-Labels bekommen einen Badge? */
   var BADGE_MAP = {
-    "Vereinsverwaltung": "antraege",
+    "Freigaben": "antraege",
     "Mitglieder": "antraege",
   };
 

@@ -294,19 +294,6 @@ const publicMenuLinks = isFcpMode
                 </div>
               </div>
             </div>
-            <div id="headerNotificationWrap" class="header-notification-wrap hidden" hidden data-ui-session-skip>
-              <button
-                type="button"
-                id="headerNotificationToggle"
-                class="header-notification-toggle"
-                aria-label="Benachrichtigungen öffnen"
-                aria-expanded="false"
-                data-ui-session-skip
-              >
-                <span aria-hidden="true">🔔</span>
-                <span id="headerNotificationBadge" class="header-notification-badge hidden" hidden aria-hidden="true"></span>
-              </button>
-            </div>
             <div class="nav-actions header-menu">
               <span id="netStatusBadge" class="small hidden" hidden>Offline</span>
               {showHeaderAuthCta && <a id="headerAuthCta" class="header-auth-cta" href="/login/" data-ui-session-skip>Sign in</a>}
@@ -372,6 +359,20 @@ const publicMenuLinks = isFcpMode
         <div class="adm-topbar__sp"></div>
 
         <div class="adm-topbar__util">
+          {/* Notification Bell — gleiche IDs wie zuvor; notifications-center.js findet sie hier. */}
+          <div id="headerNotificationWrap" class="header-notification-wrap adm-topbar__bell hidden" hidden data-ui-session-skip>
+            <button
+              type="button"
+              id="headerNotificationToggle"
+              class="header-notification-toggle adm-topbar__bell-btn"
+              aria-label="Benachrichtigungen öffnen"
+              aria-expanded="false"
+              data-ui-session-skip
+            >
+              <span aria-hidden="true">🔔</span>
+              <span id="headerNotificationBadge" class="header-notification-badge hidden" hidden aria-hidden="true"></span>
+            </button>
+          </div>
           {/* Account-Pill + Dropdown — nur Web/Desktop, mobile = portal-quick. */}
           <div class="adm-topbar__user-wrap">
             <button type="button"

@@ -1338,3 +1338,15 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-b
   padding: 12px 16px 16px;
   border-top: 1px solid var(--rd-line, rgba(108,112,91,.14));
 }
+
+/* ── Notification Bell im ADM Topbar ─────────────────────────────── */
+/* Die Glocke wurde von header.header in #admTopbar verschoben (Phase B).
+   header-notification-toggle hat bereits fcp_tactical-Styles in main.css.
+   Hier nur Topbar-spezifisches Alignment. */
+.adm-topbar__bell {
+  display: flex;
+  align-items: center;
+}
+.adm-topbar__bell.hidden {
+  display: none;
+}

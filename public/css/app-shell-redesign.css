@@ -1635,3 +1635,103 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
     padding: 0 12px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE ADM NAV — Slide-In Overlay (Option A)
+   ───────────────────────────────────────────────────────────────────
+   - Hamburger-Button (.adm-nav-mob-burger) wird per JS in den Topbar
+     injiziert — nur auf Mobile via CSS sichtbar.
+   - admin-board wechselt auf 1-Spalte (Content full-width).
+   - admin-board__nav: position:fixed, schiebt sich von links rein.
+   - Klasse adm-nav-open auf .admin-board steuert den Open-State.
+   - Backdrop via ::before (halbtransparent), Klick schließt via JS.
+   - Nav-Item-Klick schließt automatisch (in renderNav onClick).
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Desktop + Tablet: Hamburger und Close-Button versteckt */
+.adm-nav-mob-burger,
+.adm-nav-close-btn {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  /* 2-Spalten-Grid → 1 Spalte (Content full-width) */
+  body[data-app-theme="fcp_tactical"] .admin-board {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  /* Nav: aus normalem Flow raus, fixed links versteckt */
+  body[data-app-theme="fcp_tactical"] .admin-board__nav {
+    position: fixed;
+    top: 84px;          /* Topbar 54px + KPI-Strip 30px */
+    left: 0;
+    bottom: 0;
+    width: 236px;
+    max-width: 88vw;
+    max-height: none;
+    z-index: 200;
+    background: var(--rd-surface, #fbf7ee);
+    border-right: 1px solid var(--rd-line, rgba(108, 112, 91, .14));
+    border-top: 1px solid var(--rd-line, rgba(108, 112, 91, .14));
+    border-left: 0;
+    border-radius: 0;
+    padding: 12px 16px 32px;
+    box-shadow: 4px 0 24px rgba(62, 56, 34, .18);
+    /* Versteckt: links außerhalb + unsichtbar */
+    transform: translateX(-110%);
+    visibility: hidden;
+    transition: transform .22s cubic-bezier(.4, 0, .2, 1), visibility 0s .22s;
+  }
+
+  /* Nav offen: reingeschoben + sichtbar */
+  body[data-app-theme="fcp_tactical"] .admin-board.adm-nav-open .admin-board__nav {
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform .22s cubic-bezier(.4, 0, .2, 1), visibility 0s 0s;
+  }
+
+  /* Backdrop: dimmt Content wenn Nav offen */
+  body[data-app-theme="fcp_tactical"] .admin-board.adm-nav-open::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(47, 53, 42, .38);
+    z-index: 199;
+    pointer-events: auto;
+  }
+
+  /* Hamburger-Button im Topbar */
+  .adm-nav-mob-burger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+    color: var(--rd-ink-2, #4a4e40);
+    background: transparent;
+    border: 1px solid var(--rd-line, rgba(108, 112, 91, .22));
+    border-radius: 7px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* Schließen-Button oben im Nav */
+  .adm-nav-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 4px 6px 10px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--rd-muted, #7a7c68);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--rd-line, rgba(108, 112, 91, .14));
+    cursor: pointer;
+    text-align: left;
+  }
+}

@@ -275,6 +275,33 @@
         this.root.append(this.refs.shell);
         this.refs.shell.append(this.refs.nav, this.refs.content);
         this.root.append(this.refs.status);
+
+        /* ── Mobile Nav: Hamburger in Topbar injizieren (einmalig) ─────── */
+        const topbar = document.querySelector("#admTopbar");
+        if (topbar && !topbar.querySelector(".adm-nav-mob-burger")) {
+          const burger = createElement("button", {
+            className: "adm-nav-mob-burger",
+            attrs: { type: "button", "aria-label": "Navigation öffnen/schließen" },
+            text: "☰",
+            onClick: (e) => {
+              e.stopPropagation();
+              this.refs.shell.classList.toggle("adm-nav-open");
+            },
+          });
+          const brand = topbar.querySelector(".adm-topbar__brand");
+          if (brand) brand.insertAdjacentElement("afterend", burger);
+          else topbar.prepend(burger);
+        }
+
+        /* ── Mobile Nav: Klick auf Backdrop (admin-board außerhalb Nav) schließt ── */
+        this.refs.shell.addEventListener("click", (e) => {
+          if (
+            this.refs.shell.classList.contains("adm-nav-open") &&
+            !this.refs.nav.contains(e.target)
+          ) {
+            this.refs.shell.classList.remove("adm-nav-open");
+          }
+        });
       }
 
       this.refs.shell.classList.toggle("fcp-adm-shell--hosted", Boolean(this.root.closest(".card__body")));
@@ -287,6 +314,17 @@
 
     renderNav() {
       this.refs.nav.innerHTML = "";
+
+      /* Schließen-Button (Desktop: display:none — nur Mobile via CSS sichtbar) */
+      this.refs.nav.append(
+        createElement("button", {
+          className: "adm-nav-close-btn",
+          attrs: { type: "button", "aria-label": "Navigation schließen" },
+          text: "Menü schließen  ✕",
+          onClick: () => this.refs.shell.classList.remove("adm-nav-open"),
+        })
+      );
+
       const navItems = Array.isArray(this.config.workspaceNav?.items) ? this.config.workspaceNav.items : [];
       navItems.forEach((item) => {
         const isActive = item.targetSectionId === this.state.activeSectionId;
@@ -298,7 +336,11 @@
               type: "button",
               "data-section-id": item.targetSectionId || "",
             },
-            onClick: () => this.activateSection(item.targetSectionId),
+            onClick: () => {
+              /* Mobile Nav beim Sektionswechsel schließen */
+              this.refs.shell.classList.remove("adm-nav-open");
+              this.activateSection(item.targetSectionId);
+            },
           })
         );
       });

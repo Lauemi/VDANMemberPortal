@@ -277,6 +277,9 @@
         this.root.append(this.refs.status);
 
         /* ── Mobile Nav: Hamburger in Topbar injizieren (einmalig) ─────── */
+        /* Wir setzen unseren Button IN die .adm-topbar__burger-Div (rechts),
+           CSS versteckt den originalen #burgerToggle auf Mobile ADM-Seiten.
+           Ergebnis: nur EIN Toggle-Button statt zweier hamburger-artiger Icons. */
         const topbar = document.querySelector("#admTopbar");
         if (topbar && !topbar.querySelector(".adm-nav-mob-burger")) {
           const burger = createElement("button", {
@@ -288,9 +291,14 @@
               this.refs.shell.classList.toggle("adm-nav-open");
             },
           });
-          const brand = topbar.querySelector(".adm-topbar__brand");
-          if (brand) brand.insertAdjacentElement("afterend", burger);
-          else topbar.prepend(burger);
+          const burgerDiv = topbar.querySelector(".adm-topbar__burger");
+          if (burgerDiv) {
+            burgerDiv.prepend(burger);
+          } else {
+            const brand = topbar.querySelector(".adm-topbar__brand");
+            if (brand) brand.insertAdjacentElement("afterend", burger);
+            else topbar.prepend(burger);
+          }
         }
 
         /* ── Mobile Nav: Klick auf Backdrop (admin-board außerhalb Nav) schließt ── */

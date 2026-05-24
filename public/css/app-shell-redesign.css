@@ -1701,6 +1701,12 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
     pointer-events: auto;
   }
 
+  /* Originaler Burger-Toggle (≡ public links) auf Mobile ADM-Seiten ausblenden —
+     unser adm-nav-mob-burger übernimmt seinen Platz in derselben Div. */
+  body[data-app-theme="fcp_tactical"] #burgerToggle {
+    display: none;
+  }
+
   /* Hamburger-Button im Topbar */
   .adm-nav-mob-burger {
     display: flex;

@@ -14,7 +14,7 @@ const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
     <section class="card" style="max-width:980px;margin:0 auto;">
       <div class="card__body prose">
         <h1>Datenschutzhinweise – Fishing-Club-Portal</h1>
-        <p><strong>Stand:</strong> 19.03.2026</p>
+        <p><strong>Stand:</strong> 23.05.2026</p>
 
         <h2>1. Verantwortlicher</h2>
         <p>
@@ -101,7 +101,26 @@ const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
           Mit Dienstleistern werden – soweit erforderlich – Verträge zur Auftragsverarbeitung abgeschlossen.
         </p>
 
-        <h2>7. Server-Logs, Sicherheits- und Systemprotokolle</h2>
+        <h2>7. Zahlungsabwicklung über Stripe</h2>
+        <p>
+          Für die Abwicklung von Zahlungen setzen wir den Zahlungsdienstleister <strong>Stripe Payments Europe, Ltd.</strong>
+          (1 Grand Canal Street Lower, Grand Canal Dock, Dublin, Irland) ein.
+        </p>
+        <p>
+          Im Rahmen der Zahlungsabwicklung werden die für die Transaktion erforderlichen personenbezogenen Daten an Stripe übermittelt.
+          Dies umfasst insbesondere Zahlungsdaten sowie Angaben, die zur Authentifizierung und Abwicklung des Zahlungsvorgangs erforderlich sind.
+        </p>
+        <p>
+          Zweck der Verarbeitung ist die Durchführung des Zahlungsvorgangs im Rahmen der Vertragserfüllung.
+          Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO. Mit Stripe wird ein Vertrag zur Auftragsverarbeitung abgeschlossen,
+          soweit dies nach anwendbarem Recht erforderlich ist.
+        </p>
+        <p>
+          Weitere Informationen zum Datenschutz bei Stripe finden Sie unter:
+          <a href="https://stripe.com/de/privacy" target="_blank" rel="noopener noreferrer">https://stripe.com/de/privacy</a>
+        </p>
+
+        <h2>8. Server-Logs, Sicherheits- und Systemprotokolle</h2>
         <p>
           Beim Aufruf der Website und bei Nutzung der Plattform werden technisch erforderliche Daten verarbeitet, um Inhalte auszuliefern, den
           sicheren Betrieb zu gewährleisten und Angriffe oder Fehlfunktionen zu erkennen.
@@ -120,13 +139,13 @@ const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
           Dritttools eingebunden.
         </p>
 
-        <h2>8. Registrierung, Login und Mitgliederportal</h2>
+        <h2>9. Registrierung, Login und Mitgliederportal</h2>
         <p>
           Im geschützten Portal werden personenbezogene Daten zur Einrichtung und Verwaltung von Nutzerkonten, zur Authentifizierung und zur
           rollenbasierten Freischaltung im jeweiligen Vereinskontext verarbeitet.
         </p>
 
-        <h2>9. Web-Push-Benachrichtigungen</h2>
+        <h2>10. Web-Push-Benachrichtigungen</h2>
         <p>Die Plattform unterstützt Web-Push-Benachrichtigungen.</p>
         <ul>
           <li>Push-Nachrichten werden nur nach aktiver Zustimmung des Nutzers versendet</li>
@@ -135,7 +154,7 @@ const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
         </ul>
         <p>Rechtsgrundlage ist Art. 6 Abs. 1 lit. a DSGVO.</p>
 
-        <h2>10. Lokale Speichertechniken und technisch notwendige Funktionen</h2>
+        <h2>11. Lokale Speichertechniken und technisch notwendige Funktionen</h2>
         <p>
           Die Plattform verwendet technisch erforderliche lokale Speichermechanismen, insbesondere <code>localStorage</code>,
           <code>sessionStorage</code> und Service-Worker-Funktionen.
@@ -152,7 +171,7 @@ const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
           erfolgt nicht.
         </p>
 
-        <h2>11. Externe Inhalte und Karten</h2>
+        <h2>12. Externe Inhalte und Karten</h2>
         <p>Einzelne Funktionen binden externe Inhalte ein. Dazu können gehören:</p>
         <ul>
           <li>Google Maps Embed</li>
@@ -164,22 +183,22 @@ const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
           Soweit diese Inhalte nicht technisch zwingend erforderlich sind, werden sie erst nach entsprechender Einwilligung geladen.
         </p>
 
-        <h2>12. Cookies und Einwilligungsmanagement</h2>
+        <h2>13. Cookies und Einwilligungsmanagement</h2>
         <p>
           Die Plattform verwendet technisch erforderliche Cookies bzw. vergleichbare Technologien für den sicheren Betrieb.
         </p>
         <p>Ein Consent-Management ist vorhanden.</p>
         <p>Externe Inhalte werden – soweit erforderlich – nur nach Einwilligung geladen.</p>
 
-        <h2>13. Analytics</h2>
+        <h2>14. Analytics</h2>
         <p>
           Nach aktuellem Stand werden keine klassischen Web-Analytics-Tools eingesetzt.
         </p>
 
-        <h2>14. Newsletter</h2>
+        <h2>15. Newsletter</h2>
         <p>Nach aktuellem Stand wird kein Newsletter-System eingesetzt.</p>
 
-        <h2>15. Empfänger personenbezogener Daten</h2>
+        <h2>16. Empfänger personenbezogener Daten</h2>
         <p>Empfänger personenbezogener Daten können insbesondere sein:</p>
         <ul>
           <li>technische Hosting- und Infrastrukturdienstleister</li>
@@ -188,19 +207,19 @@ const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
           <li>Behörden oder sonstige Stellen bei gesetzlicher Verpflichtung</li>
         </ul>
 
-        <h2>16. Drittlandübermittlungen</h2>
+        <h2>17. Drittlandübermittlungen</h2>
         <p>
           Soweit Dienstleister in Drittstaaten, z. B. USA, eingebunden sind, erfolgt eine Übermittlung personenbezogener Daten nur auf
           Grundlage der Art. 44 ff. DSGVO, insbesondere auf Basis geeigneter Garantien, z. B. Standardvertragsklauseln der EU-Kommission.
         </p>
 
-        <h2>17. Speicherdauer</h2>
+        <h2>18. Speicherdauer</h2>
         <p>
           Personenbezogene Daten werden nur so lange gespeichert, wie dies für die jeweiligen Zwecke erforderlich ist oder gesetzliche
           Aufbewahrungsfristen bestehen.
         </p>
 
-        <h2>18. Betroffenenrechte</h2>
+        <h2>19. Betroffenenrechte</h2>
         <ul>
           <li>Auskunft</li>
           <li>Berichtigung</li>
@@ -215,13 +234,13 @@ const isFcp = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
           Es findet keine automatisierte Entscheidungsfindung im Sinne des Art. 22 DSGVO statt.
         </p>
 
-        <h2>19. Kontakt Datenschutz</h2>
+        <h2>20. Kontakt Datenschutz</h2>
         <p>
           Bei Fragen zur Datenverarbeitung oder zum Datenschutz wenden Sie sich bitte an:<br />
           <a href={`mailto:${APP.supportEmail}`}>{APP.supportEmail}</a>
         </p>
 
-        <h2>20. Stand und Änderungen</h2>
+        <h2>21. Stand und Änderungen</h2>
         <p>
           Diese Datenschutzhinweise können angepasst werden, wenn rechtliche, technische oder organisatorische Änderungen dies erforderlich
           machen.

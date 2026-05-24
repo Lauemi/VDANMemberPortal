@@ -500,6 +500,12 @@ const publicMenuLinks = isFcpMode
               initAccountMenu();
             });
             window.addEventListener("load", fillAdmUser);
+            /* vdan:session fired by member-auth.js sobald Session geladen/refreshed.
+               Stellt sicher dass Avatar auch befüllt wird wenn loadSession()
+               beim DOMContentLoaded noch null zurückgibt (Token-Refresh läuft async). */
+            document.addEventListener("vdan:session", function (e) {
+              if (e && e.detail && e.detail.loggedIn) fillAdmUser();
+            });
           })();
         </script>
       </div>

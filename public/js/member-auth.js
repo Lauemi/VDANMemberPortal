@@ -829,7 +829,7 @@
 
   async function signUpWithPassword(emailRaw, password, metadata = {}, options = {}) {
     const email = String(emailRaw || "").trim().toLowerCase();
-    if (!email || !email.includes("@")) throw new Error("Bitte eine gÃ¼ltige E-Mail eingeben.");
+    if (!email || !email.includes("@")) throw new Error("Bitte eine gültige E-Mail eingeben.");
     if (String(password || "").length < 8) throw new Error("Passwort muss mindestens 8 Zeichen haben.");
 
     const signupBody = { email, password, data: metadata || {} };
@@ -921,7 +921,7 @@
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.msg || err?.error_description || "Passwort konnte nicht geÃ¤ndert werden.");
+      throw new Error(err?.msg || err?.error_description || "Passwort konnte nicht geändert werden.");
     }
     await clearMustChangePasswordFlag();
   }
@@ -1042,7 +1042,7 @@
     if (!force) return false;
 
     const next = encodeURIComponent(String(redirectTarget || (path + window.location.search) || "/app/"));
-    window.location.replace(`/app/zugang-prÃ¼fen/?next=${next}`);
+    window.location.replace(`/app/zugang-prüfen/?next=${next}`);
     return true;
   }
 
@@ -1452,16 +1452,16 @@
         const lastName = "";
 
         if (!accepted) {
-          if (regMsg) regMsg.textContent = "Bitte Nutzungsbedingungen und DatenschutzerklÃ¤rung bestÃ¤tigen.";
+          if (regMsg) regMsg.textContent = "Bitte Nutzungsbedingungen und Datenschutzerklärung bestätigen.";
           return;
         }
         if (!updateRegisterPasswordFeedback()) {
-          if (regMsg) regMsg.textContent = "PasswÃ¶rter stimmen nicht Ã¼berein.";
+          if (regMsg) regMsg.textContent = "Passwörter stimmen nicht überein.";
           document.getElementById("registerPass2")?.reportValidity?.();
           return;
         }
         try {
-          if (!inviteToken) throw new Error("FÃ¼r den Vereinsbeitritt ist aktuell ein Invite-Token erforderlich.");
+          if (!inviteToken) throw new Error("Für den Vereinsbeitritt ist aktuell ein Invite-Token erforderlich.");
           const verify = await verifyInviteToken(inviteToken);
           applyInviteContextUi(verify);
           const inviteMemberNo = extractInviteMemberNo(verify);
@@ -1548,7 +1548,7 @@
           return;
         }
         if (p1 !== p2) {
-          if (msgEl) msgEl.textContent = "PasswÃ¶rter stimmen nicht Ã¼berein.";
+          if (msgEl) msgEl.textContent = "Passwörter stimmen nicht überein.";
           return;
         }
         try {
@@ -1558,7 +1558,7 @@
           const target = postAuthTarget(DEFAULT_CORE_HOME);
           window.location.assign(target);
         } catch (err) {
-          if (msgEl) msgEl.textContent = err?.message || "Passwort konnte nicht geÃ¤ndert werden.";
+          if (msgEl) msgEl.textContent = err?.message || "Passwort konnte nicht geändert werden.";
         }
       });
     }

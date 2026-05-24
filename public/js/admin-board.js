@@ -21,23 +21,23 @@
     { route: "/app/feedback/", kind: "PORTAL", label: "Feedback" },
     { route: "/app/feedback/cockpit", kind: "PORTAL", label: "Feedback Cockpit" },
     { route: "/app/fangliste/", kind: "PORTAL", label: "Fangliste" },
-    { route: "/app/gewaesserkarte/", kind: "PORTAL", label: "GewÃ¤sserkarte" },
+    { route: "/app/gewaesserkarte/", kind: "PORTAL", label: "Gewässerkarte" },
     { route: "/app/kontrollboard/", kind: "PORTAL", label: "Kontrollboard" },
     { route: "/app/masterboard/", kind: "PORTAL", label: "Masterboard" },
     { route: "/app/mitgliederverwaltung/", kind: "PORTAL", label: "Mitgliederverwaltung" },
     { route: "/app/notes/", kind: "PORTAL", label: "Notes" },
-    { route: "/app/passwort-aendern/", kind: "PORTAL", label: "Passwort Ã¤ndern" },
-    { route: "/app/rechtliches-bestaetigen/", kind: "PORTAL", label: "Rechtliches bestÃ¤tigen" },
+    { route: "/app/passwort-aendern/", kind: "PORTAL", label: "Passwort ändern" },
+    { route: "/app/rechtliches-bestaetigen/", kind: "PORTAL", label: "Rechtliches bestätigen" },
     { route: "/app/sitzungen/", kind: "PORTAL", label: "Sitzungen" },
     { route: "/app/template-studio/", kind: "PORTAL", label: "Template Studio" },
-    { route: "/app/zugang-pruefen/", kind: "PORTAL", label: "Zugang prÃ¼fen" },
-    { route: "/app/zustaendigkeiten/", kind: "PORTAL", label: "ZustÃ¤ndigkeiten" },
+    { route: "/app/zugang-pruefen/", kind: "PORTAL", label: "Zugang prüfen" },
+    { route: "/app/zustaendigkeiten/", kind: "PORTAL", label: "Zuständigkeiten" },
     { route: "/", kind: "WEB", label: "Startseite" },
     { route: "/anglerheim-ottenheim", kind: "WEB", label: "Anglerheim Ottenheim" },
     { route: "/datenschutz", kind: "WEB", label: "Datenschutz" },
     { route: "/docs", kind: "WEB", label: "Docs" },
     { route: "/downloads", kind: "WEB", label: "Downloads" },
-    { route: "/fischereipruefung", kind: "WEB", label: "FischereiprÃ¼fung" },
+    { route: "/fischereipruefung", kind: "WEB", label: "Fischereiprüfung" },
     { route: "/impressum", kind: "WEB", label: "Impressum" },
     { route: "/kontakt", kind: "WEB", label: "Kontakt" },
     { route: "/login", kind: "WEB", label: "Login" },
@@ -98,10 +98,10 @@
     return String(value || "")
       .trim()
       .toLowerCase()
-      .replaceAll("Ã¤", "ae")
-      .replaceAll("Ã¶", "oe")
-      .replaceAll("Ã¼", "ue")
-      .replaceAll("ÃŸ", "ss")
+      .replaceAll("ä", "ae")
+      .replaceAll("ö", "oe")
+      .replaceAll("ü", "ue")
+      .replaceAll("ß", "ss")
       .replace(/[^a-z0-9 _-]/g, "")
       .replace(/\s+/g, "_")
       .replace(/_+/g, "_")
@@ -122,7 +122,7 @@
   function defaultModuleCatalog() {
     return [
       { id: "fishing", label: "Fishing", active: true, usecases: ["fangliste", "go_fishing", "fangliste_cockpit"] },
-      { id: "work", label: "ArbeitseinsÃ¤tze", active: true, usecases: ["arbeitseinsaetze", "arbeitseinsaetze_cockpit"] },
+      { id: "work", label: "Arbeitseinsätze", active: true, usecases: ["arbeitseinsaetze", "arbeitseinsaetze_cockpit"] },
       { id: "eventplaner", label: "Eventplaner", active: true, usecases: ["eventplaner", "eventplaner_mitmachen"] },
       { id: "feed", label: "Feed", active: true, usecases: ["feed"] },
       { id: "members", label: "Mitglieder", active: true, usecases: ["mitglieder", "mitglieder_registry"] },
@@ -1251,7 +1251,7 @@
               <td><code>${esc(page.route)}</code></td>
               <td>${esc(page.kind)}</td>
               ${cells}
-              <td><a class="feed-btn feed-btn--ghost" href="${esc(page.route)}">Ã–ffnen</a></td>
+              <td><a class="feed-btn feed-btn--ghost" href="${esc(page.route)}">Öffnen</a></td>
             </tr>
           `;
         })
@@ -1761,7 +1761,7 @@
     if (govMsg) {
       govMsg.textContent = healthRows.length
         ? "Zentrale Audit-Quelle aktiv (Snapshot + Drilldown)."
-        : "Keine Governance-Health-Daten sichtbar (RPC/Permissions prÃ¼fen).";
+        : "Keine Governance-Health-Daten sichtbar (RPC/Permissions prüfen).";
     }
 
     const healthBody = document.querySelector("#adminGovernanceHealthTable tbody");
@@ -1904,7 +1904,7 @@
     renderClubDetail();
     renderClubRequests();
     if (!hasRuntimeConfig()) {
-      setMsg("Preflight: Supabase Runtime-Config fehlt oder ist Platzhalter. Admin-Board lÃ¤uft im Readiness-Modus (kein Live-Connect).", true);
+      setMsg("Preflight: Supabase Runtime-Config fehlt oder ist Platzhalter. Admin-Board läuft im Readiness-Modus (kein Live-Connect).", true);
       document.querySelectorAll(".admin-card").forEach((card) => card.classList.add("is-missing"));
       return;
     }
@@ -1937,7 +1937,7 @@
     document.getElementById("adminStaticWebReset")?.addEventListener("click", () => {
       state.staticWebMatrix = defaultStaticWebMatrix();
       renderStaticWebTables();
-      setSmallMsg("adminStaticWebMsg", "Web-Draft auf Repo-Stand zurÃ¼ckgesetzt.");
+      setSmallMsg("adminStaticWebMsg", "Web-Draft auf Repo-Stand zurückgesetzt.");
     });
     document.getElementById("adminStaticWebCopy")?.addEventListener("click", async (e) => {
       await copyText(e.currentTarget, staticWebMatrixAsJson(), "Web JSON kopiert");
@@ -2057,14 +2057,14 @@
       }
       const localOk = saveAllClubConfigs(state.clubModuleConfig, state.moduleCatalog);
       const ok = dbOk && localOk;
-      setSmallMsg("adminClubDetailMsg", ok ? "Modulzusammensetzung gespeichert." : "Speichern nur teilweise erfolgreich (DB/Local prÃ¼fen).", !ok);
+      setSmallMsg("adminClubDetailMsg", ok ? "Modulzusammensetzung gespeichert." : "Speichern nur teilweise erfolgreich (DB/Local prüfen).", !ok);
     });
     document.getElementById("adminClubDetailReset")?.addEventListener("click", () => {
       const club = selectedClub();
       if (!club) return;
       state.clubModuleConfig[club.id] = defaultClubConfigFor(state.moduleCatalog);
       renderClubDetail();
-      setSmallMsg("adminClubDetailMsg", "Standardmodell fÃ¼r diesen Club geladen.");
+      setSmallMsg("adminClubDetailMsg", "Standardmodell für diesen Club geladen.");
     });
     document.querySelector("#adminClubModulesTable tbody")?.addEventListener("change", (event) => {
       const target = event.target;
@@ -2111,7 +2111,7 @@
       renderModuleCatalogEditor();
       renderRoleDefaultsEditor();
       renderClubDetail();
-      setSmallMsg("adminModuleCatalogMsg", ok1 && ok2 && ok3 && ok4 ? "Modul-Katalog gespeichert." : "Konnte Modul-Katalog nicht vollstÃ¤ndig speichern.", !(ok1 && ok2 && ok3 && ok4));
+      setSmallMsg("adminModuleCatalogMsg", ok1 && ok2 && ok3 && ok4 ? "Modul-Katalog gespeichert." : "Konnte Modul-Katalog nicht vollständig speichern.", !(ok1 && ok2 && ok3 && ok4));
     });
     document.getElementById("adminModuleCatalogReset")?.addEventListener("click", () => {
       state.moduleCatalog = defaultModuleCatalog();
@@ -2125,7 +2125,7 @@
       renderModuleCatalogEditor();
       renderRoleDefaultsEditor();
       renderClubDetail();
-      setSmallMsg("adminModuleCatalogMsg", "Modul-Katalog auf Standard zurÃ¼ckgesetzt.");
+      setSmallMsg("adminModuleCatalogMsg", "Modul-Katalog auf Standard zurückgesetzt.");
     });
 
     document.getElementById("adminRoleDefaultsRole")?.addEventListener("change", () => {
@@ -2152,13 +2152,13 @@
         dbOk = false;
       }
       const ok = localOk && dbOk;
-      setSmallMsg("adminRoleDefaultsMsg", ok ? "Standard-Rollenrechte gespeichert." : "Speichern nur teilweise erfolgreich (DB/Local prÃ¼fen).", !ok);
+      setSmallMsg("adminRoleDefaultsMsg", ok ? "Standard-Rollenrechte gespeichert." : "Speichern nur teilweise erfolgreich (DB/Local prüfen).", !ok);
     });
     document.getElementById("adminRoleDefaultsReset")?.addEventListener("click", () => {
       state.moduleDefaultRights = defaultModuleRights(state.moduleCatalog);
       saveModuleRights(state.moduleDefaultRights, state.moduleCatalog);
       renderRoleDefaultsEditor();
-      setSmallMsg("adminRoleDefaultsMsg", "Standard-Rollenrechte auf App-Default zurÃ¼ckgesetzt.");
+      setSmallMsg("adminRoleDefaultsMsg", "Standard-Rollenrechte auf App-Default zurückgesetzt.");
     });
     document.querySelector("#adminModulesTable tbody")?.addEventListener("change", (event) => {
       const target = event.target;
@@ -2218,7 +2218,7 @@
       renderModulesTables();
     });
 
-    setMsg("Admin-Board lÃ¤dt...");
+    setMsg("Admin-Board lädt...");
     await loadCoreData();
     await loadGovernanceFromDb();
     await loadGovernanceHealth();
@@ -2226,7 +2226,7 @@
     renderRoleDefaultsEditor();
     if (state.users.length === 0 && state.clubs.length === 0) {
       const diag = state.diagnostics.length ? ` Diagnose: ${state.diagnostics.slice(0, 4).join(" | ")}` : "";
-      setMsg("Keine DatensÃ¤tze sichtbar. Wahrscheinlich fehlen Select-Policies (RLS) oder Profile/Club-Daten fÃ¼r diesen User." + diag, true);
+      setMsg("Keine Datensätze sichtbar. Wahrscheinlich fehlen Select-Policies (RLS) oder Profile/Club-Daten für diesen User." + diag, true);
     }
     const clubRows = computeClubMetrics();
     state.clubMetrics = clubRows;
@@ -2241,7 +2241,7 @@
     if (!state.loginSignalAvailable) {
       const sourceLabel = state.sources.length ? ` Quellen: ${state.sources.join(", ")}.` : "";
       const diag = state.diagnostics.length ? ` Diagnose: ${state.diagnostics.slice(0, 3).join(" | ")}` : "";
-      setMsg(`Hinweis: Last-Login-Signal nicht verfÃ¼gbar. KPIs/Spalten wurden als n/a markiert.${sourceLabel}${diag}`, false);
+      setMsg(`Hinweis: Last-Login-Signal nicht verfügbar. KPIs/Spalten wurden als n/a markiert.${sourceLabel}${diag}`, false);
       document.querySelectorAll('[data-admin-panel="dashboard"] .admin-card').forEach((card) => card.classList.add("is-missing"));
     } else {
       const sourceLabel = state.sources.length ? ` Datenquellen: ${state.sources.join(", ")}.` : "";

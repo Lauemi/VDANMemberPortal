@@ -508,6 +508,18 @@
     return start.getTime() >= today.getTime();
   }
 
+  /* Events der letzten 30 Tage ODER zukünftige — für "Events verwalten" */
+  function isRecentOrUpcomingEvent(event) {
+    const start = new Date(event?.starts_at || "");
+    if (Number.isNaN(start.getTime())) return false;
+    const status = String(event?.status || "").toLowerCase();
+    if (["cancelled", "archived"].includes(status)) return false;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    cutoff.setHours(0, 0, 0, 0);
+    return start.getTime() >= cutoff.getTime();
+  }
+
   function managedEvents() {
     return state.events.filter((event) => configForEvent(event));
   }
@@ -518,7 +530,7 @@
 
   function planningRows() {
     return state.events
-      .filter((event) => isUpcomingEvent(event) || configForEvent(event))
+      .filter((event) => isRecentOrUpcomingEvent(event) || configForEvent(event))
       .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
   }
 
@@ -963,7 +975,7 @@
     if (!rows.length) {
       body.innerHTML = `
         ${renderCreateRows()}
-        <tr><td colspan="6" class="small">Aktuell gibt es keine anstehenden Termine oder Arbeitseinsätze für die Planung.</td></tr>
+        <tr><td colspan="6" class="small">Keine Termine in den letzten 30 Tagen oder in der Zukunft. Ältere Einträge sind im Kalender sichtbar.</td></tr>
       `;
       return;
     }

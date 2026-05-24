@@ -2,7 +2,7 @@
   const FALLBACK_KEY = "vdan_portal_quick_settings_v1";
   const HANDEDNESS_VALUES = new Set(["left", "right", "auto"]);
   const MAX_FAVORITES = 3;
-  const DEFAULT_FAVORITES = ["fangliste", "ausweis", "gewaesserkarte"];
+  const DEFAULT_FAVORITES = ["fangliste", "ausweis", "arbeitseinsaetze"];
   const LABELS = {
     openPortal: "Portal öffnen",
     login: "Login",
@@ -55,7 +55,7 @@
 
     { id: "feedback_cockpit", href: "/app/feedback/cockpit/", label: "Feedback Cockpit", short: "BC", access: "admin", group: "admin" },
     { id: "admin_board", href: "/app/admin-panel/", label: "Admin Board", short: "AB", access: "superadmin", group: "superadmin" },
-    { id: "mitgliederverwaltung", href: "/app/mitgliederverwaltung/", label: "Vereinsverwaltung", short: "VV", access: "admin", group: "admin" },
+    { id: "mitgliederverwaltung", href: "/app/mitgliederverwaltung/", label: "Mitgliederverwaltung", short: "MV", access: "admin", group: "admin" },
     { id: "kontrollboard", href: "/app/kontrollboard/", label: "Kontrollboard", short: "KB", access: "superadmin", group: "superadmin" },
     { id: "masterboard", href: "/app/masterboard/", label: "Masterboard", short: "MB", access: "superadmin", group: "superadmin" },
     { id: "component_library", href: "/app/component-library/", label: "Component Library", short: "CL", access: "superadmin", group: "superadmin" },

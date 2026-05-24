@@ -279,9 +279,42 @@
       });
 
       sectionNode.append(this.renderSectionHeader(activeSection));
-      (activeSection.panels || []).forEach((panel) => {
-        sectionNode.append(this.renderPanel(activeSection, panel));
-      });
+
+      if (activeSection.sectionLayout === "tabs") {
+        /* ── Tab-Layout: Strip + one visible panel at a time ─────────── */
+        const panels = activeSection.panels || [];
+        const strip = createElement("nav", { className: "adm-section-tabs" });
+        panels.forEach((panel, idx) => {
+          const btn = createElement("button", {
+            className: "adm-section-tab" + (idx === 0 ? " is-active" : ""),
+            text: panel.title || panel.id,
+            attrs: { type: "button", "data-tab-target": panel.id },
+          });
+          btn.addEventListener("click", () => {
+            strip.querySelectorAll(".adm-section-tab").forEach((b) => b.classList.remove("is-active"));
+            btn.classList.add("is-active");
+            sectionNode.querySelectorAll("[data-tab-panel]").forEach((p) => {
+              p.hidden = p.dataset.tabPanel !== panel.id;
+            });
+          });
+          strip.append(btn);
+        });
+        sectionNode.append(strip);
+        panels.forEach((panel, idx) => {
+          const wrap = createElement("div", {
+            attrs: { "data-tab-panel": panel.id },
+          });
+          if (idx !== 0) wrap.hidden = true;
+          wrap.append(this.renderPanel(activeSection, panel));
+          sectionNode.append(wrap);
+        });
+      } else {
+        /* ── Stack-Layout (default) ───────────────────────────────────── */
+        (activeSection.panels || []).forEach((panel) => {
+          sectionNode.append(this.renderPanel(activeSection, panel));
+        });
+      }
+
       this.refs.content.append(sectionNode);
     }
 

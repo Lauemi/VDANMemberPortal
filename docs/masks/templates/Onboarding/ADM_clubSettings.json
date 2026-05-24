@@ -2721,7 +2721,7 @@
       "title": "Ausweise",
       "description": "Ausweis-Lifecycle, Freigaben und Gueltigkeiten.",
       "workspaceSlot": "main",
-      "sectionLayout": "stack",
+      "sectionLayout": "tabs",
       "permissions": {
         "view": true,
         "write": false,

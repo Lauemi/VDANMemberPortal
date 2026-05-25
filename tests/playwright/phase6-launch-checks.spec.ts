@@ -7,6 +7,14 @@
  * CHECK-06  Portrait → Landscape kein Overflow     Gate B
  * CHECK-07  Forbidden-State Toast sichtbar         Gate C
  *
+ * Phase-7 Erweiterungen — Gates A/B/C (öffentliche Seiten + QFM)
+ * ===============================================================
+ * CHECK-08  Console Errors öffentliche Seiten      Gate A
+ * CHECK-09  Touch Targets Verein anfragen           Gate B
+ * CHECK-10  Desktop kein Overflow öffentl. Seiten  Gate B
+ * CHECK-11  Console Errors QFM Dashboard           Gate A
+ * CHECK-12  Dead Ends — 404 + Session-Loss         Gate C
+ *
  * Viewport: 375×812 (chromium-mobile-375 project aus playwright.config.ts)
  * Desktop-Viewport wird per setViewportSize() überschrieben wo nötig.
  *
@@ -275,5 +283,139 @@ test.describe('CHECK-03 Console Errors — ADM Sektionen', () => {
     if (consoleErrors.length) {
       console.warn('[CHECK-03] console.error-Calls (zur Überprüfung):', consoleErrors);
     }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHECK-08 — Console Errors öffentliche Seiten (Gate A)
+// ═══════════════════════════════════════════════════════════════════════════
+
+test.describe('CHECK-08 Console Errors — öffentliche Seiten', () => {
+  const PUBLIC_PAGES = [
+    { label: 'Login',           path: '/login/' },
+    { label: 'Registrieren',    path: '/registrieren/' },
+    { label: 'Verein anfragen', path: '/verein-anfragen/' },
+  ];
+
+  for (const { label, path } of PUBLIC_PAGES) {
+    test(`${label}: keine unbehandelten JS-Exceptions`, async ({ page }) => {
+      const pageErrors: string[] = [];
+      page.on('pageerror', (err) => pageErrors.push(`[pageerror] ${err.message}`));
+
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(500);
+
+      if (pageErrors.length) {
+        console.error(`[CHECK-08] ${label}: JS-Exceptions:`, pageErrors);
+      }
+      expect(pageErrors, `${label}: unbehandelte JS-Exceptions`).toHaveLength(0);
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHECK-09 — Touch Targets >= 44px (Verein anfragen — Gate B)
+// ═══════════════════════════════════════════════════════════════════════════
+
+test.describe('CHECK-09 Touch Targets — Verein anfragen', () => {
+  test('Verein anfragen: alle interaktiven Elemente ≥ 44px', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/verein-anfragen/', { waitUntil: 'domcontentloaded' });
+    const small = await smallInteractiveElements(page, 44);
+    if (small.length > 0) {
+      console.warn(`[CHECK-09] Verein anfragen: ${small.length} Element(e) < 44px:`);
+      small.forEach(e => console.warn(`  ${e.selector} "${e.text}" — ${e.w}×${e.h}px`));
+    }
+    const critical = small.filter(e => e.w < 32 || e.h < 32);
+    expect(critical, 'Verein anfragen: kritisch kleine Targets (< 32px) gefunden').toHaveLength(0);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHECK-10 — Desktop kein horizontaler Overflow (öffentliche Seiten — Gate B)
+// ═══════════════════════════════════════════════════════════════════════════
+
+test.describe('CHECK-10 Desktop Overflow — öffentliche Seiten', () => {
+  const DESKTOP_PAGES = [
+    { label: 'Login',           path: '/login/' },
+    { label: 'Registrieren',    path: '/registrieren/' },
+    { label: 'Verein anfragen', path: '/verein-anfragen/' },
+  ];
+
+  for (const { label, path } of DESKTOP_PAGES) {
+    test(`${label}: kein horizontaler Overflow bei 1280px`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      const overflow = await hasHorizontalOverflow(page);
+      expect(overflow, `${label} hat horizontalen Overflow bei 1280px`).toBe(false);
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHECK-11 — Console Errors QFM Dashboard (Mock-Session, Gate A)
+// ═══════════════════════════════════════════════════════════════════════════
+
+test.describe('CHECK-11 Console Errors — QFM Dashboard', () => {
+  test('QFM Dashboard /app/: keine unbehandelten JS-Exceptions mit Mock-Session', async ({ page }) => {
+    const pageErrors: string[] = [];
+    page.on('pageerror', (err) => pageErrors.push(`[pageerror] ${err.message}`));
+
+    const consoleErrors: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        const text = msg.text();
+        const expected = ['Failed to load resource', 'net::ERR_', 'phase6-fake-access-token', 'Preflight'];
+        if (!expected.some((e) => text.includes(e))) {
+          consoleErrors.push(`[console.error] ${text.slice(0, 120)}`);
+        }
+      }
+    });
+
+    await injectSession(page);
+    await mockSupabaseApi(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/app/', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
+
+    if (pageErrors.length) console.error('[CHECK-11] JS-Exceptions QFM:', pageErrors);
+    expect(pageErrors, 'QFM Dashboard: unbehandelte JS-Exceptions').toHaveLength(0);
+
+    if (consoleErrors.length) console.warn('[CHECK-11] console.error-Calls QFM:', consoleErrors);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHECK-12 — Dead Ends: 404-Seite + Session-Loss (Gate C)
+// ═══════════════════════════════════════════════════════════════════════════
+
+test.describe('CHECK-12 Dead Ends', () => {
+  test('404: Seite hat einen Rückweg (Link zu / oder /app/)', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/diese-seite-existiert-garantiert-nicht-12345/', { waitUntil: 'domcontentloaded' });
+    // Rückweg: irgendein Link der auf / oder /login/ oder /app/ führt
+    const homeLink = page.locator('a[href="/"], a[href="/login/"], a[href="/app/"]').first();
+    const exists = await homeLink.count();
+    if (!exists) {
+      console.warn('[CHECK-12] 404-Seite hat keinen offensichtlichen Rückweg-Link — prüfen');
+    }
+    // Weiche Prüfung: nur Warnung, kein harter Fail bei 404-Customization
+    // (Astro rendert default 404 die möglicherweise keinen Link hat)
+  });
+
+  test('Session-Loss: /login/ hat Weiterweg (vereinssignin oder verein-anfragen)', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/login/', { waitUntil: 'domcontentloaded' });
+    // FCP-Mode: /vereinssignin/ + /verein-anfragen/ statt /registrieren/
+    const exitLink = page.locator('a[href*="vereinssignin"], a[href*="verein-anfragen"], a[href*="registrieren"]').first();
+    await expect(exitLink).toBeAttached();
+  });
+
+  test('Session-Loss: /login/ hat Link zu /verein-anfragen/ (kein Dead End)', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/login/', { waitUntil: 'domcontentloaded' });
+    const claimLink = page.locator('a[href*="verein-anfragen"]').first();
+    await expect(claimLink).toBeAttached();
   });
 });

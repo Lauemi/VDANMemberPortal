@@ -1172,6 +1172,31 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-b
   color: #b43c3c;
 }
 
+/* Legal-Footer im Account-Menü — CHECK-01 Fix */
+.adm-account-menu__legal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 10px 3px;
+}
+.adm-account-menu__legal-link {
+  font-size: 11px;
+  color: var(--rd-ink-2, #4a4e40);
+  text-decoration: none;
+  opacity: 0.55;
+  transition: opacity 0.1s ease;
+}
+.adm-account-menu__legal-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+.adm-account-menu__legal-dot {
+  font-size: 11px;
+  color: var(--rd-ink-2, #4a4e40);
+  opacity: 0.35;
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    KPI-STRIP — Phase B ADM Shell
    Thin secondary bar sticky below topbar (top: 54px).

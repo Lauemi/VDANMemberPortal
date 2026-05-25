@@ -1184,12 +1184,18 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-b
   z-index: 99;
   background: var(--rd-surface-2, #ece5d4);
   border-bottom: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
-  height: 30px;
+  height: 26px;                                /* war 30px — etwas kompakter */
   display: flex;
   align-items: center;
   padding: 0 24px;
   gap: 0;
   overflow: hidden;
+  opacity: 0.72;                               /* tritt visuell zurueck */
+  transition: opacity 0.15s ease;
+}
+
+.adm-kpi-strip:hover {
+  opacity: 1;                                  /* bei Hover wieder voll sichtbar */
 }
 
 .adm-kpi-pill {
@@ -1206,14 +1212,14 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-b
 }
 
 .adm-kpi-pill__icon {
-  font-size: 10px;
-  opacity: 0.55;
+  font-size: 9px;                              /* war 10px */
+  opacity: 0.4;                               /* war 0.55 — mehr zurueckgetreten */
 }
 
 .adm-kpi-pill__value {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--rd-ink, #2a2d24);
+  font-size: 11.5px;                          /* war 12.5px */
+  font-weight: 600;                           /* war 700 — weniger dominant */
+  color: var(--rd-ink-2, #4a4e40);           /* war rd-ink (dunkelster Ton) */
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }

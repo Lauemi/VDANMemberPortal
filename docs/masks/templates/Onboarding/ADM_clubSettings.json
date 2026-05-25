@@ -1385,7 +1385,7 @@
             "panelStateHint": "Read via RPC public.club_invite_create_state (club-scoped). Write via Edge club-invite-create. Beide Pfade live und server-validiert.",
             "resolver": {
               "requiresClubContext": true,
-              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Einladungen werden erst im freigegebenen Club-Kontext erzeugt.",
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Einladungen stehen erst nach Vereinsfreigabe bereit. Bitte zuerst den Verein im Bereich Freigaben aktivieren.",
               "savePayloadDefaults": {
                 "club_id": "{club_id}",
                 "club_code": "{club_code}"
@@ -1773,7 +1773,7 @@
             "metaDisplay": "auto",
             "resolver": {
               "requiresClubContext": true,
-              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Mitglieder werden erst im Club-Kontext geladen.",
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Mitglieder werden erst nach Vereinsfreigabe geladen. Verein zuerst im Bereich Freigaben aktivieren, danach Mitglieder importieren oder einladen.",
               "enrichMemberRegistry": true,
               "rowsPath": "rows",
               "loadPayloadDefaults": {
@@ -3296,7 +3296,7 @@
             "panelStateHint": "Die erste Ausweise-Uebersicht laeuft auf bestehender Mitglieder-/Profilwahrheit. Scanner-, PDF- und spaetere Claim-/Preislogik bleiben getrennte Ausbaupfade.",
             "resolver": {
               "requiresClubContext": true,
-              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Ausweise werden erst im Club-Kontext geladen.",
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Ausweise werden erst nach Vereinsfreigabe und Mitglieder-Import erzeugt. Freigaben-Bereich pruefen.",
               "rowsPath": "rows",
               "loadPayloadDefaults": {
                 "p_club_id": "{club_id}"
@@ -3481,7 +3481,7 @@
             "metaDisplay": "auto",
             "resolver": {
               "requiresClubContext": true,
-              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Pflichtstunden koennen erst im Club-Kontext gepflegt werden.",
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Arbeitseinsaetze und Pflichtstunden koennen erst nach Vereinsfreigabe gepflegt werden. Zuerst Verein im Bereich Freigaben aktivieren.",
               "loadPayloadDefaults": {
                 "action": "get",
                 "club_id": "{club_id}"

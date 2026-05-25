@@ -9294,3 +9294,33 @@ body[data-app-theme="fcp_tactical"] .ui-chip.ui-chip--danger{
   border-color: rgba(180,78,62,.48);
   color: #7f2f24;
 }
+
+/* ── Touch Target Fixes (CHECK-05 / Gate B) ────────────────────────────────
+   Ensure interactive elements meet 44px minimum touch target on mobile.
+   Uses display:inline-flex + min-height so visual layout is unaffected.
+   ─────────────────────────────────────────────────────────────────────── */
+
+/* "Passwort vergessen?" und andere Links im Login-Bereich */
+.login-shell__links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 2px;
+}
+
+/* "Zur Anmeldung" sekundärer Link auf Registrieren-Seite */
+.register-flow__secondary-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* Footer-Links: AGB, AVV, Datenschutz — min-height + min-width für kurze Texte */
+.site-footer__links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  min-width: 44px;
+  justify-content: center;
+  padding: 0 4px;
+}

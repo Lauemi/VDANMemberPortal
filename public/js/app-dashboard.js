@@ -847,4 +847,52 @@
   document.addEventListener("vdan:session", () => {
     refreshDashboardGreeting().catch(() => {});
   });
+
+  /* ── Forbidden-State Banner ─────────────────────────────────────────
+     Wenn member-guard.js auf /app/?forbidden=1 leitet, zeigt dieser
+     Block einen kurzen Hinweis-Toast. URL wird sofort bereinigt. */
+  (function showForbiddenBanner() {
+    var q = new URLSearchParams(window.location.search);
+    if (!q.has("forbidden")) return;
+    history.replaceState({}, "", window.location.pathname);
+    var fn = function () {
+      var t = document.createElement("div");
+      t.setAttribute("role", "alert");
+      t.setAttribute("aria-live", "assertive");
+      Object.assign(t.style, {
+        position: "fixed",
+        bottom: "24px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: "99999",
+        background: "var(--rd-surface-2, #efe8d7)",
+        border: "1px solid rgba(180,60,60,0.22)",
+        borderLeft: "3px solid #b43c3c",
+        borderRadius: "10px",
+        padding: "10px 16px",
+        fontSize: "13px",
+        color: "var(--rd-ink, #2a2d24)",
+        boxShadow: "0 4px 18px rgba(62,56,34,0.13)",
+        maxWidth: "340px",
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        opacity: "0",
+        transition: "opacity 0.2s ease",
+        pointerEvents: "none",
+      });
+      t.innerHTML = '<span aria-hidden="true" style="color:#b43c3c;font-size:15px;flex-shrink:0">⊘</span><span>Kein Zugriff auf diesen Bereich.</span>';
+      document.body.appendChild(t);
+      requestAnimationFrame(function () { t.style.opacity = "1"; });
+      setTimeout(function () {
+        t.style.opacity = "0";
+        setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 250);
+      }, 4000);
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", fn, { once: true });
+    } else {
+      fn();
+    }
+  })();
 })();

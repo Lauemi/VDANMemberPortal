@@ -1460,10 +1460,12 @@ body[data-app-theme="fcp_tactical"] .qfp-shell[data-mask-family="QFM"] {
    Derzeit aktiv für: Ausweise (club_settings_cards). */
 .fcp-adm-shell .adm-section-tabs {
   display: flex;
+  align-items: flex-end;               /* Fix Tab-Bug: verhindert dass Buttons auf volle Container-Hoehe strecken */
   gap: 2px;
   margin: 0 0 16px 0;
   border-bottom: 2px solid rgba(108,112,91,.15);
   padding-bottom: 0;
+  flex-shrink: 0;                      /* Strip selbst nicht stauchen */
 }
 
 .fcp-adm-shell .adm-section-tab {
@@ -1490,6 +1492,12 @@ body[data-app-theme="fcp_tactical"] .qfp-shell[data-mask-family="QFM"] {
   color: var(--rd-text, #1a1d12);
   border-bottom-color: #595a3d;
   font-weight: 600;
+}
+
+/* ── Tab-Panel-Wrapper: verhindert Höhen-Propagation bei Tab-Wechsel ── */
+[data-tab-panel] {
+  overflow: hidden;                    /* Höhenwechsel bleibt im Panel — kein Outer-Layout-Shift */
+  min-height: 0;
 }
 
 /* ── Nav-Submenü für Tab-Sektionen ─────────────────────────────────── */
@@ -1564,8 +1572,8 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
 }
 
 @keyframes adm-fadein {
-  from { opacity: 0; transform: translateY(3px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }                 /* Fix Layout-Shift: translateY entfernt — nur Opacity-Fade, kein Sprung */
+  to   { opacity: 1; }
 }
 
 /* ── Section-Header H2 im Content ausblenden ───────────────────────

@@ -25,7 +25,7 @@
 /* ═══════════════════════════════════════════════════════════════════
    FCP ORANGE — Akzentfarbe ersetzt Gold-Fallbacks
    ───────────────────────────────────────────────────────────────────
-   Alle var(--rd-gold, #b79a63) Fallbacks werden durch FCP Orange
+   Alle var(--rd-gold, #d46a20) Fallbacks werden durch FCP Orange
    ersetzt. Definiert als Custom Properties damit künftige Änderungen
    an einem Ort passieren. FCP Orange: #d46a20 (--fcp-o aus main.css).
    ═══════════════════════════════════════════════════════════════════ */
@@ -129,7 +129,7 @@ body[data-app-theme="fcp_tactical"] .admin-nav-btn:hover {
           Der 2px-Stripe links signalisiert Aktiv-Zustand ohne Flaeche. */
 body[data-app-theme="fcp_tactical"] .admin-nav-btn.is-active {
   background: var(--rd-gold-soft, rgba(183, 154, 99, 0.12));
-  color: var(--rd-gold-lo, #9c8148);
+  color: var(--rd-gold-lo, #c05818);
   font-weight: 500;
   border-color: transparent;
 }
@@ -141,7 +141,7 @@ body[data-app-theme="fcp_tactical"] .admin-nav-btn.is-active::before {
   top: 6px;
   bottom: 6px;
   width: 2px;
-  background: var(--rd-gold, #b79a63);
+  background: var(--rd-gold, #d46a20);
   border-radius: 2px;
 }
 
@@ -413,9 +413,9 @@ body[data-app-theme="fcp_tactical"] .main {
 .adm-topbar__beta {
   font-size: 9.5px;
   padding: 2px 6px;
-  border: 1px solid var(--rd-gold, #b79a63);
+  border: 1px solid var(--rd-gold, #d46a20);
   border-radius: 4px;
-  color: var(--rd-gold-lo, #9c8148);
+  color: var(--rd-gold-lo, #c05818);
   letter-spacing: 0.1em;
   font-weight: 600;
   text-transform: uppercase;
@@ -449,7 +449,7 @@ body[data-app-theme="fcp_tactical"] .main {
 /* WAS: kein aktiver Crumb. WARUM: letzter Eintrag = aktuelle Seite,
    Gold signalisiert Kontext ohne zu schreien. */
 .adm-topbar__crumb--active {
-  color: var(--rd-gold-lo, #9c8148);
+  color: var(--rd-gold-lo, #c05818);
   font-weight: 600;
 }
 
@@ -477,12 +477,12 @@ body[data-app-theme="fcp_tactical"] .main {
   text-decoration: none;
 }
 
-/* User-Avatar: Gold-Kreis mit Initialen */
+/* User-Avatar: FCP-Orange-Kreis mit Initialen */
 .adm-topbar__av {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: linear-gradient(180deg, #c6ad67, #9c8148);
+  background: linear-gradient(180deg, var(--rd-gold, #d46a20), var(--rd-gold-lo, #c05818));
   color: #fff;
   font-size: 10px;
   font-weight: 700;
@@ -578,7 +578,7 @@ body[data-app-theme="fcp_tactical"] .admin-section {
 
 /* Aktiver Nav-Button: Icon erbt Gold */
 body[data-app-theme="fcp_tactical"] .admin-nav-btn.is-active .adm-nav__ic {
-  color: var(--rd-gold-lo, #9c8148);
+  color: var(--rd-gold-lo, #c05818);
 }
 
 /* Nav-Buttons als Flex für Icon-Ausrichtung */
@@ -995,7 +995,7 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__body .qfp-form-field :where(i
 
 body[data-app-theme="fcp_tactical"] .catch-dialog__body .qfp-form-field :where(input, select, textarea):focus {
   outline: none;
-  border-color: var(--rd-gold, #b79a63);
+  border-color: var(--rd-gold, #d46a20);
   box-shadow: 0 0 0 2px var(--rd-gold-soft, rgba(183, 154, 99, 0.12));
 }
 
@@ -1029,16 +1029,16 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn--ghost:hove
 
 /* Speichern-Button: gold primary */
 body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-btn--ghost) {
-  background: var(--rd-gold, #b79a63);
-  border: 1px solid var(--rd-gold, #b79a63);
+  background: var(--rd-gold, #d46a20);
+  border: 1px solid var(--rd-gold, #d46a20);
   color: #fff;
   border-radius: 7px;
   font-weight: 600;
 }
 
 body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-btn--ghost):hover {
-  background: var(--rd-gold-hi, #a08842);
-  border-color: var(--rd-gold-hi, #a08842);
+  background: var(--rd-gold-hi, #bf5414);
+  border-color: var(--rd-gold-hi, #bf5414);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1108,7 +1108,7 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-b
   height: 28px;
   border-radius: 50%;
   background: var(--rd-gold-soft, rgba(183, 154, 99, 0.15));
-  color: var(--rd-gold-lo, #9c8148);
+  color: var(--rd-gold-lo, #c05818);
   font-size: 11px;
   font-weight: 700;
   flex-shrink: 0;

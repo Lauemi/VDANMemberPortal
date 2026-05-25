@@ -1,0 +1,17 @@
+---
+import Site from "../layouts/Site.astro";
+import { APP } from "../config/app";
+---
+
+<Site title={`Seite nicht gefunden • ${APP.name}`} description="Diese Seite existiert nicht." robots="noindex">
+  <section class="card" style="max-width:560px;margin:3rem auto;text-align:center;">
+    <div class="card__body" style="padding:2.5rem 2rem;">
+      <p style="font-size:3rem;margin:0 0 0.5rem;opacity:0.35;">404</p>
+      <h1 style="margin:0 0 0.75rem;">Seite nicht gefunden</h1>
+      <p class="small" style="margin:0 0 2rem;">
+        Diese Seite existiert nicht oder wurde verschoben.
+      </p>
+      <a href="/" class="feed-btn" style="display:inline-block;">Zur Startseite</a>
+    </div>
+  </section>
+</Site>

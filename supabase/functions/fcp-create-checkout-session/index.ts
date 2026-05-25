@@ -81,6 +81,9 @@ serve(async (req) => {
     },
     body: new URLSearchParams({
       "mode": "subscription",
+      "locale": "de",
+      "customer_email": user.email ?? "",
+      "billing_address_collection": "required",
       "line_items[0][price]": priceId,
       "line_items[0][quantity]": String(billingUnits),
       "metadata[club_id]": club_id,

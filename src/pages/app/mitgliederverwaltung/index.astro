@@ -80,6 +80,117 @@ const admConfigJson = JSON.stringify(admConfig);
       if (admMsgEl) admMsgEl.textContent = text || "";
     }
 
+    // -------------------------------------------------------------------------
+    // Freigaben: Approve / Reject — injected into the read-only table dialog
+    // -------------------------------------------------------------------------
+    // The club_settings_approvals_membership panel uses rowInteractionMode:"dialog"
+    // but saveBinding.kind:"none" (no standard save). When a row is clicked the
+    // dialog opens in read-only mode. We listen for the row-click event and
+    // inject Genehmigen / Ablehnen buttons into the dialog actions area after it opens.
+
+    (function () {
+      const APPROVALS_PANEL = "club_settings_approvals_membership";
+
+      function sbAuth(path, body) {
+        const url = String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, "");
+        const key = String(window.__APP_SUPABASE_KEY || "").trim();
+        const session = window.VDAN_AUTH?.loadSession?.() || null;
+        const token = session?.access_token || "";
+        return fetch(url + path, {
+          method: "POST",
+          headers: {
+            "apikey": key,
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }).then(async (res) => {
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err?.message || err?.hint || "Request failed (" + res.status + ")");
+          }
+          return res.json().catch(() => ({}));
+        });
+      }
+
+      async function approveApplication(id) {
+        const membershipNumber = window.prompt("Mitgliedsnummer (optional, Enter = leer lassen):");
+        if (membershipNumber === null) return; // cancelled
+        try {
+          setAdmMessage("Antrag wird genehmigt…");
+          await sbAuth("/rest/v1/rpc/approve_membership", {
+            p_application_id: id,
+            p_membership_number: membershipNumber.trim() || null,
+          });
+          setAdmMessage("Antrag genehmigt.");
+          document.querySelector(".catch-dialog[open]")?.close();
+          // Reload the approvals panel to reflect the updated status
+          const pattern = window.__ADM_CLUB_SETTINGS__;
+          if (pattern && typeof pattern.loadPanel === "function") {
+            await pattern.loadPanel("club_settings_approvals", "club_settings_approvals_membership").catch(() => {});
+          }
+        } catch (err) {
+          setAdmMessage("Fehler beim Genehmigen: " + (err?.message || err));
+        }
+      }
+
+      async function rejectApplication(id) {
+        const reason = window.prompt("Ablehnungsgrund (optional):");
+        if (reason === null) return; // cancelled
+        try {
+          setAdmMessage("Antrag wird abgelehnt…");
+          await sbAuth("/rest/v1/rpc/reject_membership", {
+            p_application_id: id,
+            p_rejection_reason: reason.trim() || null,
+          });
+          setAdmMessage("Antrag abgelehnt.");
+          document.querySelector(".catch-dialog[open]")?.close();
+          const pattern = window.__ADM_CLUB_SETTINGS__;
+          if (pattern && typeof pattern.loadPanel === "function") {
+            await pattern.loadPanel("club_settings_approvals", "club_settings_approvals_membership").catch(() => {});
+          }
+        } catch (err) {
+          setAdmMessage("Fehler beim Ablehnen: " + (err?.message || err));
+        }
+      }
+
+      window.addEventListener("fcp-mask:table-row-click", function (e) {
+        const detail = e.detail || {};
+        if (detail.panelId !== APPROVALS_PANEL) return;
+        const row = detail.row || {};
+        if (row.status !== "pending") return;
+        const id = String(row.id || "").trim();
+        if (!id) return;
+
+        // The dialog opens synchronously after this event — inject buttons on next frame
+        requestAnimationFrame(function () {
+          const dialog = document.querySelector(".catch-dialog[open]");
+          if (!dialog) return;
+          const actions = dialog.querySelector(".catch-dialog__actions");
+          if (!actions || actions.querySelector("[data-approve-app]")) return; // already injected
+
+          const approveBtn = document.createElement("button");
+          approveBtn.type = "button";
+          approveBtn.className = "feed-btn";
+          approveBtn.dataset.approveApp = id;
+          approveBtn.textContent = "Genehmigen";
+          approveBtn.addEventListener("click", function () { approveApplication(id); });
+
+          const rejectBtn = document.createElement("button");
+          rejectBtn.type = "button";
+          rejectBtn.className = "feed-btn feed-btn--ghost";
+          rejectBtn.dataset.rejectApp = id;
+          rejectBtn.textContent = "Ablehnen";
+          rejectBtn.addEventListener("click", function () { rejectApplication(id); });
+
+          actions.prepend(rejectBtn);
+          actions.prepend(approveBtn);
+        });
+      });
+    })();
+
+    // -------------------------------------------------------------------------
+
     window.FcpMaskPageLoader.boot({
       configScriptId: "clubSettingsAdmConfig",
       patternGlobal: "__ADM_CLUB_SETTINGS__",

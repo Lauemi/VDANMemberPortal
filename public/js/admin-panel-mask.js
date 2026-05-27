@@ -354,6 +354,28 @@
           })
         );
       });
+
+      /* ── Mobile (≤600px): Öffentliche Links ins Drawer-Footer ──────────
+         body.has-adm-nav versteckt #burgerToggle auf Mobile — damit werden
+         publicMenuLinks (Datenschutz, Impressum etc.) unerreichbar.
+         Workaround: Links aus dem DOM-#burgerPopover lesen und als
+         .adm-nav-public-link am Drawer-Ende anhängen.
+         CSS steuert die Sichtbarkeit: nur ≤600px sichtbar. */
+      const burgerPopover = document.querySelector("#burgerPopover");
+      const pubLinks = burgerPopover ? Array.from(burgerPopover.querySelectorAll("a[href]")) : [];
+      if (pubLinks.length) {
+        this.refs.nav.append(createElement("hr", { className: "adm-nav-public-sep" }));
+        pubLinks.forEach((a) => {
+          this.refs.nav.append(
+            createElement("a", {
+              className: "adm-nav-public-link",
+              text: a.textContent.trim(),
+              attrs: { href: a.href },
+              onClick: () => this.refs.shell.classList.remove("adm-nav-open"),
+            })
+          );
+        });
+      }
     }
 
     renderContent() {

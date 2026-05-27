@@ -366,11 +366,12 @@ body[data-app-theme="fcp_tactical"] .main {
 .adm-topbar__logo-link {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
   text-decoration: none;
-  /* Feste Box — verhindert SVG/PNG-Overflow */
-  width: 30px;
-  height: 30px;
+  /* Touch-Target-Fix (CHECK-15 / Gate B): mind. 44×44px Tappfläche */
+  min-width: 44px;
+  min-height: 44px;
   overflow: hidden;
   border-radius: 6px;
 }
@@ -686,7 +687,9 @@ body[data-app-theme="fcp_tactical"] .adm-topbar .burger-toggle,
   border: 1px solid var(--rd-line, rgba(108, 112, 91, 0.18));
   border-radius: 6px;
   color: var(--rd-ink-2, #4a4e40);
-  min-height: 30px;
+  /* Touch-Target-Fix (CHECK-15 / Gate B): mind. 44×44px Tappfläche */
+  min-height: 44px;
+  min-width: 44px;
   width: auto;
   height: auto;
   padding: 0 9px;
@@ -706,11 +709,24 @@ body[data-app-theme="fcp_tactical"] .adm-topbar .burger-toggle:hover,
   background: rgba(108, 112, 91, 0.08);
 }
 
-/* Burger-Popover: Position relativ zum Topbar-Burger */
+/* Burger-Popover: Position relativ zum Topbar-Burger (Desktop) */
 .adm-topbar__burger .burger-popover {
   top: calc(100% + 6px);
   right: 0;
   left: auto;
+}
+
+/* Mobile/Tablet (≤899px): Desktop-Override zurücksetzen.
+   main.css @media(max-width:899px) setzt position:fixed auf .burger-popover.
+   Bei position:fixed löst top:calc(100%+6px) als calc(100vh+6px) auf →
+   Popover landet unterhalb des sichtbaren Viewports (KILLER auf Smartphone).
+   Diese Regel stellt top/left/right auf die korrekten fixen Werte. */
+@media (max-width: 899px) {
+  .adm-topbar__burger .burger-popover {
+    top: 78px;
+    left: 12px;
+    right: 12px;
+  }
 }
 
 
@@ -1793,5 +1809,48 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
     border-bottom: 1px solid var(--rd-line, rgba(108, 112, 91, .14));
     cursor: pointer;
     text-align: left;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE ADM NAV — Öffentliche Links (Datenschutz, Impressum etc.)
+   ───────────────────────────────────────────────────────────────────
+   body.has-adm-nav #burgerToggle ist auf ≤600px ausgeblendet.
+   renderNav() liest die Links aus #burgerPopover und hängt sie als
+   .adm-nav-public-link ans Ende des ADM-Drawers.
+   Desktop/Tablet: display:none — kein visueller Overhead.
+   ≤600px: sichtbar als Ersatz für den versteckten #burgerToggle.
+   ═══════════════════════════════════════════════════════════════════ */
+.adm-nav-public-sep,
+.adm-nav-public-link {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .adm-nav-public-sep {
+    border: 0;
+    border-top: 1px solid var(--rd-line, rgba(108, 112, 91, .14));
+    margin: 8px 0 4px;
+  }
+
+  .adm-nav-public-link {
+    display: flex;
+    align-items: center;
+    padding: 7px 10px;
+    font-size: 12px;
+    color: var(--rd-muted, #7a7c68);
+    text-decoration: none;
+    border-radius: 6px;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+  }
+
+  .adm-nav-public-link:hover,
+  .adm-nav-public-link:focus-visible {
+    background: rgba(108, 112, 91, .08);
+    color: var(--rd-ink-2, #4a4e40);
   }
 }

@@ -1233,6 +1233,9 @@
   color: rgba(255, 209, 102, .92);
   font-weight: 700;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .event-planner-calendar__count {
@@ -2593,6 +2596,13 @@
 
   .event-planner-hero {
     flex-direction: column;
+  }
+
+  /* Touch-Target-Fix: Month-Toolbar-Grid auf mobile — verhindert Overflow bei 375px */
+  /* Default: 52px minmax(180px,auto) 52px + 2×20px gap = min 324px → passt nicht in 343px Content-Breite */
+  .event-planner-month-toolbar {
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    gap: 8px;
   }
 
   .event-planner-club-switch,

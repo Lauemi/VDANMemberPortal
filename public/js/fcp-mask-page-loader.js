@@ -55,7 +55,20 @@
     await pattern.init();
     // Only auto-hydrate if a valid session exists — panels with RPC bindings require auth.
     // Without a session, panels load on-demand when the user opens them (autoLoadPanelOnOpen: true).
-    if (window.VDAN_AUTH?.loadSession?.()?.access_token) {
+    //
+    // Race condition fix: member-auth.js (and app-env.js) load via `defer` and may not have run
+    // yet when boot() is called from a synchronous inline script during HTML parsing.
+    // We poll until VDAN_AUTH is defined (max 3 s), then check loadSession().
+    // This mirrors the waitForAuthReady pattern already used inside FcpMaskDataResolver.
+    const authReady = await (async () => {
+      const start = Date.now();
+      while (Date.now() - start < 3000) {
+        if (window.VDAN_AUTH?.loadSession) return true;
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      return Boolean(window.VDAN_AUTH?.loadSession);
+    })();
+    if (authReady && window.VDAN_AUTH?.loadSession?.()?.access_token) {
       await resolver.hydrateVisiblePanels(pattern);
     }
 

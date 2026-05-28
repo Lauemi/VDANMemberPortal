@@ -2121,6 +2121,11 @@
       for (const panel of openPanels) {
         await pattern.loadPanel(activeSection.id, panel.id);
       }
+      // pattern.loadPanel writes to state but does not call render() — without an
+      // explicit render after hydration the initial panel stays in its empty state
+      // until the next user interaction (tab switch) triggers hydrateActiveSection.
+      // This mirrors what hydrateActiveSection already does: load all panels, then render.
+      if (typeof pattern.render === "function") pattern.render();
     }
 
     async function savePanel(payload, ctx) {

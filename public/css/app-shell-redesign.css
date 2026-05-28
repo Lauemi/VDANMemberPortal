@@ -1624,10 +1624,14 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
   display: none;
 }
 
-/* ── Loading-State: Content-Bereich leer während Daten geladen werden ───
+/* ── Loading-State: Content-Bereich gedimmt während Daten geladen werden ──
    Klasse adm-content--loading wird von activateSection() gesetzt und
-   von renderContent() entfernt. Verhindert den Flash leerer Panels. */
+   von renderContent() entfernt. Alter Content bleibt sichtbar (gedimmt)
+   bis renderContent() den DOM atomar austauscht — kein weißer Flash. */
 .fcp-adm-shell .admin-board__content.adm-content--loading {
+  opacity: 0.4;
+  pointer-events: none;
+  transition: opacity 0.08s ease;
   min-height: 120px;
 }
 

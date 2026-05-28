@@ -122,11 +122,15 @@
       if (!section) return;
       this.state.activeSectionId = sectionId;
       this._updateBreadcrumb(section.label || section.title || "");
-      /* Nav sofort aktiv markieren — kein vollständiges render(), damit keine
-         leeren Panels durchblinken. Content wird erst nach dem Laden gezeigt. */
-      this.renderNav();
+      /* Nav sofort aktiv markieren — nur is-active toggeln, kein innerHTML-Reset.
+         renderNav() würde den gesamten Nav-DOM abreißen und neu aufbauen, was das
+         sichtbare Nav-Zucken verursacht. Hier reicht ein gezieltes classList-Toggle. */
+      this.refs.nav?.querySelectorAll(".admin-nav-btn").forEach((btn) => {
+        btn.classList.toggle("is-active", btn.dataset.sectionId === sectionId);
+      });
+      /* Content dimmen statt sofort leeren — renderContent() tauscht den DOM
+         atomar aus sobald Daten da sind. innerHTML = "" hier würde den Flash erzeugen. */
       if (this.refs.content) {
-        this.refs.content.innerHTML = "";
         this.refs.content.classList.add("adm-content--loading");
       }
       await this.hydrateActiveSection();

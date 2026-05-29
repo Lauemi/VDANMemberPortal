@@ -4455,11 +4455,12 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
 
 .portal-gofishing-brand--fcp .portal-gofishing-fields input,
 .portal-gofishing-brand--fcp .portal-gofishing-fields select{
-  border-color:rgba(241,223,154,.4);
+  border-color:rgba(244,168,37,.4);
   background:rgba(47,48,33,.88);
   color:#fff9e8;
   min-height:44px;
   padding:0 12px;
+  font-size:16px;
 }
 
 .portal-gofishing-brand--fcp .portal-gofishing-fields input::placeholder{

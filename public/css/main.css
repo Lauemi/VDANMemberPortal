@@ -4365,9 +4365,9 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
 .portal-gofishing-brand--fcp{
   --gofishing-brand-navy-1: #4b4c34;
   --gofishing-brand-navy-2: #595a3d;
-  --gofishing-brand-gold-1: #f1df9a;
-  --gofishing-brand-gold-2: #c6ad67;
-  --gofishing-brand-line: rgba(241,223,154,.34);
+  --gofishing-brand-gold-1: #f4a825;
+  --gofishing-brand-gold-2: #d4892e;
+  --gofishing-brand-line: rgba(244,168,37,.34);
   --gofishing-brand-surface: rgba(60,61,42,.88);
   --gofishing-brand-surface-soft: rgba(79,80,56,.76);
 }
@@ -4376,7 +4376,7 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
   position:relative;
   padding:10px max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
   background:
-    radial-gradient(120% 65% at 50% 0%, rgba(241,223,154,.15) 0%, rgba(241,223,154,0) 55%),
+    radial-gradient(120% 65% at 50% 0%, rgba(244,168,37,.12) 0%, rgba(244,168,37,0) 55%),
     linear-gradient(180deg, var(--gofishing-brand-navy-2) 0%, var(--gofishing-brand-navy-1) 100%);
 }
 
@@ -4387,7 +4387,7 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
   left:0;
   right:0;
   height:3px;
-  background:linear-gradient(90deg, rgba(217,187,111,.1) 0%, var(--gofishing-brand-gold-1) 50%, rgba(217,187,111,.1) 100%);
+  background:linear-gradient(90deg, rgba(244,168,37,.1) 0%, var(--gofishing-brand-gold-1) 50%, rgba(244,168,37,.1) 100%);
   pointer-events:none;
 }
 
@@ -4469,7 +4469,7 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
 
 .portal-gofishing-brand--fcp .portal-gofishing-fields input:focus-visible,
 .portal-gofishing-brand--fcp .portal-gofishing-fields select:focus-visible{
-  outline:2px solid rgba(217,187,111,.72);
+  outline:2px solid rgba(244,168,37,.72);
   outline-offset:2px;
 }
 
@@ -4507,6 +4507,8 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
   background:none;
   border:none;
   padding:2px 4px;
+  min-width:44px;
+  min-height:44px;
   cursor:pointer;
   color:rgba(255,255,255,.4);
   font-size:0.78rem;
@@ -4546,44 +4548,44 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
 }
 
 .portal-gofishing-brand--fcp .fangliste-water-chip{
-  border-color:rgba(241,223,154,.38);
+  border-color:rgba(244,168,37,.38);
   background:rgba(52,53,37,.9);
   color:#fff9e8;
 }
 
 .portal-gofishing-brand--fcp .fangliste-water-chip:hover,
 .portal-gofishing-brand--fcp .fangliste-water-chip:focus-visible{
-  border-color:rgba(241,223,154,.72);
-  background:rgba(127,114,73,.6);
+  border-color:rgba(244,168,37,.72);
+  background:rgba(160,90,15,.45);
   color:#fffdf4;
 }
 
 .portal-gofishing-brand--fcp .feed-btn{
-  border-color:rgba(241,223,154,.46);
-  background:linear-gradient(180deg, rgba(241,223,154,.34), rgba(67,68,48,.95));
+  border-color:rgba(244,168,37,.46);
+  background:linear-gradient(180deg, rgba(244,168,37,.28), rgba(67,68,48,.95));
   color:#fff6dc;
 }
 
 .portal-gofishing-brand--fcp .feed-btn:hover,
 .portal-gofishing-brand--fcp .feed-btn:focus-visible{
-  border-color:rgba(241,223,154,.8);
-  background:linear-gradient(180deg, rgba(241,223,154,.48), rgba(78,79,56,.98));
+  border-color:rgba(244,168,37,.8);
+  background:linear-gradient(180deg, rgba(244,168,37,.4), rgba(78,79,56,.98));
 }
 
 .portal-gofishing-brand--fcp .feed-btn--ghost{
-  border-color:rgba(241,223,154,.4);
+  border-color:rgba(244,168,37,.4);
   background:rgba(59,60,42,.9);
   color:#fff9e8;
 }
 
 .portal-gofishing-brand--fcp .feed-btn--ghost:hover,
 .portal-gofishing-brand--fcp .feed-btn--ghost:focus-visible{
-  border-color:rgba(241,223,154,.74);
-  background:rgba(127,114,73,.56);
+  border-color:rgba(244,168,37,.74);
+  background:rgba(160,90,15,.4);
   color:#fffdf4;
 }
 #goFishingStartBtn{
-  background-color:#ff7828;
+  background-color:#f4a825;
 }
 .portal-gofishing-actions{
   margin-top:0;
@@ -4591,7 +4593,7 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
 }
 
 .portal-gofishing-actions .feed-btn{
-  min-height:42px;
+  min-height:44px;
 }
 
 .portal-quick-group{

@@ -558,7 +558,7 @@ const publicMenuLinks = isFcpMode
         <div id="portalQuickList" class="portal-quick-list"></div>
       </section>
     </div>
-    <section id="goFishingDialog" class="catch-dialog catch-dialog--panel portal-gofishing-brand--fcp hidden" data-guard-sheet="1" data-guard-no-draft="1" hidden>
+    {isAppPath && <section id="goFishingDialog" class="catch-dialog catch-dialog--panel portal-gofishing-brand--fcp hidden" data-guard-sheet="1" data-guard-no-draft="1" hidden>
       <form id="goFishingDialogForm" class="catch-dialog__form portal-gofishing-dialog__form">
         <input type="hidden" id="goFishingDraftState" name="goFishingDraftState" value="" />
         <div class="portal-gofishing-dialog__content">
@@ -621,7 +621,7 @@ const publicMenuLinks = isFcpMode
           </div>
         </div>
       </form>
-    </section>
+    </section>}
 
     <main class="main">
       <div class={containerClass}>
@@ -705,7 +705,7 @@ const publicMenuLinks = isFcpMode
     <script src={`/js/nav-burger.js?v=${assetVersion}`} defer></script>
     <script src={`/js/portal-quick.js?v=${assetVersion}`} defer></script>
     <script src={`/js/studio-inspector-bridge.js?v=${assetVersion}`} defer></script>
-    <script src={`/js/go-fishing.js?v=${assetVersion}`} defer></script>
+    {isAppPath && <script src={`/js/go-fishing.js?v=${assetVersion}`} defer></script>}
     <script src={`/js/dialog-ux-guard.js?v=${assetVersion}`} defer></script>
     <script src={`/js/pwa-register.js?v=${assetVersion}`} defer></script>
     <!-- <script src="/js/maintenance-gate.js" defer></script> -->

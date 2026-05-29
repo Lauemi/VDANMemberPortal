@@ -1,6 +1,10 @@
 ;(() => {
   const SESSION_KEY_PREFIX = "vdan_go_fishing_session_v1";
   const QUEUE_KEY_PREFIX = "vdan_go_fishing_queue_v1";
+  // Offline-First: Masterdata (Gewässer + Fischarten) wird nach jedem
+  // erfolgreichen Fetch gecacht. Beim nächsten Open werden gecachte Daten
+  // sofort angezeigt (kein Ladebalken, kein leerer Dialog) — auch ohne Netz.
+  const MASTER_DATA_CACHE_KEY_PREFIX = "vdan_go_fishing_master_v1";
 
   let waters = [];
   let memberWaters = [];
@@ -376,16 +380,43 @@
     `).join("");
   }
 
+  function masterDataCacheKey() {
+    return `${MASTER_DATA_CACHE_KEY_PREFIX}:${uid() || "anon"}`;
+  }
+
+  function applyMasterData(cached) {
+    if (!cached || typeof cached !== "object") return;
+    if (Array.isArray(cached.waters)) waters = cached.waters;
+    if (Array.isArray(cached.fishSpecies)) fishSpecies = cached.fishSpecies;
+    if (Array.isArray(cached.memberWaters)) memberWaters = cached.memberWaters;
+    if (Array.isArray(cached.topOfficialWaterIds)) topOfficialWaterIds = cached.topOfficialWaterIds;
+  }
+
   async function loadMasterData() {
+    // 1. Cache sofort laden — Dialog ist instant nutzbar auch offline
+    const cached = readJsonSafe(masterDataCacheKey(), null);
+    if (cached) {
+      applyMasterData(cached);
+      renderWaterOptions();
+      renderFishOptions();
+    }
+
+    // 2. Netz-Fetch im Hintergrund — bei Erfolg Cache + UI aktualisieren
+    // Performance-Fix: fishing_trips limit 100 statt 2000 (Top-3-Gewässer reichen)
     const userId = String(uid() || "").trim();
     const [waterRows, fishRows, memberRows, tripRows] = await Promise.all([
-      sb("/rest/v1/water_bodies?select=id,name,is_active&is_active=eq.true&order=name.asc", { method: "GET" }, true).catch(() => []),
-      sb("/rest/v1/fish_species?select=id,name,is_active&is_active=eq.true&order=name.asc", { method: "GET" }, true).catch(() => []),
-      sb(`/rest/v1/member_waters?select=id,name,location_text,usage_count,status&user_id=eq.${encodeURIComponent(userId)}&status=eq.active&order=usage_count.desc,updated_at.desc&limit=50`, { method: "GET" }, true).catch(() => []),
-      sb(`/rest/v1/fishing_trips?select=water_source,water_body_id&user_id=eq.${encodeURIComponent(userId)}&water_source=eq.official&order=created_at.desc&limit=2000`, { method: "GET" }, true).catch(() => []),
+      sb("/rest/v1/water_bodies?select=id,name,is_active&is_active=eq.true&order=name.asc", { method: "GET" }, true).catch(() => null),
+      sb("/rest/v1/fish_species?select=id,name,is_active&is_active=eq.true&order=name.asc", { method: "GET" }, true).catch(() => null),
+      sb(`/rest/v1/member_waters?select=id,name,location_text,usage_count,status&user_id=eq.${encodeURIComponent(userId)}&status=eq.active&order=usage_count.desc,updated_at.desc&limit=50`, { method: "GET" }, true).catch(() => null),
+      sb(`/rest/v1/fishing_trips?select=water_source,water_body_id&user_id=eq.${encodeURIComponent(userId)}&water_source=eq.official&order=created_at.desc&limit=100`, { method: "GET" }, true).catch(() => null),
     ]);
-    waters = Array.isArray(waterRows) ? waterRows : [];
-    fishSpecies = Array.isArray(fishRows) ? fishRows : [];
+
+    // Nur übernehmen wenn Netz-Call erfolgreich — null bedeutet offline/Fehler
+    const gotFreshData = waterRows !== null || fishRows !== null;
+    if (!gotFreshData) return; // Offline → gecachte Daten bleiben aktiv
+
+    if (Array.isArray(waterRows)) waters = waterRows;
+    if (Array.isArray(fishRows)) fishSpecies = fishRows;
     memberWaters = (Array.isArray(memberRows) ? memberRows : []).map((r) => ({
       id: String(r.id || ""),
       name: String(r.name || "").trim(),
@@ -402,6 +433,9 @@
       .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])))
       .map(([id]) => id)
       .slice(0, 3);
+
+    // Cache für nächsten Offline-Open persistieren
+    writeJsonSafe(masterDataCacheKey(), { waters, fishSpecies, memberWaters, topOfficialWaterIds });
   }
 
   function addSelectedFishTarget() {
@@ -664,7 +698,10 @@
   }
 
   async function onOpen() {
-    if (!uid()) return;
+    if (!uid()) {
+      setMsg("Bitte zuerst einloggen.");
+      return;
+    }
     loadState();
     ensureSession();
     if (hasStartedSession()) {

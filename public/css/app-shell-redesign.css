@@ -1439,8 +1439,8 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-b
   appearance: none;
   -webkit-appearance: none;
   flex-shrink: 0;
-  width: 38px;
-  height: 22px;
+  width: 44px;  /* Touch Target ≥ 44px (Gate B) — visueller Switch vergrößert */
+  height: 26px; /* proportional angepasst */
   border-radius: 11px;
   background: rgba(108,112,91,.18);
   border: 1.5px solid rgba(108,112,91,.32);
@@ -1516,6 +1516,7 @@ body[data-app-theme="fcp_tactical"] .qfp-shell[data-mask-family="QFM"] {
 
 .fcp-adm-shell .adm-section-tab {
   padding: 7px 18px 9px;
+  min-height: 44px; /* Touch Target ≥ 44px (Gate B) */
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--rd-muted, rgba(61,64,45,.6));
@@ -1609,6 +1610,15 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
   width: 32px;
   padding-inline: 0;
   font-size: 0.9rem;
+}
+
+/* ── Arbeitseinsätze Row-Action-Buttons — Touch Target (Gate B) ─────
+   .work-part-actions enthält .feed-btn (Freigeben/Ablehnen/Speichern)
+   die teils nur 34px breit sind. */
+.work-part-actions .feed-btn,
+.work-part-actions button:not([type="submit"]) {
+  min-width: 44px;
+  min-height: 44px;
 }
 
 /* ── Maske fade-in — dämpft den Flash beim Sektionswechsel ─────────
@@ -1717,9 +1727,10 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
   }
 
   /* Arbeitseinsätze: Tab-Leiste scrollbar statt overflow.
-     max-width + overflow-x:auto auf dem Flex-Container machen den Inhalt
-     scrollbar anstatt aus dem Parent herauszufließen. */
+     flex-shrink:1 überschreibt base-CSS flex-shrink:0 — erst dann kann
+     overflow-x:auto greifen (Container muss komprimierbar sein). */
   .fcp-adm-shell .adm-section-tabs {
+    flex-shrink: 1;
     width: 100%;
     max-width: 100%;
     overflow-x: auto;

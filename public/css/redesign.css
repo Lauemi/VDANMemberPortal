@@ -1006,7 +1006,7 @@
 }
 
 .fcp-adm-shell .qfp-btn--primary {
-  min-height: 40px;
+  min-height: 44px; /* Touch Target ≥ 44px (Gate B) */
   padding: 0 22px;
   border-radius: var(--rd-radius-sm);
   border: 1px solid color-mix(in srgb, var(--rd-gold-lo) 70%, transparent);

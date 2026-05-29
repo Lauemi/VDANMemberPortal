@@ -295,7 +295,8 @@
 }
 
 /* Ghost- und Icon-Buttons — alle gleich hoch, gleiche Sprache */
-.is-redesign .feed-btn--ghost,
+/* .row-action-btn ausgenommen — braucht ≥44px Touch Target (Gate B) */
+.is-redesign .feed-btn--ghost:not(.row-action-btn),
 .is-redesign .icon-utility,
 .is-redesign [data-inline-filter-toggle],
 .is-redesign [data-inline-reset],
@@ -326,6 +327,16 @@
   background: var(--rd-surface-2);
   border-color: var(--rd-line-strong);
   color: var(--rd-ink);
+}
+
+/* Row-Action-Buttons: Touch Target ≥ 44px (Gate B)
+   Ausgenommen aus dem ghost-button height:34px/min-width:34px oben.
+   Kein height-constraint — Höhe kommt aus Zeilen-Layout (≥44px durch table-row). */
+.is-redesign .row-action-btn {
+  min-width: 44px;
+  min-height: 44px;
+  height: auto;
+  padding: 0 8px;
 }
 
 /* aktive Zustände (Filter offen, etc.) */

@@ -1613,10 +1613,10 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
 }
 
 /* ── Row-Action-Buttons — Touch Target (Gate B) ────────────────────
-   .rd-row-actions button: der Selektor .is-redesign .rd-row-actions
-   greift nicht im ADM-Kontext (kein .is-redesign-Vorfahre).
-   .work-part-actions: Arbeitseinsätze-spezifische Action-Buttons. */
-.fcp-adm-shell .rd-row-actions button {
+   Buttons haben Klassen: feed-btn feed-btn--ghost row-action-btn
+   redesign.css: .is-redesign .feed-btn--ghost { min-width: 34px } (Spez. 0,2,0)
+   Fix braucht ≥ 3-Klassen-Selektor um zu gewinnen (Spez. 0,3,0). */
+.fcp-adm-shell .rd-row-actions .row-action-btn {
   min-width: 44px;
   min-height: 44px;
 }

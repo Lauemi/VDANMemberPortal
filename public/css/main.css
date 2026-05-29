@@ -1706,8 +1706,8 @@ hr{border:none;border-top:1px solid var(--line);margin:var(--space-2) 0}
 }
 
 .row-action-btn{
-  min-width:36px;
-  min-height:36px;
+  min-width:44px;  /* Touch Target ≥ 44px (Gate B) */
+  min-height:44px; /* Touch Target ≥ 44px (Gate B) */
   padding:0 8px;
   border-radius:9px;
 }
@@ -5426,8 +5426,9 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
 .app-dashboard__settings{
   display:inline-grid;
   place-items:center;
-  width:30px;
-  height:30px;
+  /* Touch-Target-Fix (CHECK-15 / Gate B): mind. 44×44px Tappfläche */
+  min-width:44px;
+  min-height:44px;
   color:#d9cfbb;
   text-decoration:none;
   font-size:1.2rem;
@@ -5447,6 +5448,14 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
   color:#f4a825;
   opacity:1;
   transform:rotate(14deg);
+}
+
+/* Touch-Target-Fix (CHECK-15 / Gate B): E-Mail-Links in Rechtstexten ≥ 44px */
+a[href^="mailto:"]{
+  display:inline-flex;
+  align-items:center;
+  min-height:44px;
+  vertical-align:middle;
 }
 
 .fcp-dashboard-grid{
@@ -5712,6 +5721,10 @@ body.portal-quick-open[data-portal-rail-side="right"] .portal-quick-panel{
   color:#f4a825;
   text-decoration:none;
   font-weight:700;
+  /* Touch-Target-Fix (CHECK-15 / Gate B): mind. 44px Tappfläche */
+  display:inline-flex;
+  align-items:center;
+  min-height:44px;
 }
 
 .fcp-dashboard-cta:hover,
@@ -8427,7 +8440,8 @@ body[data-app-theme="fcp_brand"] .login-shell hr{
 } */
 
 .catch-screen .trip-view-toggle .feed-btn{
-  min-height:calc(var(--form-control-height) - 6px);
+  /* Touch-Target-Fix (CHECK-15 / Gate B): mind. 44px — calc(34-6)=28px war zu klein */
+  min-height:44px;
 }
 
 .catch-screen .trip-toolbar-btn--reset{

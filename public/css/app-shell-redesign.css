@@ -109,7 +109,7 @@ body[data-app-theme="fcp_tactical"] .admin-nav-btn {
   background: transparent;
   color: var(--rd-ink-2, #4a4e40);
   border-radius: 7px;
-  min-height: 30px;
+  min-height: 44px; /* Touch Target ≥ 44px (Gate B) */
   padding: 6px 12px;
   font-size: 13px;
   position: relative;
@@ -1693,6 +1693,31 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
   .adm-kpi-strip {
     padding: 0 12px;
   }
+
+  /* Topbar-Overflow-Fix: Util darf schrumpfen, Username verstecken */
+  .adm-topbar__util {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .adm-topbar__username {
+    display: none; /* Kein Platz auf 375px — Avatar + Chevron reichen */
+  }
+  /* Touch Target: User-Pill auf Mobile vergrößern */
+  .adm-topbar__pill {
+    min-height: 44px; /* Touch Target ≥ 44px (Gate B) */
+  }
+
+  /* Arbeitseinsätze: Tab-Leiste scrollbar statt overflow */
+  .fcp-adm-shell .adm-section-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+  }
+  .fcp-adm-shell .adm-section-tabs::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1786,8 +1811,8 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    min-width: 44px;  /* Touch Target ≥ 44px (Gate B) */
+    min-height: 44px; /* Touch Target ≥ 44px (Gate B) */
     font-size: 15px;
     color: var(--rd-ink-2, #4a4e40);
     background: transparent;
@@ -1803,6 +1828,7 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    min-height: 44px; /* Touch Target ≥ 44px (Gate B) */
     padding: 4px 6px 10px;
     margin-bottom: 8px;
     font-size: 12px;

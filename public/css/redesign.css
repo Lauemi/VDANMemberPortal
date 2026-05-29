@@ -155,7 +155,7 @@
   font: inherit;
   font-size: 13px;
   font-weight: 500;
-  min-height: 28px;
+  min-height: 44px; /* Touch Target ≥ 44px (Gate B) */
   padding: 0 12px;
   border-radius: 6px;
   cursor: pointer;
@@ -188,7 +188,7 @@
   font: inherit;
   font-size: 12px;
   font-weight: 600;
-  min-height: 28px;
+  min-height: 44px; /* Touch Target ≥ 44px (Gate B) */
   padding: 0 11px;
   border-radius: 6px;
   cursor: pointer;

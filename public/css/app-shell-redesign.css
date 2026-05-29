@@ -1612,9 +1612,14 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
   font-size: 0.9rem;
 }
 
-/* ── Arbeitseinsätze Row-Action-Buttons — Touch Target (Gate B) ─────
-   .work-part-actions enthält .feed-btn (Freigeben/Ablehnen/Speichern)
-   die teils nur 34px breit sind. */
+/* ── Row-Action-Buttons — Touch Target (Gate B) ────────────────────
+   .rd-row-actions button: der Selektor .is-redesign .rd-row-actions
+   greift nicht im ADM-Kontext (kein .is-redesign-Vorfahre).
+   .work-part-actions: Arbeitseinsätze-spezifische Action-Buttons. */
+.fcp-adm-shell .rd-row-actions button {
+  min-width: 44px;
+  min-height: 44px;
+}
 .work-part-actions .feed-btn,
 .work-part-actions button:not([type="submit"]) {
   min-width: 44px;
@@ -1727,19 +1732,27 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
   }
 
   /* Arbeitseinsätze: Tab-Leiste scrollbar statt overflow.
-     flex-shrink:1 überschreibt base-CSS flex-shrink:0 — erst dann kann
-     overflow-x:auto greifen (Container muss komprimierbar sein). */
+     display:flex + overflow-x:auto funktioniert nicht zuverlässig
+     weil der Flex-Container sich auf Content-Breite aufzieht.
+     Lösung: Container → display:block + white-space:nowrap,
+             Tab-Buttons → display:inline-flex (fließen dann horizontal). */
   .fcp-adm-shell .adm-section-tabs {
-    flex-shrink: 1;
+    display: block;
+    white-space: nowrap;
+    overflow-x: auto;
     width: 100%;
     max-width: 100%;
-    overflow-x: auto;
-    flex-wrap: nowrap;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none; /* Firefox */
   }
   .fcp-adm-shell .adm-section-tabs::-webkit-scrollbar {
     display: none; /* Chrome/Safari */
+  }
+  .fcp-adm-shell .adm-section-tab {
+    display: inline-flex;
+    align-items: flex-end;   /* wie ursprüngliches align-items:flex-end am Container */
+    vertical-align: bottom;  /* bündig zur Unterkante */
+    white-space: nowrap;
   }
   /* Content-Bereich auf Mobile: kein Overflow nach außen */
   .fcp-adm-shell .admin-board__content {

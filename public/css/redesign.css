@@ -863,8 +863,8 @@
 .is-redesign .rd-row-actions button {
   all: unset;
   display: inline-flex;
-  width: 24px;
-  height: 24px;
+  min-width: 44px;  /* Touch Target ≥ 44px (Gate B) */
+  min-height: 44px; /* Touch Target ≥ 44px (Gate B) */
   align-items: center;
   justify-content: center;
   border-radius: 4px;

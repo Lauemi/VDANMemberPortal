@@ -4209,6 +4209,7 @@ body[data-portal-rail-side="right"] .portal-rail{
 .portal-rail__item{
   min-height:var(--touch-target-min);
   width:var(--touch-target-min);
+  min-width:44px; /* Touch Target ≥ 44px — Fallback falls --touch-target-min nicht aufgelöst (Gate B) */
   display:grid;
   place-items:center;
   text-decoration:none;

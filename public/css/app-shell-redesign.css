@@ -1407,6 +1407,10 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-b
   padding: 12px 16px 16px;
   border-top: 1px solid var(--rd-line, rgba(108,112,91,.14));
 }
+/* Touch Target: Speichern-Button ≥ 44px (Gate B) */
+.fcp-adm-shell .admin-card__save-row .feed-btn {
+  min-height: 44px;
+}
 
 /* ── Notification Bell im ADM Topbar ─────────────────────────────── */
 /* Die Glocke wurde von header.header in #admTopbar verschoben (Phase B).
@@ -1428,6 +1432,7 @@ body[data-app-theme="fcp_tactical"] .catch-dialog__actions .feed-btn:not(.feed-b
   align-items: center;
   gap: 10px;
   padding: 2px 0;
+  min-height: 44px; /* Touch Target ≥ 44px — Trefferbereich nicht der Switch selbst (Gate B) */
 }
 
 .fcp-adm-shell .qfp-toggle-row input[type="checkbox"] {
@@ -1552,6 +1557,7 @@ body[data-app-theme="fcp_tactical"] .qfp-shell[data-mask-family="QFM"] {
 .fcp-adm-shell .adm-nav-subitem {
   display: block;
   width: 100%;
+  min-height: 44px; /* Touch Target ≥ 44px (Gate B) */
   padding: 5px 10px;
   font-size: 0.8rem;
   color: var(--rd-muted, rgba(61,64,45,.6));
@@ -1694,11 +1700,13 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
     padding: 0 12px;
   }
 
-  /* Topbar-Overflow-Fix: Util darf schrumpfen, Username verstecken */
+  /* Topbar-Overflow-Fix: Topbar clippt, Util darf schrumpfen, Username weg */
+  .adm-topbar {
+    overflow: hidden; /* Verhindert document-level Overflow durch Util-Kinder */
+  }
   .adm-topbar__util {
-    flex-shrink: 1;
+    flex: 0 1 auto; /* darf schrumpfen, wächst nicht */
     min-width: 0;
-    overflow: hidden;
   }
   .adm-topbar__username {
     display: none; /* Kein Platz auf 375px — Avatar + Chevron reichen */
@@ -1708,8 +1716,12 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
     min-height: 44px; /* Touch Target ≥ 44px (Gate B) */
   }
 
-  /* Arbeitseinsätze: Tab-Leiste scrollbar statt overflow */
+  /* Arbeitseinsätze: Tab-Leiste scrollbar statt overflow.
+     max-width + overflow-x:auto auf dem Flex-Container machen den Inhalt
+     scrollbar anstatt aus dem Parent herauszufließen. */
   .fcp-adm-shell .adm-section-tabs {
+    width: 100%;
+    max-width: 100%;
     overflow-x: auto;
     flex-wrap: nowrap;
     -webkit-overflow-scrolling: touch;
@@ -1717,6 +1729,11 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
   }
   .fcp-adm-shell .adm-section-tabs::-webkit-scrollbar {
     display: none; /* Chrome/Safari */
+  }
+  /* Content-Bereich auf Mobile: kein Overflow nach außen */
+  .fcp-adm-shell .admin-board__content {
+    overflow: hidden;
+    min-width: 0;
   }
 }
 

@@ -2575,9 +2575,9 @@
       "sectionLayout": "stack",
       "permissions": {
         "view": true,
-        "write": false,
-        "update": false,
-        "delete": false,
+        "write": true,
+        "update": true,
+        "delete": true,
         "roles": []
       },
       "securityContext": {
@@ -2604,9 +2604,9 @@
           "flowType": "standard",
           "permissions": {
             "view": true,
-            "write": false,
-            "update": false,
-            "delete": false,
+            "write": true,
+            "update": true,
+            "delete": true,
             "roles": []
           },
           "securityContext": {
@@ -2619,41 +2619,51 @@
               "vorstand",
               "superadmin"
             ],
-            "serverValidated": false
+            "serverValidated": true
           },
           "meta": {
-            "sourceTable": "regulations_contract_pending",
-            "sourceKind": "table",
-            "sourceOfTruth": "json",
+            "sourceTable": "public.permit_rules",
+            "sourceKind": "rpc",
+            "sourceOfTruth": "sql",
             "sqlContract": {
-              "sqlFile": "docs/sql-contracts/processes/club-settings/rules/READ_rules_overview.sql",
+              "sqlFile": "docs/sql-contracts/processes/club-settings/rules/READ_permit_rules.sql",
               "expectedColumns": [
-                "rule_name",
-                "rule_scope",
-                "version_label",
-                "status",
-                "updated_at"
+                "rule_id",
+                "card_title",
+                "water_name",
+                "rule_text",
+                "sort_order"
               ]
             },
             "scope": "club_override",
             "ownership": "club_override",
-            "metaDisplay": "full",
-            "panelState": "gap",
-            "panelStateLabel": "Vertrag offen",
-            "panelStateHint": "Dieser Bereich ist im Workspace vorbereitet, aber noch nicht live an eine echte Datenquelle angeschlossen.",
+            "metaDisplay": "auto",
             "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext. Regelwerke werden erst im Club-Kontext geladen.",
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              },
+              "savePayloadDefaults": {
+                "p_club_id": "{club_id}",
+                "p_rule_id": "{row.rule_id}",
+                "p_card_type_id": "{row.card_type_id}",
+                "p_rule_text": "{row.rule_text}",
+                "p_sort_order": "{row.sort_order}",
+                "p_water_body_id": "{row.water_body_id}"
+              },
               "rowsPath": "rows"
             }
           },
           "loadBinding": {
-            "kind": "none",
-            "target": null,
-            "path": "none"
+            "kind": "rpc",
+            "target": "public.admin_permit_rules_for_club",
+            "path": "rpc:public.admin_permit_rules_for_club"
           },
           "saveBinding": {
-            "kind": "none",
-            "target": null,
-            "path": "none"
+            "kind": "rpc",
+            "target": "public.admin_permit_rule_upsert",
+            "path": "rpc:public.admin_permit_rule_upsert"
           },
           "content": {
             "fields": [],
@@ -2662,53 +2672,121 @@
           },
           "columns": [
             {
-              "key": "rule_name",
-              "label": "Regelwerk",
-              "type": "text"
+              "key": "card_title",
+              "label": "Karte",
+              "type": "text",
+              "editable": false,
+              "width": "160px"
             },
             {
-              "key": "rule_scope",
-              "label": "Bereich",
-              "type": "text"
+              "key": "water_name",
+              "label": "Gewässer",
+              "type": "text",
+              "editable": false,
+              "width": "150px",
+              "placeholder": "Alle Gewässer der Karte"
             },
             {
-              "key": "version_label",
-              "label": "Version",
-              "type": "text"
+              "key": "rule_text",
+              "label": "Regeltext",
+              "type": "text",
+              "editable": true,
+              "width": "auto"
             },
             {
-              "key": "status",
-              "label": "Status",
-              "type": "text"
+              "key": "sort_order",
+              "label": "Nr.",
+              "type": "number",
+              "editable": true,
+              "width": "70px"
             },
             {
-              "key": "updated_at",
-              "label": "Zuletzt aktualisiert",
-              "type": "text"
+              "key": "card_type_id",
+              "label": "Karte (ID)",
+              "type": "select",
+              "editable": true,
+              "hidden": false,
+              "width": "180px",
+              "optionsBinding": {
+                "kind": "rpc",
+                "target": "public.admin_permit_card_types_for_rules",
+                "path": "rpc:public.admin_permit_card_types_for_rules",
+                "payloadDefaults": {
+                  "p_club_id": "{club_id}"
+                },
+                "valueKey": "card_type_id",
+                "labelKey": "card_title"
+              }
+            },
+            {
+              "key": "water_body_id",
+              "label": "Gewässer (ID)",
+              "type": "select",
+              "editable": true,
+              "hidden": false,
+              "width": "180px",
+              "placeholder": "— Alle Gewässer —",
+              "optionsBinding": {
+                "kind": "rpc",
+                "target": "public.admin_water_bodies_for_club",
+                "path": "rpc:public.admin_water_bodies_for_club",
+                "payloadDefaults": {
+                  "p_club_id": "{club_id}"
+                },
+                "valueKey": "water_body_id",
+                "labelKey": "name"
+              }
+            },
+            {
+              "key": "actions",
+              "label": "Aktionen",
+              "type": "actions",
+              "editable": false,
+              "sortable": false,
+              "filterable": false,
+              "width": "140px"
             }
           ],
           "rowsPath": "rows",
           "tableConfig": {
             "tableId": "adm-club-settings-rules",
-            "rowKeyField": "id",
+            "rowKeyField": "rule_id",
             "gridTemplateColumns": "",
-            "rowInteractionMode": "dialog",
+            "rowInteractionMode": "inline",
             "selectionMode": "single",
             "viewMode": "table",
-            "sortKey": "updated_at",
+            "sortKey": "sort_order",
             "sortDir": "asc",
+            "showCreateButton": true,
+            "createButtonLabel": "Regel hinzufügen",
+            "createDefaults": {
+              "sort_order": 0,
+              "rule_text": "",
+              "card_type_id": "",
+              "water_body_id": null
+            },
+            "rowActions": [
+              "edit",
+              "delete"
+            ],
+            "deletePayloadDefaults": {
+              "action": "delete_rule",
+              "club_id": "{club_id}"
+            },
+            "deleteConfirmMessage": "Diese Regel wirklich löschen?",
+            "deleteConfirmLabel": "Regel löschen",
             "filterFields": [
               {
-                "key": "rule_name",
-                "label": "Regelwerk",
+                "key": "card_title",
+                "label": "Karte",
                 "type": "text",
-                "placeholder": "Name"
+                "placeholder": "z. B. Jahresausweis"
               },
               {
-                "key": "status",
-                "label": "Status",
+                "key": "rule_text",
+                "label": "Regeltext",
                 "type": "text",
-                "placeholder": "draft / live"
+                "placeholder": "Suchbegriff"
               }
             ]
           }

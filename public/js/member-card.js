@@ -171,6 +171,15 @@
     return Array.isArray(rows) ? rows : [];
   }
 
+  async function listPermitRules() {
+    try {
+      const rows = await sb("/rest/v1/rpc/get_my_permit_rules", { method: "POST", body: JSON.stringify({}) }, true);
+      return Array.isArray(rows) ? rows : [];
+    } catch {
+      return [];
+    }
+  }
+
   async function loadCardLabel() {
     // Wahrheitsquelle: member_card_assignments via get_my_card_label(),
     // NICHT profiles.fishing_card_type (kann stale sein).
@@ -178,7 +187,7 @@
     return Array.isArray(rows) && rows[0]?.card_label ? String(rows[0].card_label) : null;
   }
 
-  async function renderCard(profile, waters, cardLabel) {
+  async function renderCard(profile, waters, cardLabel, rules) {
     const box = document.getElementById("memberCardBox");
     if (!box) return;
 
@@ -198,14 +207,40 @@
     if (offlineToken) qrUrl.searchParams.set("ot", offlineToken);
     const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrUrl.toString())}`;
 
+    // Regeln indexiert: water_body_id → [{text, sort_order}] und card_type_id → [{...}]
+    const rulesList = Array.isArray(rules) ? rules : [];
+    const rulesByWater = {};
+    const rulesByCard = {};
+    rulesList.forEach((r) => {
+      if (r.water_body_id) {
+        const key = String(r.water_body_id);
+        if (!rulesByWater[key]) rulesByWater[key] = [];
+        rulesByWater[key].push(r);
+      } else {
+        const key = String(r.card_type_id || "");
+        if (!rulesByCard[key]) rulesByCard[key] = [];
+        rulesByCard[key].push(r);
+      }
+    });
+
     const waterItems = (Array.isArray(waters) ? waters : []).map((w) => {
       const allowed = Boolean(w.is_allowed);
       const bg = allowed ? "rgba(56,184,98,.13)" : "rgba(191,66,66,.13)";
       const border = allowed ? "rgba(56,184,98,.35)" : "rgba(191,66,66,.35)";
       const color = allowed ? "#3ab862" : "#bf4242";
-      return `<li style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border:1px solid ${border};border-radius:8px;background:${bg};">
-        <span>${escapeHtml(w.name || "-")}</span>
-        <strong style="color:${color};font-size:.76rem;">${allowed ? "✓ Erlaubt" : "✗ Verboten"}</strong>
+      const waterRules = (rulesByWater[String(w.water_body_id || w.id || "")] || [])
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      const rulesHtml = waterRules.length
+        ? `<ul style="margin:6px 0 0;padding:0 0 0 14px;list-style:disc;font-size:.78rem;color:var(--rd-ink-2,#4a4e40);display:grid;gap:2px;">${
+            waterRules.map((r) => `<li>${escapeHtml(r.rule_text)}</li>`).join("")
+          }</ul>`
+        : "";
+      return `<li style="display:grid;gap:4px;padding:8px 12px;border:1px solid ${border};border-radius:8px;background:${bg};">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <span>${escapeHtml(w.name || "-")}</span>
+          <strong style="color:${color};font-size:.76rem;">${allowed ? "✓ Erlaubt" : "✗ Verboten"}</strong>
+        </div>
+        ${rulesHtml}
       </li>`;
     }).join("");
 
@@ -254,6 +289,45 @@
         </ul>
       </details>` : ""}
 
+      ${rulesList.length > 0 ? (() => {
+        // Karten mit Regeln zusammenstellen (allgemein + gewässerspezifisch)
+        const cardMap = {};
+        rulesList.forEach((r) => {
+          const cid = String(r.card_type_id || "");
+          if (!cardMap[cid]) cardMap[cid] = { title: r.card_title || "Karte", general: [], specific: {} };
+          if (r.water_body_id) {
+            const wkey = String(r.water_body_id);
+            if (!cardMap[cid].specific[wkey]) cardMap[cid].specific[wkey] = { name: r.water_name || wkey, rules: [] };
+            cardMap[cid].specific[wkey].rules.push(r);
+          } else {
+            cardMap[cid].general.push(r);
+          }
+        });
+        const cardBlocks = Object.values(cardMap).map((card) => {
+          let counter = 0;
+          const generalItems = card.general
+            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+            .map((r) => { counter++; return `<li>${escapeHtml(String(counter))}. ${escapeHtml(r.rule_text)}</li>`; })
+            .join("");
+          const specificBlocks = Object.values(card.specific).map((ws) => {
+            const items = ws.rules
+              .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+              .map((r) => { counter++; return `<li>${escapeHtml(String(counter))}. ${escapeHtml(r.rule_text)}</li>`; })
+              .join("");
+            return `<p class="mc-rules__water-label">${escapeHtml(ws.name)}</p><ul class="mc-rules__list">${items}</ul>`;
+          }).join("");
+          return `<div class="mc-rules__card">
+            <p class="mc-rules__card-title">${escapeHtml(card.title)}</p>
+            ${generalItems ? `<ul class="mc-rules__list">${generalItems}</ul>` : ""}
+            ${specificBlocks}
+          </div>`;
+        }).join("");
+        return `<details class="mc-waters mc-rules">
+          <summary>Regelwerk (${escapeHtml(String(rulesList.length))} Regel${rulesList.length !== 1 ? "n" : ""})</summary>
+          <div style="padding:0 12px 12px;">${cardBlocks}</div>
+        </details>`;
+      })() : ""}
+
       <p class="mc-legal">
         Dieser digitale Mitgliedsausweis ist personenbezogen und nur in Verbindung mit einem amtlichen Ausweis gültig.
         Die Berechtigung gilt ausschließlich im angegebenen Zeitraum.
@@ -269,18 +343,19 @@
     }
     try {
       setMsg("Lade Ausweis…");
-      const [rows, waters, cardLabel, roles] = await Promise.all([
+      const [rows, waters, cardLabel, roles, rules] = await Promise.all([
         sb(`/rest/v1/profiles?select=display_name,member_no,member_card_valid,member_card_valid_from,member_card_valid_until,member_card_id,member_card_key,member_card_checked_at,member_card_checked_by_label&id=eq.${encodeURIComponent(userId())}&limit=1`, { method: "GET" }, true),
         listWatersAccess(),
         loadCardLabel(),
         loadRoles(),
+        listPermitRules(),
       ]);
       const p = Array.isArray(rows) ? rows[0] : null;
       if (!p) {
         setMsg("Kein Profil gefunden.");
         return;
       }
-      await renderCard(p, waters, cardLabel);
+      await renderCard(p, waters, cardLabel, rules);
       const verifyLink = document.querySelector('[data-manager-only]');
       if (verifyLink) {
         const show = isManagerRole(roles);

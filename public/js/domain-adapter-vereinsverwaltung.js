@@ -446,12 +446,74 @@
       return true;
     }
 
+    // -------------------------------------------------------------------------
+    // Regelwerk-Handlers (permit_rules via Supabase RPC)
+    // -------------------------------------------------------------------------
+
+    async function saveRuleRow(row, draft) {
+      const clubId = await currentClubIdAsync(row, draft);
+      if (!clubId) throw new Error("club_id fehlt.");
+
+      const cardTypeId = String(draft?.card_type_id ?? row?.card_type_id ?? "").trim();
+      if (!cardTypeId) throw new Error("Karte (card_type_id) muss gewählt werden.");
+
+      const ruleText = String(draft?.rule_text ?? row?.rule_text ?? "").trim();
+      if (!ruleText) throw new Error("Regeltext darf nicht leer sein.");
+
+      const sortOrder = parseInt(String(draft?.sort_order ?? row?.sort_order ?? "0"), 10) || 0;
+      const waterBodyId = String(draft?.water_body_id ?? row?.water_body_id ?? "").trim() || null;
+      const ruleId = String(row?.rule_id ?? "").trim() || null;
+
+      const result = await rpcPost("/rest/v1/rpc/admin_permit_rule_upsert", {
+        p_club_id: clubId,
+        p_card_type_id: cardTypeId,
+        p_rule_text: ruleText,
+        p_sort_order: sortOrder,
+        p_water_body_id: waterBodyId || null,
+        p_rule_id: ruleId || null,
+      }, true);
+
+      const row0 = Array.isArray(result) ? result[0] : result;
+      if (!row0?.ok) {
+        throw new Error(String(row0?.message || "Fehler beim Speichern der Regel."));
+      }
+      if (typeof pattern?.loadPanel === "function") {
+        await pattern.loadPanel(section.id, panelId).catch(() => null);
+      }
+      message(ruleId ? "Regel gespeichert." : "Regel hinzugefügt.");
+      return true;
+    }
+
+    async function deleteRuleRow(row) {
+      const clubId = await currentClubIdAsync(row, null);
+      const ruleId = String(row?.rule_id ?? row?.id ?? "").trim();
+      if (!clubId) throw new Error("club_id fehlt.");
+      if (!ruleId) throw new Error("rule_id fehlt.");
+
+      const result = await rpcPost("/rest/v1/rpc/admin_permit_rule_delete", {
+        p_rule_id: ruleId,
+        p_club_id: clubId,
+      }, true);
+
+      const row0 = Array.isArray(result) ? result[0] : result;
+      if (row0?.ok === false) {
+        throw new Error(String(row0?.message || "Fehler beim Löschen der Regel."));
+      }
+      if (typeof pattern?.loadPanel === "function") {
+        await pattern.loadPanel(section.id, panelId).catch(() => null);
+      }
+      message("Regel gelöscht.");
+      return true;
+    }
+
     return {
       createMemberRegistryRow,
       updateMemberRegistryRow,
       deleteMemberRegistryRow,
       saveWaterRow,
       deleteWaterRow,
+      saveRuleRow,
+      deleteRuleRow,
     };
   }
 

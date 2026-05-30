@@ -908,6 +908,12 @@
     const deleteMemberRegistryRow = typeof _domainHandlers.deleteMemberRegistryRow === "function"
       ? _domainHandlers.deleteMemberRegistryRow
       : async () => { message("Domain-Adapter nicht geladen."); };
+    const saveRuleRow = typeof _domainHandlers.saveRuleRow === "function"
+      ? _domainHandlers.saveRuleRow
+      : null;
+    const deleteRuleRow = typeof _domainHandlers.deleteRuleRow === "function"
+      ? _domainHandlers.deleteRuleRow
+      : null;
     const saveWaterRow = typeof _domainHandlers.saveWaterRow === "function"
       ? _domainHandlers.saveWaterRow
       : async () => { message("Domain-Adapter nicht geladen."); return false; };
@@ -1102,6 +1108,18 @@
                 }
                 return ok;
               }
+              if (panelId === "club_settings_rules_table") {
+                const ok = await saveRuleRow(row, draft);
+                if (ok) {
+                  dispatchTableContractEvent("fcp-mask:table-row-save", {
+                    panelId,
+                    sectionId: section?.id || "",
+                    row,
+                    payload: buildTableRowSavePayload(row, draft),
+                  });
+                }
+                return ok;
+              }
               if (panelId === "club_settings_waters_table") {
                 const ok = await saveWaterRow(row, draft);
                 if (ok) {
@@ -1166,6 +1184,10 @@
           });
           if (utilityHandler === "vereinsverwaltung_members") {
             await deleteMemberRegistryRow(row);
+            return;
+          }
+          if (panelId === "club_settings_rules_table") {
+            await deleteRuleRow(row);
             return;
           }
           if (panelId === "club_settings_waters_table") {

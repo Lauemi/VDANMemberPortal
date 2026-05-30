@@ -3755,6 +3755,37 @@ body[data-portal-rail-side="left"] .catch-dialog--panel .catch-dialog__form{
   display:grid;
   gap:6px;
 }
+/* Regelwerk-Akkordeon */
+.mc-rules__card{margin-bottom:14px;}
+.mc-rules__card:last-child{margin-bottom:0;}
+.mc-rules__card-title{
+  font-size:.8rem;
+  font-weight:700;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  color:var(--rd-gold-lo,#c05818);
+  margin:0 0 6px;
+}
+.mc-rules__water-label{
+  font-size:.78rem;
+  font-weight:600;
+  color:var(--rd-ink-2,#4a4e40);
+  margin:8px 0 4px;
+}
+.mc-rules__list{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:grid;
+  gap:3px;
+}
+.mc-rules__list li{
+  font-size:.82rem;
+  color:var(--rd-ink,#2a2d24);
+  padding:3px 0;
+  border-bottom:1px solid var(--line,rgba(108,112,91,.1));
+}
+.mc-rules__list li:last-child{border-bottom:none;}
 .mc-legal{
   margin-top:12px;
   font-size:.74rem;

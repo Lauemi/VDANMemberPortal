@@ -344,8 +344,8 @@ body[data-app-theme="fcp_tactical"] .main {
 /* ADM Topbar — Layout */
 .adm-topbar {
   height: 54px;
-  background: var(--rd-surface, #fbf7ee);
-  border-bottom: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
+  background: linear-gradient(135deg, #595A3D 0%, #525440 50%, #4B4C33 100%);
+  border-bottom: 1px solid rgba(240, 234, 216, 0.12);
   display: flex;
   align-items: center;
   padding: 0 24px;
@@ -401,13 +401,14 @@ body[data-app-theme="fcp_tactical"] .main {
   display: block;
   object-fit: cover;
   border-radius: 6px;
+  filter: brightness(0) invert(1);
 }
 
 .adm-topbar__name {
   font-size: 13.5px;
   font-weight: 600;
   letter-spacing: -0.005em;
-  color: var(--rd-ink, #2a2d24);
+  color: #f0ead8;
   white-space: nowrap;
 }
 
@@ -438,12 +439,12 @@ body[data-app-theme="fcp_tactical"] .main {
 }
 
 .adm-topbar__sep {
-  color: var(--rd-muted-soft, #9b9c88);
+  color: rgba(240, 234, 216, 0.5);
   font-size: 11px;
 }
 
 .adm-topbar__crumb {
-  color: var(--rd-ink-2, #4a4e40);
+  color: rgba(240, 234, 216, 0.8);
   font-weight: 400;
 }
 
@@ -468,11 +469,11 @@ body[data-app-theme="fcp_tactical"] .main {
   gap: 6px;
   height: 30px;
   padding: 0 10px;
-  border: 1px solid var(--rd-line, rgba(108, 112, 91, 0.14));
+  border: 1px solid rgba(240, 234, 216, 0.22);
   border-radius: 7px;
-  background: #fff;
+  background: rgba(240, 234, 216, 0.1);
   font-size: 12.5px;
-  color: var(--rd-ink-2, #4a4e40);
+  color: #f0ead8;
   cursor: pointer;
   font-family: inherit;
   text-decoration: none;
@@ -495,7 +496,7 @@ body[data-app-theme="fcp_tactical"] .main {
 
 .adm-topbar__username {
   font-size: 12.5px;
-  color: var(--rd-ink-2, #4a4e40);
+  color: #f0ead8;
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -684,9 +685,9 @@ body[data-app-theme="fcp_tactical"] .cell-select {
 body[data-app-theme="fcp_tactical"] .adm-topbar .burger-toggle,
 .adm-topbar__burger-btn {
   background: transparent;
-  border: 1px solid var(--rd-line, rgba(108, 112, 91, 0.18));
+  border: 1px solid rgba(240, 234, 216, 0.22);
   border-radius: 6px;
-  color: var(--rd-ink-2, #4a4e40);
+  color: #f0ead8;
   /* Touch-Target-Fix (CHECK-15 / Gate B): mind. 44×44px Tappfläche */
   min-height: 44px;
   min-width: 44px;
@@ -701,12 +702,12 @@ body[data-app-theme="fcp_tactical"] .adm-topbar .burger-toggle,
 
 body[data-app-theme="fcp_tactical"] .adm-topbar .burger-toggle span,
 .adm-topbar__burger-btn span {
-  color: var(--rd-ink-2, #4a4e40);
+  color: #f0ead8;
 }
 
 body[data-app-theme="fcp_tactical"] .adm-topbar .burger-toggle:hover,
 .adm-topbar__burger-btn:hover {
-  background: rgba(108, 112, 91, 0.08);
+  background: rgba(240, 234, 216, 0.1);
 }
 
 /* Burger-Popover: Position relativ zum Topbar-Burger (Desktop) */

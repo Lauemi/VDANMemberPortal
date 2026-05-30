@@ -157,8 +157,8 @@ body[data-app-theme="fcp_brand"] .header-notification-toggle[aria-expanded="true
 }
 
 body[data-app-theme="fcp_tactical"] .header{
-  border-bottom:1px solid rgba(221,212,194,.42);
-  background:rgba(47,53,42,.82);
+  border-bottom:1px solid rgba(240,234,216,.18);
+  background:rgba(82,84,64,.88);
 }
 
 body[data-app-theme="fcp_tactical"] .site-footer{

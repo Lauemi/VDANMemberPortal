@@ -190,6 +190,126 @@ const admConfigJson = JSON.stringify(admConfig);
     })();
 
     // -------------------------------------------------------------------------
+    // Regelwerke: Select-Optionen für card_type_id + water_body_id nachladen
+    // und per DOM-Injection in Create-/Edit-Formulare einsetzen.
+    // -------------------------------------------------------------------------
+    (function () {
+      let _cardOptions = null;    // [{value, label}]
+      let _waterOptions = null;   // [{value, label}]
+      let _clubId = null;
+
+      function sbAuth(path, body) {
+        const url = String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, "");
+        const key = String(window.__APP_SUPABASE_KEY || "").trim();
+        const session = window.VDAN_AUTH?.loadSession?.() || null;
+        const token = session?.access_token || "";
+        return fetch(url + path, {
+          method: "POST",
+          headers: { apikey: key, Authorization: "Bearer " + token, "Content-Type": "application/json" },
+          body: JSON.stringify(body || {}),
+        }).then(async (r) => {
+          if (!r.ok) throw new Error("RPC error " + r.status);
+          return r.json().catch(() => []);
+        });
+      }
+
+      async function loadRulesOptions(clubId) {
+        if (_cardOptions && _waterOptions) return; // bereits geladen
+        _clubId = clubId;
+        const [cards, waters] = await Promise.all([
+          sbAuth("/rest/v1/rpc/admin_permit_card_types_for_rules", { p_club_id: clubId }),
+          sbAuth("/rest/v1/rpc/admin_water_bodies_for_club",       { p_club_id: clubId }),
+        ]).catch(() => [[], []]);
+        _cardOptions = (Array.isArray(cards) ? cards : []).map(r => ({
+          value: String(r.card_type_id || ""), label: String(r.card_title || r.card_type_key || "?"),
+        }));
+        _waterOptions = [{ value: "", label: "— Alle Gewässer —" }].concat(
+          (Array.isArray(waters) ? waters : []).map(r => ({
+            value: String(r.water_body_id || ""), label: String(r.name || "?"),
+          }))
+        );
+      }
+
+      function injectSelectOptions(selectEl, options, currentValue) {
+        if (!selectEl || !Array.isArray(options)) return;
+        selectEl.innerHTML = options.map(o =>
+          `<option value="${String(o.value).replace(/"/g,"&quot;")}" ${o.value === currentValue ? "selected" : ""}>${
+            String(o.label).replace(/</g,"&lt;").replace(/>/g,"&gt;")
+          }</option>`
+        ).join("");
+      }
+
+      function patchRulesEditor(editorRow) {
+        const cardSel = editorRow.querySelector('[data-editor-key="card_type_id"]');
+        const waterSel = editorRow.querySelector('[data-editor-key="water_body_id"]');
+        if (cardSel && _cardOptions) injectSelectOptions(cardSel, _cardOptions, cardSel.value);
+        if (waterSel && _waterOptions) injectSelectOptions(waterSel, _waterOptions, waterSel.value);
+      }
+
+      function watchRulesTable(root) {
+        // Beobachte neue Editor-Zeilen im Rules-Panel
+        const observer = new MutationObserver((mutations) => {
+          for (const mut of mutations) {
+            for (const node of mut.addedNodes) {
+              if (node.nodeType !== 1) continue;
+              // Editor-Zeile (create oder edit)
+              if (node.matches?.("[data-editor-row]") || node.querySelector?.("[data-editor-row]")) {
+                const rows = node.matches("[data-editor-row]") ? [node] : Array.from(node.querySelectorAll("[data-editor-row]"));
+                rows.forEach(patchRulesEditor);
+              }
+            }
+            // Auch in geänderten Subtrees suchen (falls bereits im DOM)
+            if (mut.target?.closest?.("[data-table-id='adm-club-settings-rules']")) {
+              mut.target.querySelectorAll?.("[data-editor-row]")?.forEach(patchRulesEditor);
+            }
+          }
+        });
+        observer.observe(root, { childList: true, subtree: true });
+        return observer;
+      }
+
+      // Starte Beobachtung wenn ADM-Root verfügbar ist
+      window.addEventListener("DOMContentLoaded", function () {
+        const admRoot = document.getElementById("clubSettingsAdmRoot");
+        if (admRoot) watchRulesTable(admRoot);
+
+        // Warte auf Regelwerke-Sektion und lade dann Options
+        window.addEventListener("fcp-mask:table-row-click", function (e) {
+          const panelId = e?.detail?.panelId;
+          if (panelId === "club_settings_rules_table" && !_cardOptions) {
+            const session = window.VDAN_AUTH?.loadSession?.();
+            const clubId = session?.clubId || localStorage.getItem("vdan_selected_club_id") || "";
+            if (clubId) loadRulesOptions(clubId).catch(() => {});
+          }
+        });
+
+        // Options laden sobald Regelwerke-Panel aktiv wird
+        document.addEventListener("click", function (e) {
+          const navItem = e.target.closest?.("[data-section-id='club_settings_rules']");
+          if (navItem) {
+            setTimeout(async function () {
+              // club_id aus URL-Params (z.B. ?club_id=xxx) oder aus ersten geladenen Rows
+              const urlClubId = new URLSearchParams(window.location.search).get("club_id") || "";
+              const pattern = window.__ADM_CLUB_SETTINGS__;
+              const rowsClubId = (() => {
+                try {
+                  const panel = pattern?.state?.sections
+                    ?.flatMap?.(s => s.panels || [])
+                    ?.find?.(p => p.id === "club_settings_rules_table");
+                  return (panel?.rows || [])[0]?.tenant_id || "";
+                } catch { return ""; }
+              })();
+              const clubId = String(urlClubId || rowsClubId || "").trim();
+              if (clubId && !_cardOptions) {
+                await loadRulesOptions(clubId).catch(() => {});
+              }
+            }, 400);
+          }
+        }, true);
+      });
+    })();
+
+    // -------------------------------------------------------------------------
 
     window.FcpMaskPageLoader.boot({
       configScriptId: "clubSettingsAdmConfig",

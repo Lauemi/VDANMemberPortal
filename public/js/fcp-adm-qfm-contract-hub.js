@@ -1083,6 +1083,18 @@
                 }
                 return ok;
               }
+              if (panelId === "club_settings_rules_table") {
+                // Neuer Eintrag: row hat keine rule_id → saveRuleRow macht INSERT
+                const ok = await saveRuleRow({}, draft);
+                if (ok) {
+                  dispatchTableContractEvent("fcp-mask:table-row-create", {
+                    panelId,
+                    sectionId: section?.id || "",
+                    payload: draft,
+                  });
+                }
+                return ok;
+              }
               const ok = await saveThroughPanel(draft);
               if (ok) {
                 dispatchTableContractEvent("fcp-mask:table-row-create", {

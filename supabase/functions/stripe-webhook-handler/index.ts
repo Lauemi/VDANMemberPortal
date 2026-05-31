@@ -50,25 +50,49 @@ serve(async (req) => {
       case "checkout.session.completed": {
         const session = event.data.object;
         const club_id = session.metadata?.club_id;
-        if (!club_id) break;
+        const registrationRequestId = session.metadata?.registration_request_id;
+        const isNewRegistration = session.metadata?.is_new_registration === "true";
 
-        // member_count aus Checkout-Metadata verwenden — nicht aus DB re-lesen.
-        // Der Wert wurde beim Checkout-Erstellen fixiert und ist der
-        // abrechnungsrelevante Stand. Ein DB-Re-read würde zwischenzeitliche
-        // Mitgliederänderungen einschleichen und billing_state inkonsistent machen.
-        const memberCountAtCheckout = parseInt(session.metadata?.member_count ?? "0", 10);
+        // ── Pfad A: Bestehender Club (Standard-Billing) ─────────────────
+        if (club_id && !isNewRegistration) {
+          const memberCountAtCheckout = parseInt(session.metadata?.member_count ?? "0", 10);
+          await supabase.from("club_billing_subscriptions").upsert({
+            club_id,
+            stripe_customer_id: session.customer,
+            stripe_subscription_id: session.subscription,
+            stripe_price_id: Deno.env.get("STRIPE_FCP_PRICE_ID"),
+            billing_state: "active",
+            checkout_state: "completed",
+            member_count_at_billing: memberCountAtCheckout,
+            last_event_id: event.id,
+            last_event_type: event.type,
+          }, { onConflict: "club_id" });
+          break;
+        }
 
-        await supabase.from("club_billing_subscriptions").upsert({
-          club_id,
-          stripe_customer_id: session.customer,
-          stripe_subscription_id: session.subscription,
-          stripe_price_id: Deno.env.get("STRIPE_FCP_PRICE_ID"),
-          billing_state: "active",
-          checkout_state: "completed",
-          member_count_at_billing: memberCountAtCheckout,
-          last_event_id: event.id,
-          last_event_type: event.type,
-        }, { onConflict: "club_id" });
+        // ── Pfad B: Neue Selbstregistrierung ────────────────────────────
+        if (isNewRegistration && registrationRequestId) {
+          const billingUnits = parseInt(session.metadata?.billing_units ?? "50", 10);
+
+          // Registrierungsanfrage auf billing_paid setzen → Michael sieht es im Masterboard
+          await supabase
+            .from("club_registration_requests")
+            .update({
+              status: "billing_paid",
+              stripe_customer_id: session.customer,
+              stripe_subscription_id: session.subscription,
+            })
+            .eq("id", registrationRequestId);
+
+          // Webhook-Event mit Registrierungs-Kontext aktualisieren
+          await supabase
+            .from("club_billing_webhook_events")
+            .update({
+              club_id: null, // noch kein Club
+              payload: { ...event, _registration_request_id: registrationRequestId },
+            })
+            .eq("stripe_event_id", event.id);
+        }
         break;
       }
 

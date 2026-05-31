@@ -1,0 +1,275 @@
+---
+import path from "node:path";
+import Site from "../layouts/Site.astro";
+import { APP } from "../config/app";
+import { readMaskJsonFile } from "../../scripts/fcp-mask-reader.mjs";
+
+const maskFilePath = path.resolve(process.cwd(), "docs/masks/templates/Onboarding/QFM_clubRegister.json");
+const resolvedMask = await readMaskJsonFile(maskFilePath);
+
+function toQuickFlowField(field) {
+  const typeMap = {
+    input: field.type === "email" ? "email" : field.type === "date" ? "date" : "text",
+    textarea: "textarea",
+    select: "select",
+    toggle: "toggle",
+    date: "date",
+    email: "email",
+    phone: "text",
+    number: "number",
+    readonly: "text",
+    custom: "text",
+  };
+
+  return {
+    name: field.name,
+    label: field.label,
+    type: typeMap[field.componentType] || field.type || "text",
+    value: field.defaultValue ?? "",
+    placeholder: field.placeholder || "",
+    help: field.helpText || "",
+    description: field.description || "",
+    disabled: field.readonly === true,
+    valuePath: field.valuePath || "",
+    payloadKey: field.payloadKey || field.name,
+    readonly: field.readonly === true,
+    required: field.required === true,
+    defaultValue: field.defaultValue ?? "",
+    autocomplete:
+      field.autocomplete ||
+      (field.componentType === "email"
+        ? "email"
+        : field.componentType === "phone"
+          ? "tel"
+          : undefined),
+    inputMode: field.inputMode || undefined,
+    options: Array.isArray(field.options) ? field.options : [],
+    span: field.displaySpan || undefined,
+  };
+}
+
+function mapAction(action) {
+  return {
+    id: action.id,
+    label: action.label,
+    variant: action.variant || (action.kind === "rpc" || action.kind === "auth_action" || action.kind === "edge_function" ? "primary" : "ghost"),
+    action: action.action || undefined,
+    disabled: action.disabled === true,
+    binding: action.binding || null,
+  };
+}
+
+function toQuickFlowPanel(panel, index) {
+  const content = panel.content || {};
+  const transformed = {
+    id: panel.id,
+    title: panel.title,
+    renderMode: panel.renderMode,
+    componentType: panel.componentType || null,
+    flowType: panel.flowType,
+    permissions: panel.permissions,
+    open: index === 0,
+    meta: {
+      label: panel.meta?.displayLabel || "",
+      securityContext: panel.securityContext,
+      processAdapter: panel.meta?.processAdapter || "",
+      resolver: {
+        ...(panel.meta?.resolver || {}),
+        fieldDefs: content.fields || [],
+        blockDefs: content.blocks || [],
+      },
+    },
+    loadBinding: panel.loadBinding,
+    saveBinding: panel.saveBinding,
+    content: {
+      fields: [],
+      rows: [],
+      actions: [],
+      blocks: [],
+    },
+    actions: (panel.actions || []).map(mapAction),
+    rows: [],
+    columns: [],
+    tableConfig: panel.tableConfig || null,
+  };
+
+  if (panel.renderMode === "form") {
+    transformed.content.fields = (content.fields || []).map(toQuickFlowField);
+  } else if (panel.renderMode === "readonly") {
+    transformed.content.rows = [];
+  } else if (panel.renderMode === "actions") {
+    transformed.actions = (panel.actions || content.actions || []).map(mapAction);
+  } else if (panel.renderMode === "mixed") {
+    transformed.content.blocks = [];
+  } else if (panel.renderMode === "table") {
+    transformed.columns = panel.columns || [];
+    transformed.rows = panel.rows || [];
+  }
+
+  return transformed;
+}
+
+function toQuickFlowSection(section) {
+  return {
+    id: section.id,
+    label: section.label,
+    title: section.title,
+    description: section.description,
+    permissions: section.permissions,
+    panels: (section.panels || []).map((panel, index) => toQuickFlowPanel(panel, index)),
+  };
+}
+
+const qfmPageConfig = {
+  root: "#clubRegisterQfmRoot",
+  maskId: resolvedMask.maskId,
+  maskFamily: resolvedMask.maskFamily || "QFM",
+  shellVariant: "public-entry",
+  ignorePersistedDraftOnInit: true,
+  ignoreDefaultValuesOnInit: true,
+  maskType: resolvedMask.maskType,
+  activeSectionId: resolvedMask.sections[0]?.id || null,
+  autoLoadOnInit: false,
+  autoLoadSectionOnActivate: false,
+  autoLoadPanelOnOpen: false,
+  currentRoles: [],
+  currentScopes: {
+    globalUser: true,
+    authSystem: true,
+    clubReadonly: true,
+    clubOverride: false,
+    billingSnapshot: true,
+    consentAppendOnly: true,
+  },
+  header: resolvedMask.header,
+  sections: resolvedMask.sections.map(toQuickFlowSection),
+};
+
+const qfmPageConfigJson = JSON.stringify(qfmPageConfig);
+const nextRaw = Astro.url.searchParams.get("next") ?? "/verein-registrieren/";
+const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/verein-registrieren/";
+const accessSetupHref = `/verein-registrieren/zugang/?next=${encodeURIComponent(nextTarget)}`;
+---
+
+<Site title={`Verein registrieren • ${APP.name}`} description="QFM-Einstieg für den echten Registrierungsweg neuer Vereine." robots="noindex" appThemeOverride="fcp_tactical" density="compact">
+  <Fragment slot="head">
+    <link rel="stylesheet" href="/css/ofmMask.css" />
+  </Fragment>
+
+  <div id="clubRegisterQfmRoot" data-access-href={accessSetupHref}></div>
+
+  <script is:inline src="/js/fcp-mask-process-state.js"></script>
+  <script is:inline src="/js/fcp-adm-qfm-contract-hub.js"></script>
+  <script is:inline src="/js/fcp-mask-data-resolver.js"></script>
+  <script is:inline src="/js/fcp-data-table.js"></script>
+  <script is:inline src="/js/fcp-inline-data-table-v2.js"></script>
+  <script is:inline src="/js/quick-flow-pattern.js"></script>
+  <script is:inline src="/js/fcp-mask-page-loader.js"></script>
+  <script id="clubRegisterQfmConfig" type="application/json" set:html={qfmPageConfigJson}></script>
+  <script is:inline>
+    const rootEl = document.getElementById("clubRegisterQfmRoot");
+    const CLUB_REGISTER_DRAFT_KEY = "vdan_club_register_pending_v1";
+    const CLUB_REGISTER_RESUME_KEY = "vdan_club_register_resume_v1";
+    const accessHref = String(rootEl?.dataset?.accessHref || "/verein-registrieren/zugang/?next=%2Fverein-registrieren%2F");
+
+    function resolveRouteTemplate(template, result) {
+      const rawTemplate = String(template || "").trim();
+      if (!rawTemplate) return "";
+      return rawTemplate.replace(/\{([^}]+)\}/g, (_, key) => {
+        const value = result && Object.prototype.hasOwnProperty.call(result, key) ? result[key] : "";
+        return encodeURIComponent(String(value ?? ""));
+      });
+    }
+
+    function navigateAfterSubmit(detail) {
+      const result = detail?.result || {};
+      const routing = detail?.resolverMeta?.postSubmitRouting || {};
+      const status = String(result?.status || "").trim().toLowerCase();
+      const rule = routing[status] || routing.fallback || null;
+      const target = resolveRouteTemplate(rule?.target, {
+        ...result,
+        club_id: result?.club_id || result?.approved_club_id || "",
+      });
+      if (!target) return;
+      window.location.assign(target);
+    }
+
+    function getDraftFromStorage() {
+      try {
+        const raw = localStorage.getItem(CLUB_REGISTER_DRAFT_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function hasResumeIntent() {
+      try {
+        return Boolean(sessionStorage.getItem(CLUB_REGISTER_RESUME_KEY));
+      } catch {
+        return false;
+      }
+    }
+
+    function markResumeIntent() {
+      try {
+        sessionStorage.setItem(CLUB_REGISTER_RESUME_KEY, String(Date.now()));
+      } catch {}
+    }
+
+    function clearResumeIntent() {
+      try {
+        sessionStorage.removeItem(CLUB_REGISTER_RESUME_KEY);
+      } catch {}
+    }
+
+    function sanitizePublicDraft() {
+      if (hasResumeIntent()) return;
+      try {
+        localStorage.removeItem(CLUB_REGISTER_DRAFT_KEY);
+      } catch {}
+    }
+
+    async function resumeClubRegisterSubmit() {
+      const draft = getDraftFromStorage();
+      if (!draft || !window.__QFM_CLUB_REGISTER_PAGE__) return;
+      await window.__QFM_CLUB_REGISTER_PAGE__.savePanel("club_request_entry", "request_form", draft);
+    }
+
+    window.addEventListener("fcp-mask:auth-required", (event) => {
+      const detail = event?.detail || {};
+      if (detail?.panelId !== "request_form") return;
+      const payload = detail.payload || getDraftFromStorage();
+      markResumeIntent();
+      if (payload) {
+        try {
+          localStorage.setItem(CLUB_REGISTER_DRAFT_KEY, JSON.stringify(payload));
+        } catch {}
+      }
+      window.location.assign(accessHref);
+    });
+
+    window.addEventListener("fcp-mask:save-success", (event) => {
+      const detail = event?.detail || {};
+      if (detail?.panelId !== "request_form") return;
+      clearResumeIntent();
+      navigateAfterSubmit(detail);
+    });
+
+    sanitizePublicDraft();
+
+    window.FcpMaskPageLoader.boot({
+      configScriptId: "clubRegisterQfmConfig",
+      patternGlobal: "__QFM_CLUB_REGISTER_PAGE__",
+      onMessage: () => {},
+      onReady: async () => {
+        if (window.VDAN_AUTH?.loadSession?.()?.access_token && hasResumeIntent()) {
+          await resumeClubRegisterSubmit().catch(() => {});
+        }
+      },
+    }).catch((error) => {
+      console.error(error instanceof Error ? error.message : String(error));
+    });
+  </script>
+
+</Site>

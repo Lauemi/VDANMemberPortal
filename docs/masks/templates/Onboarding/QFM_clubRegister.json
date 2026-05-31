@@ -416,7 +416,20 @@
               }
             ],
             "rows": [],
-            "actions": []
+            "actions": [
+              {
+                "id": "submit_registration",
+                "label": "Weiter zur Zahlung →",
+                "kind": "edge_function",
+                "variant": "primary",
+                "action": "submit",
+                "binding": {
+                  "kind": "edge_function",
+                  "target": "club-request-submit",
+                  "path": "edge:club-request-submit"
+                }
+              }
+            ]
           },
           "actions": [
             {
@@ -460,7 +473,9 @@
             "sourceOfTruth": "sql",
             "scope": "auth_system",
             "ownership": "auth_system",
-            "metaDisplay": "auto"
+            "metaDisplay": "auto",
+            "panelState": "gap",
+            "panelStateLabel": "Nicht angezeigt"
           },
           "loadBinding": {
             "kind": "rpc",

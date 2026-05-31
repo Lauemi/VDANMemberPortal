@@ -78,6 +78,12 @@ serve(async (req) => {
       "metadata[billing_units]": String(billingUnits),
       "metadata[is_new_registration]": "true",
       "subscription_data[description]": `FCP-Vereinslizenz – ${billingUnits} Abrechnungseinheiten à 2 € netto/Jahr`,
+      // Pflicht-/Transparenzinfos direkt am Bezahl-Button (§19 UStG, Vertragspartner, Laufzeit)
+      "custom_text[submit][message]":
+        `Jahreslizenz für Vereine/Organisationen: ${billingUnits} Einheiten × 2 € = ${billingUnits * 2} € pro Jahr. `
+        + `Laufzeit 12 Monate, Verlängerung um je 1 Jahr, jährlich kündbar. `
+        + `Gemäß § 19 UStG wird keine Umsatzsteuer berechnet. `
+        + `Vertragspartner: Michael Lauenroth (Einzelunternehmen).`,
       "success_url": successUrl,
       "cancel_url": cancelUrl,
     }),

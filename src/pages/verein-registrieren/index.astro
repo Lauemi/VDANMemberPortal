@@ -7,269 +7,611 @@ import { readMaskJsonFile } from "../../../scripts/fcp-mask-reader.mjs";
 const maskFilePath = path.resolve(process.cwd(), "docs/masks/templates/Onboarding/QFM_clubRegister.json");
 const resolvedMask = await readMaskJsonFile(maskFilePath);
 
-function toQuickFlowField(field) {
-  const typeMap = {
-    input: field.type === "email" ? "email" : field.type === "date" ? "date" : "text",
-    textarea: "textarea",
-    select: "select",
-    toggle: "toggle",
-    date: "date",
-    email: "email",
-    phone: "text",
-    number: "number",
-    readonly: "text",
-    custom: "text",
-  };
-
-  return {
-    name: field.name,
-    label: field.label,
-    type: typeMap[field.componentType] || field.type || "text",
-    value: field.defaultValue ?? "",
-    placeholder: field.placeholder || "",
-    help: field.helpText || "",
-    description: field.description || "",
-    disabled: field.readonly === true,
-    valuePath: field.valuePath || "",
-    payloadKey: field.payloadKey || field.name,
-    readonly: field.readonly === true,
-    required: field.required === true,
-    defaultValue: field.defaultValue ?? "",
-    autocomplete:
-      field.autocomplete ||
-      (field.componentType === "email"
-        ? "email"
-        : field.componentType === "phone"
-          ? "tel"
-          : undefined),
-    inputMode: field.inputMode || undefined,
-    options: Array.isArray(field.options) ? field.options : [],
-    span: field.displaySpan || undefined,
-  };
-}
-
-function mapAction(action) {
-  return {
-    id: action.id,
-    label: action.label,
-    variant: action.variant || (action.kind === "rpc" || action.kind === "auth_action" || action.kind === "edge_function" ? "primary" : "ghost"),
-    action: action.action || undefined,
-    disabled: action.disabled === true,
-    binding: action.binding || null,
-  };
-}
-
-function toQuickFlowPanel(panel, index) {
-  const content = panel.content || {};
-  const transformed = {
-    id: panel.id,
-    title: panel.title,
-    renderMode: panel.renderMode,
-    componentType: panel.componentType || null,
-    flowType: panel.flowType,
-    permissions: panel.permissions,
-    open: index === 0,
-    meta: {
-      label: panel.meta?.displayLabel || "",
-      securityContext: panel.securityContext,
-      processAdapter: panel.meta?.processAdapter || "",
-      resolver: {
-        ...(panel.meta?.resolver || {}),
-        fieldDefs: content.fields || [],
-        blockDefs: content.blocks || [],
-      },
-    },
-    loadBinding: panel.loadBinding,
-    saveBinding: panel.saveBinding,
-    content: {
-      fields: [],
-      rows: [],
-      actions: [],
-      blocks: [],
-    },
-    actions: (panel.actions || []).map(mapAction),
-    rows: [],
-    columns: [],
-    tableConfig: panel.tableConfig || null,
-  };
-
-  if (panel.renderMode === "form") {
-    transformed.content.fields = (content.fields || []).map(toQuickFlowField);
-  } else if (panel.renderMode === "readonly") {
-    transformed.content.rows = [];
-  } else if (panel.renderMode === "actions") {
-    transformed.actions = (panel.actions || content.actions || []).map(mapAction);
-  } else if (panel.renderMode === "mixed") {
-    transformed.content.blocks = [];
-  } else if (panel.renderMode === "table") {
-    transformed.columns = panel.columns || [];
-    transformed.rows = panel.rows || [];
-  }
-
-  return transformed;
-}
-
-function toQuickFlowSection(section) {
-  return {
-    id: section.id,
-    label: section.label,
-    title: section.title,
-    description: section.description,
-    permissions: section.permissions,
-    panels: (section.panels || []).map((panel, index) => toQuickFlowPanel(panel, index)),
-  };
-}
-
-const qfmPageConfig = {
-  root: "#clubRegisterQfmRoot",
-  maskId: resolvedMask.maskId,
-  maskFamily: resolvedMask.maskFamily || "QFM",
-  shellVariant: "public-entry",
-  ignorePersistedDraftOnInit: true,
-  ignoreDefaultValuesOnInit: true,
-  maskType: resolvedMask.maskType,
-  activeSectionId: resolvedMask.sections[0]?.id || null,
-  autoLoadOnInit: false,
-  autoLoadSectionOnActivate: false,
-  autoLoadPanelOnOpen: false,
-  currentRoles: [],
-  currentScopes: {
-    globalUser: true,
-    authSystem: true,
-    clubReadonly: true,
-    clubOverride: false,
-    billingSnapshot: true,
-    consentAppendOnly: true,
-  },
-  header: resolvedMask.header,
-  sections: resolvedMask.sections.map(toQuickFlowSection),
-};
-
-const qfmPageConfigJson = JSON.stringify(qfmPageConfig);
 const nextRaw = Astro.url.searchParams.get("next") ?? "/verein-registrieren/";
 const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/verein-registrieren/";
 const accessSetupHref = `/verein-registrieren/zugang/?next=${encodeURIComponent(nextTarget)}`;
+
+// Preisstufen aus der Maske holen
+const clubSizeField = resolvedMask.sections?.[0]?.panels?.[0]?.content?.fields?.find(f => f.name === "club_size");
+const pricingOptions = (clubSizeField?.options || []).filter(o => o.value && o.value !== "" && o.value !== "enterprise");
 ---
 
-<Site title={`Verein registrieren • ${APP.name}`} description="QFM-Einstieg für den echten Registrierungsweg neuer Vereine." robots="noindex" appThemeOverride="fcp_tactical" density="compact">
-  <Fragment slot="head">
-    <link rel="stylesheet" href="/css/ofmMask.css" />
-  </Fragment>
+<Site
+  title={`Verein registrieren • ${APP.name}`}
+  description="Jetzt Verein registrieren und sofort starten. Digital, einfach, sicher."
+  robots="noindex"
+  appThemeOverride="fcp_tactical"
+  density="compact"
+>
 
-  <div id="clubRegisterQfmRoot" data-access-href={accessSetupHref}></div>
+<div class="reg-page" data-access-href={accessSetupHref}>
 
-  <script is:inline src="/js/fcp-mask-process-state.js"></script>
-  <script is:inline src="/js/fcp-adm-qfm-contract-hub.js"></script>
-  <script is:inline src="/js/fcp-mask-data-resolver.js"></script>
-  <script is:inline src="/js/fcp-data-table.js"></script>
-  <script is:inline src="/js/fcp-inline-data-table-v2.js"></script>
-  <script is:inline src="/js/quick-flow-pattern.js"></script>
-  <script is:inline src="/js/fcp-mask-page-loader.js"></script>
-  <script id="clubRegisterQfmConfig" type="application/json" set:html={qfmPageConfigJson}></script>
-  <script is:inline>
-    const rootEl = document.getElementById("clubRegisterQfmRoot");
-    const CLUB_REGISTER_DRAFT_KEY = "vdan_club_register_pending_v1";
-    const CLUB_REGISTER_RESUME_KEY = "vdan_club_register_resume_v1";
-    const accessHref = String(rootEl?.dataset?.accessHref || "/verein-registrieren/zugang/?next=%2Fverein-registrieren%2F");
+  <!-- PROGRESS -->
+  <div class="reg-progress">
+    <div class="reg-progress__step reg-progress__step--active">
+      <span class="reg-progress__num">1</span>
+      <span>Vereinsdaten</span>
+    </div>
+    <div class="reg-progress__line"></div>
+    <div class="reg-progress__step">
+      <span class="reg-progress__num">2</span>
+      <span>Zahlung</span>
+    </div>
+    <div class="reg-progress__line"></div>
+    <div class="reg-progress__step">
+      <span class="reg-progress__num">3</span>
+      <span>Sofortiger Zugang</span>
+    </div>
+  </div>
 
-    function resolveRouteTemplate(template, result) {
-      const rawTemplate = String(template || "").trim();
-      if (!rawTemplate) return "";
-      return rawTemplate.replace(/\{([^}]+)\}/g, (_, key) => {
-        const value = result && Object.prototype.hasOwnProperty.call(result, key) ? result[key] : "";
-        return encodeURIComponent(String(value ?? ""));
+  <!-- LAYOUT: Form + Sidebar -->
+  <div class="reg-layout">
+
+    <!-- LINKE SEITE: Formular -->
+    <div class="reg-form-col">
+      <div class="reg-card">
+        <h1 class="reg-card__title">Vereinsdaten eingeben</h1>
+        <p class="reg-card__sub">Alle Felder werden sicher übertragen. Deine Daten werden nur für die Vereinsverwaltung genutzt.</p>
+
+        <form id="clubRegisterForm" class="reg-form" novalidate>
+
+          <div class="reg-form__group">
+            <label class="reg-label" for="reg_club_name">Vereinsname <span class="reg-required">*</span></label>
+            <input class="reg-input" id="reg_club_name" name="club_name" type="text"
+              placeholder="z. B. Angelsportverein Musterstadt" required autocomplete="organization" />
+          </div>
+
+          <div class="reg-form__row">
+            <div class="reg-form__group">
+              <label class="reg-label" for="reg_zip">PLZ <span class="reg-required">*</span></label>
+              <input class="reg-input" id="reg_zip" name="zip" type="text" placeholder="12345" required maxlength="5" inputmode="numeric" />
+            </div>
+            <div class="reg-form__group reg-form__group--grow">
+              <label class="reg-label" for="reg_city">Ort <span class="reg-required">*</span></label>
+              <input class="reg-input" id="reg_city" name="city" type="text" placeholder="Musterstadt" required />
+            </div>
+          </div>
+
+          <div class="reg-form__row">
+            <div class="reg-form__group reg-form__group--grow">
+              <label class="reg-label" for="reg_street">Straße <span class="reg-required">*</span></label>
+              <input class="reg-input" id="reg_street" name="street" type="text" placeholder="Musterstraße" required />
+            </div>
+            <div class="reg-form__group">
+              <label class="reg-label" for="reg_house_number">Nr.</label>
+              <input class="reg-input reg-input--short" id="reg_house_number" name="house_number" type="text" placeholder="12a" />
+            </div>
+          </div>
+
+          <hr class="reg-divider" />
+
+          <div class="reg-form__group">
+            <label class="reg-label" for="reg_responsible_name">Verantwortliche Person <span class="reg-required">*</span></label>
+            <input class="reg-input" id="reg_responsible_name" name="responsible_name" type="text"
+              placeholder="Vor- und Nachname" required />
+          </div>
+
+          <div class="reg-form__row">
+            <div class="reg-form__group">
+              <label class="reg-label" for="reg_responsible_role">Funktion <span class="reg-required">*</span></label>
+              <input class="reg-input" id="reg_responsible_role" name="responsible_role" type="text"
+                placeholder="z. B. Vorstand" required />
+            </div>
+            <div class="reg-form__group reg-form__group--grow">
+              <label class="reg-label" for="reg_responsible_email">E-Mail <span class="reg-required">*</span></label>
+              <input class="reg-input" id="reg_responsible_email" name="responsible_email" type="email"
+                placeholder="vorstand@verein.de" required autocomplete="email" />
+            </div>
+          </div>
+
+          <hr class="reg-divider" />
+
+          <!-- MITGLIEDERZAHL & PREIS -->
+          <div class="reg-form__group">
+            <label class="reg-label" for="reg_club_size">
+              Mitgliederzahl <span class="reg-required">*</span>
+              <span class="reg-label__hint">bestimmt den Jahrespreis</span>
+            </label>
+            <select class="reg-input reg-select" id="reg_club_size" name="club_size" required>
+              <option value="">Bitte Mitgliederzahl wählen</option>
+              {pricingOptions.map(opt => (
+                <option value={opt.value}>{opt.label}</option>
+              ))}
+              <option value="enterprise">Über 500 Mitglieder — Enterprise (auf Anfrage)</option>
+            </select>
+          </div>
+
+          <!-- PREIS-PREVIEW (wird per JS befüllt) -->
+          <div id="reg_price_preview" class="reg-price-preview" hidden>
+            <div class="reg-price-preview__label">Dein Paket</div>
+            <div class="reg-price-preview__price" id="reg_price_display">–</div>
+            <div class="reg-price-preview__note">jährliche Abrechnung · sofort kündbar</div>
+          </div>
+
+          <hr class="reg-divider" />
+
+          <!-- RECHTLICHES -->
+          <label class="reg-check">
+            <input type="checkbox" id="reg_legal" name="legal_confirmed" required />
+            <span>Ich bin berechtigt, diese Registrierung für den Verein zu starten und bestätige die
+              <a href="/agb.html/" target="_blank" class="reg-link">AGB</a> und
+              <a href="/datenschutz.html/" target="_blank" class="reg-link">Datenschutzerklärung</a>.
+              <span class="reg-required">*</span>
+            </span>
+          </label>
+
+          <p id="reg_msg" class="reg-msg" aria-live="polite" hidden></p>
+
+          <button id="reg_submit" type="submit" class="reg-btn reg-btn--primary">
+            Weiter zur Zahlung →
+          </button>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- RECHTE SEITE: Sidebar -->
+    <aside class="reg-sidebar">
+
+      <!-- Was du bekommst -->
+      <div class="reg-sidebar__card">
+        <h2 class="reg-sidebar__title">Was du bekommst</h2>
+        <ul class="reg-benefits">
+          <li class="reg-benefit">
+            <span class="reg-benefit__icon">✓</span>
+            <span><strong>Digitaler Mitgliedsausweis</strong> mit QR-Code für jedes Mitglied</span>
+          </li>
+          <li class="reg-benefit">
+            <span class="reg-benefit__icon">✓</span>
+            <span><strong>Mitgliederverwaltung</strong> für den gesamten Verein</span>
+          </li>
+          <li class="reg-benefit">
+            <span class="reg-benefit__icon">✓</span>
+            <span><strong>Gewässerverwaltung</strong> und Angelkarten-System</span>
+          </li>
+          <li class="reg-benefit">
+            <span class="reg-benefit__icon">✓</span>
+            <span><strong>Arbeitseinsätze</strong> und Eventplanung</span>
+          </li>
+          <li class="reg-benefit">
+            <span class="reg-benefit__icon">✓</span>
+            <span><strong>Sofortiger Zugang</strong> nach Zahlung</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Preistabelle -->
+      <div class="reg-sidebar__card reg-sidebar__card--pricing">
+        <h2 class="reg-sidebar__title">Einfaches Preismodell</h2>
+        <p class="reg-sidebar__sub">2 € pro Mitglied / Jahr, in 50er-Stufen</p>
+        <div class="reg-pricing-table">
+          <div class="reg-pricing-row"><span>1–50 Mitglieder</span><strong>100 €/Jahr</strong></div>
+          <div class="reg-pricing-row"><span>51–100 Mitglieder</span><strong>200 €/Jahr</strong></div>
+          <div class="reg-pricing-row"><span>101–150 Mitglieder</span><strong>300 €/Jahr</strong></div>
+          <div class="reg-pricing-row reg-pricing-row--dots"><span>…</span><span></span></div>
+          <div class="reg-pricing-row"><span>451–500 Mitglieder</span><strong>1.000 €/Jahr</strong></div>
+          <div class="reg-pricing-row reg-pricing-row--enterprise"><span>500+ Mitglieder</span><strong>auf Anfrage</strong></div>
+        </div>
+      </div>
+
+      <!-- Trust -->
+      <div class="reg-trust">
+        <div class="reg-trust__item">🔒 Sichere Zahlung über Stripe</div>
+        <div class="reg-trust__item">📄 §19 UStG — keine Umsatzsteuer</div>
+        <div class="reg-trust__item">↩ Jährlich kündbar</div>
+      </div>
+
+    </aside>
+  </div>
+</div>
+
+<script is:inline>
+(() => {
+  const DRAFT_KEY = "vdan_club_register_pending_v1";
+  const RESUME_KEY = "vdan_club_register_resume_v1";
+  const ACCESS_HREF = document.querySelector('[data-access-href]')?.dataset?.accessHref
+    || "/verein-registrieren/zugang/";
+
+  // Preisberechnung
+  const PRICE_PER_UNIT = 2;
+  function getYearlyPrice(billingUnits) {
+    const units = parseInt(billingUnits, 10);
+    if (!units || units > 500) return null;
+    return units * PRICE_PER_UNIT;
+  }
+  function formatEur(amount) {
+    return amount.toLocaleString("de-DE") + " €/Jahr";
+  }
+
+  const sizeSelect = document.getElementById("reg_club_size");
+  const pricePreview = document.getElementById("reg_price_preview");
+  const priceDisplay = document.getElementById("reg_price_display");
+
+  function updatePricePreview() {
+    const val = sizeSelect?.value;
+    if (!val || val === "" || val === "enterprise") {
+      if (pricePreview) pricePreview.hidden = true;
+      return;
+    }
+    const price = getYearlyPrice(val);
+    if (price && priceDisplay && pricePreview) {
+      priceDisplay.textContent = formatEur(price);
+      pricePreview.hidden = false;
+    }
+  }
+
+  sizeSelect?.addEventListener("change", updatePricePreview);
+
+  // Draft-Speicherung
+  function saveDraft() {
+    const form = document.getElementById("clubRegisterForm");
+    if (!form) return;
+    const data = Object.fromEntries(new FormData(form).entries());
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(data)); } catch {}
+  }
+
+  function loadDraft() {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
+
+  function restoreDraft(draft) {
+    if (!draft) return;
+    const form = document.getElementById("clubRegisterForm");
+    if (!form) return;
+    Object.entries(draft).forEach(([name, value]) => {
+      const el = form.querySelector(`[name="${name}"]`);
+      if (!el) return;
+      if (el.type === "checkbox") el.checked = Boolean(value);
+      else el.value = String(value || "");
+    });
+    updatePricePreview();
+  }
+
+  function showMsg(text, error = false) {
+    const el = document.getElementById("reg_msg");
+    if (!el) return;
+    el.textContent = text;
+    el.hidden = !text;
+    el.style.color = error ? "var(--rd-danger, #bf4242)" : "inherit";
+  }
+
+  // Formular abschicken
+  const form = document.getElementById("clubRegisterForm");
+  form?.addEventListener("input", saveDraft);
+  form?.addEventListener("change", saveDraft);
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form).entries());
+
+    // Validierung
+    if (!data.club_name?.trim()) { showMsg("Bitte den Vereinsnamen angeben.", true); return; }
+    if (!data.zip?.trim() || !data.city?.trim()) { showMsg("Bitte PLZ und Ort angeben.", true); return; }
+    if (!data.street?.trim()) { showMsg("Bitte die Straße angeben.", true); return; }
+    if (!data.responsible_name?.trim()) { showMsg("Bitte die verantwortliche Person angeben.", true); return; }
+    if (!data.responsible_role?.trim()) { showMsg("Bitte die Funktion im Verein angeben.", true); return; }
+    if (!data.responsible_email?.trim() || !data.responsible_email.includes("@")) { showMsg("Bitte eine gültige E-Mail-Adresse angeben.", true); return; }
+    if (!data.club_size) { showMsg("Bitte die Mitgliederzahl wählen.", true); return; }
+    if (data.club_size === "enterprise") {
+      showMsg("Für Vereine über 500 Mitglieder: bitte über die Kontaktseite anfragen — wir melden uns mit einem Enterprise-Angebot.", true); return;
+    }
+    if (!form.querySelector('[name="legal_confirmed"]')?.checked) {
+      showMsg("Bitte AGB und Datenschutz bestätigen.", true); return;
+    }
+
+    // Draft speichern
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(data)); } catch {}
+
+    const btn = document.getElementById("reg_submit");
+    if (btn) { btn.disabled = true; btn.textContent = "Wird verarbeitet…"; }
+    showMsg("");
+
+    // Auth-Check
+    const session = window.VDAN_AUTH?.loadSession?.();
+    if (!session?.access_token) {
+      // Kein Login → zur Zugang-Seite
+      try { sessionStorage.setItem(RESUME_KEY, String(Date.now())); } catch {}
+      window.location.assign(ACCESS_HREF);
+      return;
+    }
+
+    // Eingeloggt → Anfrage direkt abschicken
+    const supabaseUrl = String(window.__APP_SUPABASE_URL || "").trim().replace(/\/+$/, "");
+    const supabaseKey = String(window.__APP_SUPABASE_KEY || "").trim();
+
+    function resetBtn() {
+      if (btn) { btn.disabled = false; btn.textContent = "Weiter zur Zahlung →"; }
+    }
+
+    async function goToCheckout(requestId, billingUnits) {
+      showMsg("Weiterleitung zur Zahlung…");
+      const checkoutRes = await fetch(`${supabaseUrl}/functions/v1/fcp-create-registration-checkout`, {
+        method: "POST",
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          registration_request_id: requestId,
+          billing_units: billingUnits,
+          customer_email: data.responsible_email,
+        }),
       });
+      const checkoutData = await checkoutRes.json().catch(() => ({}));
+      if (checkoutData?.checkout_url) {
+        try { localStorage.removeItem(DRAFT_KEY); } catch {}
+        window.location.assign(checkoutData.checkout_url);
+        return true;
+      }
+      return false;
     }
 
-    function navigateAfterSubmit(detail) {
-      const result = detail?.result || {};
-      const routing = detail?.resolverMeta?.postSubmitRouting || {};
-      const status = String(result?.status || "").trim().toLowerCase();
-      const rule = routing[status] || routing.fallback || null;
-      const target = resolveRouteTemplate(rule?.target, {
-        ...result,
-        club_id: result?.club_id || result?.approved_club_id || "",
+    try {
+      showMsg("Registrierung wird gespeichert…");
+      const billingUnits = parseInt(data.club_size, 10);
+      const res = await fetch(`${supabaseUrl}/functions/v1/club-request-submit`, {
+        method: "POST",
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          club_name: data.club_name,
+          zip: data.zip,
+          city: data.city,
+          street: data.street || "",
+          house_number: data.house_number || "",
+          responsible_name: data.responsible_name || "",
+          responsible_role: data.responsible_role || "",
+          responsible_email: data.responsible_email,
+          club_size: data.club_size,
+          legal_confirmed: true,
+        }),
       });
-      if (!target) return;
-      window.location.assign(target);
-    }
+      const result = await res.json().catch(() => ({}));
 
-    function getDraftFromStorage() {
-      try {
-        const raw = localStorage.getItem(CLUB_REGISTER_DRAFT_KEY);
-        return raw ? JSON.parse(raw) : null;
-      } catch {
-        return null;
+      // Bereits ausstehende Anfrage → direkt zur Zahlung mit vorhandener ID
+      if (res.status === 409 && result?.error === "club_request_already_pending" && result?.request_id) {
+        if (await goToCheckout(result.request_id, billingUnits)) return;
+        showMsg("Du hast bereits eine offene Registrierung. Bitte schließe zuerst die Zahlung ab.", true);
+        resetBtn();
+        return;
       }
-    }
-
-    function hasResumeIntent() {
-      try {
-        return Boolean(sessionStorage.getItem(CLUB_REGISTER_RESUME_KEY));
-      } catch {
-        return false;
+      // Nutzer verwaltet bereits einen Verein
+      if (res.status === 409 && result?.error === "club_request_existing_admin_scope") {
+        showMsg("Du verwaltest bereits einen Verein. Eine neue Registrierung ist mit diesem Konto nicht möglich.", true);
+        resetBtn();
+        return;
       }
-    }
-
-    function markResumeIntent() {
-      try {
-        sessionStorage.setItem(CLUB_REGISTER_RESUME_KEY, String(Date.now()));
-      } catch {}
-    }
-
-    function clearResumeIntent() {
-      try {
-        sessionStorage.removeItem(CLUB_REGISTER_RESUME_KEY);
-      } catch {}
-    }
-
-    function sanitizePublicDraft() {
-      if (hasResumeIntent()) return;
-      try {
-        localStorage.removeItem(CLUB_REGISTER_DRAFT_KEY);
-      } catch {}
-    }
-
-    async function resumeClubRegisterSubmit() {
-      const draft = getDraftFromStorage();
-      if (!draft || !window.__QFM_CLUB_REGISTER_PAGE__) return;
-      await window.__QFM_CLUB_REGISTER_PAGE__.savePanel("club_request_entry", "request_form", draft);
-    }
-
-    window.addEventListener("fcp-mask:auth-required", (event) => {
-      const detail = event?.detail || {};
-      if (detail?.panelId !== "request_form") return;
-      const payload = detail.payload || getDraftFromStorage();
-      markResumeIntent();
-      if (payload) {
-        try {
-          localStorage.setItem(CLUB_REGISTER_DRAFT_KEY, JSON.stringify(payload));
-        } catch {}
+      if (!res.ok || result?.ok === false) {
+        throw new Error(result?.error || `Fehler (${res.status})`);
       }
-      window.location.assign(accessHref);
-    });
 
-    window.addEventListener("fcp-mask:save-success", (event) => {
-      const detail = event?.detail || {};
-      if (detail?.panelId !== "request_form") return;
-      clearResumeIntent();
-      navigateAfterSubmit(detail);
-    });
+      const requestId = result?.request_id || result?.id;
+      if (requestId && billingUnits) {
+        if (await goToCheckout(requestId, billingUnits)) return;
+      }
+      // Checkout fehlgeschlagen → Status-Seite, Zahlung später nachholbar
+      window.location.assign("/app/anfrage-offen/");
+    } catch (err) {
+      showMsg(err?.message || "Fehler beim Speichern. Bitte erneut versuchen.", true);
+      resetBtn();
+    }
+  });
 
-    sanitizePublicDraft();
+  // Draft wiederherstellen
+  document.addEventListener("DOMContentLoaded", () => {
+    const draft = loadDraft();
+    if (draft) restoreDraft(draft);
+  });
 
-    window.FcpMaskPageLoader.boot({
-      configScriptId: "clubRegisterQfmConfig",
-      patternGlobal: "__QFM_CLUB_REGISTER_PAGE__",
-      onMessage: () => {},
-      onReady: async () => {
-        if (window.VDAN_AUTH?.loadSession?.()?.access_token && hasResumeIntent()) {
-          await resumeClubRegisterSubmit().catch(() => {});
-        }
-      },
-    }).catch((error) => {
-      console.error(error instanceof Error ? error.message : String(error));
-    });
-  </script>
+  // Init
+  updatePricePreview();
+})();
+</script>
+
+<style>
+.reg-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
+
+/* Progress */
+.reg-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 32px;
+}
+.reg-progress__step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .83rem;
+  font-weight: 500;
+  color: var(--rd-muted, #9b9c88);
+}
+.reg-progress__step--active {
+  color: var(--rd-gold-lo, #c05818);
+  font-weight: 700;
+}
+.reg-progress__step--active .reg-progress__num {
+  background: var(--rd-gold-lo, #c05818);
+  color: #fff;
+}
+.reg-progress__num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--rd-line, rgba(108,112,91,.2));
+  display: grid;
+  place-items: center;
+  font-size: .75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.reg-progress__line {
+  flex: 0 0 40px;
+  height: 1px;
+  background: var(--rd-line, rgba(108,112,91,.2));
+  margin: 0 8px;
+}
+
+/* Layout */
+.reg-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .reg-layout { grid-template-columns: 1fr; }
+  .reg-sidebar { order: -1; }
+}
+
+/* Form Card */
+.reg-card {
+  background: var(--rd-surface, #fbf7ee);
+  border: 1px solid var(--rd-line, rgba(108,112,91,.14));
+  border-radius: 14px;
+  padding: 28px 28px 32px;
+}
+.reg-card__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--rd-ink, #2a2d24);
+  margin: 0 0 6px;
+}
+.reg-card__sub {
+  font-size: .83rem;
+  color: var(--rd-ink-2, #4a4e40);
+  margin: 0 0 24px;
+}
+
+/* Form */
+.reg-form__group { display: flex; flex-direction: column; gap: 5px; }
+.reg-form__row { display: grid; grid-template-columns: auto 1fr; gap: 12px; }
+.reg-form__group--grow { flex: 1; }
+.reg-divider { border: none; border-top: 1px solid var(--rd-line, rgba(108,112,91,.12)); margin: 20px 0; }
+.reg-form { display: flex; flex-direction: column; gap: 16px; }
+
+.reg-label {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--rd-ink, #2a2d24);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.reg-label__hint {
+  font-weight: 400;
+  color: var(--rd-ink-2, #4a4e40);
+  font-size: .78rem;
+}
+.reg-required { color: var(--rd-gold-lo, #c05818); }
+
+.reg-input {
+  padding: 10px 12px;
+  border: 1px solid var(--rd-line-strong, rgba(108,112,91,.28));
+  border-radius: 8px;
+  background: #fff;
+  font-size: .9rem;
+  color: var(--rd-ink, #2a2d24);
+  font-family: inherit;
+  transition: border-color .15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.reg-input:focus {
+  outline: none;
+  border-color: var(--rd-gold-lo, #c05818);
+  box-shadow: 0 0 0 3px rgba(192,88,24,.1);
+}
+.reg-input--short { width: 80px; }
+.reg-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a4e40' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+
+/* Preis-Preview */
+.reg-price-preview {
+  background: linear-gradient(135deg, rgba(192,88,24,.08), rgba(192,88,24,.04));
+  border: 1.5px solid rgba(192,88,24,.3);
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.reg-price-preview__label { font-size: .8rem; font-weight: 600; color: var(--rd-ink-2, #4a4e40); }
+.reg-price-preview__price { font-size: 1.4rem; font-weight: 800; color: var(--rd-gold-lo, #c05818); flex: 1; text-align: right; }
+.reg-price-preview__note { font-size: .75rem; color: var(--rd-muted, #9b9c88); width: 100%; grid-column: 1/-1; }
+
+/* Checkbox */
+.reg-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: .83rem;
+  color: var(--rd-ink-2, #4a4e40);
+  cursor: pointer;
+}
+.reg-check input { flex-shrink: 0; margin-top: 2px; accent-color: var(--rd-gold-lo, #c05818); width: 16px; height: 16px; }
+.reg-link { color: var(--rd-gold-lo, #c05818); }
+
+/* Message */
+.reg-msg { font-size: .83rem; padding: 10px 14px; border-radius: 7px; background: rgba(191,66,66,.08); border: 1px solid rgba(191,66,66,.2); }
+
+/* Button */
+.reg-btn--primary {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #595A3D, #4B4C33);
+  color: #f0ead8;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity .15s;
+  margin-top: 4px;
+}
+.reg-btn--primary:hover { opacity: .9; }
+.reg-btn--primary:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Sidebar */
+.reg-sidebar { display: flex; flex-direction: column; gap: 16px; }
+.reg-sidebar__card {
+  background: var(--rd-surface, #fbf7ee);
+  border: 1px solid var(--rd-line, rgba(108,112,91,.14));
+  border-radius: 14px;
+  padding: 20px;
+}
+.reg-sidebar__card--pricing { background: var(--rd-surface-hi, #f5f0e8); }
+.reg-sidebar__title { font-size: .95rem; font-weight: 700; color: var(--rd-ink, #2a2d24); margin: 0 0 8px; }
+.reg-sidebar__sub { font-size: .78rem; color: var(--rd-ink-2, #4a4e40); margin: 0 0 12px; }
+
+/* Benefits */
+.reg-benefits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.reg-benefit { display: flex; gap: 10px; font-size: .83rem; color: var(--rd-ink-2, #4a4e40); }
+.reg-benefit__icon { color: #3ab862; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+/* Pricing table */
+.reg-pricing-table { display: flex; flex-direction: column; gap: 4px; }
+.reg-pricing-row { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; padding: 5px 0; border-bottom: 1px solid var(--rd-line, rgba(108,112,91,.1)); color: var(--rd-ink-2, #4a4e40); }
+.reg-pricing-row:last-child { border-bottom: none; }
+.reg-pricing-row strong { color: var(--rd-ink, #2a2d24); font-weight: 700; }
+.reg-pricing-row--dots { color: var(--rd-muted, #9b9c88); font-size: .75rem; }
+.reg-pricing-row--enterprise strong { color: var(--rd-ink-2, #4a4e40); font-weight: 600; }
+
+/* Trust */
+.reg-trust { display: flex; flex-direction: column; gap: 6px; padding: 0 4px; }
+.reg-trust__item { font-size: .78rem; color: var(--rd-ink-2, #4a4e40); }
+</style>
 
 </Site>

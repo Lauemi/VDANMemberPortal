@@ -1,8 +1,8 @@
 ---
 import path from "node:path";
-import Site from "../layouts/Site.astro";
-import { APP } from "../config/app";
-import { readMaskJsonFile } from "../../scripts/fcp-mask-reader.mjs";
+import Site from "../../layouts/Site.astro";
+import { APP } from "../../config/app";
+import { readMaskJsonFile } from "../../../scripts/fcp-mask-reader.mjs";
 
 const maskFilePath = path.resolve(process.cwd(), "docs/masks/templates/Onboarding/QFM_clubRegister.json");
 const resolvedMask = await readMaskJsonFile(maskFilePath);

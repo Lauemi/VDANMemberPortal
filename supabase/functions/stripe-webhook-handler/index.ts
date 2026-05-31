@@ -70,28 +70,107 @@ serve(async (req) => {
           break;
         }
 
-        // ── Pfad B: Neue Selbstregistrierung ────────────────────────────
+        // ── Pfad B: Neue Selbstregistrierung — vollautomatisch ─────────
         if (isNewRegistration && registrationRequestId) {
           const billingUnits = parseInt(session.metadata?.billing_units ?? "50", 10);
+          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+          const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-          // Registrierungsanfrage auf billing_paid setzen → Michael sieht es im Masterboard
-          await supabase
+          // Registrierungsanfrage holen
+          const { data: regRequest } = await supabase
             .from("club_registration_requests")
-            .update({
-              status: "billing_paid",
-              stripe_customer_id: session.customer,
-              stripe_subscription_id: session.subscription,
-            })
-            .eq("id", registrationRequestId);
+            .select("*")
+            .eq("id", registrationRequestId)
+            .maybeSingle();
 
-          // Webhook-Event mit Registrierungs-Kontext aktualisieren
-          await supabase
-            .from("club_billing_webhook_events")
-            .update({
-              club_id: null, // noch kein Club
-              payload: { ...event, _registration_request_id: registrationRequestId },
-            })
-            .eq("stripe_event_id", event.id);
+          if (regRequest) {
+            // Stripe-Daten auf Anfrage setzen
+            await supabase
+              .from("club_registration_requests")
+              .update({
+                stripe_customer_id: session.customer,
+                stripe_subscription_id: session.subscription,
+                billing_units: billingUnits,
+              })
+              .eq("id", registrationRequestId);
+
+            // club-admin-setup direkt aufrufen (service role = voller Zugriff)
+            const reqPayload = (regRequest.request_payload || {}) as Record<string, string>;
+            const setupRes = await fetch(`${supabaseUrl}/functions/v1/club-admin-setup`, {
+              method: "POST",
+              headers: {
+                apikey: serviceKey,
+                Authorization: `Bearer ${serviceKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                request_id: registrationRequestId,
+                club_name: regRequest.club_name || "",
+                default_fishing_card: "FCP Standard",
+                fishing_cards: ["FCP Standard"],
+                waters: [],
+                make_public_active: false,
+                assign_creator_roles: true,
+                street: reqPayload.street || regRequest.club_address || "",
+                zip: reqPayload.zip || "",
+                city: reqPayload.city || reqPayload.club_location || "",
+                contact_name: regRequest.responsible_name || "",
+                contact_email: regRequest.responsible_email || "",
+                responsible_name: regRequest.responsible_name || "",
+                responsible_email: regRequest.responsible_email || "",
+                club_size: String(billingUnits),
+                creator_user_id: regRequest.requester_user_id || "",
+                creator_email: regRequest.requester_email || "",
+              }),
+            });
+
+            const setupData = await setupRes.json().catch(() => ({}));
+            const clubId = String(setupData?.club_id || "").trim();
+
+            if (clubId) {
+              // Registrierungsanfrage als genehmigt markieren
+              await supabase
+                .from("club_registration_requests")
+                .update({
+                  status: "approved",
+                  approved_club_id: clubId,
+                  auto_approved: true,
+                  approved_at: new Date().toISOString(),
+                  decision_payload: {
+                    decided_at: new Date().toISOString(),
+                    action: "approve",
+                    club_id: clubId,
+                    trigger: "stripe_payment",
+                    billing_units: billingUnits,
+                  },
+                })
+                .eq("id", registrationRequestId);
+
+              // Billing-Subscription für neuen Club anlegen
+              await supabase.from("club_billing_subscriptions").upsert({
+                club_id: clubId,
+                stripe_customer_id: session.customer,
+                stripe_subscription_id: session.subscription,
+                stripe_price_id: Deno.env.get("STRIPE_FCP_PRICE_ID"),
+                billing_state: "active",
+                checkout_state: "completed",
+                billing_units: billingUnits,
+                member_count_at_billing: 0,
+                last_event_id: event.id,
+                last_event_type: event.type,
+              }, { onConflict: "club_id" });
+
+              // Webhook-Event mit Club-ID aktualisieren
+              await supabase
+                .from("club_billing_webhook_events")
+                .update({ club_id: clubId })
+                .eq("stripe_event_id", event.id);
+
+              console.log("Auto-approved registration:", registrationRequestId, "→ club:", clubId);
+            } else {
+              console.error("club-admin-setup failed:", setupData);
+            }
+          }
         }
         break;
       }

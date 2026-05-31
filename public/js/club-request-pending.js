@@ -36,6 +36,55 @@
     return Array.isArray(rows) && rows[0] ? rows[0] : null;
   }
 
+  function getResumeBtn() {
+    return document.getElementById("clubRequestResumePaymentBtn");
+  }
+
+  function billingUnitsLabel(units) {
+    const u = parseInt(units, 10);
+    if (!u || u > 500) return "";
+    const max = u;
+    const min = u - 49;
+    return `${min}–${max} Mitglieder · ${u * 2} €/Jahr`;
+  }
+
+  async function resumePayment(state) {
+    const { url, key } = cfg();
+    const requestId = String(state?.request_id || "").trim();
+    const billingUnits = parseInt(state?.billing_units, 10);
+    if (!requestId || !billingUnits) {
+      setMsg("Zahlungsdaten unvollständig. Bitte Support kontaktieren.", true);
+      return;
+    }
+    setMsg("Weiterleitung zur Zahlung…");
+    const btn = getResumeBtn();
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch(`${url}/functions/v1/fcp-create-registration-checkout`, {
+        method: "POST",
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${session()?.access_token || ""}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          registration_request_id: requestId,
+          billing_units: billingUnits,
+          customer_email: String(state?.responsible_email || "").trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data?.checkout_url) {
+        window.location.assign(data.checkout_url);
+        return;
+      }
+      throw new Error(data?.error || "Checkout konnte nicht gestartet werden.");
+    } catch (err) {
+      setMsg(err?.message || "Zahlung konnte nicht gestartet werden.", true);
+      if (btn) btn.disabled = false;
+    }
+  }
+
   function render(state) {
     const title = document.getElementById("clubRequestPendingTitle");
     const lead = document.getElementById("clubRequestPendingLead");
@@ -46,6 +95,11 @@
     const clubName = String(state?.club_name || "dein Verein").trim();
     const responsibleEmail = String(state?.responsible_email || "").trim();
     const rejectionReason = String(state?.rejection_reason || "").trim();
+    const billingUnits = parseInt(state?.billing_units, 10);
+    const isSelfServicePayable = Boolean(billingUnits) && billingUnits <= 500;
+
+    const resumeBtn = getResumeBtn();
+    if (resumeBtn) resumeBtn.hidden = true;
 
     if (status === "approved") {
       title.textContent = "Anfrage freigegeben";
@@ -61,6 +115,19 @@
       box.textContent = rejectionReason
         ? `${clubName}: ${rejectionReason}`
         : `${clubName} wurde derzeit nicht freigegeben.`;
+      return;
+    }
+
+    // Self-Service-Registrierung: Zahlung offen → Zahlung-nachholen anbieten
+    if (isSelfServicePayable && (status === "pending" || status === "billing_pending")) {
+      title.textContent = "Nur noch ein Schritt: Zahlung abschließen";
+      lead.textContent = "Deine Vereinsdaten sind gespeichert. Sobald die Zahlung abgeschlossen ist, wird dein Verein automatisch freigeschaltet.";
+      const label = billingUnitsLabel(billingUnits);
+      box.textContent = `${clubName}${label ? " · " + label : ""}. Schließe die Zahlung ab, um sofort loszulegen.`;
+      if (resumeBtn) {
+        resumeBtn.hidden = false;
+        resumeBtn.onclick = () => resumePayment(state);
+      }
       return;
     }
 

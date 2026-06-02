@@ -1312,3 +1312,281 @@
 [data-rd-chrome="always"] .is-redesign .data-table__sort-icon {
   opacity: .6 !important;
 }
+
+/* ═══ 13 · Rollen/Rechte-Akkordeon ══════════════════════════════════════════ */
+.roles-accordion-root {
+  width: 100%;
+}
+
+.roles-acc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.roles-acc-item {
+  border: 1px solid var(--rd-border, #e2e8f0);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--rd-surface, #fff);
+}
+
+.roles-acc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  gap: 8px;
+}
+
+.roles-acc-header:hover {
+  background: var(--rd-hover-bg, #f8fafc);
+}
+
+.roles-acc-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.roles-acc-label {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.roles-acc-badge {
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--rd-badge-bg, #e2e8f0);
+  color: var(--rd-badge-text, #4a5568);
+}
+
+.roles-acc-meta {
+  font-size: 0.75rem;
+  color: var(--rd-text-muted, #718096);
+}
+
+.roles-acc-chevron {
+  font-size: 1.1rem;
+  color: var(--rd-text-muted, #718096);
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+
+.roles-acc-item.is-open .roles-acc-chevron {
+  transform: rotate(90deg);
+}
+
+.roles-acc-panel {
+  border-top: 1px solid var(--rd-border, #e2e8f0);
+  padding: 14px;
+  background: var(--rd-panel-bg, #fafbfc);
+}
+
+.roles-acc-panel.is-hidden {
+  display: none;
+}
+
+/* Rechte-Raster */
+.roles-acc-perm-grid {
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+
+.roles-acc-perm-head,
+.roles-acc-perm-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 90px 110px 180px;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.roles-acc-perm-head {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--rd-text-muted, #718096);
+  border-bottom: 1px solid var(--rd-border, #e2e8f0);
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+}
+
+.roles-acc-perm-row:hover {
+  background: var(--rd-hover-bg, #f8fafc);
+}
+
+.roles-acc-perm-module {
+  font-size: 0.825rem;
+  padding: 2px 0;
+}
+
+.roles-acc-perm-cell {
+  display: flex;
+  justify-content: center;
+}
+
+/* Save-Bar */
+.roles-acc-save-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rd-border, #e2e8f0);
+}
+
+/* Bestätigung-Overlay */
+.roles-acc-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roles-acc-confirm-box {
+  background: var(--rd-surface, #fff);
+  border-radius: 8px;
+  padding: 20px 24px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  min-width: 280px;
+  max-width: 400px;
+}
+
+.roles-acc-confirm-box p {
+  margin: 0 0 14px;
+  font-size: 0.875rem;
+}
+
+.roles-acc-confirm-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Mitglieder-Liste */
+.roles-acc-member-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.roles-acc-member-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.825rem;
+  padding: 4px 2px;
+  gap: 8px;
+}
+
+.roles-acc-login-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #48bb78;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+/* Zuweisungs-Dialog */
+.roles-acc-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roles-acc-dialog {
+  background: var(--rd-surface, #fff);
+  border-radius: 8px;
+  padding: 20px 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  width: min(480px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.roles-acc-dialog-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.roles-acc-dialog-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 120px;
+}
+
+.roles-acc-dialog-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 4px;
+  border-radius: 4px;
+  font-size: 0.825rem;
+  cursor: pointer;
+}
+
+.roles-acc-dialog-row:hover {
+  background: var(--rd-hover-bg, #f8fafc);
+}
+
+.roles-acc-dialog-row.is-selected {
+  background: var(--rd-selected-bg, #ebf8ff);
+}
+
+.roles-acc-dialog-btns {
+  display: flex;
+  gap: 8px;
+}
+
+/* Create-Row */
+.roles-acc-create-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 4px 12px;
+  border-bottom: 1px solid var(--rd-border, #e2e8f0);
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.roles-acc-input {
+  border: 1px solid var(--rd-border, #e2e8f0);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 0.825rem;
+  min-width: 150px;
+  flex: 1;
+}
+
+.roles-acc-input:focus {
+  outline: none;
+  border-color: var(--rd-focus, #4299e1);
+}
+
+/* feed-btn--sm */
+.feed-btn--sm {
+  padding: 3px 8px;
+  font-size: 0.75rem;
+}

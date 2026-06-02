@@ -2233,7 +2233,7 @@
       "id": "club_settings_roles",
       "label": "Rollen / Rechte",
       "title": "Rollen / Rechte",
-      "description": "Rollen und Rechte verwalten. Fundament (Tabelle + 4 RPCs) live. Write-RPCs deployed 2026-06-02.",
+      "description": "Rollen und Rechte verwalten. Akkordeon-UI: Tab 1 = Rechte, Tab 2 = Mitglieder.",
       "workspaceSlot": "main",
       "sectionLayout": "stack",
       "permissions": {
@@ -2259,16 +2259,15 @@
       "scope": "club_override",
       "panels": [
         {
-          "id": "club_settings_roles_backend_contract",
-          "title": "Rollen- und Rechtevertrag",
-          "renderMode": "table",
-          "componentType": "inline-data-table",
+          "id": "club_roles_permissions_accordion",
+          "title": "Rechte pro Rolle",
+          "renderMode": "accordion",
           "contentArea": "main",
           "flowType": "standard",
           "permissions": {
             "view": true,
-            "write": false,
-            "update": false,
+            "write": true,
+            "update": true,
             "delete": false,
             "roles": []
           },
@@ -2285,30 +2284,110 @@
             "serverValidated": true
           },
           "meta": {
-            "sourceTable": "public.club_roles + public.club_user_roles + public.club_role_permissions",
-            "sourceKind": "table",
+            "sourceKind": "rpc",
             "sourceOfTruth": "sql",
-            "sqlContract": {
-              "sqlFile": "docs/sql-contracts/processes/club-settings/roles/READ_roles_backend_contract.sql",
-              "expectedColumns": [
-                "role_key",
-                "role_label",
-                "is_core",
-                "is_active",
-                "module_count",
-                "member_count"
-              ]
-            },
             "scope": "club_override",
             "ownership": "club_override",
-            "metaDisplay": "full",
-            "panelState": "live",
-            "panelStateLabel": "Live",
-            "panelStateHint": "Read via RPC public.admin_club_roles_read. Write-RPCs admin_club_role_member_assign/remove deployed 2026-06-02. Frontend via club-roles-admin.js.",
             "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein Vereinskontext. Rollen werden erst im Club-Kontext geladen.",
               "loadPayloadDefaults": {
                 "p_club_id": "{club_id}"
-              }
+              },
+              "rowsPath": "rows"
+            },
+            "accordionConfig": {
+              "variant": "permissions",
+              "itemKeyField": "role_key",
+              "itemLabelField": "role_label",
+              "subLoadRpc": "public.admin_club_role_permissions_read",
+              "subLoadParamKey": "p_role_key",
+              "saveRpc": "public.admin_club_role_permission_save",
+              "createRpc": "public.admin_club_role_create",
+              "canCreate": true,
+              "createLabel": "+ Neue Rolle"
+            }
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.admin_club_roles_read",
+            "path": "rpc:public.admin_club_roles_read"
+          },
+          "saveBinding": {
+            "kind": "rpc",
+            "target": "public.admin_club_role_permission_save",
+            "path": "rpc:public.admin_club_role_permission_save"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            {
+              "key": "role_label",
+              "label": "Rolle",
+              "type": "text"
+            },
+            {
+              "key": "is_core",
+              "label": "Kernrolle",
+              "type": "boolean"
+            },
+            {
+              "key": "module_count",
+              "label": "Module",
+              "type": "number"
+            }
+          ]
+        },
+        {
+          "id": "club_roles_members_accordion",
+          "title": "Mitglieder pro Rolle",
+          "renderMode": "accordion",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": true,
+            "delete": true,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceKind": "rpc",
+            "sourceOfTruth": "sql",
+            "scope": "club_override",
+            "ownership": "club_override",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein Vereinskontext. Rollen werden erst im Club-Kontext geladen.",
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              },
+              "rowsPath": "rows"
+            },
+            "accordionConfig": {
+              "variant": "members",
+              "itemKeyField": "role_key",
+              "itemLabelField": "role_label",
+              "subLoadRpc": "public.admin_club_role_members_read",
+              "subLoadParamKey": "p_role_key",
+              "assignDialogRpc": "public.admin_club_members_for_role_assign",
+              "assignRpc": "public.admin_club_role_member_assign",
+              "removeRpc": "public.admin_club_role_member_remove"
             }
           },
           "loadBinding": {
@@ -2326,43 +2405,16 @@
             "rows": [],
             "actions": []
           },
-          "rowsPath": "rows",
-          "tableConfig": {
-            "tableId": "adm-club-settings-roles-overview",
-            "rowKeyField": "role_key",
-            "gridTemplateColumns": "",
-            "rowInteractionMode": "inline",
-            "selectionMode": "single",
-            "viewMode": "table",
-            "sortKey": "role_key",
-            "sortDir": "asc",
-            "filterFields": []
-          },
           "columns": [
             {
-              "key": "role_key",
-              "label": "Rolle",
-              "type": "text"
-            },
-            {
               "key": "role_label",
-              "label": "Bezeichnung",
+              "label": "Rolle",
               "type": "text"
             },
             {
               "key": "is_core",
               "label": "Kernrolle",
               "type": "boolean"
-            },
-            {
-              "key": "is_active",
-              "label": "Aktiv",
-              "type": "boolean"
-            },
-            {
-              "key": "module_count",
-              "label": "Module",
-              "type": "number"
             },
             {
               "key": "member_count",

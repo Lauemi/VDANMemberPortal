@@ -346,7 +346,7 @@
   function collectExpectedColumns(panel, resolverMeta) {
     const sqlExpected = toArray(panel?.meta?.sqlContract?.expectedColumns);
     if (sqlExpected.length) return uniqueStrings(sqlExpected);
-    if (panel?.renderMode === "table") return uniqueStrings(toArray(panel?.columns).map((column) => column?.key));
+    if (panel?.renderMode === "table" || panel?.renderMode === "accordion") return uniqueStrings(toArray(panel?.columns).map((column) => column?.key));
     return collectPanelFields(panel, resolverMeta);
   }
 
@@ -406,7 +406,7 @@
       componentType: panel?.componentType || null,
       renderMode: panel?.renderMode || null,
       rowsPath: String(panel?.meta?.resolver?.rowsPath || panel?.rowsPath || "").trim() || null,
-      valuePaths: panel?.renderMode === "table" ? [] : collectPanelValuePaths(panel, panel?.meta?.resolver || {}),
+      valuePaths: (panel?.renderMode === "table" || panel?.renderMode === "accordion") ? [] : collectPanelValuePaths(panel, panel?.meta?.resolver || {}),
       loadPayloadDefaults: panel?.meta?.resolver?.loadPayloadDefaults || null,
     };
   }
@@ -548,7 +548,7 @@
       expectedColumns,
       expectedSource: debug?.sourceTable || debug?.sourceOfTruth || null,
       expectedSourceKind: debug?.sourceKind || null,
-      expectedResultType: debug?.contract?.renderMode === "table" || debug?.rowsPath ? "rows" : "record",
+      expectedResultType: (debug?.contract?.renderMode === "table" || debug?.contract?.renderMode === "accordion") || debug?.rowsPath ? "rows" : "record",
       valuePaths: uniqueStrings(debug?.valuePaths),
       recommendedSqlFile: debug?.sqlFile || inferPanelSqlReferencePath(debug || {}),
     };
@@ -569,13 +569,14 @@
     const sourceModel = bindingKind === "local_only"
       ? (runtimeModel || model)
       : (runtimeModel || model);
-    const sourceRows = panel?.renderMode === "table"
+    const isRowsMode = panel?.renderMode === "table" || panel?.renderMode === "accordion";
+    const sourceRows = isRowsMode
       ? (Array.isArray(runtimeRows) ? runtimeRows : toArray(getByPath(sourceModel, contract?.rowsPath || resolverMeta?.rowsPath || panel?.rowsPath || "rows")))
       : [];
-    const actualKeys = panel?.renderMode === "table"
+    const actualKeys = isRowsMode
       ? collectActualKeysForRows(sourceRows)
       : collectActualKeysForRecord(panel, resolverMeta, sourceModel || {});
-    const rowCount = panel?.renderMode === "table" ? sourceRows.length : actualKeys.length ? 1 : 0;
+    const rowCount = isRowsMode ? sourceRows.length : actualKeys.length ? 1 : 0;
     const resolvedRowsPathExists = contract?.rowsPath ? hasByPath(sourceModel, contract.rowsPath) : null;
     return {
       loadBinding,
@@ -1943,7 +1944,7 @@
             : panel.renderMode === "readonly"
               ? { fields: [], rows: [{ label: "Status", value: missingClubContextMessage, span: "full" }], actions: [], blocks: [] }
               : {},
-          rows: panel.renderMode === "table"
+          rows: (panel.renderMode === "table" || panel.renderMode === "accordion")
             ? []
             : undefined,
           state: {
@@ -1951,6 +1952,9 @@
             message: missingClubContextMessage,
           },
         };
+      }
+      if (panel.renderMode === "accordion" && clubContext?.club_id) {
+        panel.__fcpClubId = String(clubContext.club_id);
       }
       const model = await executeBinding(
         effectiveBinding,
@@ -2033,7 +2037,7 @@
           state: resolvedState,
         };
       }
-      if (panel.renderMode === "table") {
+      if (panel.renderMode === "table" || panel.renderMode === "accordion") {
         let rows = toArray(getByPath(resolvedModel, readContract?.rowsPath || resolverMeta.rowsPath || panel.rowsPath || "rows"));
         if (resolverMeta.enrichMemberRegistry === true) {
           const roleRows = await sb("/rest/v1/club_user_roles?select=club_id,user_id,role_key", { method: "GET" }, true).catch(() => []);

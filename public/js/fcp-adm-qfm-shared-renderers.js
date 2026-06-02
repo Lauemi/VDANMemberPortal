@@ -378,6 +378,35 @@
   }
 
   // ---------------------------------------------------------------------------
+  // renderAccordionContent
+  // Delegiert an window.FcpRolesAccordion (fcp-roles-accordion.js).
+  // ---------------------------------------------------------------------------
+
+  function renderAccordionContent(pattern, section, panel, emptyText) {
+    const content = panel.loadedContent || panel.content || {};
+    const rows = Array.isArray(content.rows) ? content.rows : (Array.isArray(panel.rows) ? panel.rows : []);
+    const accordionConfig = panel?.meta?.accordionConfig || {};
+    const emptyMessage = panel.state?.error || panel.state?.message || emptyText;
+
+    const wrap = createElement("div", { className: "roles-accordion-root" });
+
+    const host = window.FcpRolesAccordion;
+    if (typeof host?.mount === "function") {
+      host.mount(wrap, {
+        pattern,
+        section,
+        panel,
+        rows,
+        accordionConfig,
+        emptyText: emptyMessage,
+      });
+    } else {
+      wrap.append(createElement("p", { className: "small", text: "Accordion-Modul nicht geladen." }));
+    }
+    return wrap;
+  }
+
+  // ---------------------------------------------------------------------------
   // renderActionsContent
   // ---------------------------------------------------------------------------
 
@@ -408,6 +437,7 @@
     renderMixedContent,
     renderFormContent,
     renderTableContent,
+    renderAccordionContent,
     renderActionsContent,
     createElement,
     valueToText,

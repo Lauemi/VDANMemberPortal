@@ -628,6 +628,10 @@
           return typeof renderers.renderActionsContent === "function"
             ? renderers.renderActionsContent(panel, emptyText)
             : createElement("p", { className: "small", text: emptyText });
+        case "accordion":
+          return typeof renderers.renderAccordionContent === "function"
+            ? renderers.renderAccordionContent(this, section, panel, emptyText)
+            : createElement("p", { className: "small", text: emptyText });
         default:
           return createElement("p", { className: "small", text: emptyText });
       }

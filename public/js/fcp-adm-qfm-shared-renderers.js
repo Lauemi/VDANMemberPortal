@@ -383,8 +383,11 @@
   // ---------------------------------------------------------------------------
 
   function renderAccordionContent(pattern, section, panel, emptyText) {
-    const content = panel.loadedContent || panel.content || {};
-    const rows = Array.isArray(content.rows) ? content.rows : (Array.isArray(panel.rows) ? panel.rows : []);
+    // Für accordion: applyPanelPayload schreibt Zeilen nach panel.rows (kein loadedContent).
+    // panel.content.rows ist das leere JSON-Default — nie verwenden.
+    const rows = Array.isArray(panel.rows) && panel.rows.length > 0
+      ? panel.rows
+      : [];
     const accordionConfig = panel?.meta?.accordionConfig || {};
     const emptyMessage = panel.state?.error || panel.state?.message || emptyText;
 

@@ -1953,9 +1953,6 @@
           },
         };
       }
-      if (panel.renderMode === "accordion" && clubContext?.club_id) {
-        panel.__fcpClubId = String(clubContext.club_id);
-      }
       const model = await executeBinding(
         effectiveBinding,
         applyPayloadTemplate(readContract?.loadPayloadDefaults || resolverMeta.loadPayloadDefaults || null, clubContext)
@@ -2057,9 +2054,12 @@
         });
         panel.__fcpReadDebug = readDebug;
         emitPanelDebug(readDebug);
+        const panelState = panel.renderMode === "accordion" && clubContext?.club_id
+          ? { ...resolvedState, __accordionClubId: String(clubContext.club_id) }
+          : resolvedState;
         return {
           rows,
-          state: resolvedState,
+          state: panelState,
         };
       }
       if (panel.renderMode === "actions") {

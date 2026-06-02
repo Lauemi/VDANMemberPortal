@@ -671,10 +671,11 @@
     const variant = String(accordionConfig.variant || "permissions");
 
     // club_id aus dem Pattern (wird von resolveClubContext() gesetzt)
+    // club_id wird via panel.state.__accordionClubId transportiert
+    // (applyPanelPayload merged state auf die State-Kopie → korrekte Referenz).
     const clubId = String(
-      panel?.__fcpClubId ||
-      opts.pattern?.getState?.()?.resolvedClubId ||
-      opts.pattern?.getState?.()?.clubContext?.club_id ||
+      panel?.state?.__accordionClubId ||
+      new URLSearchParams(window.location.search).get("club_id") ||
       ""
     ).trim();
 

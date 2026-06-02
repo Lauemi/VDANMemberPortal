@@ -8,8 +8,8 @@ const MASK_FAMILIES = Object.freeze({
 });
 
 const BINDING_KINDS = new Set(["rpc", "auth_action", "edge_function", "local_only", "none"]);
-const RENDER_MODES = new Set(["readonly", "form", "table", "actions", "mixed"]);
-const SOURCE_KINDS = new Set(["record", "table", "process", "snapshot", "append_only"]);
+const RENDER_MODES = new Set(["readonly", "form", "table", "actions", "mixed", "accordion"]);
+const SOURCE_KINDS = new Set(["record", "table", "process", "snapshot", "append_only", "rpc"]);
 const FIELD_COMPONENT_TYPES = new Set([
   "input",
   "textarea",
@@ -706,6 +706,9 @@ function normalizePanelMeta(meta, basePath, diagnostics) {
             ? meta.sqlContract.expectedColumns.filter(Boolean)
             : [],
         }
+      : null,
+    accordionConfig: meta?.accordionConfig && typeof meta.accordionConfig === "object"
+      ? structuredClone(meta.accordionConfig)
       : null,
     resolver: meta?.resolver && typeof meta.resolver === "object"
       ? structuredClone(meta.resolver)

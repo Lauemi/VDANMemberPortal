@@ -437,6 +437,9 @@
         const result = await rpc(subLoadRpc, { p_club_id: clubId, p_role_key: roleKey });
         const memberRows = Array.isArray(result) ? result : [];
         renderMemberList(memberRows, roleKey, panelEl);
+        // Zähler-Badge im Header live aktualisieren
+        const badge = list.querySelector(`[data-role-count-for="${CSS.escape(roleKey)}"]`);
+        if (badge) badge.textContent = `${memberRows.length} Mitgl.`;
       } catch (e) {
         panelEl.innerHTML = "";
         panelEl.append(el("p", { className: "small", text: String(e?.message || "Ladefehler.") }));
@@ -623,7 +626,11 @@
         el("span", { className: "roles-acc-badge", text: roleRow.is_core ? "Kern" : "Eigen" })
       );
       if (roleRow.member_count != null) {
-        headerLeft.append(el("span", { className: "roles-acc-meta", text: `${roleRow.member_count} Mitgl.` }));
+        headerLeft.append(el("span", {
+          className: "roles-acc-meta",
+          text: `${roleRow.member_count} Mitgl.`,
+          attrs: { "data-role-count-for": roleKey },
+        }));
       }
       const chevron = el("span", { className: "roles-acc-chevron", text: "›" });
       header.append(headerLeft, chevron);

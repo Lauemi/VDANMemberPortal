@@ -2233,14 +2233,14 @@
       "id": "club_settings_roles",
       "label": "Rollen / Rechte",
       "title": "Rollen / Rechte",
-      "description": "Backend-seitige Rollenstruktur vorhanden, aber die alte ACL-Matrix war nur ein LocalStorage-Pilot.",
+      "description": "Rollen und Rechte verwalten. Fundament (Tabelle + 4 RPCs) live. Write-RPCs deployed 2026-06-02.",
       "workspaceSlot": "main",
       "sectionLayout": "stack",
       "permissions": {
         "view": true,
-        "write": false,
-        "update": false,
-        "delete": false,
+        "write": true,
+        "update": true,
+        "delete": true,
         "roles": []
       },
       "securityContext": {
@@ -2304,7 +2304,7 @@
             "metaDisplay": "full",
             "panelState": "live",
             "panelStateLabel": "Live",
-            "panelStateHint": "Read via RPC public.admin_club_roles_read. Quellen: club_roles + club_user_roles + club_role_permissions. Write-Vertrag fuer Rollen-Editor ist noch offen.",
+            "panelStateHint": "Read via RPC public.admin_club_roles_read. Write-RPCs admin_club_role_member_assign/remove deployed 2026-06-02. Frontend via club-roles-admin.js.",
             "resolver": {
               "loadPayloadDefaults": {
                 "p_club_id": "{club_id}"

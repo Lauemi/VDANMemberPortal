@@ -97,7 +97,7 @@
       if (window.location.pathname.startsWith("/auth/")) return;
       reloadingForSw = true;
       const u = new URL(window.location.href);
-      u.searchParams.set("vdan_sw", String(Date.now()));
+      u.searchParams.set("app_sw", String(Date.now()));
       window.location.replace(u.toString());
     });
   }

@@ -48,7 +48,7 @@
     console.warn("[runtime-guard] recovering after script load failure:", reason);
     await clearRuntimeCaches();
     const u = new URL(window.location.href);
-    u.searchParams.set("vdan_refresh", String(Date.now()));
+    u.searchParams.set("app_refresh", String(Date.now()));
     window.location.replace(u.toString());
   }
 

@@ -713,6 +713,9 @@ function normalizePanelMeta(meta, basePath, diagnostics) {
     resolver: meta?.resolver && typeof meta.resolver === "object"
       ? structuredClone(meta.resolver)
       : null,
+    accordionConfig: meta?.accordionConfig && typeof meta.accordionConfig === "object"
+      ? structuredClone(meta.accordionConfig)
+      : null,
   };
 
   if (!normalized.sourceTable) {

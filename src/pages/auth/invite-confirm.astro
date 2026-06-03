@@ -4,55 +4,65 @@ import { APP } from "../../config/app";
 
 const emailParam = Astro.url.searchParams.get("email") ?? "";
 const safeEmail = emailParam.includes("@") ? emailParam : "";
+const token = (Astro.url.searchParams.get("token") ?? "").trim();
+const hasToken = token.length > 0;
 ---
 
 <Site
-  title={`Registrierung fortsetzen • ${APP.name}`}
-  description="E-Mail bestätigt – bitte Passwort eingeben."
+  title={`Zugang aktivieren • ${APP.name}`}
+  description="Aktiviere deinen Vereinszugang."
   robots="noindex"
   density="compact"
 >
-  <section class="card ui-card register-flow-card form-shell" style="max-width:480px;margin:0 auto;">
-    <div class="card__body ui-card__body register-flow">
-      <div class="register-flow__intro">
-        <h1>E-Mail bestätigt</h1>
-        <p class="small register-flow__lede">Dein Zugang wurde bestätigt. Bitte warte einen Moment, der Vereinsbeitritt wird geprüft.</p>
-      </div>
-
-      <p id="inviteClaimStatus" class="small" aria-live="polite" hidden></p>
-
-      <form id="inviteConfirmForm" class="register-flow__form form-shell__section">
-        <label class="ui-field">
-          <span>E-Mail</span>
-          <input
-            id="inviteConfirmEmail"
-            type="email"
-            autocomplete="username"
-            value={safeEmail}
-            readonly
-            tabindex="-1"
-          />
-        </label>
-        <label class="ui-field">
-          <span>Passwort</span>
-          <input
-            id="inviteConfirmPass"
-            name="password"
-            type="password"
-            autocomplete="current-password"
-            required
-            autofocus
-          />
-        </label>
-        <div class="register-flow__actions">
-          <button id="inviteConfirmBtn" class="feed-btn fcp-brand-btn--primary" type="submit">
-            Weiter zum Portal
-          </button>
-          <span id="inviteConfirmMsg" class="small" aria-live="polite"></span>
+  {hasToken ? (
+    <section class="card ui-card register-flow-card form-shell" style="max-width:460px;margin:0 auto;">
+      <div class="card__body ui-card__body register-flow">
+        <div class="register-flow__intro">
+          <h1>Zugang aktivieren</h1>
+          <p id="inviteGreeting" class="register-flow__lede">Einladung wird geprüft …</p>
         </div>
-      </form>
-    </div>
-  </section>
+        <p id="inviteClaimStatus" class="small" aria-live="polite" hidden></p>
+        <form id="inviteClaimForm" class="register-flow__form form-shell__section">
+          <label class="ui-field">
+            <span>E-Mail</span>
+            <input id="inviteClaimEmail" type="email" autocomplete="username" />
+          </label>
+          <label class="ui-field">
+            <span>Passwort festlegen</span>
+            <input id="inviteClaimPass" type="password" autocomplete="new-password" minlength="8" required autofocus />
+          </label>
+          <div class="register-flow__actions">
+            <button id="inviteClaimBtn" class="feed-btn fcp-brand-btn--primary" type="submit">Zugang aktivieren</button>
+            <span id="inviteClaimMsg" class="small" aria-live="polite"></span>
+          </div>
+        </form>
+      </div>
+    </section>
+  ) : (
+    <section class="card ui-card register-flow-card form-shell" style="max-width:480px;margin:0 auto;">
+      <div class="card__body ui-card__body register-flow">
+        <div class="register-flow__intro">
+          <h1>E-Mail bestätigt</h1>
+          <p class="small register-flow__lede">Dein Zugang wurde bestätigt. Bitte warte einen Moment, der Vereinsbeitritt wird geprüft.</p>
+        </div>
+        <p id="inviteClaimStatus" class="small" aria-live="polite" hidden></p>
+        <form id="inviteConfirmForm" class="register-flow__form form-shell__section">
+          <label class="ui-field">
+            <span>E-Mail</span>
+            <input id="inviteConfirmEmail" type="email" autocomplete="username" value={safeEmail} readonly tabindex="-1" />
+          </label>
+          <label class="ui-field">
+            <span>Passwort</span>
+            <input id="inviteConfirmPass" name="password" type="password" autocomplete="current-password" required autofocus />
+          </label>
+          <div class="register-flow__actions">
+            <button id="inviteConfirmBtn" class="feed-btn fcp-brand-btn--primary" type="submit">Weiter zum Portal</button>
+            <span id="inviteConfirmMsg" class="small" aria-live="polite"></span>
+          </div>
+        </form>
+      </div>
+    </section>
+  )}
 </Site>
 
 <script>
@@ -61,97 +71,138 @@ const safeEmail = emailParam.includes("@") ? emailParam : "";
     if (!el) return;
     el.textContent = message;
     el.removeAttribute("hidden");
-    if (type === "error") {
-      el.style.cssText = "color:var(--color-danger,#c0392b);font-weight:600;";
-    } else if (type === "warning") {
-      el.style.cssText = "color:var(--color-warning,#d35400);font-weight:600;";
-    } else {
-      el.style.cssText = "color:var(--color-success,#27ae60);";
-    }
+    el.style.cssText = type === "error"
+      ? "color:var(--color-danger,#c0392b);font-weight:600;"
+      : type === "warning"
+        ? "color:var(--color-warning,#d35400);font-weight:600;"
+        : "color:var(--color-success,#27ae60);";
   }
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    const auth = (window as any)["VDAN_AUTH"];
-    const form = document.getElementById("inviteConfirmForm") as HTMLFormElement | null;
-    const emailInput = document.getElementById("inviteConfirmEmail") as HTMLInputElement | null;
-    const passInput = document.getElementById("inviteConfirmPass") as HTMLInputElement | null;
-    const msg = document.getElementById("inviteConfirmMsg");
-    const btn = document.getElementById("inviteConfirmBtn") as HTMLButtonElement | null;
+  // ── Token-Flow (Member-Claim STEP 5) ──────────────────────────────────────
+  const __token = new URLSearchParams(window.location.search).get("token")?.trim() || "";
+  if (__token) {
+    document.addEventListener("DOMContentLoaded", async () => {
+      const auth = (window as any)["VDAN_AUTH"];
+      const url = String((window as any).__APP_SUPABASE_URL || "").replace(/\/+$/, "");
+      const key = String((window as any).__APP_SUPABASE_KEY || "");
+      const greeting = document.getElementById("inviteGreeting");
+      const form = document.getElementById("inviteClaimForm") as HTMLFormElement | null;
+      const emailInput = document.getElementById("inviteClaimEmail") as HTMLInputElement | null;
+      const passInput = document.getElementById("inviteClaimPass") as HTMLInputElement | null;
+      const btn = document.getElementById("inviteClaimBtn") as HTMLButtonElement | null;
+      const msgEl = document.getElementById("inviteClaimMsg");
+      if (!auth || !form || !emailInput) return;
+      const msg = (t: string) => { if (msgEl) msgEl.textContent = t; };
 
-    if (!form || !auth) return;
+      async function rpc(name: string, body: any, bearer?: string) {
+        const headers: Record<string, string> = { apikey: key, "Content-Type": "application/json" };
+        if (bearer) headers["Authorization"] = "Bearer " + bearer;
+        const res = await fetch(url + "/rest/v1/rpc/" + name, { method: "POST", headers, body: JSON.stringify(body) });
+        const j = await res.json().catch(() => ([]));
+        if (!res.ok) throw new Error((Array.isArray(j) ? j[0]?.message : j?.message) || ("HTTP " + res.status));
+        return Array.isArray(j) ? j[0] : j;
+      }
 
-    const email = String(emailInput?.value || "").trim();
-    if (!email) {
-      setClaimStatus("error", "Kein E-Mail-Kontext. Bitte den Invite-Link erneut verwenden.");
-      if (btn) btn.disabled = true;
-      return;
-    }
+      let pv: any;
+      try { pv = await rpc("member_invite_preview", { p_token: __token }); }
+      catch (e: any) { setClaimStatus("error", String(e?.message || "Einladung konnte nicht geladen werden.")); if (btn) btn.disabled = true; return; }
+      if (!pv?.ok) { setClaimStatus("error", pv?.message || "Einladung ungültig."); if (btn) btn.disabled = true; return; }
 
-    // Determine whether there is a pending invite claim to attempt.
-    let hasPendingInvite = false;
-    try {
-      hasPendingInvite = Boolean(
-        localStorage.getItem(String(auth.INVITE_PENDING_KEY || ""))
-      );
-    } catch {
-      // localStorage not available — treat as no pending invite
-    }
+      if (greeting) greeting.textContent = `Hallo ${pv.first_name || ""}, aktiviere deinen Zugang zu ${pv.club_name || "deinem Verein"}.`;
+      if (pv.has_email) { emailInput.value = pv.member_email; emailInput.readOnly = true; emailInput.tabIndex = -1; }
+      else { emailInput.readOnly = false; emailInput.placeholder = "Deine E-Mail"; }
 
-    if (hasPendingInvite) {
-      // member-auth.js already saved the session from the URL callback before returning early.
-      const session = auth.loadSession();
-      const token = String(session?.access_token || "").trim();
-
-      if (!token) {
-        setClaimStatus("warning", "Sitzung konnte nicht geladen werden. Bitte den Invite-Link erneut oeffnen.");
-      } else {
-        // Guard: if the session already has a resolved user email, verify it matches
-        // the expected email from the URL param. A mismatch means a stale session from
-        // a different account is still active despite the clearSession fix in member-auth.js.
-        const sessionEmail = String((session as any)?.user?.email || "").trim().toLowerCase();
-        if (sessionEmail && email && sessionEmail !== email.toLowerCase()) {
-          setClaimStatus("error",
-            "Sitzungskonflikt: Die aktive Sitzung gehört zu einer anderen E-Mail-Adresse " +
-            "(" + sessionEmail + "). Bitte ein Inkognito-Fenster verwenden und den Einladungslink erneut öffnen."
-          );
-          if (btn) btn.disabled = true;
-          return;
-        }
-
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = String((pv.has_email ? pv.member_email : emailInput.value) || "").trim().toLowerCase();
+        const pass = String(passInput?.value || "");
+        if (!email.includes("@")) { msg("Bitte eine gültige E-Mail eingeben."); return; }
+        if (pass.length < 8) { msg("Passwort muss mindestens 8 Zeichen haben."); return; }
+        if (btn) btn.disabled = true;
+        msg("Lege Zugang an …");
         try {
-          await auth.claimPendingInviteIfPresent(token);
-          setClaimStatus("success", "Vereinsbeitritt erfolgreich abgeschlossen. Bitte Passwort eingeben zum Einloggen.");
+          try {
+            await auth.signUpWithPassword(email, pass, { first_name: pv.first_name });
+          } catch (errSignup: any) {
+            // Konto existiert evtl. schon → einloggen und claimen
+            await auth.loginWithPassword(email, pass);
+          }
+          const bearer = String(auth.loadSession()?.access_token || "").trim();
+          if (!bearer) { msg("Keine Sitzung. Bitte erneut versuchen."); if (btn) btn.disabled = false; return; }
+          const claim = await rpc("member_invite_claim", { p_token: __token }, bearer);
+          if (!claim?.ok) { setClaimStatus("error", claim?.message || "Aktivierung fehlgeschlagen."); if (btn) btn.disabled = false; return; }
+          setClaimStatus("success", "Zugang aktiviert. Weiter zum Portal …");
+          window.location.assign("/app/zugang-pruefen/?next=" + encodeURIComponent("/app/"));
         } catch (err: any) {
-          const message = auth.mapRegistrationErrorMessage
-            ? auth.mapRegistrationErrorMessage(err)
-            : mapClaimError(err);
-          setClaimStatus("error", message);
+          msg(String(err?.message || "Aktivierung fehlgeschlagen."));
+          if (btn) btn.disabled = false;
         }
-      }
-    } else {
-      // No pending invite — either already claimed or auth callback without a join flow.
-      setClaimStatus("success", "E-Mail bestaetigt. Bitte Passwort eingeben zum Einloggen.");
-    }
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const pass = String(passInput?.value || "");
-      if (!pass) return;
-
-      if (btn) btn.disabled = true;
-      if (msg) msg.textContent = "…";
-
-      try {
-        await auth.loginWithPassword(email, pass);
-        window.location.assign("/app/zugang-pruefen/?next=" + encodeURIComponent("/app/"));
-      } catch (err: any) {
-        if (msg) msg.textContent = String(err?.message || "Anmeldung fehlgeschlagen.");
-        if (btn) btn.disabled = false;
-      }
+      });
     });
-  });
+  }
 
-  // Inline fallback in case mapRegistrationErrorMessage is not yet exported.
+  // ── Legacy-Flow (Post-Auth Claim, ohne token) ─────────────────────────────
+  if (!__token) {
+    document.addEventListener("DOMContentLoaded", async () => {
+      const auth = (window as any)["VDAN_AUTH"];
+      const form = document.getElementById("inviteConfirmForm") as HTMLFormElement | null;
+      const emailInput = document.getElementById("inviteConfirmEmail") as HTMLInputElement | null;
+      const passInput = document.getElementById("inviteConfirmPass") as HTMLInputElement | null;
+      const msg = document.getElementById("inviteConfirmMsg");
+      const btn = document.getElementById("inviteConfirmBtn") as HTMLButtonElement | null;
+      if (!form || !auth) return;
+
+      const email = String(emailInput?.value || "").trim();
+      if (!email) {
+        setClaimStatus("error", "Kein E-Mail-Kontext. Bitte den Invite-Link erneut verwenden.");
+        if (btn) btn.disabled = true;
+        return;
+      }
+
+      let hasPendingInvite = false;
+      try { hasPendingInvite = Boolean(localStorage.getItem(String(auth.INVITE_PENDING_KEY || ""))); } catch { /* ignore */ }
+
+      if (hasPendingInvite) {
+        const session = auth.loadSession();
+        const token = String(session?.access_token || "").trim();
+        if (!token) {
+          setClaimStatus("warning", "Sitzung konnte nicht geladen werden. Bitte den Invite-Link erneut oeffnen.");
+        } else {
+          const sessionEmail = String((session as any)?.user?.email || "").trim().toLowerCase();
+          if (sessionEmail && email && sessionEmail !== email.toLowerCase()) {
+            setClaimStatus("error", "Sitzungskonflikt: Die aktive Sitzung gehört zu einer anderen E-Mail-Adresse (" + sessionEmail + "). Bitte ein Inkognito-Fenster verwenden und den Einladungslink erneut öffnen.");
+            if (btn) btn.disabled = true;
+            return;
+          }
+          try {
+            await auth.claimPendingInviteIfPresent(token);
+            setClaimStatus("success", "Vereinsbeitritt erfolgreich abgeschlossen. Bitte Passwort eingeben zum Einloggen.");
+          } catch (err: any) {
+            const message = auth.mapRegistrationErrorMessage ? auth.mapRegistrationErrorMessage(err) : mapClaimError(err);
+            setClaimStatus("error", message);
+          }
+        }
+      } else {
+        setClaimStatus("success", "E-Mail bestaetigt. Bitte Passwort eingeben zum Einloggen.");
+      }
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const pass = String(passInput?.value || "");
+        if (!pass) return;
+        if (btn) btn.disabled = true;
+        if (msg) msg.textContent = "…";
+        try {
+          await auth.loginWithPassword(email, pass);
+          window.location.assign("/app/zugang-pruefen/?next=" + encodeURIComponent("/app/"));
+        } catch (err: any) {
+          if (msg) msg.textContent = String(err?.message || "Anmeldung fehlgeschlagen.");
+          if (btn) btn.disabled = false;
+        }
+      });
+    });
+  }
+
   function mapClaimError(err: any): string {
     const message = String(err?.message || "").trim();
     if (message === "member_email_missing") return "Fuer diese Mitgliedsnummer ist im Verein keine E-Mail-Adresse hinterlegt. Bitte wende dich an den Verein.";

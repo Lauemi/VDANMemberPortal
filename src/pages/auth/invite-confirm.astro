@@ -22,20 +22,13 @@ const hasToken = token.length > 0;
           <p id="inviteGreeting" class="register-flow__lede">Einladung wird geprüft …</p>
         </div>
         <p id="inviteClaimStatus" class="small" aria-live="polite" hidden></p>
-        <form id="inviteClaimForm" class="register-flow__form form-shell__section">
-          <label class="ui-field">
-            <span>E-Mail</span>
-            <input id="inviteClaimEmail" type="email" autocomplete="username" />
-          </label>
-          <label class="ui-field">
-            <span>Passwort festlegen</span>
-            <input id="inviteClaimPass" type="password" autocomplete="new-password" minlength="8" required autofocus />
-          </label>
+        <div class="register-flow__form form-shell__section">
+          <p id="inviteVerifyHint" class="small register-flow__lede"></p>
           <div class="register-flow__actions">
-            <button id="inviteClaimBtn" class="feed-btn fcp-brand-btn--primary" type="submit">Zugang aktivieren</button>
+            <button id="inviteVerifyBtn" class="feed-btn fcp-brand-btn--primary" type="button" hidden>Per E-Mail verifizieren</button>
             <span id="inviteClaimMsg" class="small" aria-live="polite"></span>
           </div>
-        </form>
+        </div>
       </div>
     </section>
   ) : (
@@ -86,12 +79,10 @@ const hasToken = token.length > 0;
       const url = String((window as any).__APP_SUPABASE_URL || "").replace(/\/+$/, "");
       const key = String((window as any).__APP_SUPABASE_KEY || "");
       const greeting = document.getElementById("inviteGreeting");
-      const form = document.getElementById("inviteClaimForm") as HTMLFormElement | null;
-      const emailInput = document.getElementById("inviteClaimEmail") as HTMLInputElement | null;
-      const passInput = document.getElementById("inviteClaimPass") as HTMLInputElement | null;
-      const btn = document.getElementById("inviteClaimBtn") as HTMLButtonElement | null;
+      const hint = document.getElementById("inviteVerifyHint");
+      const verifyBtn = document.getElementById("inviteVerifyBtn") as HTMLButtonElement | null;
       const msgEl = document.getElementById("inviteClaimMsg");
-      if (!auth || !form || !emailInput) return;
+      if (!auth) return;
       const msg = (t: string) => { if (msgEl) msgEl.textContent = t; };
 
       async function rpc(name: string, body: any, bearer?: string) {
@@ -102,42 +93,59 @@ const hasToken = token.length > 0;
         if (!res.ok) throw new Error((Array.isArray(j) ? j[0]?.message : j?.message) || ("HTTP " + res.status));
         return Array.isArray(j) ? j[0] : j;
       }
+      function maskEmail(e: string) {
+        const [u, d] = String(e || "").split("@");
+        if (!d) return "deiner hinterlegten Adresse";
+        const um = u.length <= 2 ? u[0] + "*" : u[0] + "***" + u[u.length - 1];
+        return um + "@" + d;
+      }
 
+      // Kontext laden
       let pv: any;
       try { pv = await rpc("member_invite_preview", { p_token: __token }); }
-      catch (e: any) { setClaimStatus("error", String(e?.message || "Einladung konnte nicht geladen werden.")); if (btn) btn.disabled = true; return; }
-      if (!pv?.ok) { setClaimStatus("error", pv?.message || "Einladung ungültig."); if (btn) btn.disabled = true; return; }
-
+      catch (e: any) { setClaimStatus("error", String(e?.message || "Einladung konnte nicht geladen werden.")); return; }
+      if (!pv?.ok) { setClaimStatus("error", pv?.message || "Einladung ungültig."); return; }
       if (greeting) greeting.textContent = `Hallo ${pv.first_name || ""}, aktiviere deinen Zugang zu ${pv.club_name || "deinem Verein"}.`;
-      if (pv.has_email) { emailInput.value = pv.member_email; emailInput.readOnly = true; emailInput.tabIndex = -1; }
-      else { emailInput.readOnly = false; emailInput.placeholder = "Deine E-Mail"; }
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const email = String((pv.has_email ? pv.member_email : emailInput.value) || "").trim().toLowerCase();
-        const pass = String(passInput?.value || "");
-        if (!email.includes("@")) { msg("Bitte eine gültige E-Mail eingeben."); return; }
-        if (pass.length < 8) { msg("Passwort muss mindestens 8 Zeichen haben."); return; }
-        if (btn) btn.disabled = true;
-        msg("Lege Zugang an …");
+      // Zurück vom Magic-Link? → Session vorhanden → Identität bewiesen → claimen
+      const bearer = String(auth.loadSession?.()?.access_token || "").trim();
+      if (bearer) {
+        setClaimStatus("success", "E-Mail bestätigt. Aktiviere Zugang …");
         try {
-          try {
-            await auth.signUpWithPassword(email, pass, { first_name: pv.first_name });
-          } catch (errSignup: any) {
-            // Konto existiert evtl. schon → einloggen und claimen
-            await auth.loginWithPassword(email, pass);
-          }
-          const bearer = String(auth.loadSession()?.access_token || "").trim();
-          if (!bearer) { msg("Keine Sitzung. Bitte erneut versuchen."); if (btn) btn.disabled = false; return; }
           const claim = await rpc("member_invite_claim", { p_token: __token }, bearer);
-          if (!claim?.ok) { setClaimStatus("error", claim?.message || "Aktivierung fehlgeschlagen."); if (btn) btn.disabled = false; return; }
-          setClaimStatus("success", "Zugang aktiviert. Weiter zum Portal …");
+          if (!claim?.ok) { setClaimStatus("error", claim?.message || "Aktivierung fehlgeschlagen."); return; }
           window.location.assign("/app/zugang-pruefen/?next=" + encodeURIComponent("/app/"));
-        } catch (err: any) {
-          msg(String(err?.message || "Aktivierung fehlgeschlagen."));
-          if (btn) btn.disabled = false;
-        }
-      });
+        } catch (err: any) { setClaimStatus("error", String(err?.message || "Aktivierung fehlgeschlagen.")); }
+        return;
+      }
+
+      // Noch nicht verifiziert → Bestätigungslink an die HINTERLEGTE Adresse (Sicherheitsanker)
+      if (!pv.has_email) {
+        setClaimStatus("warning", "Für dich ist keine E-Mail hinterlegt. Bitte beim Vorstand melden, dann wird dein Zugang freigeschaltet.");
+        return;
+      }
+      if (hint) hint.textContent = `Zur Bestätigung senden wir einen Link an deine hinterlegte Adresse (${maskEmail(pv.member_email)}). Nur über diesen Link wird dein Zugang aktiviert.`;
+      if (verifyBtn) {
+        verifyBtn.hidden = false;
+        verifyBtn.addEventListener("click", async () => {
+          verifyBtn.disabled = true;
+          msg("Sende Bestätigung …");
+          try {
+            const redirectTo = window.location.origin + "/auth/invite-confirm?token=" + encodeURIComponent(__token);
+            const res = await fetch(url + "/auth/v1/otp?redirect_to=" + encodeURIComponent(redirectTo), {
+              method: "POST",
+              headers: { apikey: key, "Content-Type": "application/json" },
+              body: JSON.stringify({ email: pv.member_email, create_user: true }),
+            });
+            if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.msg || e?.error_description || ("HTTP " + res.status)); }
+            setClaimStatus("success", `Bestätigungs-Mail an ${maskEmail(pv.member_email)} gesendet. Öffne den Link in der Mail, um deinen Zugang zu aktivieren.`);
+            msg("");
+          } catch (err: any) {
+            msg(String(err?.message || "Senden fehlgeschlagen."));
+            verifyBtn.disabled = false;
+          }
+        });
+      }
     });
   }
 

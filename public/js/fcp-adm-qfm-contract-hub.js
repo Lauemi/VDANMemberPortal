@@ -1020,13 +1020,15 @@
             eventType: event?.type || "click",
           });
         },
-        onInvite: async (row) => {
-          if (window.FcpMemberInviteDialog?.open) {
-            await window.FcpMemberInviteDialog.open(row, { panelId, sectionId: section?.id || "" });
-          } else {
-            message("Einladen-Dialog nicht geladen.");
-          }
-        },
+        onInvite: utilityHandler === "vereinsverwaltung_members"
+          ? async (row) => {
+              if (window.FcpMemberInviteDialog?.open) {
+                await window.FcpMemberInviteDialog.open(row, { panelId, sectionId: section?.id || "" });
+              } else {
+                message("Einladen-Dialog nicht geladen.");
+              }
+            }
+          : undefined,
         onRowAction: async ({ action, row, event }) => {
           if (!row || !action) return;
           if (action === "edit") {

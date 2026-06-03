@@ -203,6 +203,9 @@
       const items = [
         { icon: "✎", label: "Bearbeiten", onSelect: callbacks.onEdit },
       ];
+      if (callbacks.onInvite) {
+        items.push({ icon: "✉", label: "Einladen", onSelect: callbacks.onInvite });
+      }
       if (callbacks.onDuplicate) {
         items.push({ icon: "⎘", label: "Duplizieren", onSelect: callbacks.onDuplicate });
       }
@@ -220,6 +223,9 @@
       const items = [
         { icon: "✎", label: "Bearbeiten", onSelect: callbacks.onEdit },
       ];
+      if (callbacks.onInvite) {
+        items.push({ icon: "✉", label: "Einladen", onSelect: callbacks.onInvite });
+      }
       if (callbacks.onDuplicate) {
         items.push({ icon: "⎘", label: "Duplizieren", onSelect: callbacks.onDuplicate });
       }

@@ -1257,6 +1257,7 @@
               },
               onDuplicate: config?.onDuplicate ? () => config.onDuplicate(row) : null,
               onDelete: config?.onDelete ? () => config.onDelete(row) : null,
+              onInvite: config?.onInvite ? () => config.onInvite(row) : null,
             });
           }
         }
@@ -1492,6 +1493,7 @@
               },
               onDuplicate: config?.onDuplicate ? () => config.onDuplicate(row) : null,
               onDelete: config?.onDelete ? () => config.onDelete(row) : null,
+              onInvite: config?.onInvite ? () => config.onInvite(row) : null,
             }, root);
           }
           return;

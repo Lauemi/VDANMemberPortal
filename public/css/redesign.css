@@ -1590,3 +1590,27 @@
   padding: 3px 8px;
   font-size: 0.75rem;
 }
+
+/* ═══ 14 · Mitglied-Einladen-Dialog ════════════════════════════════════════ */
+.mi-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,.35);
+  display: flex; align-items: center; justify-content: center;
+}
+.mi-dialog {
+  background: var(--rd-surface, #fff);
+  border-radius: 10px; padding: 22px 24px;
+  width: min(440px, 92vw); max-height: 86vh; overflow-y: auto;
+  box-shadow: 0 10px 34px rgba(0,0,0,.2);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.mi-title { margin: 0; font-size: 1.05rem; font-weight: 650; }
+.mi-status { margin: 0; font-size: .85rem; color: var(--rd-text-muted, #5a6472); }
+.mi-body { display: flex; flex-direction: column; gap: 10px; }
+.mi-channel { display: flex; }
+.mi-channel .feed-btn { width: 100%; justify-content: center; text-align: center; }
+.mi-wa { background: #25D366 !important; color: #fff !important; border-color: #25D366 !important; }
+.mi-qr { flex-direction: column; align-items: center; gap: 6px; padding-top: 6px; }
+.mi-qr-label { font-size: .78rem; color: var(--rd-text-muted, #5a6472); }
+.mi-qr-img { border: 1px solid var(--rd-border, #e2e8f0); border-radius: 8px; background: #fff; }
+.mi-foot { display: flex; justify-content: flex-end; padding-top: 4px; }

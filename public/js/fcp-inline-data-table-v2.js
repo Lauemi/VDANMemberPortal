@@ -177,7 +177,7 @@
 
     function configuredRowActions() {
       const raw = Array.isArray(config?.rowActions) ? config.rowActions : ["edit", "duplicate", "delete"];
-      const allowed = new Set(["edit", "duplicate", "delete"]);
+      const allowed = new Set(["edit", "duplicate", "delete", "invite"]);
       const filtered = raw.map((entry) => String(entry || "").trim().toLowerCase()).filter((entry) => allowed.has(entry));
       return filtered.length ? filtered : ["edit", "duplicate", "delete"];
     }
@@ -193,6 +193,9 @@
         }
         if (action === "delete") {
           return `<button type="button" class="feed-btn feed-btn--ghost row-action-btn row-action-btn--danger" data-row-action="delete" aria-label="Löschen">🗑</button>`;
+        }
+        if (action === "invite") {
+          return `<button type="button" class="feed-btn feed-btn--ghost row-action-btn" data-row-action="invite" aria-label="Einladen" title="Mitglied einladen">✉</button>`;
         }
         return "";
       }).join("");
@@ -1008,6 +1011,7 @@
                       ${activeColumns.map((column) => dataCellHtml(column, row)).join("")}
                       ${isRedesign ? `<div class="rd-row-actions">
                         <button type="button" data-rd-row-action="edit" data-rd-row-id="${esc(key)}" aria-label="Bearbeiten">✎</button>
+                        ${configuredRowActions().includes("invite") ? `<button type="button" data-rd-row-action="invite" data-rd-row-id="${esc(key)}" aria-label="Einladen" title="Mitglied einladen">✉</button>` : ""}
                         <button type="button" data-rd-row-action="menu" data-rd-row-id="${esc(key)}" aria-label="Mehr">⋯</button>
                       </div>` : ""}
                     </div>
@@ -1240,6 +1244,8 @@
             } else {
               openEditor(row);
             }
+          } else if (act === "invite") {
+            await config?.onInvite?.(row);
           } else if (act === "menu") {
             window.RdPopover?.openRowMenu(rdRowActionBtn, rowId, {
               onEdit: () => {
@@ -1402,6 +1408,8 @@
             await config?.onDuplicate?.(row);
           } else if (action === "delete") {
             await config?.onDelete?.(row);
+          } else if (action === "invite") {
+            await config?.onInvite?.(row);
           }
         }
         return;

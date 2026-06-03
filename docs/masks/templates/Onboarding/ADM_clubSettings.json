@@ -2126,6 +2126,7 @@
             "createLabel": "Neues Mitglied",
             "rowActions": [
               "edit",
+              "invite",
               "delete"
             ],
             "deleteConfirmMessage": "Diesen Mitgliedseintrag wirklich loeschen?",

@@ -66,6 +66,7 @@
   }
 
   async function open(row, ctx = {}) {
+    const clubId = field(row, "club_id");
     const clubCode = field(row, "club_code");
     const memberNo = field(row, "member_no");
     const firstName = field(row, "first_name");
@@ -87,14 +88,14 @@
     document.body.append(overlay);
     overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
 
-    if (!clubCode || !memberNo) {
+    if ((!clubId && !clubCode) || !memberNo) {
       statusEl.textContent = "Diesem Mitglied fehlen Vereins-/Nummern-Daten — Einladung nicht möglich.";
       return;
     }
 
     let result;
     try {
-      const raw = await rpc("admin_member_invite_create_by_no", { p_club_code: clubCode, p_member_no: memberNo });
+      const raw = await rpc("admin_member_invite_create_resolved", { p_club_id: clubId || null, p_club_code: clubCode || null, p_member_no: memberNo });
       result = Array.isArray(raw) ? raw[0] : raw;
     } catch (e) {
       statusEl.textContent = `Fehler: ${e?.message || e}`;

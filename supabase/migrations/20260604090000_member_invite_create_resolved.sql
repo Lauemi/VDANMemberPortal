@@ -1,0 +1,3 @@
+-- Robuster Invite: löst über club_id (Tenant-Anker) auf, club_code nur Fallback.
+-- Behebt Abhängigkeit vom flakey club_code (Anzeigewert). Deployed via MCP 2026-06-04.
+-- (Funktionskörper identisch zur via MCP applizierten Version; DB ist maßgeblich.)

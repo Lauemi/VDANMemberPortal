@@ -29,6 +29,23 @@ const hasToken = token.length > 0;
             <span id="inviteClaimMsg" class="small" aria-live="polite"></span>
           </div>
         </div>
+        <div id="invitePwBlock" class="register-flow__form form-shell__section" hidden>
+          <label class="ui-field">
+            <span>Passwort festlegen</span>
+            <span style="display:flex;gap:8px;align-items:center;">
+              <input id="invitePw1" type="password" autocomplete="new-password" minlength="8" style="flex:1;" />
+              <button id="invitePwToggle" type="button" class="feed-btn feed-btn--ghost" aria-label="Passwort anzeigen" style="padding:6px 10px;">👁</button>
+            </span>
+          </label>
+          <label class="ui-field">
+            <span>Passwort wiederholen</span>
+            <input id="invitePw2" type="password" autocomplete="new-password" minlength="8" />
+          </label>
+          <div class="register-flow__actions">
+            <button id="invitePwSaveBtn" class="feed-btn fcp-brand-btn--primary" type="button">Passwort speichern &amp; Zugang aktivieren</button>
+            <span id="invitePwMsg" class="small" aria-live="polite"></span>
+          </div>
+        </div>
       </div>
     </section>
   ) : (
@@ -107,15 +124,77 @@ const hasToken = token.length > 0;
       if (!pv?.ok) { setClaimStatus("error", pv?.message || "Einladung ungültig."); return; }
       if (greeting) greeting.textContent = `Hallo ${pv.first_name || ""}, aktiviere deinen Zugang zu ${pv.club_name || "deinem Verein"}.`;
 
-      // Zurück vom Magic-Link? → Session vorhanden → Identität bewiesen → claimen
+      // Zurück vom Magic-Link? → Session vorhanden → Identität bewiesen.
+      // SOLL/MUSS: erst Passwort setzen, dann HART und unmittelbar claimen (kein Zwischenzustand).
       const bearer = String(auth.loadSession?.()?.access_token || "").trim();
       if (bearer) {
-        setClaimStatus("success", "E-Mail bestätigt. Aktiviere Zugang …");
-        try {
+        setClaimStatus("success", "E-Mail bestätigt. Bitte lege jetzt dein Passwort fest.");
+        if (hint) hint.textContent = "Dein Zugang ist fast aktiv. Vergib ein Passwort — danach wird dein Vereinszugang sofort aktiviert.";
+
+        const pwBlock = document.getElementById("invitePwBlock");
+        const pw1 = document.getElementById("invitePw1") as HTMLInputElement | null;
+        const pw2 = document.getElementById("invitePw2") as HTMLInputElement | null;
+        const pwToggle = document.getElementById("invitePwToggle");
+        const pwSave = document.getElementById("invitePwSaveBtn") as HTMLButtonElement | null;
+        const pwMsg = document.getElementById("invitePwMsg");
+        if (pwBlock) pwBlock.removeAttribute("hidden");
+        const setPwMsg = (t: string, err = false) => {
+          if (!pwMsg) return;
+          pwMsg.textContent = t;
+          pwMsg.style.color = err ? "var(--color-danger,#c0392b)" : "";
+        };
+
+        // Auge-Toggle (blendet beide Felder gemeinsam ein/aus)
+        if (pwToggle && pw1 && pw2) {
+          pwToggle.addEventListener("click", () => {
+            const show = pw1.type === "password";
+            pw1.type = pw2.type = show ? "text" : "password";
+            pwToggle.setAttribute("aria-label", show ? "Passwort verbergen" : "Passwort anzeigen");
+            pwToggle.textContent = show ? "🙈" : "👁";
+          });
+        }
+
+        // Passwort ist bereits gesetzt? Dann darf ein Retry NICHT erneut das Passwort setzen,
+        // sondern muss direkt in den Claim springen — so bleibt kein Zwischenzustand offen.
+        let passwordDone = false;
+
+        async function hardClaimAndEnter() {
           const claim = await rpc("member_invite_claim", { p_token: __token }, bearer);
-          if (!claim?.ok) { setClaimStatus("error", claim?.message || "Aktivierung fehlgeschlagen."); return; }
+          if (!claim?.ok) throw new Error(claim?.message || "Aktivierung fehlgeschlagen.");
           window.location.assign("/app/zugang-pruefen/?next=" + encodeURIComponent("/app/"));
-        } catch (err: any) { setClaimStatus("error", String(err?.message || "Aktivierung fehlgeschlagen.")); }
+        }
+
+        if (pwSave && pw1 && pw2) {
+          pwSave.addEventListener("click", async () => {
+            const p1 = String(pw1.value || "");
+            const p2 = String(pw2.value || "");
+            if (!passwordDone) {
+              if (p1.length < 8) { setPwMsg("Passwort muss mindestens 8 Zeichen haben.", true); return; }
+              if (p1 !== p2) { setPwMsg("Die Passwörter stimmen nicht überein.", true); return; }
+            }
+            pwSave.disabled = true; pw1.disabled = true; pw2.disabled = true;
+            setPwMsg("Speichere und aktiviere …");
+            try {
+              if (!passwordDone) {
+                await auth.updatePassword(p1);
+                passwordDone = true;
+              }
+              await hardClaimAndEnter();
+            } catch (err: any) {
+              // Kein Zwischenzustand: Fehler zeigen, erneuter Versuch möglich.
+              // Bei bereits gesetztem Passwort führt der Retry direkt zum Claim.
+              setPwMsg("", false);
+              setClaimStatus("error", String(err?.message || "Aktivierung fehlgeschlagen."));
+              pwSave.disabled = false;
+              if (passwordDone) {
+                pw1.disabled = true; pw2.disabled = true;
+                pwSave.textContent = "Zugang aktivieren";
+              } else {
+                pw1.disabled = false; pw2.disabled = false;
+              }
+            }
+          });
+        }
         return;
       }
 

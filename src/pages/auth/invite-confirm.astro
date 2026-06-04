@@ -135,7 +135,18 @@ const hasToken = token.length > 0;
             const res = await fetch(url + "/auth/v1/otp?redirect_to=" + encodeURIComponent(redirectTo), {
               method: "POST",
               headers: { apikey: key, "Content-Type": "application/json" },
-              body: JSON.stringify({ email: pv.member_email, create_user: true }),
+              body: JSON.stringify({
+                email: pv.member_email,
+                create_user: true,
+                // signup_guard verlangt registration_mode; Claim-Flow = join_club.
+                // Felder aus dem Token abgeleitet (nicht User-Eingabe) -> Sicherheitsanker bleibt.
+                data: {
+                  registration_mode: "join_club",
+                  invite_token: __token,
+                  member_no: pv.member_no || "",
+                  club_code: pv.club_code || "",
+                },
+              }),
             });
             if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.msg || e?.error_description || ("HTTP " + res.status)); }
             setClaimStatus("success", `Bestätigungs-Mail an ${maskEmail(pv.member_email)} gesendet. Öffne den Link in der Mail, um deinen Zugang zu aktivieren.`);

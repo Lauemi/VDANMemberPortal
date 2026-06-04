@@ -161,6 +161,7 @@
       onEditSubmit: runtimeOptions?.runtime?.onEditSubmit,
       onDuplicate: runtimeOptions?.runtime?.onDuplicate,
       onDelete: runtimeOptions?.runtime?.onDelete,
+      onInvite: runtimeOptions?.runtime?.onInvite,
     };
 
     const mountVersion = Number(root.dataset.fcpMountVersion || "0") + 1;

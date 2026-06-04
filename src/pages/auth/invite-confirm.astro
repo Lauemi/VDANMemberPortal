@@ -124,10 +124,14 @@ const hasToken = token.length > 0;
       if (!pv?.ok) { setClaimStatus("error", pv?.message || "Einladung ungültig."); return; }
       if (greeting) greeting.textContent = `Hallo ${pv.first_name || ""}, aktiviere deinen Zugang zu ${pv.club_name || "deinem Verein"}.`;
 
-      // Zurück vom Magic-Link? → Session vorhanden → Identität bewiesen.
+      // Zurück vom Magic-Link? Nur dann den Passwort-Schritt zeigen.
+      // Erkennung über expliziten Marker (verified=1) AUS dem Bestätigungslink PLUS Session –
+      // eine bloß vorhandene (evtl. veraltete) Session reicht NICHT (sonst Passwort zu früh).
       // SOLL/MUSS: erst Passwort setzen, dann HART und unmittelbar claimen (kein Zwischenzustand).
       const bearer = String(auth.loadSession?.()?.access_token || "").trim();
-      if (bearer) {
+      const justVerified = new URLSearchParams(window.location.search).get("verified") === "1";
+      if (bearer && justVerified) {
+        if (verifyBtn) verifyBtn.hidden = true;
         setClaimStatus("success", "E-Mail bestätigt. Bitte lege jetzt dein Passwort fest.");
         if (hint) hint.textContent = "Dein Zugang ist fast aktiv. Vergib ein Passwort — danach wird dein Vereinszugang sofort aktiviert.";
 
@@ -210,7 +214,7 @@ const hasToken = token.length > 0;
           verifyBtn.disabled = true;
           msg("Sende Bestätigung …");
           try {
-            const redirectTo = window.location.origin + "/auth/invite-confirm?token=" + encodeURIComponent(__token);
+            const redirectTo = window.location.origin + "/auth/invite-confirm?token=" + encodeURIComponent(__token) + "&verified=1";
             const res = await fetch(url + "/auth/v1/otp?redirect_to=" + encodeURIComponent(redirectTo), {
               method: "POST",
               headers: { apikey: key, "Content-Type": "application/json" },

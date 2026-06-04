@@ -80,7 +80,9 @@
     const body = el("div", { className: "mi-body" });
     dialog.append(body);
     const btnClose = el("button", { className: "feed-btn feed-btn--ghost", text: "Schließen", onClick: () => overlay.remove() });
-    dialog.append(el("div", { className: "mi-foot" })).append(btnClose);
+    const foot = el("div", { className: "mi-foot" });
+    foot.append(btnClose);
+    dialog.append(foot);
     overlay.append(dialog);
     document.body.append(overlay);
     overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });

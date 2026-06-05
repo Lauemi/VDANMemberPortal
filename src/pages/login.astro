@@ -17,7 +17,7 @@ if (inviteClubName) joinQuery.set("club_name", inviteClubName);
 const showDemoHint = Boolean(import.meta.env.DEV);
 const isFcpMode = resolveSiteMode(Astro.url.hostname, APP.siteMode) === "fcp";
 const clubRequestHref = `/verein-anfragen/?next=${encodeURIComponent(nextTarget)}`;
-const clubSignInHref = `/vereinssignin/?${joinQuery.toString()}`;
+const clubSignInHref = `/login/?${joinQuery.toString()}`; // LEGACY-STILLLEGUNG Schritt 2: war "/vereinssignin/"
 ---
 
 <Site title={`Login • ${APP.name}`} description="Login zum Memberbereich." robots="noindex" density="compact">

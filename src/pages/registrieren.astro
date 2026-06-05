@@ -14,7 +14,7 @@ if (inviteClubId) loginQuery.set("club_id", inviteClubId);
 if (inviteClubCode) loginQuery.set("club_code", inviteClubCode);
 if (inviteClubName) loginQuery.set("club_name", inviteClubName);
 const clubRequestHref = `/verein-anfragen/?next=${encodeURIComponent(nextTarget)}`;
-const clubSignInHref = `/vereinssignin/?next=${encodeURIComponent(nextTarget)}`;
+const clubSignInHref = `/login/?next=${encodeURIComponent(nextTarget)}`; // LEGACY-STILLLEGUNG Schritt 2: war "/vereinssignin/"
 const loginHref = `/login/?${loginQuery.toString()}`;
 ---
 
@@ -86,12 +86,12 @@ const loginHref = `/login/?${loginQuery.toString()}`;
       };
 
       if (invite) {
-        window.location.replace(`/vereinssignin/?${buildJoinQuery()}`);
+        window.location.replace(`/login/?${buildJoinQuery()}`); // LEGACY-STILLLEGUNG Schritt 2: war "/vereinssignin/"
         return;
       }
 
       if (mode === "join_club") {
-        window.location.replace(`/vereinssignin/?${buildJoinQuery()}`);
+        window.location.replace(`/login/?${buildJoinQuery()}`); // LEGACY-STILLLEGUNG Schritt 2: war "/vereinssignin/"
         return;
       }
 

@@ -28,7 +28,7 @@ const autoAppVersion = [
 ].filter(Boolean).join("+");
 const assetVersion = encodeURIComponent(appVersionEnv && appVersionEnv !== "dev-local" ? appVersionEnv : autoAppVersion);
 const clubRequestHref = "/verein-anfragen/";
-const clubJoinHref = "/vereinssignin/";
+const clubJoinHref = "/login/"; // LEGACY-STILLLEGUNG Schritt 2: war "/vereinssignin/"
 ---
 
 <Site

@@ -60,10 +60,12 @@ export const STATIC_WEB_PAGES: StaticWebPageEntry[] = [
   {
     route: "/vereinssignin",
     label: "VereinsSignIn",
-    note: "Getrennter Einstieg fuer bestehende Vereine und Invite-Flow.",
+    // LEGACY-STILLLEGUNG Schritt 2 (2026-06-05): aus der sichtbaren Nav genommen (Route bleibt
+    // registriert, damit der Server-Redirect /vereinssignin -> /login/ greift). Reversibel: visible:true.
+    note: "Stillgelegt (Legacy-Invite-Flow) — Route leitet auf /login/.",
     targets: {
-      fcp: { visible: true, brand: "fcp" },
-      vdan: { visible: true, brand: "vdan" },
+      fcp: { visible: false, brand: "fcp" },
+      vdan: { visible: false, brand: "vdan" },
     },
   },
   {

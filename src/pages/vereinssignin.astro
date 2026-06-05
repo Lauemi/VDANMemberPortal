@@ -2,6 +2,11 @@
 import Site from "../layouts/Site.astro";
 import { APP } from "../config/app";
 
+// LEGACY-STILLLEGUNG Schritt 2 (2026-06-05): Legacy-Pfad /vereinssignin außer Betrieb.
+// Autoritativer Server-Redirect — jeder Zugang landet auf /login/.
+// Reversibel: diese eine Redirect-Zeile entfernen, dann rendert die Seite wieder normal.
+return Astro.redirect("/login/", 302);
+
 const nextRaw = Astro.url.searchParams.get("next") ?? "/app/";
 const nextTarget = nextRaw.startsWith("/") ? nextRaw : "/app/";
 const inviteToken = String(Astro.url.searchParams.get("invite") ?? "").trim();

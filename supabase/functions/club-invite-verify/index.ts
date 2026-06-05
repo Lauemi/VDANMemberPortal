@@ -85,6 +85,13 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers });
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers });
 
+  // LEGACY-STILLLEGUNG Schritt 3 (2026-06-05): Legacy-Invite-Verify deaktiviert.
+  // Autoritativer Riegel auch gegen Direkt-API. Reversibel: diesen Block entfernen.
+  return new Response(
+    JSON.stringify({ ok: false, error: "legacy_invite_verify_disabled" }),
+    { status: 410, headers: { ...headers, "Content-Type": "application/json" } },
+  );
+
   try {
     const body = await req.json().catch(() => ({}));
     const inviteToken = txt((body as { invite_token?: string })?.invite_token);

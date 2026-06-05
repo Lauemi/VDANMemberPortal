@@ -622,6 +622,9 @@
   }
 
   async function verifyInviteToken(inviteToken) {
+    // LEGACY-STILLLEGUNG Schritt 3 (2026-06-05): Legacy-Invite-Verify deaktiviert (ruft Edge nicht mehr).
+    // Reversibel: diese zwei Guard-Zeilen entfernen.
+    return { ok: false, disabled: "legacy_invite_verify_disabled" };
     return callEdgeFunction("club-invite-verify", { invite_token: String(inviteToken || "").trim() });
   }
 
@@ -659,6 +662,9 @@
   }
 
   async function claimInviteToken(claimPayload, accessToken) {
+    // LEGACY-STILLLEGUNG Schritt 3 (2026-06-05): Legacy-Invite-Claim deaktiviert (ruft Edge nicht mehr).
+    // Kein throw -> bricht keinen Login-/Boot-Flow. Reversibel: diese zwei Guard-Zeilen entfernen.
+    return { ok: false, disabled: "legacy_invite_claim_disabled" };
     const token = String(accessToken || "").trim();
     if (!token) throw new Error("login_required_for_invite_claim");
     const inviteToken = String(claimPayload?.invite_token || "").trim();
@@ -746,6 +752,11 @@
   }
 
   async function claimPendingInviteIfPresent(accessToken = "") {
+    // LEGACY-STILLLEGUNG Schritt 3 (2026-06-05): Legacy-Pending-Claim deaktiviert.
+    // Verwaisten Pending-Invite verwerfen, return null -> Login-/Gate-Flow unberuehrt.
+    // Reversibel: diese zwei Guard-Zeilen entfernen.
+    clearPendingInvite();
+    return null;
     const pending = readPendingInvite();
     if (!pending?.invite_token) return null;
     const token = String(accessToken || "").trim() || String(loadSession()?.access_token || "").trim();

@@ -202,6 +202,13 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers });
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers });
 
+  // LEGACY-STILLLEGUNG Schritt 1 (2026-06-05): Erzeugung von Legacy-Club-Invites deaktiviert.
+  // Autoritativer Riegel auch gegen Direkt-API. Reversibel: diesen Block entfernen.
+  return new Response(
+    JSON.stringify({ ok: false, error: "legacy_invite_create_disabled" }),
+    { status: 410, headers: { ...headers, "Content-Type": "application/json" } },
+  );
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";

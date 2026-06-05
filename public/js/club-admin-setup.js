@@ -1365,6 +1365,10 @@
   }
 
   async function submitInviteCreate() {
+    // LEGACY-STILLLEGUNG Schritt 1 (2026-06-05): Erzeugung von Legacy-Club-Invites deaktiviert.
+    // Reversibel: diese zwei Guard-Zeilen entfernen, um die Erzeugung wieder freizugeben.
+    setMsg("Legacy-Einladungslinks sind stillgelegt. Bitte den neuen Mitglied-Einladen-Flow verwenden.");
+    return;
     setMsg("Invite-Link wird erzeugt ...");
     setResult(null);
     try {

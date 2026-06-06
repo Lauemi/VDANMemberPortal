@@ -128,7 +128,7 @@
       { id: "members", label: "Mitglieder", active: true, usecases: ["members", "mitglieder_registry"] }, // STEP09: mitglieder->members
       { id: "documents", label: "Dokumente", active: true, usecases: ["documents"] }, // STEP09: dokumente->documents
       { id: "meetings", label: "Sitzungen", active: true, usecases: ["sitzungen"] },
-      { id: "settings", label: "Einstellungen", active: true, usecases: ["einstellungen"] },
+      { id: "settings", label: "Einstellungen", active: true, usecases: ["settings"] }, // STEP09: einstellungen->settings
     ];
   }
 
@@ -201,7 +201,7 @@
     }
     if (r === "member") {
       if (uc === "eventplaner_mitmachen") return rightSet({ view: true, write: true, update: true, delete: false });
-      if (["fangliste", "go_fishing", "arbeitseinsaetze", "feed", "einstellungen"].includes(uc)) return rightSet({ view: true });
+      if (["fangliste", "go_fishing", "arbeitseinsaetze", "feed", "settings"].includes(uc)) return rightSet({ view: true }); // STEP09: einstellungen->settings
       return rightSet({ view: false });
     }
     return rightSet({ view: false });

@@ -122,7 +122,7 @@
   function defaultModuleCatalog() {
     return [
       { id: "fishing", label: "Fishing", active: true, usecases: ["fangliste", "go_fishing", "fangliste_cockpit"] },
-      { id: "work", label: "Arbeitseinsätze", active: true, usecases: ["arbeitseinsaetze", "arbeitseinsaetze_cockpit"] },
+      { id: "work", label: "Arbeitseinsätze", active: true, usecases: ["work", "arbeitseinsaetze_cockpit"] }, // STEP09: arbeitseinsaetze->work (cockpit granular)
       { id: "eventplaner", label: "Eventplaner", active: true, usecases: ["eventplaner", "eventplaner_mitmachen"] },
       { id: "feed", label: "Feed", active: true, usecases: ["feed"] },
       { id: "members", label: "Mitglieder", active: true, usecases: ["members", "mitglieder_registry"] }, // STEP09: mitglieder->members
@@ -201,7 +201,7 @@
     }
     if (r === "member") {
       if (uc === "eventplaner_mitmachen") return rightSet({ view: true, write: true, update: true, delete: false });
-      if (["fangliste", "go_fishing", "arbeitseinsaetze", "feed", "settings"].includes(uc)) return rightSet({ view: true }); // STEP09: einstellungen->settings
+      if (["fangliste", "go_fishing", "work", "feed", "settings"].includes(uc)) return rightSet({ view: true }); // STEP09: einstellungen->settings, arbeitseinsaetze->work
       return rightSet({ view: false });
     }
     return rightSet({ view: false });

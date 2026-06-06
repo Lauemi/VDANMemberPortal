@@ -125,7 +125,7 @@
       { id: "work", label: "Arbeitseinsätze", active: true, usecases: ["arbeitseinsaetze", "arbeitseinsaetze_cockpit"] },
       { id: "eventplaner", label: "Eventplaner", active: true, usecases: ["eventplaner", "eventplaner_mitmachen"] },
       { id: "feed", label: "Feed", active: true, usecases: ["feed"] },
-      { id: "members", label: "Mitglieder", active: true, usecases: ["mitglieder", "mitglieder_registry"] },
+      { id: "members", label: "Mitglieder", active: true, usecases: ["members", "mitglieder_registry"] }, // STEP09: mitglieder->members
       { id: "documents", label: "Dokumente", active: true, usecases: ["documents"] }, // STEP09: dokumente->documents
       { id: "meetings", label: "Sitzungen", active: true, usecases: ["sitzungen"] },
       { id: "settings", label: "Einstellungen", active: true, usecases: ["einstellungen"] },

@@ -393,6 +393,20 @@
     return String(row?.status || "").toLowerCase() === "approved";
   }
 
+  // ADM-Lesehilfe: Roh-Status der work_participations (auch via Eventplaner-Approve-Bruecke erzeugt)
+  // als Fortschritts-Klartext fuer die Vorstands-/Freigabesicht. Reiner Read, keine Statusaenderung.
+  function workStatusLabel(status) {
+    switch (String(status || "").toLowerCase()) {
+      case "registered": return "Angemeldet";
+      case "checked_in": return "Aktiv";
+      case "submitted": return "Eingereicht";
+      case "approved": return "Freigegeben";
+      case "rejected": return "Abgelehnt";
+      case "no_show": return "Nicht erschienen";
+      default: return status || "-";
+    }
+  }
+
   function workApprovalGroups(statusFilter = "pending") {
     return state.events
       .filter((event) => event.kind === "work_event")
@@ -508,18 +522,6 @@
     return start.getTime() >= today.getTime();
   }
 
-  /* Events der letzten 30 Tage ODER zukünftige — für "Events verwalten" */
-  function isRecentOrUpcomingEvent(event) {
-    const start = new Date(event?.starts_at || "");
-    if (Number.isNaN(start.getTime())) return false;
-    const status = String(event?.status || "").toLowerCase();
-    if (["cancelled", "archived"].includes(status)) return false;
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 30);
-    cutoff.setHours(0, 0, 0, 0);
-    return start.getTime() >= cutoff.getTime();
-  }
-
   function managedEvents() {
     return state.events.filter((event) => configForEvent(event));
   }
@@ -530,7 +532,7 @@
 
   function planningRows() {
     return state.events
-      .filter((event) => isRecentOrUpcomingEvent(event) || configForEvent(event))
+      .filter((event) => isUpcomingEvent(event) || configForEvent(event))
       .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
   }
 
@@ -975,7 +977,7 @@
     if (!rows.length) {
       body.innerHTML = `
         ${renderCreateRows()}
-        <tr><td colspan="6" class="small">Keine Termine in den letzten 30 Tagen oder in der Zukunft. Ältere Einträge sind im Kalender sichtbar.</td></tr>
+        <tr><td colspan="6" class="small">Aktuell gibt es keine anstehenden Termine oder Arbeitseinsätze für die Planung.</td></tr>
       `;
       return;
     }
@@ -1449,7 +1451,7 @@
       const active = entry.sourceKind === "work" ? workParticipationIsActive(row) : false;
       const gone = entry.sourceKind === "work" ? workParticipationIsGone(row) : false;
       const rowClass = active ? "is-active" : gone ? "is-gone" : "";
-      const statusLabel = active ? "Aktiv" : gone ? "Gegangen" : row.status || "-";
+      const statusLabel = active ? "Aktiv" : gone ? "Gegangen" : workStatusLabel(row.status);
       const minutesValue = Number(row.minutes_approved ?? computeMinutes(row.checkin_at, row.checkout_at) ?? row.minutes_reported ?? 0);
       const rowStatus = String(row.status || "").toLowerCase();
       const isEditing = state.approvalEditingRows.has(String(row.id || ""));

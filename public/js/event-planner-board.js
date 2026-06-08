@@ -407,6 +407,23 @@
     }
   }
 
+  // ADM-Lesehilfe: stammt diese work_participation aus einer Eventplaner-Helferanmeldung?
+  // Match ueber bereits geladene plannerConfigs/plannerRegistrations (kein zusaetzlicher Fetch, reiner Read).
+  function participationFromPlanner(row) {
+    const eventId = String(row?.event_id || "");
+    const uid = String(row?.auth_uid || "");
+    if (!eventId || !uid) return false;
+    const configIds = new Set(
+      state.plannerConfigs
+        .filter((c) => String(c?.base_work_event_id || "") === eventId)
+        .map((c) => String(c?.id || ""))
+    );
+    if (configIds.size === 0) return false;
+    return state.plannerRegistrations.some(
+      (r) => configIds.has(String(r?.planner_config_id || "")) && String(r?.auth_uid || "") === uid
+    );
+  }
+
   function workApprovalGroups(statusFilter = "pending") {
     return state.events
       .filter((event) => event.kind === "work_event")
@@ -1452,6 +1469,7 @@
       const gone = entry.sourceKind === "work" ? workParticipationIsGone(row) : false;
       const rowClass = active ? "is-active" : gone ? "is-gone" : "";
       const statusLabel = active ? "Aktiv" : gone ? "Gegangen" : workStatusLabel(row.status);
+      const fromPlanner = entry.sourceKind === "work" ? participationFromPlanner(row) : false;
       const minutesValue = Number(row.minutes_approved ?? computeMinutes(row.checkin_at, row.checkout_at) ?? row.minutes_reported ?? 0);
       const rowStatus = String(row.status || "").toLowerCase();
       const isEditing = state.approvalEditingRows.has(String(row.id || ""));
@@ -1483,7 +1501,7 @@
               <span>${escapeHtml(memberLabel(row.auth_uid))}</span>
             </div>
           </td>
-          <td>${escapeHtml(String(statusLabel))}</td>
+          <td>${escapeHtml(String(statusLabel))}${fromPlanner ? ` <span class="small" title="Teilnahme aus Eventplaner-Helferanmeldung">· aus Helferplanung</span>` : ""}</td>
           <td>
             ${entry.sourceKind === "work"
               ? `

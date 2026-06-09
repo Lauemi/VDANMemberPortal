@@ -4291,6 +4291,166 @@
           }
         }
       ]
+    },
+    {
+      "id": "club_settings_abrechnung",
+      "title": "Mitgliederabrechnung",
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "club_settings_abrechnung_pflichtstunden",
+          "title": "Pflichtstunden — Soll / Ist / Delta",
+          "renderMode": "table",
+          "componentType": "inline-data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": [
+              "admin",
+              "vorstand",
+              "superadmin"
+            ],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.admin_member_work_hours_overview",
+            "sourceKind": "table",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "expectedColumns": [
+                "member_no",
+                "club_member_no",
+                "first_name",
+                "last_name",
+                "role",
+                "is_exempt",
+                "soll_minutes",
+                "ist_minutes",
+                "delta_minutes"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein freigegebener Vereinskontext verfuegbar. Pflichtstunden-Uebersicht erst nach Vereinsfreigabe verfuegbar.",
+              "rowsPath": "rows",
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              }
+            }
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.admin_member_work_hours_overview",
+            "path": "rpc:public.admin_member_work_hours_overview"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            {
+              "key": "club_member_no",
+              "label": "Mitgl.-Nr.",
+              "type": "text",
+              "exportable": true,
+              "exportKey": "club_member_no",
+              "exportLabel": "Mitgliedsnummer"
+            },
+            {
+              "key": "last_name",
+              "label": "Name",
+              "type": "text",
+              "exportable": true,
+              "exportKey": "last_name",
+              "exportLabel": "Nachname"
+            },
+            {
+              "key": "first_name",
+              "label": "Vorname",
+              "type": "text",
+              "exportable": true,
+              "exportKey": "first_name",
+              "exportLabel": "Vorname"
+            },
+            {
+              "key": "role",
+              "label": "Rolle",
+              "type": "text"
+            },
+            {
+              "key": "is_exempt",
+              "label": "Befreit",
+              "type": "boolean"
+            },
+            {
+              "key": "soll_minutes",
+              "label": "Soll (min)",
+              "type": "number",
+              "exportable": true,
+              "exportKey": "soll_minutes",
+              "exportLabel": "Soll (Minuten)"
+            },
+            {
+              "key": "ist_minutes",
+              "label": "Ist (min)",
+              "type": "number",
+              "exportable": true,
+              "exportKey": "ist_minutes",
+              "exportLabel": "Ist (Minuten)"
+            },
+            {
+              "key": "delta_minutes",
+              "label": "Delta (min)",
+              "type": "number",
+              "exportable": true,
+              "exportKey": "delta_minutes",
+              "exportLabel": "Delta (Minuten)"
+            }
+          ],
+          "rowsPath": "rows",
+          "tableConfig": {
+            "tableId": "adm-club-settings-abrechnung-pflichtstunden",
+            "rowKeyField": "member_no",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "none",
+            "selectionMode": "none",
+            "viewMode": "table",
+            "sortKey": "delta_minutes",
+            "sortDir": "desc",
+            "filterFields": [
+              {
+                "key": "last_name",
+                "label": "Name"
+              },
+              {
+                "key": "is_exempt",
+                "label": "Befreit"
+              }
+            ]
+          }
+        }
+      ]
     }
   ],
   "specialCases": []

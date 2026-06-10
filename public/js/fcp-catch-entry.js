@@ -530,7 +530,7 @@
 
     // Enter on last visible field triggers save
     fWeight.addEventListener("keydown",  (e) => { if (e.key === "Enter") { e.preventDefault(); doSave(); } });
-    fQty.addEventListener("keydown",     (e) => { if (e.key === "Enter" && captureTyp === "no_catch") { e.preventDefault(); doSave(); } });
+    fQty.addEventListener("keydown",     (e) => { if (e.key === "Enter") { e.preventDefault(); doSave(); } });
     fWater.addEventListener("keydown",   (e) => { if (e.key === "Enter" && captureTyp === "no_catch") { e.preventDefault(); doSave(); } });
     btnSave.addEventListener("keydown",  (e) => { if (e.key === "Enter") { e.preventDefault(); doSave(); } });
 

@@ -102,6 +102,7 @@
     let waters = [];
     let selectedMember = null;
     let entries = [];
+    let captureOpen = false;
 
     // ── Member bar
     const memberInput = el("input", {
@@ -121,14 +122,11 @@
       badge,
     ]);
 
-    // ── Action bar
-    const btnCapture = el("button", { cls: "fcp-ce-btn fcp-ce-btn--primary", type: "button", text: "+ Erfassen" });
-    const actionBar = el("div", { cls: "fcp-ce-action-bar fcp-ce-hidden" }, [btnCapture]);
+    // ── "Neue Zeile" bar — only visible when capture is CLOSED
+    const btnNewRow = el("button", { cls: "fcp-ce-btn fcp-ce-btn--primary", type: "button", text: "+ Neue Zeile" });
+    const newRowBar = el("div", { cls: "fcp-ce-action-bar fcp-ce-hidden" }, [btnNewRow]);
 
-    // ── Table
-    const tbody = el("tbody");
-
-    // Capture row elements
+    // ── Capture row elements
     const fDate    = el("input",  { type: "date",   cls: "fcp-ce-field", value: today() });
     const fWater   = el("select", { cls: "fcp-ce-field fcp-ce-field--select" });
     const fSpecies = el("select", { cls: "fcp-ce-field fcp-ce-field--select" });
@@ -137,14 +135,18 @@
     const btnSave  = el("button", { cls: "fcp-ce-btn fcp-ce-btn--save", type: "button", text: "Speichern" });
     const btnAbort = el("button", { cls: "fcp-ce-btn fcp-ce-btn--ghost", type: "button", title: "Abbrechen", text: "✕" });
     const capStatus = el("span",  { cls: "fcp-ce-cap-status" });
+
     const captureRow = el("tr", { cls: "fcp-ce-capture-row fcp-ce-hidden" }, [
-      el("td", {}, [fDate]),
+      el("td", { cls: "fcp-ce-capture-indicator" }, [el("span", { cls: "fcp-ce-capture-arrow", text: "▶" }), fDate]),
       el("td", {}, [fWater]),
       el("td", {}, [fSpecies]),
       el("td", {}, [fQty]),
       el("td", {}, [fWeight]),
       el("td", { cls: "fcp-ce-cap-actions" }, [btnSave, btnAbort, capStatus]),
     ]);
+
+    // ── Table
+    const tbody = el("tbody");
     tbody.append(captureRow);
 
     const thead = el("thead");
@@ -160,7 +162,7 @@
     // ── Hint / status line
     const hint = el("p", { cls: "fcp-ce-hint", text: "Lade Stammdaten …" });
 
-    wrap.append(memberBar, actionBar, tableWrap, hint);
+    wrap.append(memberBar, newRowBar, tableWrap, hint);
 
     // ── Populate selects
     function fillWater(sel) {
@@ -179,14 +181,17 @@
       });
     }
 
-    // ── Render entries
+    // ── Render entries below capture row
     function renderEntries() {
-      // Remove old data rows (keep captureRow)
       Array.from(tbody.querySelectorAll(".fcp-ce-data-row, .fcp-ce-empty-row")).forEach((r) => r.remove());
 
       if (!entries.length) {
         const tr = el("tr", { cls: "fcp-ce-empty-row" });
-        tr.append(el("td", { colspan: "6", cls: "fcp-ce-empty-cell", text: "Noch keine Einträge für dieses Mitglied." }));
+        tr.append(el("td", {
+          colspan: "6",
+          cls: captureOpen ? "fcp-ce-empty-cell fcp-ce-empty-cell--sub" : "fcp-ce-empty-cell",
+          text: captureOpen ? "Noch keine früheren Einträge." : "Noch keine Einträge für dieses Mitglied.",
+        }));
         tbody.append(tr);
         return;
       }
@@ -204,7 +209,7 @@
       });
     }
 
-    // ── Capture mode
+    // ── Capture mode — OPEN
     function openCapture() {
       fillWater(fWater);
       fillSpecies(fSpecies);
@@ -213,17 +218,23 @@
       fWeight.value = "";
       capStatus.textContent = "";
       capStatus.className = "fcp-ce-cap-status";
+      captureOpen = true;
+      hide(newRowBar);         // "Neue Zeile" button hidden while capture is open
       show(captureRow);
       show(tableWrap);
       renderEntries();
       setTimeout(() => fDate.focus(), 30);
     }
 
+    // ── Capture mode — CLOSE
     function closeCapture() {
+      captureOpen = false;
       hide(captureRow);
+      show(newRowBar);         // "Neue Zeile" button reappears
       renderEntries();
     }
 
+    // ── Save a capture row entry
     async function doSave() {
       if (!selectedMember || !clubId) return;
       const caught_on       = fDate.value;
@@ -252,8 +263,9 @@
           p_quantity:        quantity,
           p_weight_g:        weight_g,
         });
-        capStatus.textContent = "✓ gespeichert";
+        capStatus.textContent = "✓";
         capStatus.className = "fcp-ce-cap-status fcp-ce-cap-status--ok";
+        // Reload entries, then immediately reset for next row
         await loadEntries();
         fDate.value = today();
         fQty.value = "";
@@ -261,7 +273,7 @@
         setTimeout(() => {
           capStatus.textContent = "";
           fDate.focus();
-        }, 1000);
+        }, 600);
       } catch (err) {
         capStatus.textContent = err.message || "Fehler beim Speichern.";
         capStatus.className = "fcp-ce-cap-status fcp-ce-cap-status--err";
@@ -296,24 +308,24 @@
       }
     }
 
+    // ── Select a member → auto-open capture mode
     function selectMember(m) {
       selectedMember = m;
       memberInput.value = "";
       hide(dropdown);
       badgeName.textContent = `${m.first_name} ${m.last_name} · Nr. ${m.member_no}`;
       show(badge);
-      show(actionBar);
       hide(hint);
-      show(tableWrap);
-      hide(captureRow);
-      loadEntries();
+      loadEntries();   // async — entries appear below as they load
+      openCapture();   // auto-open capture row immediately, focus Datum
     }
 
     function clearMember() {
       selectedMember = null;
       entries = [];
+      captureOpen = false;
       hide(badge);
-      hide(actionBar);
+      hide(newRowBar);
       hide(captureRow);
       hide(tableWrap);
       hint.textContent = "Mitglied wählen, um Fangeinträge anzuzeigen.";
@@ -359,9 +371,8 @@
 
     // ── Event wiring
     memberInput.addEventListener("input", () => {
-      const q = memberInput.value;
-      if (!q && !members.length) return;
-      renderDropdown(matchMembers(q));
+      if (!members.length) return;
+      renderDropdown(matchMembers(memberInput.value));
       show(dropdown);
     });
 
@@ -377,10 +388,11 @@
     });
 
     badgeClear.addEventListener("click", clearMember);
-    btnCapture.addEventListener("click", openCapture);
+    btnNewRow.addEventListener("click", openCapture);
     btnAbort.addEventListener("click", closeCapture);
     btnSave.addEventListener("click", doSave);
 
+    // Enter on last field or save button triggers save
     fWeight.addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); doSave(); }
     });
@@ -423,15 +435,15 @@
       ".fcp-ce-badge-clear{background:none;border:none;cursor:pointer;color:var(--rd-muted,#7a7c68);font-size:.8125rem;padding:0 .125rem;line-height:1}",
       ".fcp-ce-badge-clear:hover{color:var(--rd-ink,#2a2d24)}",
 
-      // Action bar
+      // "Neue Zeile" action bar (visible only when capture closed)
       ".fcp-ce-action-bar{display:flex;gap:.5rem}",
 
       // Buttons
       ".fcp-ce-btn{padding:.3125rem .75rem;font-size:.75rem;border-radius:5px;border:1px solid;cursor:pointer;font-weight:500;line-height:1.4;transition:background .1s,border-color .1s}",
       ".fcp-ce-btn--primary{background:var(--rd-gold,#d46a20);border-color:var(--rd-gold,#d46a20);color:#fff}",
       ".fcp-ce-btn--primary:hover{background:var(--rd-gold-hi,#bf5414);border-color:var(--rd-gold-hi,#bf5414)}",
-      ".fcp-ce-btn--save{background:rgba(22,101,52,.08);border-color:rgba(22,101,52,.28);color:#166534;font-weight:600}",
-      ".fcp-ce-btn--save:hover{background:rgba(22,101,52,.16)}",
+      ".fcp-ce-btn--save{background:rgba(22,101,52,.09);border-color:rgba(22,101,52,.32);color:#166534;font-weight:600}",
+      ".fcp-ce-btn--save:hover{background:rgba(22,101,52,.17)}",
       ".fcp-ce-btn--save:disabled{opacity:.5;cursor:not-allowed}",
       ".fcp-ce-btn--ghost{background:transparent;border-color:var(--rd-line,rgba(108,112,91,.14));color:var(--rd-muted,#7a7c68)}",
       ".fcp-ce-btn--ghost:hover{background:var(--rd-gold-softer,rgba(212,106,32,.06))}",
@@ -443,11 +455,17 @@
       ".fcp-ce-table tbody td{border:1px solid var(--rd-line,rgba(108,112,91,.14));padding:.375rem .75rem;background:#fff;vertical-align:middle}",
       ".fcp-ce-num{text-align:right;font-variant-numeric:tabular-nums}",
       ".fcp-ce-src{color:var(--rd-muted,#7a7c68);font-size:.6875rem}",
-      ".fcp-ce-data-row:hover td{background:var(--rd-gold-softer,rgba(212,106,32,.04))}",
+      ".fcp-ce-data-row:hover td{background:rgba(212,106,32,.03)}",
       ".fcp-ce-empty-cell{text-align:center;color:var(--rd-muted,#7a7c68);font-style:italic;padding:1rem!important}",
+      ".fcp-ce-empty-cell--sub{font-size:.6875rem;padding:.5rem!important;color:rgba(122,124,104,.6)}",
 
-      // Capture row
-      ".fcp-ce-capture-row td{background:rgba(22,101,52,.04);border-color:rgba(22,101,52,.18)!important;padding:.3rem .375rem!important}",
+      // ── Capture row — dominant, clearly the INPUT row
+      ".fcp-ce-capture-row td{background:rgba(22,101,52,.07);border:1px solid rgba(22,101,52,.22)!important;padding:.3rem .375rem!important;vertical-align:middle}",
+      ".fcp-ce-capture-row td:first-child{border-left:3px solid rgba(22,101,52,.55)!important}",
+      ".fcp-ce-capture-indicator{display:flex;align-items:center;gap:.375rem}",
+      ".fcp-ce-capture-arrow{font-size:.625rem;color:rgba(22,101,52,.7);flex-shrink:0}",
+
+      // Fields inside capture row
       ".fcp-ce-field{padding:.25rem .375rem;font-size:.75rem;border:1px solid var(--rd-line,rgba(108,112,91,.14));border-radius:4px;background:#fff;color:var(--rd-ink,#2a2d24);outline:none;width:100%;box-sizing:border-box;transition:border-color .12s}",
       ".fcp-ce-field:focus{border-color:var(--rd-gold,#d46a20)}",
       ".fcp-ce-field--select{min-width:7.5rem}",

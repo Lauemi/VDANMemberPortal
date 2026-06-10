@@ -1,0 +1,216 @@
+{
+  "maskId": "ADM_NATUR_GEWAESSER",
+  "maskFamily": "ADM",
+  "maskType": "workspace",
+  "workspaceMode": "full_width",
+  "workspaceNav": {
+    "enabled": true,
+    "position": "left",
+    "defaultSectionId": "ng_gewaesser",
+    "items": [
+      {
+        "id": "nav_ng_gewaesser",
+        "label": "Gewässer",
+        "targetSectionId": "ng_gewaesser"
+      },
+      {
+        "id": "nav_ng_fangstatistik",
+        "label": "Fangstatistik",
+        "targetSectionId": "ng_fangstatistik"
+      }
+    ]
+  },
+  "securityContext": {
+    "rlsKey": "tenant_id",
+    "membershipKey": "canonical_membership_id",
+    "requiresTenantAccess": true,
+    "requiresRoleCheck": true,
+    "allowedRoles": ["admin", "vorstand", "superadmin"],
+    "serverValidated": true
+  },
+  "header": {
+    "kicker": "Vereinsebene",
+    "title": "Natur / Gewässer",
+    "description": "Gewässer-Stammdaten und Fangstatistik auf Vereinsebene. Nicht die Mitglieder-Fangliste."
+  },
+  "toolbar": {
+    "enabled": false,
+    "actions": []
+  },
+  "metaPolicy": {
+    "autoDetect": true,
+    "auditFields": ["created_at", "updated_at"],
+    "appendOnlyHandling": "explicit"
+  },
+  "texts": {
+    "empty": "Keine Daten verfügbar."
+  },
+  "sections": [
+    {
+      "id": "ng_gewaesser",
+      "label": "Gewässer",
+      "title": "Gewässer — Stammdaten",
+      "description": "Übersicht der Vereinsgewässer mit zugeordneten Angelkarten.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": ["admin", "vorstand", "superadmin"],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "ng_gewaesser_tabelle",
+          "title": "Gewässer-Liste",
+          "renderMode": "table",
+          "componentType": "inline-data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": ["admin", "vorstand", "superadmin"],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.water_bodies",
+            "sourceKind": "rpc",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "expectedColumns": ["water_body_id", "name", "area_kind", "is_active", "card_keys"]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein Vereinskontext verfügbar. Bitte als Admin einloggen.",
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              },
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.admin_water_bodies_with_cards",
+            "path": "rpc:public.admin_water_bodies_with_cards"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            {"key": "name", "label": "Gewässer", "type": "text", "editable": false},
+            {"key": "area_kind", "label": "Art", "type": "text", "editable": false},
+            {"key": "is_active", "label": "Aktiv", "type": "boolean", "editable": false},
+            {"key": "card_keys", "label": "Angelkarten", "type": "json-display", "editable": false}
+          ],
+          "rowsPath": "rows",
+          "tableConfig": {
+            "tableId": "adm-ng-gewaesser",
+            "rowKeyField": "water_body_id",
+            "rowInteractionMode": "none",
+            "selectionMode": "none",
+            "viewMode": "table",
+            "sortKey": "name",
+            "sortDir": "asc",
+            "showCreateButton": false,
+            "filterFields": [
+              {"key": "name", "label": "Gewässer", "type": "text", "placeholder": "z. B. Angelweiher"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "ng_fangstatistik",
+      "label": "Fangstatistik",
+      "title": "Fangstatistik (in Vorbereitung)",
+      "description": "Aggregierte Fangstatistik auf Vereinsebene — wird separat konzipiert.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": ["admin", "vorstand", "superadmin"],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "ng_fangstatistik_hinweis",
+          "title": "Fangstatistik — Stand und Planung",
+          "renderMode": "readonly",
+          "componentType": "ReadonlyPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {"view": true, "write": false, "update": false, "delete": false, "roles": []},
+          "loadBinding": {"kind": "none"},
+          "saveBinding": {"kind": "none"},
+          "content": {
+            "fields": [
+              {
+                "key": "status",
+                "label": "Status",
+                "type": "text",
+                "value": "Noch nicht gebaut."
+              },
+              {
+                "key": "was_geplant",
+                "label": "Was geplant ist",
+                "type": "text",
+                "value": "Aggregierte Fangstatistik je Gewässer auf Vereinsebene (alle Mitglieder zusammen). Separates Konzept für mobile Vor-Ort-Erfassung folgt."
+              },
+              {
+                "key": "abgrenzung",
+                "label": "Abgrenzung",
+                "type": "text",
+                "value": "Diese Sicht ist für Vereinsauswertung — nicht für die Mitglieder-Fangliste unter /app/fangliste/."
+              }
+            ],
+            "rows": [],
+            "actions": []
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,215 @@
+{
+  "maskId": "ADM_MITGLIEDERABRECHNUNG",
+  "maskFamily": "ADM",
+  "maskType": "workspace",
+  "workspaceMode": "full_width",
+  "workspaceNav": {
+    "enabled": true,
+    "position": "left",
+    "defaultSectionId": "ma_pflichtstunden",
+    "items": [
+      {
+        "id": "nav_ma_pflichtstunden",
+        "label": "Pflichtstunden",
+        "targetSectionId": "ma_pflichtstunden"
+      }
+    ]
+  },
+  "securityContext": {
+    "rlsKey": "tenant_id",
+    "membershipKey": "canonical_membership_id",
+    "requiresTenantAccess": true,
+    "requiresRoleCheck": true,
+    "allowedRoles": ["admin", "vorstand", "superadmin"],
+    "serverValidated": true
+  },
+  "header": {
+    "kicker": "Verein → Mitglied",
+    "title": "Mitgliederabrechnung",
+    "description": "Pflichtstunden Soll / Ist / Delta je Mitglied. Grundlage für Verein-zu-Mitglied-Abrechnung. Keine Vermischung mit FCP-Billing."
+  },
+  "toolbar": {
+    "enabled": false,
+    "actions": []
+  },
+  "metaPolicy": {
+    "autoDetect": true,
+    "auditFields": ["created_at", "updated_at"],
+    "appendOnlyHandling": "explicit"
+  },
+  "texts": {
+    "empty": "Keine Daten verfügbar."
+  },
+  "sections": [
+    {
+      "id": "ma_pflichtstunden",
+      "label": "Pflichtstunden",
+      "title": "Pflichtstunden — Soll / Ist / Delta",
+      "description": "Jahresübersicht: Soll, geleistete Stunden und Delta je Mitglied.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": ["admin", "vorstand", "superadmin"],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "ma_pflichtstunden_tabelle",
+          "title": "Pflichtstunden je Mitglied",
+          "renderMode": "table",
+          "componentType": "inline-data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": ["admin", "vorstand", "superadmin"],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.admin_member_work_hours_overview",
+            "sourceKind": "rpc",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "expectedColumns": [
+                "member_no",
+                "club_member_no",
+                "first_name",
+                "last_name",
+                "role",
+                "is_exempt",
+                "soll_minutes",
+                "ist_minutes",
+                "delta_minutes"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein Vereinskontext verfügbar. Bitte als Admin einloggen.",
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              },
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.admin_member_work_hours_overview",
+            "path": "rpc:public.admin_member_work_hours_overview"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            {
+              "key": "club_member_no",
+              "label": "Mitgl.-Nr.",
+              "type": "text",
+              "exportable": true,
+              "exportKey": "club_member_no",
+              "exportLabel": "Mitgliedsnummer"
+            },
+            {
+              "key": "last_name",
+              "label": "Name",
+              "type": "text",
+              "exportable": true,
+              "exportKey": "last_name",
+              "exportLabel": "Nachname"
+            },
+            {
+              "key": "first_name",
+              "label": "Vorname",
+              "type": "text",
+              "exportable": true,
+              "exportKey": "first_name",
+              "exportLabel": "Vorname"
+            },
+            {
+              "key": "role",
+              "label": "Rolle",
+              "type": "text"
+            },
+            {
+              "key": "is_exempt",
+              "label": "Befreit",
+              "type": "boolean"
+            },
+            {
+              "key": "soll_minutes",
+              "label": "Soll (min)",
+              "type": "number",
+              "exportable": true,
+              "exportKey": "soll_minutes",
+              "exportLabel": "Soll (Minuten)"
+            },
+            {
+              "key": "ist_minutes",
+              "label": "Ist (min)",
+              "type": "number",
+              "exportable": true,
+              "exportKey": "ist_minutes",
+              "exportLabel": "Ist (Minuten)"
+            },
+            {
+              "key": "delta_minutes",
+              "label": "Delta (min)",
+              "type": "number",
+              "exportable": true,
+              "exportKey": "delta_minutes",
+              "exportLabel": "Delta (Minuten)"
+            }
+          ],
+          "rowsPath": "rows",
+          "tableConfig": {
+            "tableId": "adm-ma-pflichtstunden",
+            "rowKeyField": "member_no",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "none",
+            "selectionMode": "none",
+            "viewMode": "table",
+            "sortKey": "delta_minutes",
+            "sortDir": "desc",
+            "showCreateButton": false,
+            "filterFields": [
+              {"key": "last_name", "label": "Name", "type": "text", "placeholder": "Nachname"},
+              {"key": "is_exempt", "label": "Befreit", "type": "text"}
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

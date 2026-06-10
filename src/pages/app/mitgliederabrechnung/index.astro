@@ -4,15 +4,11 @@ import Site from "../../../layouts/Site.astro";
 import { APP } from "../../../config/app";
 import { readMaskJsonFile } from "../../../../scripts/fcp-mask-reader.mjs";
 
-const maskFilePath = path.resolve(process.cwd(), "docs/masks/templates/Onboarding/ADM_clubSettings.json");
+const maskFilePath = path.resolve(process.cwd(), "docs/masks/templates/ADM_mitgliederabrechnung.json");
 const resolvedMask = await readMaskJsonFile(maskFilePath);
 
 const admConfig = {
   ...resolvedMask,
-  workspaceNav: {
-    ...resolvedMask.workspaceNav,
-    defaultSectionId: "club_settings_abrechnung",
-  },
   root: "#mitgliederabrechnungAdmRoot",
   currentRoles: ["admin", "vorstand", "superadmin"],
   currentScopes: {
@@ -30,7 +26,7 @@ const admConfigJson = JSON.stringify(admConfig);
 
 <Site
   title={`Mitgliederabrechnung • ${APP.name}`}
-  description="ADM: Mitgliederabrechnung — Pflichtstunden, Soll/Ist/Delta"
+  description="ADM: Mitgliederabrechnung — Pflichtstunden Soll/Ist/Delta"
   robots="noindex"
   containerClass="container container--admin-wide"
   admBreadcrumbs={["Operativ", "Mitgliederabrechnung"]}
@@ -38,11 +34,11 @@ const admConfigJson = JSON.stringify(admConfig);
 
   <div class="adm-workspace-header">
     <div class="adm-workspace-header__text">
-      <p class="adm-workspace-header__kicker">Vereins-Abrechnung</p>
-      <h1 class="adm-workspace-header__title">Mitgliederabrechnung</h1>
-      <p class="adm-workspace-header__desc">
-        Pflichtstunden Soll / Ist / Delta pro Mitglied. Grundlage für Verein→Mitglied-Abrechnung.
-      </p>
+      <p class="adm-workspace-header__kicker">{resolvedMask?.header?.kicker ?? "Verein → Mitglied"}</p>
+      <h1 class="adm-workspace-header__title">{resolvedMask?.header?.title ?? "Mitgliederabrechnung"}</h1>
+      {resolvedMask?.header?.description && (
+        <p class="adm-workspace-header__desc">{resolvedMask.header.description}</p>
+      )}
     </div>
   </div>
 
@@ -61,9 +57,6 @@ const admConfigJson = JSON.stringify(admConfig);
   <script is:inline src="/js/fcp-roles-accordion.js"></script>
   <script is:inline src="/js/fcp-adm-qfm-shared-renderers.js"></script>
   <script is:inline src="/js/fcp-table-dialog-host.js"></script>
-  <script is:inline src="/js/fcp-member-invite-dialog.js"></script>
-  <script is:inline src="/js/domain-adapter-vereinsverwaltung.js"></script>
-  <script is:inline src="/js/vereinsverwaltung-adm.js"></script>
   <script is:inline src="/js/admin-panel-mask.js"></script>
   <script is:inline src="/js/fcp-mask-page-loader.js"></script>
   <link rel="stylesheet" href="/css/redesign.css" />
@@ -85,11 +78,7 @@ const admConfigJson = JSON.stringify(admConfig);
   </script>
 
   <style>
-    #mitgliederabrechnungAdmRoot {
-      min-height: 420px;
-    }
-    .ofm-mask-stage__status {
-      margin: 10px 0 0;
-    }
+    #mitgliederabrechnungAdmRoot { min-height: 420px; }
+    .ofm-mask-stage__status { margin: 10px 0 0; }
   </style>
 </Site>

@@ -5,7 +5,7 @@
 // Einstiegspunkt: window.FcpCatchEntry.renderPanel(mask, section, panel, emptyText)
 
 ;(() => {
-  // ── Supabase fetch utility (same pattern as fcp-mask-data-resolver.js)
+  // ── Supabase fetch utility
   async function waitForAuth(ms) {
     const end = Date.now() + (ms || 3000);
     while (Date.now() < end) {
@@ -81,9 +81,7 @@
   function hide(n) { n.classList.add("fcp-ce-hidden"); }
   function show(n) { n.classList.remove("fcp-ce-hidden"); }
 
-  function today() {
-    return new Date().toISOString().slice(0, 10);
-  }
+  function today() { return new Date().toISOString().slice(0, 10); }
 
   function fmtDate(iso) {
     if (!iso) return "—";
@@ -95,7 +93,6 @@
   function renderPanel(mask, section, panel, emptyText) {
     const wrap = el("div", { cls: "fcp-ce-wrap" });
 
-    // State
     let clubId = "";
     let members = [];
     let species = [];
@@ -103,68 +100,134 @@
     let selectedMember = null;
     let entries = [];
     let captureOpen = false;
+    let captureTyp = "catch"; // "catch" | "no_catch"
 
-    // ── Member bar
+    // ──────────────────────────────────────────
+    // STEP 1 — Member picker zone
+    // ──────────────────────────────────────────
     const memberInput = el("input", {
       type: "search", cls: "fcp-ce-member-input",
-      placeholder: "Name oder Mitgl.-Nr. …", autocomplete: "off",
+      placeholder: "Name oder Mitgliedsnummer …", autocomplete: "off",
     });
     const dropdown = el("div", { cls: "fcp-ce-dropdown fcp-ce-hidden" });
     const searchWrap = el("div", { cls: "fcp-ce-search-wrap" }, [memberInput, dropdown]);
 
-    const badgeName = el("span", { cls: "fcp-ce-badge-name" });
-    const badgeClear = el("button", { cls: "fcp-ce-badge-clear", type: "button", title: "Abwählen", text: "✕" });
-    const badge = el("div", { cls: "fcp-ce-badge fcp-ce-hidden" }, [badgeName, badgeClear]);
-
-    const memberBar = el("div", { cls: "fcp-ce-member-bar" }, [
-      el("span", { cls: "fcp-ce-member-label", text: "Mitglied" }),
+    // Empty state: card with step number, instruction, search input
+    const stepBody = el("div", { cls: "fcp-ce-step-body" }, [
+      el("p", { cls: "fcp-ce-step-desc", text: "Zuerst ein Mitglied auswählen — danach können Fangtage erfasst werden." }),
       searchWrap,
-      badge,
     ]);
 
-    // ── "Neue Zeile" bar — only visible when capture is CLOSED
-    const btnNewRow = el("button", { cls: "fcp-ce-btn fcp-ce-btn--primary", type: "button", text: "+ Neue Zeile" });
+    const stepHead = el("div", { cls: "fcp-ce-step-head" }, [
+      el("span", { cls: "fcp-ce-step-num", text: "1" }),
+      el("span", { cls: "fcp-ce-step-title", text: "Mitglied auswählen" }),
+    ]);
+
+    // Selected state: compact inline
+    const badgeName = el("span", { cls: "fcp-ce-badge-name" });
+    const badgeClear = el("button", {
+      cls: "fcp-ce-badge-clear", type: "button", text: "Wechseln",
+    });
+    const stepSel = el("div", { cls: "fcp-ce-step-sel fcp-ce-hidden" }, [badgeName, badgeClear]);
+
+    const stepZone = el("div", { cls: "fcp-ce-step-zone" }, [stepHead, stepBody, stepSel]);
+
+    // ──────────────────────────────────────────
+    // "Neue Zeile" bar — appears when capture closed
+    // ──────────────────────────────────────────
+    const btnNewRow = el("button", {
+      cls: "fcp-ce-btn fcp-ce-btn--primary", type: "button", text: "+ Neue Zeile",
+    });
     const newRowBar = el("div", { cls: "fcp-ce-action-bar fcp-ce-hidden" }, [btnNewRow]);
 
-    // ── Capture row elements
-    const fDate    = el("input",  { type: "date",   cls: "fcp-ce-field", value: today() });
+    // ──────────────────────────────────────────
+    // CAPTURE ROW — Typ toggle + fields
+    // ──────────────────────────────────────────
+    const btnTypNoCatch = el("button", {
+      cls: "fcp-ce-typ-btn", type: "button", "data-typ": "no_catch", text: "Nutzung",
+    });
+    const btnTypCatch = el("button", {
+      cls: "fcp-ce-typ-btn fcp-ce-typ-btn--active", type: "button", "data-typ": "catch", text: "Fang",
+    });
+    const typToggle = el("div", { cls: "fcp-ce-typ-toggle" }, [btnTypNoCatch, btnTypCatch]);
+
+    const fDate    = el("input",  { type: "date",   cls: "fcp-ce-field",                           value: today() });
     const fWater   = el("select", { cls: "fcp-ce-field fcp-ce-field--select" });
     const fSpecies = el("select", { cls: "fcp-ce-field fcp-ce-field--select" });
-    const fQty     = el("input",  { type: "number", cls: "fcp-ce-field fcp-ce-field--num", min: "1", placeholder: "Stück" });
-    const fWeight  = el("input",  { type: "number", cls: "fcp-ce-field fcp-ce-field--num", min: "0", placeholder: "g" });
-    const btnSave  = el("button", { cls: "fcp-ce-btn fcp-ce-btn--save", type: "button", text: "Speichern" });
+    const fQty     = el("input",  { type: "number", cls: "fcp-ce-field fcp-ce-field--num", min: "1",  placeholder: "Stück" });
+    const fWeight  = el("input",  { type: "number", cls: "fcp-ce-field fcp-ce-field--num", min: "0",  placeholder: "g" });
+    const btnSave  = el("button", { cls: "fcp-ce-btn fcp-ce-btn--save",  type: "button", text: "Speichern" });
     const btnAbort = el("button", { cls: "fcp-ce-btn fcp-ce-btn--ghost", type: "button", title: "Abbrechen", text: "✕" });
     const capStatus = el("span",  { cls: "fcp-ce-cap-status" });
 
+    // TDs we conditionally hide for Nutzung
+    const thFish   = el("th", { cls: "fcp-ce-col-fish",   text: "Fischart" });
+    const thQty    = el("th", { cls: "fcp-ce-col-qty",    text: "Stück"    });
+    const thWeight = el("th", { cls: "fcp-ce-col-weight", text: "Gewicht"  });
+    const tdSpecies = el("td", { cls: "fcp-ce-col-fish"   }, [fSpecies]);
+    const tdQty     = el("td", { cls: "fcp-ce-col-qty"    }, [fQty]);
+    const tdWeight  = el("td", { cls: "fcp-ce-col-weight" }, [fWeight]);
+
     const captureRow = el("tr", { cls: "fcp-ce-capture-row fcp-ce-hidden" }, [
-      el("td", { cls: "fcp-ce-capture-indicator" }, [el("span", { cls: "fcp-ce-capture-arrow", text: "▶" }), fDate]),
+      el("td", { cls: "fcp-ce-cap-typ" }, [typToggle]),
+      el("td", { cls: "fcp-ce-capture-indicator" }, [
+        el("span", { cls: "fcp-ce-capture-arrow", text: "▶" }),
+        fDate,
+      ]),
       el("td", {}, [fWater]),
-      el("td", {}, [fSpecies]),
-      el("td", {}, [fQty]),
-      el("td", {}, [fWeight]),
+      tdSpecies,
+      tdQty,
+      tdWeight,
       el("td", { cls: "fcp-ce-cap-actions" }, [btnSave, btnAbort, capStatus]),
     ]);
 
-    // ── Table
-    const tbody = el("tbody");
-    tbody.append(captureRow);
-
+    // ──────────────────────────────────────────
+    // TABLE
+    // ──────────────────────────────────────────
     const thead = el("thead");
     const thr = el("tr");
-    ["Datum", "Gewässer", "Fischart", "Stück", "Gewicht", ""].forEach((h) => {
-      thr.append(el("th", { text: h }));
-    });
+    [
+      el("th", { text: "Typ" }),
+      el("th", { text: "Datum" }),
+      el("th", { text: "Gewässer" }),
+      thFish,
+      thQty,
+      thWeight,
+      el("th"),
+    ].forEach((th) => thr.append(th));
     thead.append(thr);
+
+    const tbody = el("tbody");
+    tbody.append(captureRow);
 
     const table = el("table", { cls: "fcp-ce-table", role: "grid" }, [thead, tbody]);
     const tableWrap = el("div", { cls: "fcp-ce-table-wrap fcp-ce-hidden" }, [table]);
 
-    // ── Hint / status line
     const hint = el("p", { cls: "fcp-ce-hint", text: "Lade Stammdaten …" });
 
-    wrap.append(memberBar, newRowBar, tableWrap, hint);
+    wrap.append(stepZone, newRowBar, tableWrap, hint);
 
-    // ── Populate selects
+    // ──────────────────────────────────────────
+    // Typ toggle — show/hide catch-only columns
+    // ──────────────────────────────────────────
+    function setTyp(newTyp) {
+      captureTyp = newTyp;
+      const isCatch = newTyp === "catch";
+      btnTypNoCatch.classList.toggle("fcp-ce-typ-btn--active", !isCatch);
+      btnTypCatch.classList.toggle("fcp-ce-typ-btn--active",    isCatch);
+      [tdSpecies, tdQty, tdWeight, thFish, thQty, thWeight].forEach((node) => {
+        node.classList.toggle("fcp-ce-col-hidden", !isCatch);
+      });
+      if (!isCatch) {
+        fSpecies.value = "";
+        fQty.value = "";
+        fWeight.value = "";
+      }
+    }
+
+    // ──────────────────────────────────────────
+    // Populate selects
+    // ──────────────────────────────────────────
     function fillWater(sel) {
       sel.innerHTML = "";
       sel.append(el("option", { value: "", text: "— Gewässer —" }));
@@ -181,72 +244,102 @@
       });
     }
 
-    // ── Render entries below capture row
+    // ──────────────────────────────────────────
+    // Render entry rows (Fang + Nutzung unified)
+    // ──────────────────────────────────────────
     function renderEntries() {
       Array.from(tbody.querySelectorAll(".fcp-ce-data-row, .fcp-ce-empty-row")).forEach((r) => r.remove());
 
       if (!entries.length) {
         const tr = el("tr", { cls: "fcp-ce-empty-row" });
         tr.append(el("td", {
-          colspan: "6",
+          colspan: "7",
           cls: captureOpen ? "fcp-ce-empty-cell fcp-ce-empty-cell--sub" : "fcp-ce-empty-cell",
-          text: captureOpen ? "Noch keine früheren Einträge." : "Noch keine Einträge für dieses Mitglied.",
+          text: captureOpen
+            ? "Noch keine früheren Einträge."
+            : "Noch keine Einträge für dieses Mitglied.",
         }));
         tbody.append(tr);
         return;
       }
+
       entries.forEach((e) => {
+        const isCatch = e.entry_kind === "catch";
         const tr = el("tr", { cls: "fcp-ce-data-row" });
         tr.append(
-          el("td", { text: fmtDate(e.caught_on) }),
+          el("td", {}, [
+            el("span", {
+              cls: isCatch ? "fcp-ce-typ-badge fcp-ce-typ-badge--catch" : "fcp-ce-typ-badge fcp-ce-typ-badge--nocatch",
+              text: isCatch ? "Fang" : "Nutzung",
+            }),
+          ]),
+          el("td", { text: fmtDate(e.trip_date) }),
           el("td", { text: e.water_body_name || "—" }),
-          el("td", { text: e.fish_species_name || "—" }),
-          el("td", { cls: "fcp-ce-num", text: String(e.quantity) }),
-          el("td", { cls: "fcp-ce-num", text: e.weight_g ? `${e.weight_g} g` : "—" }),
+          el("td", { cls: "fcp-ce-col-fish",   text: isCatch ? (e.fish_species_name || "—") : "" }),
+          el("td", { cls: "fcp-ce-col-qty fcp-ce-num",    text: isCatch ? String(e.quantity ?? "—") : "" }),
+          el("td", { cls: "fcp-ce-col-weight fcp-ce-num", text: isCatch && e.weight_g ? `${e.weight_g} g` : (isCatch ? "—" : "") }),
           el("td", { cls: "fcp-ce-src", text: e.source === "admin_backfill" ? "Admin" : "" }),
         );
         tbody.append(tr);
       });
     }
 
-    // ── Capture mode — OPEN
+    // ──────────────────────────────────────────
+    // Capture mode open / close
+    // ──────────────────────────────────────────
     function openCapture() {
       fillWater(fWater);
       fillSpecies(fSpecies);
       fDate.value = today();
       fQty.value = "";
       fWeight.value = "";
+      fSpecies.value = "";
       capStatus.textContent = "";
       capStatus.className = "fcp-ce-cap-status";
       captureOpen = true;
-      hide(newRowBar);         // "Neue Zeile" button hidden while capture is open
+      setTyp(captureTyp);
+      hide(newRowBar);
       show(captureRow);
       show(tableWrap);
       renderEntries();
       setTimeout(() => fDate.focus(), 30);
     }
 
-    // ── Capture mode — CLOSE
     function closeCapture() {
       captureOpen = false;
       hide(captureRow);
-      show(newRowBar);         // "Neue Zeile" button reappears
+      show(newRowBar);
       renderEntries();
     }
 
-    // ── Save a capture row entry
+    // ──────────────────────────────────────────
+    // Save — routes to Nutzung or Fang RPC
+    // ──────────────────────────────────────────
     async function doSave() {
       if (!selectedMember || !clubId) return;
-      const caught_on       = fDate.value;
-      const water_body_id   = fWater.value || null;
-      const fish_species_id = fSpecies.value;
-      const quantity        = parseInt(fQty.value, 10);
-      const weight_g        = fWeight.value ? parseInt(fWeight.value, 10) : null;
 
-      if (!caught_on || !fish_species_id || !(quantity >= 1)) {
-        capStatus.textContent = "Datum, Fischart und Stück sind Pflichtfelder.";
+      const caught_on     = fDate.value;
+      const water_body_id = fWater.value || null;
+
+      if (!caught_on) {
+        capStatus.textContent = "Datum ist Pflicht.";
         capStatus.className = "fcp-ce-cap-status fcp-ce-cap-status--err";
         return;
+      }
+      if (!water_body_id) {
+        capStatus.textContent = "Gewässer ist Pflicht.";
+        capStatus.className = "fcp-ce-cap-status fcp-ce-cap-status--err";
+        return;
+      }
+
+      if (captureTyp === "catch") {
+        const fish_species_id = fSpecies.value;
+        const quantity        = parseInt(fQty.value, 10);
+        if (!fish_species_id || !(quantity >= 1)) {
+          capStatus.textContent = "Bei Fang: Fischart und Stück (≥ 1) sind Pflicht.";
+          capStatus.className = "fcp-ce-cap-status fcp-ce-cap-status--err";
+          return;
+        }
       }
 
       btnSave.disabled = true;
@@ -254,22 +347,35 @@
       capStatus.className = "fcp-ce-cap-status";
 
       try {
-        await rpc("admin_catch_entry_insert", {
-          p_club_id:         clubId,
-          p_member_no:       selectedMember.member_no,
-          p_caught_on:       caught_on,
-          p_water_body_id:   water_body_id,
-          p_fish_species_id: fish_species_id,
-          p_quantity:        quantity,
-          p_weight_g:        weight_g,
-        });
+        if (captureTyp === "no_catch") {
+          await rpc("admin_fishing_trip_no_catch_insert", {
+            p_club_id:       clubId,
+            p_member_no:     selectedMember.member_no,
+            p_trip_date:     caught_on,
+            p_water_body_id: water_body_id,
+          });
+        } else {
+          const fish_species_id = fSpecies.value;
+          const quantity        = parseInt(fQty.value, 10);
+          const weight_g        = fWeight.value ? parseInt(fWeight.value, 10) : null;
+          await rpc("admin_catch_entry_insert", {
+            p_club_id:         clubId,
+            p_member_no:       selectedMember.member_no,
+            p_caught_on:       caught_on,
+            p_water_body_id:   water_body_id,
+            p_fish_species_id: fish_species_id,
+            p_quantity:        quantity,
+            p_weight_g:        weight_g,
+          });
+        }
+
         capStatus.textContent = "✓";
         capStatus.className = "fcp-ce-cap-status fcp-ce-cap-status--ok";
-        // Reload entries, then immediately reset for next row
         await loadEntries();
         fDate.value = today();
         fQty.value = "";
         fWeight.value = "";
+        fSpecies.value = "";
         setTimeout(() => {
           capStatus.textContent = "";
           fDate.focus();
@@ -282,19 +388,26 @@
       }
     }
 
-    // ── Member dropdown
+    // ──────────────────────────────────────────
+    // Member dropdown
+    // ──────────────────────────────────────────
     function matchMembers(q) {
       const lq = q.trim().toLowerCase();
       if (!lq) return members.slice(0, 12);
-      return members.filter((m) =>
-        `${m.first_name} ${m.last_name} ${m.member_no}`.toLowerCase().includes(lq)
-      ).slice(0, 12);
+      return members
+        .filter((m) =>
+          `${m.first_name} ${m.last_name} ${m.member_no}`.toLowerCase().includes(lq)
+        )
+        .slice(0, 12);
     }
 
     function renderDropdown(list) {
       dropdown.innerHTML = "";
       if (!list.length) {
-        dropdown.append(el("div", { cls: "fcp-ce-dd-item fcp-ce-dd-empty", text: "Kein Mitglied gefunden." }));
+        dropdown.append(el("div", {
+          cls: "fcp-ce-dd-item fcp-ce-dd-empty",
+          text: "Kein Mitglied gefunden.",
+        }));
       } else {
         list.forEach((m) => {
           const item = el("div", { cls: "fcp-ce-dd-item" });
@@ -308,23 +421,37 @@
       }
     }
 
-    // ── Select a member → auto-open capture mode
+    // ──────────────────────────────────────────
+    // Member select / clear
+    // ──────────────────────────────────────────
     function selectMember(m) {
       selectedMember = m;
       memberInput.value = "";
       hide(dropdown);
+
+      // Transform step zone → compact done state
       badgeName.textContent = `${m.first_name} ${m.last_name} · Nr. ${m.member_no}`;
-      show(badge);
+      hide(stepBody);
+      show(stepSel);
+      stepHead.querySelector(".fcp-ce-step-title").textContent = "Mitglied:";
+      stepZone.classList.add("fcp-ce-step-zone--done");
+
       hide(hint);
-      loadEntries();   // async — entries appear below as they load
-      openCapture();   // auto-open capture row immediately, focus Datum
+      loadEntries();
+      openCapture();
     }
 
     function clearMember() {
       selectedMember = null;
       entries = [];
       captureOpen = false;
-      hide(badge);
+
+      // Reset step zone → empty state
+      show(stepBody);
+      hide(stepSel);
+      stepHead.querySelector(".fcp-ce-step-title").textContent = "Mitglied auswählen";
+      stepZone.classList.remove("fcp-ce-step-zone--done");
+
       hide(newRowBar);
       hide(captureRow);
       hide(tableWrap);
@@ -332,11 +459,13 @@
       show(hint);
     }
 
-    // ── Data loading
+    // ──────────────────────────────────────────
+    // Load entries — unified Fang + Nutzung
+    // ──────────────────────────────────────────
     async function loadEntries() {
       if (!selectedMember || !clubId) return;
       try {
-        const rows = await rpc("admin_catch_entries_by_member", {
+        const rows = await rpc("admin_trip_log_by_member", {
           p_club_id:   clubId,
           p_member_no: selectedMember.member_no,
         });
@@ -347,6 +476,9 @@
       renderEntries();
     }
 
+    // ──────────────────────────────────────────
+    // Init — load reference data
+    // ──────────────────────────────────────────
     async function init() {
       hint.textContent = "Lade Stammdaten …";
       try {
@@ -363,26 +495,26 @@
         members = Array.isArray(mRows) ? mRows : [];
         species = Array.isArray(sRows) ? sRows : [];
         waters  = Array.isArray(wRows) ? wRows : [];
-        hint.textContent = "Mitglied wählen, um Fangeinträge anzuzeigen.";
+        hint.textContent = "Mitglied suchen und auswählen, um Einträge zu erfassen.";
       } catch (err) {
         hint.textContent = `Fehler beim Laden: ${err.message || "Unbekannter Fehler."}`;
       }
     }
 
-    // ── Event wiring
+    // ──────────────────────────────────────────
+    // Event wiring
+    // ──────────────────────────────────────────
     memberInput.addEventListener("input", () => {
       if (!members.length) return;
       renderDropdown(matchMembers(memberInput.value));
       show(dropdown);
     });
-
     memberInput.addEventListener("focus", () => {
       if (members.length) {
         renderDropdown(matchMembers(memberInput.value));
         show(dropdown);
       }
     });
-
     memberInput.addEventListener("blur", () => {
       setTimeout(() => hide(dropdown), 160);
     });
@@ -392,13 +524,14 @@
     btnAbort.addEventListener("click", closeCapture);
     btnSave.addEventListener("click", doSave);
 
-    // Enter on last field or save button triggers save
-    fWeight.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); doSave(); }
-    });
-    btnSave.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); doSave(); }
-    });
+    btnTypNoCatch.addEventListener("click", () => setTyp("no_catch"));
+    btnTypCatch.addEventListener("click",   () => setTyp("catch"));
+
+    // Enter on last visible field triggers save
+    fWeight.addEventListener("keydown",  (e) => { if (e.key === "Enter") { e.preventDefault(); doSave(); } });
+    fQty.addEventListener("keydown",     (e) => { if (e.key === "Enter" && captureTyp === "no_catch") { e.preventDefault(); doSave(); } });
+    fWater.addEventListener("keydown",   (e) => { if (e.key === "Enter" && captureTyp === "no_catch") { e.preventDefault(); doSave(); } });
+    btnSave.addEventListener("keydown",  (e) => { if (e.key === "Enter") { e.preventDefault(); doSave(); } });
 
     init();
     return wrap;
@@ -412,13 +545,25 @@
       // Layout
       ".fcp-ce-wrap{display:flex;flex-direction:column;gap:.875rem}",
       ".fcp-ce-hidden{display:none!important}",
+      ".fcp-ce-col-hidden{display:none!important}",
 
-      // Member bar
-      ".fcp-ce-member-bar{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}",
-      ".fcp-ce-member-label{font-size:.75rem;font-weight:600;color:var(--rd-muted,#7a7c68);white-space:nowrap}",
+      // ── Step 1 zone — empty state
+      ".fcp-ce-step-zone{background:var(--rd-gold-softer,rgba(212,106,32,.06));border:1px solid var(--rd-line,rgba(108,112,91,.14));border-radius:8px;padding:1rem 1.25rem;transition:padding .15s,background .15s}",
+      ".fcp-ce-step-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}",
+      ".fcp-ce-step-num{width:1.625rem;height:1.625rem;background:var(--rd-gold,#d46a20);color:#fff;font-size:.75rem;font-weight:700;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}",
+      ".fcp-ce-step-title{font-size:.875rem;font-weight:600;color:var(--rd-ink,#2a2d24)}",
+      ".fcp-ce-step-desc{font-size:.75rem;color:var(--rd-muted,#7a7c68);margin:0 0 .625rem}",
       ".fcp-ce-search-wrap{position:relative}",
-      ".fcp-ce-member-input{width:16rem;padding:.3125rem .625rem;font-size:.75rem;border:1px solid var(--rd-line,rgba(108,112,91,.14));border-radius:5px;background:#fff;color:var(--rd-ink,#2a2d24);outline:none;transition:border-color .15s}",
-      ".fcp-ce-member-input:focus{border-color:var(--rd-gold,#d46a20)}",
+      ".fcp-ce-member-input{width:18rem;padding:.375rem .75rem;font-size:.8125rem;border:1px solid var(--rd-line,rgba(108,112,91,.14));border-radius:5px;background:#fff;color:var(--rd-ink,#2a2d24);outline:none;transition:border-color .15s}",
+      ".fcp-ce-member-input:focus{border-color:var(--rd-gold,#d46a20);box-shadow:0 0 0 2px rgba(212,106,32,.1)}",
+
+      // ── Step zone — done/selected state
+      ".fcp-ce-step-zone--done{background:transparent;padding:.5rem 1rem}",
+      ".fcp-ce-step-zone--done .fcp-ce-step-head{margin-bottom:0}",
+      ".fcp-ce-step-sel{display:flex;align-items:center;gap:.625rem;padding-left:.125rem}",
+      ".fcp-ce-badge-name{font-size:.8125rem;font-weight:500;color:var(--rd-ink,#2a2d24)}",
+      ".fcp-ce-badge-clear{background:none;border:1px solid var(--rd-gold-soft,rgba(212,106,32,.12));border-radius:4px;cursor:pointer;color:var(--rd-gold,#d46a20);font-size:.6875rem;font-weight:500;padding:.1875rem .5rem;margin-left:.125rem;transition:background .1s}",
+      ".fcp-ce-badge-clear:hover{background:var(--rd-gold-softer,rgba(212,106,32,.06))}",
 
       // Dropdown
       ".fcp-ce-dropdown{position:absolute;top:calc(100% + 4px);left:0;min-width:22rem;background:#fff;border:1px solid var(--rd-line,rgba(108,112,91,.14));border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.09);z-index:120;max-height:15rem;overflow-y:auto}",
@@ -429,13 +574,7 @@
       ".fcp-ce-dd-name{font-size:.75rem;color:var(--rd-ink,#2a2d24);font-weight:500}",
       ".fcp-ce-dd-no{font-size:.6875rem;color:var(--rd-muted,#7a7c68)}",
 
-      // Badge
-      ".fcp-ce-badge{display:inline-flex;align-items:center;gap:.375rem;background:var(--rd-gold-softer,rgba(212,106,32,.06));border:1px solid var(--rd-line,rgba(108,112,91,.14));border-radius:5px;padding:.25rem .625rem}",
-      ".fcp-ce-badge-name{font-size:.75rem;color:var(--rd-ink,#2a2d24);font-weight:500}",
-      ".fcp-ce-badge-clear{background:none;border:none;cursor:pointer;color:var(--rd-muted,#7a7c68);font-size:.8125rem;padding:0 .125rem;line-height:1}",
-      ".fcp-ce-badge-clear:hover{color:var(--rd-ink,#2a2d24)}",
-
-      // "Neue Zeile" action bar (visible only when capture closed)
+      // "Neue Zeile" action bar
       ".fcp-ce-action-bar{display:flex;gap:.5rem}",
 
       // Buttons
@@ -448,6 +587,17 @@
       ".fcp-ce-btn--ghost{background:transparent;border-color:var(--rd-line,rgba(108,112,91,.14));color:var(--rd-muted,#7a7c68)}",
       ".fcp-ce-btn--ghost:hover{background:var(--rd-gold-softer,rgba(212,106,32,.06))}",
 
+      // ── Typ toggle
+      ".fcp-ce-typ-toggle{display:inline-flex;border:1px solid var(--rd-line,rgba(108,112,91,.18));border-radius:5px;overflow:hidden}",
+      ".fcp-ce-typ-btn{padding:.1875rem .5rem;font-size:.6875rem;border:none;background:transparent;cursor:pointer;color:var(--rd-muted,#7a7c68);font-weight:500;white-space:nowrap;transition:background .1s,color .1s}",
+      ".fcp-ce-typ-btn[data-typ='catch'].fcp-ce-typ-btn--active{background:rgba(22,101,52,.1);color:#166534}",
+      ".fcp-ce-typ-btn[data-typ='no_catch'].fcp-ce-typ-btn--active{background:var(--rd-gold-soft,rgba(212,106,32,.12));color:var(--rd-gold,#d46a20)}",
+
+      // ── Typ badges (in data rows)
+      ".fcp-ce-typ-badge{font-size:.625rem;font-weight:600;padding:.1rem .375rem;border-radius:3px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}",
+      ".fcp-ce-typ-badge--catch{background:rgba(22,101,52,.09);color:#166534}",
+      ".fcp-ce-typ-badge--nocatch{background:var(--rd-gold-softer,rgba(212,106,32,.06));color:var(--rd-gold,#d46a20)}",
+
       // Table
       ".fcp-ce-table-wrap{overflow-x:auto}",
       ".fcp-ce-table{border-collapse:collapse;width:100%;font-size:.75rem;color:var(--rd-ink,#2a2d24)}",
@@ -459,9 +609,10 @@
       ".fcp-ce-empty-cell{text-align:center;color:var(--rd-muted,#7a7c68);font-style:italic;padding:1rem!important}",
       ".fcp-ce-empty-cell--sub{font-size:.6875rem;padding:.5rem!important;color:rgba(122,124,104,.6)}",
 
-      // ── Capture row — dominant, clearly the INPUT row
-      ".fcp-ce-capture-row td{background:rgba(22,101,52,.07);border:1px solid rgba(22,101,52,.22)!important;padding:.3rem .375rem!important;vertical-align:middle}",
-      ".fcp-ce-capture-row td:first-child{border-left:3px solid rgba(22,101,52,.55)!important}",
+      // ── Capture row
+      ".fcp-ce-capture-row td{background:rgba(22,101,52,.06);border:1px solid rgba(22,101,52,.2)!important;padding:.3rem .375rem!important;vertical-align:middle}",
+      ".fcp-ce-capture-row td:first-child{border-left:3px solid rgba(22,101,52,.5)!important}",
+      ".fcp-ce-cap-typ{white-space:nowrap}",
       ".fcp-ce-capture-indicator{display:flex;align-items:center;gap:.375rem}",
       ".fcp-ce-capture-arrow{font-size:.625rem;color:rgba(22,101,52,.7);flex-shrink:0}",
 

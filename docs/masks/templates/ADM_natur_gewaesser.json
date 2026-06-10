@@ -245,16 +245,16 @@
     {
       "id": "ng_nacherfassung",
       "label": "Nacherfassung",
-      "title": "Nacherfassung (in Vorbereitung)",
-      "description": "Manuelle Erfassung von Papierfanglisten durch den Vorstand — separater Bauauftrag.",
+      "title": "Nacherfassung — Papierfanglisten",
+      "description": "Manuelle Erfassung von Papierfanglisten durch den Vorstand. Mitglied wählen, Fangzeilen erfassen.",
       "workspaceSlot": "main",
       "sectionLayout": "stack",
       "permissions": {
         "view": true,
-        "write": false,
+        "write": true,
         "update": false,
         "delete": false,
-        "roles": []
+        "roles": ["admin", "vorstand", "superadmin"]
       },
       "securityContext": {
         "rlsKey": "tenant_id",
@@ -268,36 +268,31 @@
       "scope": "club_override",
       "panels": [
         {
-          "id": "ng_nacherfassung_hinweis",
-          "title": "Nacherfassung — Stand und Abgrenzung",
-          "renderMode": "readonly",
-          "componentType": "ReadonlyPanel",
+          "id": "ng_nacherfassung_capture",
+          "title": "Fangerfassung",
+          "renderMode": "catch-entry",
+          "componentType": "catch-entry",
           "contentArea": "main",
           "flowType": "standard",
-          "permissions": {"view": true, "write": false, "update": false, "delete": false, "roles": []},
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": false,
+            "delete": false,
+            "roles": ["admin", "vorstand", "superadmin"]
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": ["admin", "vorstand", "superadmin"],
+            "serverValidated": true
+          },
           "loadBinding": {"kind": "none"},
           "saveBinding": {"kind": "none"},
           "content": {
-            "fields": [
-              {
-                "key": "status",
-                "label": "Status",
-                "type": "text",
-                "value": "Noch nicht gebaut."
-              },
-              {
-                "key": "was_geplant",
-                "label": "Was geplant ist",
-                "type": "text",
-                "value": "Manuelle Erfassung von Papierfanglisten durch den Vorstand (Gewässer + Fischart + Menge + Datum + Mitglied). Separates Konzept — kein Bestandteil des Fangstatistik-Tabs."
-              },
-              {
-                "key": "abgrenzung",
-                "label": "Abgrenzung",
-                "type": "text",
-                "value": "Fangstatistik = Aggregations-Lesesicht. Nacherfassung = operativer Schreibkontext. Bewusst getrennte Tabs. Mobile Vor-Ort-Erfassung ist nochmals ein separater Scope."
-              }
-            ],
+            "fields": [],
             "rows": [],
             "actions": []
           }

@@ -25,6 +25,8 @@ export const APP_MASK_BRAND_PAGES: AppMaskBrandEntry[] = [
   { route: "/app/kontrollboard/", label: "Kontrollboard", note: "Kontroll- und Rollout-Board.", default_brand: "fcp_tactical" },
   { route: "/app/masterboard/", label: "Masterboard", note: "Systemboard fuer Architektur, Risiko und operativen Stand.", default_brand: "fcp_tactical" },
   { route: "/app/mitgliederverwaltung/", label: "Mitgliederverwaltung", note: "Vereinsbezogene Mitgliederverwaltung.", default_brand: "fcp_tactical" },
+  { route: "/app/mitgliederabrechnung/", label: "Mitgliederabrechnung", note: "Pflichtstunden Soll/Ist/Delta — Verein zu Mitglied.", default_brand: "fcp_tactical" },
+  { route: "/app/natur-gewaesser/", label: "Natur / Gewaesser", note: "Gewaesser-Stammdaten und Fangstatistik auf Vereinsebene.", default_brand: "fcp_tactical" },
   { route: "/app/notes/", label: "Notes", note: "Interne Demo-/Notizseite.", default_brand: "fcp_tactical" },
   { route: "/app/passwort-aendern/", label: "Passwort aendern", note: "Passwort-Flow fuer Mitglieder.", default_brand: "fcp_tactical" },
   { route: "/app/rechtliches-bestaetigen/", label: "Rechtliches bestaetigen", note: "Rechtstexte im Portal bestaetigen.", default_brand: "fcp_tactical" },

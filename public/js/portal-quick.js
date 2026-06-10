@@ -54,6 +54,8 @@
     { id: "dokumente", href: "/app/dokumente/", label: "Dokumente", short: "DV", access: "manager", group: "manager" },
 
     { id: "feedback_cockpit", href: "/app/feedback/cockpit/", label: "Feedback Cockpit", short: "BC", access: "admin", group: "admin" },
+    { id: "mitgliederabrechnung", href: "/app/mitgliederabrechnung/", label: "Mitgliederabrechnung", short: "MA", access: "admin", group: "admin" },
+    { id: "natur_gewaesser", href: "/app/natur-gewaesser/", label: "Natur / Gewässer", short: "NG", access: "admin", group: "admin" },
     { id: "admin_board", href: "/app/admin-panel/", label: "Admin Board", short: "AB", access: "superadmin", group: "superadmin" },
     { id: "mitgliederverwaltung", href: "/app/mitgliederverwaltung/", label: "Mitgliederverwaltung", short: "MV", access: "admin", group: "admin" },
     { id: "kontrollboard", href: "/app/kontrollboard/", label: "Kontrollboard", short: "KB", access: "superadmin", group: "superadmin" },

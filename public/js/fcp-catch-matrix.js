@@ -8,11 +8,9 @@
 ;(() => {
   function renderPanel(mask, section, panel, emptyText) {
     const content = panel.loadedContent || panel.content || {};
-    const rawRows = Array.isArray(content.rows)
-      ? content.rows
-      : Array.isArray(panel.rows)
-        ? panel.rows
-        : [];
+    const contentRows = Array.isArray(content.rows) ? content.rows : null;
+    const panelRows = Array.isArray(panel.rows) ? panel.rows : [];
+    const rawRows = contentRows && contentRows.length ? contentRows : panelRows;
 
     const wrap = document.createElement("div");
     wrap.className = "fcp-catch-matrix-wrap";

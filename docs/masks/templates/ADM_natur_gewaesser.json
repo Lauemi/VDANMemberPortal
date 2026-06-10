@@ -17,6 +17,11 @@
         "id": "nav_ng_fangstatistik",
         "label": "Fangstatistik",
         "targetSectionId": "ng_fangstatistik"
+      },
+      {
+        "id": "nav_ng_nacherfassung",
+        "label": "Nacherfassung",
+        "targetSectionId": "ng_nacherfassung"
       }
     ]
   },
@@ -31,7 +36,7 @@
   "header": {
     "kicker": "Vereinsebene",
     "title": "Natur / Gewässer",
-    "description": "Gewässer-Stammdaten und Fangstatistik auf Vereinsebene. Nicht die Mitglieder-Fangliste."
+    "description": "Gewässer-Stammdaten, Fangstatistik und Nacherfassung auf Vereinsebene."
   },
   "toolbar": {
     "enabled": false,
@@ -153,8 +158,8 @@
     {
       "id": "ng_fangstatistik",
       "label": "Fangstatistik",
-      "title": "Fangstatistik (in Vorbereitung)",
-      "description": "Aggregierte Fangstatistik auf Vereinsebene — wird separat konzipiert.",
+      "title": "Fangstatistik — Vereinsebene",
+      "description": "Summe gefangener Fische je Gewässer und Fischart. Nur Fischarten mit mindestens einem Eintrag werden angezeigt.",
       "workspaceSlot": "main",
       "sectionLayout": "stack",
       "permissions": {
@@ -176,8 +181,95 @@
       "scope": "club_override",
       "panels": [
         {
-          "id": "ng_fangstatistik_hinweis",
-          "title": "Fangstatistik — Stand und Planung",
+          "id": "ng_fangstatistik_matrix",
+          "title": "Fangmatrix",
+          "renderMode": "catch-matrix",
+          "componentType": "catch-matrix",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": ["admin", "vorstand", "superadmin"],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.catch_entries",
+            "sourceKind": "rpc",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "expectedColumns": [
+                "fish_species_id", "fish_species_name",
+                "water_body_id", "water_body_name",
+                "total_quantity"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein Vereinskontext verfügbar. Bitte als Admin einloggen.",
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              },
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.admin_catch_stats_matrix",
+            "path": "rpc:public.admin_catch_stats_matrix"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "ng_nacherfassung",
+      "label": "Nacherfassung",
+      "title": "Nacherfassung (in Vorbereitung)",
+      "description": "Manuelle Erfassung von Papierfanglisten durch den Vorstand — separater Bauauftrag.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": ["admin", "vorstand", "superadmin"],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "ng_nacherfassung_hinweis",
+          "title": "Nacherfassung — Stand und Abgrenzung",
           "renderMode": "readonly",
           "componentType": "ReadonlyPanel",
           "contentArea": "main",
@@ -197,13 +289,13 @@
                 "key": "was_geplant",
                 "label": "Was geplant ist",
                 "type": "text",
-                "value": "Aggregierte Fangstatistik je Gewässer auf Vereinsebene (alle Mitglieder zusammen). Separates Konzept für mobile Vor-Ort-Erfassung folgt."
+                "value": "Manuelle Erfassung von Papierfanglisten durch den Vorstand (Gewässer + Fischart + Menge + Datum + Mitglied). Separates Konzept — kein Bestandteil des Fangstatistik-Tabs."
               },
               {
                 "key": "abgrenzung",
                 "label": "Abgrenzung",
                 "type": "text",
-                "value": "Diese Sicht ist für Vereinsauswertung — nicht für die Mitglieder-Fangliste unter /app/fangliste/."
+                "value": "Fangstatistik = Aggregations-Lesesicht. Nacherfassung = operativer Schreibkontext. Bewusst getrennte Tabs. Mobile Vor-Ort-Erfassung ist nochmals ein separater Scope."
               }
             ],
             "rows": [],

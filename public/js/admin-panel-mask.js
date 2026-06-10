@@ -632,6 +632,10 @@
           return typeof renderers.renderAccordionContent === "function"
             ? renderers.renderAccordionContent(this, section, panel, emptyText)
             : createElement("p", { className: "small", text: emptyText });
+        case "catch-matrix":
+          return typeof window.FcpCatchMatrix?.renderPanel === "function"
+            ? window.FcpCatchMatrix.renderPanel(this, section, panel, emptyText)
+            : createElement("p", { className: "small", text: emptyText });
         default:
           return createElement("p", { className: "small", text: emptyText });
       }

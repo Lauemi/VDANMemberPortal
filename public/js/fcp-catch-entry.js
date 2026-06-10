@@ -215,7 +215,8 @@
       const isCatch = newTyp === "catch";
       btnTypNoCatch.classList.toggle("fcp-ce-typ-btn--active", !isCatch);
       btnTypCatch.classList.toggle("fcp-ce-typ-btn--active",    isCatch);
-      [tdSpecies, tdQty, tdWeight, thFish, thQty, thWeight].forEach((node) => {
+      // Header stays stable — only hide capture-row cells
+      [tdSpecies, tdQty, tdWeight].forEach((node) => {
         node.classList.toggle("fcp-ce-col-hidden", !isCatch);
       });
       if (!isCatch) {

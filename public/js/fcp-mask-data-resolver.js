@@ -548,7 +548,11 @@
       expectedColumns,
       expectedSource: debug?.sourceTable || debug?.sourceOfTruth || null,
       expectedSourceKind: debug?.sourceKind || null,
-      expectedResultType: (debug?.contract?.renderMode === "table" || debug?.contract?.renderMode === "accordion") || debug?.rowsPath ? "rows" : "record",
+      expectedResultType: (
+        debug?.contract?.renderMode === "table" ||
+        debug?.contract?.renderMode === "accordion" ||
+        debug?.contract?.renderMode === "catch-matrix"
+      ) || debug?.rowsPath ? "rows" : "record",
       valuePaths: uniqueStrings(debug?.valuePaths),
       recommendedSqlFile: debug?.sqlFile || inferPanelSqlReferencePath(debug || {}),
     };
@@ -1944,7 +1948,7 @@
             : panel.renderMode === "readonly"
               ? { fields: [], rows: [{ label: "Status", value: missingClubContextMessage, span: "full" }], actions: [], blocks: [] }
               : {},
-          rows: (panel.renderMode === "table" || panel.renderMode === "accordion")
+          rows: (panel.renderMode === "table" || panel.renderMode === "accordion" || panel.renderMode === "catch-matrix")
             ? []
             : undefined,
           state: {
@@ -2034,7 +2038,11 @@
           state: resolvedState,
         };
       }
-      if (panel.renderMode === "table" || panel.renderMode === "accordion") {
+      if (
+        panel.renderMode === "table" ||
+        panel.renderMode === "accordion" ||
+        panel.renderMode === "catch-matrix"
+      ) {
         let rows = toArray(getByPath(resolvedModel, readContract?.rowsPath || resolverMeta.rowsPath || panel.rowsPath || "rows"));
         if (resolverMeta.enrichMemberRegistry === true) {
           const roleRows = await sb("/rest/v1/club_user_roles?select=club_id,user_id,role_key", { method: "GET" }, true).catch(() => []);

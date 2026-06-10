@@ -125,7 +125,7 @@
       { id: "work", label: "Arbeitseinsätze", active: true, usecases: ["work", "arbeitseinsaetze_cockpit"] }, // STEP09: arbeitseinsaetze->work (cockpit granular)
       { id: "eventplaner", label: "Eventplaner", active: true, usecases: ["eventplaner", "eventplaner_mitmachen"] },
       { id: "feed", label: "Feed", active: true, usecases: ["feed"] },
-      { id: "members", label: "Mitglieder", active: true, usecases: ["members", "mitglieder_registry"] }, // STEP09: mitglieder->members
+      { id: "members", label: "Mitglieder", active: true, usecases: ["members"] }, // STEP09: mitglieder_registry collapsed into members
       { id: "documents", label: "Dokumente", active: true, usecases: ["documents"] }, // STEP09: dokumente->documents
       { id: "meetings", label: "Sitzungen", active: true, usecases: ["meetings"] }, // STEP09: sitzungen->meetings
       { id: "settings", label: "Einstellungen", active: true, usecases: ["settings"] }, // STEP09: einstellungen->settings
@@ -196,7 +196,6 @@
     if (r === "admin") return rightSet({ view: true, write: true, update: true, delete: true });
     if (r === "vorstand") {
       if (/cockpit/.test(uc)) return rightSet({ view: true, write: true, update: true, delete: false });
-      if (uc === "mitglieder_registry") return rightSet({ view: true, write: true, update: true, delete: false });
       return rightSet({ view: true, write: true, update: true, delete: false });
     }
     if (r === "member") {

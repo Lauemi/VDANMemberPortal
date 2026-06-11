@@ -56,27 +56,27 @@
   ];
 
   const PORTAL_MODULE_DEFS = [
-    { id: "fangliste",            label: "Fangliste",              short: "FL", group: "member",     fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "arbeitseinsaetze",     label: "Termine / Events",       short: "TE", group: "member",     fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "ausweis",              label: "Mitgliedsausweis",       short: "ID", group: "member",     fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "gewaesserkarte",       label: "Gewässerkarte",          short: "GK", group: "member",     fcp_only: false, vdan_only: true,  deprecated: false },
-    { id: "zustaendigkeiten",     label: "Zuständigkeiten",        short: "ZU", group: "member",     fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "einstellungen",        label: "Einstellungen",          short: "ES", group: "member",     fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "scanner",              label: "Scanner",                short: "SC", group: "manager",    fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "eventplaner",          label: "Eventplaner",            short: "EP", group: "manager",    fcp_only: false, vdan_only: false, deprecated: true  },
-    { id: "eventplaner_v2",       label: "Eventplaner 2.0",        short: "E2", group: "manager",    fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "feedback",             label: "Feedback",               short: "FB", group: "manager",    fcp_only: true,  vdan_only: false, deprecated: false },
-    { id: "sitzungen",            label: "Sitzungen",              short: "SI", group: "manager",    fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "dokumente",            label: "Dokumente",              short: "DV", group: "manager",    fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "feedback_cockpit",     label: "Feedback Cockpit",       short: "BC", group: "admin",      fcp_only: true,  vdan_only: false, deprecated: false },
-    { id: "mitgliederabrechnung", label: "Mitgliederabrechnung",   short: "MA", group: "admin",      fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "natur_gewaesser",      label: "Natur / Gewässer",       short: "NG", group: "admin",      fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "mitgliederverwaltung", label: "Mitgliederverwaltung",   short: "MV", group: "admin",      fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "admin_board",          label: "Admin Board",            short: "AB", group: "superadmin", fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "kontrollboard",        label: "Kontrollboard",          short: "KB", group: "superadmin", fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "masterboard",          label: "Masterboard",            short: "MB", group: "superadmin", fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "component_library",    label: "Component Library",      short: "CL", group: "superadmin", fcp_only: false, vdan_only: false, deprecated: false },
-    { id: "template_studio",      label: "Template Studio",        short: "TS", group: "superadmin", fcp_only: false, vdan_only: false, deprecated: false },
+    { id: "fangliste",            label: "Fangliste",              short: "FL", group: "member",     fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "arbeitseinsaetze",     label: "Termine / Events",       short: "TE", group: "member",     fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "ausweis",              label: "Mitgliedsausweis",       short: "ID", group: "member",     fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "gewaesserkarte",       label: "Gewässerkarte",          short: "GK", group: "member",     fcp_only: false, vdan_only: true,  deprecated: false, superadmin_only: false },
+    { id: "zustaendigkeiten",     label: "Zuständigkeiten",        short: "ZU", group: "member",     fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "einstellungen",        label: "Einstellungen",          short: "ES", group: "member",     fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "scanner",              label: "Scanner",                short: "SC", group: "manager",    fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "eventplaner",          label: "Eventplaner",            short: "EP", group: "manager",    fcp_only: false, vdan_only: false, deprecated: true,  superadmin_only: false },
+    { id: "eventplaner_v2",       label: "Eventplaner 2.0",        short: "E2", group: "manager",    fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "feedback",             label: "Feedback",               short: "FB", group: "manager",    fcp_only: true,  vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "sitzungen",            label: "Sitzungen",              short: "SI", group: "manager",    fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "dokumente",            label: "Dokumente",              short: "DV", group: "manager",    fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "feedback_cockpit",     label: "Feedback Cockpit",       short: "BC", group: "admin",      fcp_only: true,  vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "mitgliederabrechnung", label: "Mitgliederabrechnung",   short: "MA", group: "admin",      fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "natur_gewaesser",      label: "Natur / Gewässer",       short: "NG", group: "admin",      fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "mitgliederverwaltung", label: "Mitgliederverwaltung",   short: "MV", group: "admin",      fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "admin_board",          label: "Admin Board",            short: "AB", group: "superadmin", fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "kontrollboard",        label: "Kontrollboard",          short: "KB", group: "superadmin", fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "masterboard",          label: "Masterboard",            short: "MB", group: "superadmin", fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "component_library",    label: "Component Library",      short: "CL", group: "superadmin", fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
+    { id: "template_studio",      label: "Template Studio",        short: "TS", group: "superadmin", fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
   ];
 
   function siteMode() {
@@ -212,32 +212,36 @@
     const out = {};
     PORTAL_MODULE_DEFS.forEach((m) => {
       out[m.id] = {
-        visible:    true,
-        deprecated: Boolean(m.deprecated),
-        fcp_only:   Boolean(m.fcp_only),
-        vdan_only:  Boolean(m.vdan_only),
-        note:       "",
+        visible:         m.id !== "eventplaner", // eventplaner off by default (deprecated)
+        deprecated:      Boolean(m.deprecated),
+        superadmin_only: Boolean(m.superadmin_only),
+        fcp_only:        Boolean(m.fcp_only),
+        vdan_only:       Boolean(m.vdan_only),
+        note:            "",
       };
     });
     return out;
   }
 
-  function loadModuleVisibility() {
+  function parseVisibilityRow(raw) {
+    return {
+      visible:         raw.visible !== false && raw.is_visible !== false,
+      deprecated:      Boolean(raw.deprecated || raw.is_deprecated),
+      superadmin_only: Boolean(raw.superadmin_only || raw.is_superadmin_only),
+      fcp_only:        Boolean(raw.fcp_only),
+      vdan_only:       Boolean(raw.vdan_only),
+      note:            String(raw.note || ""),
+    };
+  }
+
+  function loadModuleVisibilityLocal() {
     try {
       const raw = JSON.parse(localStorage.getItem(PORTAL_MODULE_VISIBILITY_KEY) || "null");
       const def = defaultModuleVisibility();
       if (!raw || typeof raw !== "object") return def;
       const out = { ...def };
       PORTAL_MODULE_DEFS.forEach((m) => {
-        if (raw[m.id] && typeof raw[m.id] === "object") {
-          out[m.id] = {
-            visible:    raw[m.id].visible !== false,
-            deprecated: Boolean(raw[m.id].deprecated),
-            fcp_only:   Boolean(raw[m.id].fcp_only),
-            vdan_only:  Boolean(raw[m.id].vdan_only),
-            note:       String(raw[m.id].note || ""),
-          };
-        }
+        if (raw[m.id] && typeof raw[m.id] === "object") out[m.id] = parseVisibilityRow(raw[m.id]);
       });
       return out;
     } catch {
@@ -245,13 +249,49 @@
     }
   }
 
-  function saveModuleVisibility(vis) {
-    try {
-      localStorage.setItem(PORTAL_MODULE_VISIBILITY_KEY, JSON.stringify(vis));
-      return true;
-    } catch {
-      return false;
-    }
+  async function loadModuleVisibilityFromDb() {
+    const rows = await sb(
+      "/rest/v1/portal_module_meta?select=module_id,is_visible,is_deprecated,is_superadmin_only,vdan_only,fcp_only,note",
+      { method: "GET" },
+      true,
+    );
+    if (!Array.isArray(rows) || !rows.length) return null;
+    const out = defaultModuleVisibility();
+    rows.forEach((row) => {
+      const id = String(row.module_id || "").trim();
+      if (!id || !out[id]) return;
+      out[id] = parseVisibilityRow({
+        visible:         row.is_visible,
+        deprecated:      row.is_deprecated,
+        superadmin_only: row.is_superadmin_only,
+        fcp_only:        row.fcp_only,
+        vdan_only:       row.vdan_only,
+        note:            row.note,
+      });
+    });
+    return out;
+  }
+
+  async function saveModuleVisibility(vis) {
+    // Write-through: localStorage cache + Supabase
+    try { localStorage.setItem(PORTAL_MODULE_VISIBILITY_KEY, JSON.stringify(vis)); } catch { /* ignore */ }
+    const payload = PORTAL_MODULE_DEFS.map((m) => {
+      const cfg = vis[m.id] || defaultModuleVisibility()[m.id];
+      return {
+        module_id:          m.id,
+        is_visible:         cfg.visible !== false,
+        is_deprecated:      Boolean(cfg.deprecated),
+        is_superadmin_only: Boolean(cfg.superadmin_only),
+        vdan_only:          Boolean(cfg.vdan_only),
+        fcp_only:           Boolean(cfg.fcp_only),
+        note:               String(cfg.note || "").substring(0, 200),
+      };
+    });
+    await sb("/rest/v1/portal_module_meta?on_conflict=module_id", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(payload),
+    }, true);
   }
 
   function renderModuleVisibilityEditor() {
@@ -260,14 +300,15 @@
     const vis = state.moduleVisibility;
     const GROUP_LABELS = { member: "Mitglied", manager: "Vorstand", admin: "Admin", superadmin: "Superadmin" };
     const rows = PORTAL_MODULE_DEFS.map((m) => {
-      const cfg = vis[m.id] || {};
-      const visible    = cfg.visible !== false;
-      const deprecated = Boolean(cfg.deprecated);
-      const fcp_only   = Boolean(cfg.fcp_only);
-      const vdan_only  = Boolean(cfg.vdan_only);
-      const note       = String(cfg.note || "");
-      const tierLabel  = GROUP_LABELS[m.group] || m.group;
-      const visStyle   = visible ? "" : " style=\"opacity:0.45\"";
+      const cfg            = vis[m.id] || {};
+      const visible        = cfg.visible !== false;
+      const deprecated     = Boolean(cfg.deprecated);
+      const superadmin_only = Boolean(cfg.superadmin_only);
+      const fcp_only       = Boolean(cfg.fcp_only);
+      const vdan_only      = Boolean(cfg.vdan_only);
+      const note           = String(cfg.note || "");
+      const tierLabel      = GROUP_LABELS[m.group] || m.group;
+      const visStyle       = visible ? "" : " style=\"opacity:0.45\"";
       return `
         <tr${visStyle}>
           <td class="small" style="white-space:nowrap;color:var(--text-muted,#888);text-transform:uppercase;font-size:0.72em">${esc(tierLabel)}</td>
@@ -275,9 +316,10 @@
           <td><code class="small">${esc(m.id)}</code></td>
           <td style="text-align:center"><input type="checkbox" data-mv-id="${esc(m.id)}" data-mv-field="visible" ${visible ? "checked" : ""} /></td>
           <td style="text-align:center"><input type="checkbox" data-mv-id="${esc(m.id)}" data-mv-field="deprecated" ${deprecated ? "checked" : ""} /></td>
+          <td style="text-align:center"><input type="checkbox" data-mv-id="${esc(m.id)}" data-mv-field="superadmin_only" ${superadmin_only ? "checked" : ""} /></td>
           <td style="text-align:center"><input type="checkbox" data-mv-id="${esc(m.id)}" data-mv-field="fcp_only" ${fcp_only ? "checked" : ""} /></td>
           <td style="text-align:center"><input type="checkbox" data-mv-id="${esc(m.id)}" data-mv-field="vdan_only" ${vdan_only ? "checked" : ""} /></td>
-          <td><input type="text" class="small" style="width:130px" value="${esc(note)}" data-mv-id="${esc(m.id)}" data-mv-field="note" placeholder="Notiz…" /></td>
+          <td><input type="text" class="small" style="width:120px" value="${esc(note)}" data-mv-id="${esc(m.id)}" data-mv-field="note" placeholder="Notiz…" /></td>
         </tr>
       `;
     }).join("");
@@ -2193,22 +2235,34 @@
       cfg.modules[moduleId].usecases[usecaseId] = Boolean(target.checked);
     });
 
-    document.getElementById("adminModuleVisibilitySave")?.addEventListener("click", () => {
-      const ok = saveModuleVisibility(state.moduleVisibility);
-      setSmallMsg("adminModuleVisibilityMsg", ok ? "Sichtbarkeits-Konfiguration gespeichert." : "Speichern fehlgeschlagen.", !ok);
+    document.getElementById("adminModuleVisibilitySave")?.addEventListener("click", async () => {
+      setSmallMsg("adminModuleVisibilityMsg", "Wird gespeichert…");
+      try {
+        await saveModuleVisibility(state.moduleVisibility);
+        setSmallMsg("adminModuleVisibilityMsg", "Sichtbarkeits-Konfiguration in Datenbank gespeichert.");
+      } catch (err) {
+        recordDiag("portal_module_meta/save", err);
+        setSmallMsg("adminModuleVisibilityMsg", `Fehler: ${err?.message || err}`, true);
+      }
     });
-    document.getElementById("adminModuleVisibilityReset")?.addEventListener("click", () => {
+    document.getElementById("adminModuleVisibilityReset")?.addEventListener("click", async () => {
       state.moduleVisibility = defaultModuleVisibility();
-      saveModuleVisibility(state.moduleVisibility);
       renderModuleVisibilityEditor();
-      setSmallMsg("adminModuleVisibilityMsg", "Sichtbarkeits-Konfiguration auf Standard zurückgesetzt.");
+      setSmallMsg("adminModuleVisibilityMsg", "Wird zurückgesetzt…");
+      try {
+        await saveModuleVisibility(state.moduleVisibility);
+        setSmallMsg("adminModuleVisibilityMsg", "Sichtbarkeits-Konfiguration auf Standard zurückgesetzt.");
+      } catch (err) {
+        recordDiag("portal_module_meta/reset", err);
+        setSmallMsg("adminModuleVisibilityMsg", `Zurückgesetzt (lokal), DB-Fehler: ${err?.message || err}`, true);
+      }
     });
     document.querySelector("#adminModuleVisibilityTable tbody")?.addEventListener("change", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLInputElement) || target.type !== "checkbox") return;
       const moduleId = String(target.getAttribute("data-mv-id") || "").trim();
       const field    = String(target.getAttribute("data-mv-field") || "").trim();
-      if (!moduleId || !["visible", "deprecated", "fcp_only", "vdan_only"].includes(field)) return;
+      if (!moduleId || !["visible", "deprecated", "superadmin_only", "fcp_only", "vdan_only"].includes(field)) return;
       if (!state.moduleVisibility[moduleId]) state.moduleVisibility[moduleId] = {};
       state.moduleVisibility[moduleId][field] = Boolean(target.checked);
       const row = target.closest("tr");
@@ -2350,10 +2404,19 @@
     });
 
     setMsg("Admin-Board lädt...");
-    state.moduleVisibility = loadModuleVisibility();
+    state.moduleVisibility = loadModuleVisibilityLocal();
     await loadCoreData();
     await loadGovernanceFromDb();
     await loadGovernanceHealth();
+    try {
+      const fromDb = await loadModuleVisibilityFromDb();
+      if (fromDb) {
+        state.moduleVisibility = fromDb;
+        try { localStorage.setItem(PORTAL_MODULE_VISIBILITY_KEY, JSON.stringify(fromDb)); } catch { /* ignore */ }
+      }
+    } catch (err) {
+      recordDiag("portal_module_meta/load", err);
+    }
     renderModuleVisibilityEditor();
     renderModuleCatalogEditor();
     renderRoleDefaultsEditor();

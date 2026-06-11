@@ -851,16 +851,41 @@
     const profile = await loadProfileData().catch(() => ({ name: "", memberNo: "" }));
     state.profileName = String(profile?.name || "").trim();
     state.profileMemberNo = String(profile?.memberNo || "").trim();
-    let moduleVisibilityCfg = {};
+    // Load portal module meta from DB (shared truth); fall back to localStorage cache
+    let portalMeta = {};
     try {
-      const raw = JSON.parse(localStorage.getItem("vdan_portal_module_visibility_v1") || "null");
-      if (raw && typeof raw === "object") moduleVisibilityCfg = raw;
-    } catch { /* ignore */ }
-    state.visibleModules = MODULES.filter((m) =>
-      canAccess(m.access, state.roles) &&
-      isModuleAllowedBySiteMode(m.id) &&
-      moduleVisibilityCfg[m.id]?.visible !== false
-    );
+      const metaRows = await sb(
+        "/rest/v1/portal_module_meta?select=module_id,is_visible,is_deprecated,is_superadmin_only,vdan_only,fcp_only",
+        { method: "GET" },
+        true,
+      );
+      if (Array.isArray(metaRows) && metaRows.length) {
+        metaRows.forEach((row) => { portalMeta[String(row.module_id || "")] = row; });
+        try { localStorage.setItem("vdan_portal_module_visibility_v1", JSON.stringify(portalMeta)); } catch { /* ignore */ }
+      }
+    } catch {
+      // DB unavailable: try localStorage cache
+      try {
+        const cached = JSON.parse(localStorage.getItem("vdan_portal_module_visibility_v1") || "null");
+        if (cached && typeof cached === "object") portalMeta = cached;
+      } catch { /* ignore */ }
+    }
+
+    const mode = siteMode();
+    state.visibleModules = MODULES.filter((m) => {
+      if (!canAccess(m.access, state.roles)) return false;
+      const meta = portalMeta[m.id];
+      if (meta) {
+        if (meta.is_visible === false) return false;
+        if (meta.is_deprecated) return false;
+        if (meta.is_superadmin_only && !canAccess("superadmin", state.roles)) return false;
+        if (meta.vdan_only && mode !== "vdan") return false;
+        if (meta.fcp_only && mode !== "fcp") return false;
+        return true;
+      }
+      // No DB record: fall back to hardcoded site-mode filter
+      return isModuleAllowedBySiteMode(m.id);
+    });
 
     const fallback = loadFallback(state.uid);
     let remote = null;

@@ -260,6 +260,26 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
 
         <section class="admin-section" data-admin-panel="modules">
           <article class="admin-card">
+            <h2>Modul-Sichtbarkeit</h2>
+            <p class="small">Steuert, welche Module im Portal-Menü erscheinen und wie sie klassifiziert sind. Die Einstellungen werden im Browser gespeichert und von portal-quick.js beim nächsten Laden ausgewertet.</p>
+            <p class="small" id="adminModuleVisibilityMsg" aria-live="polite"></p>
+            <div class="admin-actions">
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminModuleVisibilitySave">Sichtbarkeit speichern</button>
+              <button type="button" class="feed-btn feed-btn--ghost" id="adminModuleVisibilityReset">Auf Standard zurücksetzen</button>
+            </div>
+            <div class="work-part-table-wrap">
+              <table class="work-part-table" id="adminModuleVisibilityTable" data-table-id="admin-module-visibility">
+                <thead>
+                  <tr>
+                    <th>Tier</th><th>Modul</th><th>ID</th><th>Sichtbar</th><th>Veraltet</th><th>FCP only</th><th>VDAN only</th><th>Notiz</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="admin-card">
             <h2>Module (Portal)</h2>
             <div class="admin-actions">
               <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixSavePortal">Portal speichern</button>

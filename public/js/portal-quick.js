@@ -851,7 +851,16 @@
     const profile = await loadProfileData().catch(() => ({ name: "", memberNo: "" }));
     state.profileName = String(profile?.name || "").trim();
     state.profileMemberNo = String(profile?.memberNo || "").trim();
-    state.visibleModules = MODULES.filter((m) => canAccess(m.access, state.roles) && isModuleAllowedBySiteMode(m.id));
+    let moduleVisibilityCfg = {};
+    try {
+      const raw = JSON.parse(localStorage.getItem("vdan_portal_module_visibility_v1") || "null");
+      if (raw && typeof raw === "object") moduleVisibilityCfg = raw;
+    } catch { /* ignore */ }
+    state.visibleModules = MODULES.filter((m) =>
+      canAccess(m.access, state.roles) &&
+      isModuleAllowedBySiteMode(m.id) &&
+      moduleVisibilityCfg[m.id]?.visible !== false
+    );
 
     const fallback = loadFallback(state.uid);
     let remote = null;

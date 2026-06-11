@@ -292,7 +292,12 @@
     if (typeof value !== "string") return value;
     return value.replace(/\{([^}]+)\}/g, (_, rawKey) => {
       const key = String(rawKey || "").trim();
-      const resolved = Object.prototype.hasOwnProperty.call(context, key) ? context[key] : "";
+      let resolved = Object.prototype.hasOwnProperty.call(context, key) ? context[key] : "";
+      if (!Object.prototype.hasOwnProperty.call(context, key)) {
+        if (key === "current_year") {
+          resolved = new Date().getFullYear();
+        }
+      }
       return resolved == null ? "" : String(resolved);
     });
   }

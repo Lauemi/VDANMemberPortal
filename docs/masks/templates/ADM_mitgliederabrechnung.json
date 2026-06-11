@@ -311,7 +311,8 @@
               "requiresClubContext": true,
               "missingClubContextMessage": "Kein Vereinskontext verfügbar. Bitte als Admin einloggen.",
               "loadPayloadDefaults": {
-                "p_club_id": "{club_id}"
+                "p_club_id": "{club_id}",
+                "p_run_year": "{current_year}"
               },
               "rowsPath": "rows"
             }
@@ -599,7 +600,8 @@
               "requiresClubContext": true,
               "missingClubContextMessage": "Kein Vereinskontext verfügbar. Bitte als Admin einloggen.",
               "loadPayloadDefaults": {
-                "p_club_id": "{club_id}"
+                "p_club_id": "{club_id}",
+                "p_run_year": "{current_year}"
               },
               "rowsPath": "rows"
             }

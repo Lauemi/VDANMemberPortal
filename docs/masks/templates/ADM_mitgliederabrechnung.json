@@ -17,6 +17,11 @@
         "id": "nav_ma_pflichtstunden",
         "label": "Pflichtstundenabrechnung",
         "targetSectionId": "ma_pflichtstunden"
+      },
+      {
+        "id": "nav_ma_kassierer",
+        "label": "Kassierer-Übersicht",
+        "targetSectionId": "ma_kassierer_uebersicht"
       }
     ]
   },
@@ -394,6 +399,184 @@
             "filterFields": [
               {"key": "last_name", "label": "Name", "type": "text", "placeholder": "Nachname"},
               {"key": "is_exempt", "label": "Befreit", "type": "text"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "ma_kassierer_uebersicht",
+      "label": "Kassierer-Übersicht",
+      "title": "Kassierer-Übersicht — Abrechnungsvorschau",
+      "description": "Live-Vorschau der Mitgliederabrechnung. Zeigt berechnete Beträge, Preisstufen und SEPA-Status — noch kein Lauf, noch kein Export. Erfordert konfigurierte Beitragsarten in Tab 1.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": false,
+        "update": false,
+        "delete": false,
+        "roles": []
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": ["admin", "vorstand", "superadmin"],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "ma_kassierer_tabelle",
+          "title": "Abrechnungsvorschau je Mitglied",
+          "renderMode": "table",
+          "componentType": "inline-data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": ["admin", "vorstand", "superadmin"],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.admin_get_billing_preview",
+            "sourceKind": "rpc",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "expectedColumns": [
+                "member_id", "club_member_no", "last_name", "first_name",
+                "price_tier", "total_amount", "sepa_status",
+                "iban_last4", "sepa_mandate_ref", "positions_json"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein Vereinskontext verfügbar. Bitte als Admin einloggen.",
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              },
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.admin_get_billing_preview",
+            "path": "rpc:public.admin_get_billing_preview"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            {
+              "key": "club_member_no",
+              "label": "Nr.",
+              "type": "text",
+              "exportable": true,
+              "exportKey": "club_member_no",
+              "exportLabel": "Mitgliedsnummer"
+            },
+            {
+              "key": "last_name",
+              "label": "Name",
+              "type": "text",
+              "exportable": true,
+              "exportKey": "last_name",
+              "exportLabel": "Nachname"
+            },
+            {
+              "key": "first_name",
+              "label": "Vorname",
+              "type": "text",
+              "exportable": true,
+              "exportKey": "first_name",
+              "exportLabel": "Vorname"
+            },
+            {
+              "key": "price_tier",
+              "label": "Stufe",
+              "type": "text",
+              "options": [
+                {"value": "default",   "label": "Standard"},
+                {"value": "youth",     "label": "Jugend"},
+                {"value": "honorary",  "label": "Ehren"},
+                {"value": "exempt",    "label": "Befreit"}
+              ],
+              "exportable": true,
+              "exportKey": "price_tier",
+              "exportLabel": "Preisstufe"
+            },
+            {
+              "key": "total_amount",
+              "label": "Gesamt (€)",
+              "type": "number",
+              "exportable": true,
+              "exportKey": "total_amount",
+              "exportLabel": "Gesamtbetrag (€)"
+            },
+            {
+              "key": "sepa_status",
+              "label": "SEPA",
+              "type": "text",
+              "options": [
+                {"value": "vollständig",          "label": "✓ Vollständig"},
+                {"value": "mandat_genehmigt",      "label": "Genehmigt"},
+                {"value": "genehmigt_keine_iban",  "label": "Genehmigt (keine IBAN)"},
+                {"value": "bankdaten_kein_mandat", "label": "Bankdaten (kein Mandat)"},
+                {"value": "kein_sepa",             "label": "Kein SEPA"}
+              ],
+              "exportable": true,
+              "exportKey": "sepa_status",
+              "exportLabel": "SEPA-Status"
+            },
+            {
+              "key": "iban_last4",
+              "label": "IBAN (Ende)",
+              "type": "text"
+            },
+            {
+              "key": "positions_json",
+              "label": "Positionen",
+              "type": "json-display"
+            }
+          ],
+          "rowsPath": "rows",
+          "tableConfig": {
+            "tableId": "adm-ma-kassierer",
+            "rowKeyField": "member_id",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "none",
+            "selectionMode": "none",
+            "viewMode": "table",
+            "sortKey": "total_amount",
+            "sortDir": "desc",
+            "showCreateButton": false,
+            "filterFields": [
+              {"key": "last_name",   "label": "Name",        "type": "text", "placeholder": "Nachname"},
+              {"key": "price_tier",  "label": "Preisstufe",  "type": "text"},
+              {"key": "sepa_status", "label": "SEPA-Status", "type": "text"}
             ]
           }
         }

@@ -93,6 +93,24 @@
       { id: "nav_ma_kassierer",          label: "Kassierer-Übersicht" },
       { id: "nav_ma_sepa_einstellungen", label: "SEPA / XML-Export" },
     ],
+    mitgliederverwaltung: [
+      { id: "nav_club_settings_club_data",  label: "Vereinsdaten" },
+      { id: "nav_club_settings_invites",    label: "Einladungen" },
+      { id: "nav_club_settings_members",    label: "Mitgliederverwaltung" },
+      { id: "nav_club_settings_roles",      label: "Rollen / Rechte" },
+      { id: "nav_club_settings_waters",     label: "Gewässer" },
+      { id: "nav_club_settings_rules",      label: "Regelwerke" },
+      { id: "nav_club_settings_cards",      label: "Ausweise" },
+      { id: "nav_club_settings_work",       label: "Arbeitseinsätze" },
+      { id: "nav_club_settings_approvals",  label: "Freigaben" },
+      { id: "nav_club_settings_settings",   label: "Einstellungen" },
+    ],
+    admin_board: [
+      { id: "nav_ab_sichtbarkeit", label: "Sichtbarkeit" },
+      { id: "nav_ab_portal",       label: "Portal" },
+      { id: "nav_ab_katalog",      label: "Katalog" },
+      { id: "nav_ab_rollenrechte", label: "Rollenrechte" },
+    ],
   };
 
   function siteMode() {
@@ -2374,6 +2392,19 @@
       if (!cfg.modules[moduleId]) return;
       if (!cfg.modules[moduleId].enabled) return;
       cfg.modules[moduleId].usecases[usecaseId] = Boolean(target.checked);
+    });
+
+    // Sub-tab navigation within modules section
+    document.querySelector("[data-admin-panel='modules']")?.addEventListener("click", (event) => {
+      const tab = event.target.closest("[data-sub-tab][data-sub-panel-group]");
+      if (!tab) return;
+      const group = tab.getAttribute("data-sub-panel-group");
+      const panel = tab.getAttribute("data-sub-tab");
+      document.querySelectorAll(`[data-sub-tab][data-sub-panel-group="${group}"]`).forEach((t) => t.classList.remove("is-active"));
+      document.querySelectorAll(`[data-sub-panel][data-sub-panel-group="${group}"]`).forEach((p) => p.hidden = true);
+      tab.classList.add("is-active");
+      const target = document.querySelector(`[data-sub-panel="${panel}"][data-sub-panel-group="${group}"]`);
+      if (target) target.hidden = false;
     });
 
     document.getElementById("adminModuleVisibilitySave")?.addEventListener("click", async () => {

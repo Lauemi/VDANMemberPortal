@@ -259,92 +259,117 @@ import { APP_MASK_BRAND_PAGES } from "../../../config/app-mask-brand-pages";
         </section>
 
         <section class="admin-section" data-admin-panel="modules">
-          <article class="admin-card">
-            <h2>Modul-Sichtbarkeit</h2>
-            <p class="small">Steuert, welche Module im Portal-Menü erscheinen und wie sie klassifiziert sind. Die Einstellungen werden im Browser gespeichert und von portal-quick.js beim nächsten Laden ausgewertet.</p>
-            <p class="small" id="adminModuleVisibilityMsg" aria-live="polite"></p>
-            <div class="admin-actions">
-              <button type="button" class="feed-btn feed-btn--ghost" id="adminModuleVisibilitySave">Sichtbarkeit speichern</button>
-              <button type="button" class="feed-btn feed-btn--ghost" id="adminModuleVisibilityReset">Auf Standard zurücksetzen</button>
-            </div>
-            <div class="work-part-table-wrap">
-              <table class="work-part-table" id="adminModuleVisibilityTable" data-table-id="admin-module-visibility">
-                <thead>
-                  <tr>
-                    <th>Tier</th><th>Modul</th><th>ID</th><th>Sichtbar</th><th>Veraltet</th><th>Superadmin</th><th>FCP only</th><th>VDAN only</th><th>Notiz</th><th>Tabs</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </article>
+          <nav class="admin-sub-tab-nav" aria-label="Modul-Bereich" style="display:flex;gap:0;margin-bottom:1.25rem;border-bottom:2px solid var(--border-color,#e0e0e0)">
+            <button type="button" class="admin-sub-tab is-active" data-sub-tab="sichtbarkeit" data-sub-panel-group="modules">Sichtbarkeit</button>
+            <button type="button" class="admin-sub-tab" data-sub-tab="portal" data-sub-panel-group="modules">Portal</button>
+            <button type="button" class="admin-sub-tab" data-sub-tab="katalog" data-sub-panel-group="modules">Katalog</button>
+            <button type="button" class="admin-sub-tab" data-sub-tab="rollenrechte" data-sub-panel-group="modules">Rollenrechte</button>
+          </nav>
+          <style>
+            .admin-sub-tab {
+              background: none; border: none; border-bottom: 3px solid transparent;
+              padding: 6px 14px; margin-bottom: -2px; cursor: pointer;
+              font-size: 0.88em; font-weight: 500; color: var(--text-muted, #888);
+              transition: color 0.15s, border-color 0.15s;
+            }
+            .admin-sub-tab:hover { color: var(--text-primary, #222); }
+            .admin-sub-tab.is-active { color: var(--link-color, #0066cc); border-bottom-color: var(--link-color, #0066cc); }
+          </style>
 
-          <article class="admin-card">
-            <h2>Module (Portal)</h2>
-            <div class="admin-actions">
-              <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixSavePortal">Portal speichern</button>
-              <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixResetPortal">Portal reset</button>
-              <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixCopyPortal">Portal JSON</button>
-            </div>
-            <div class="work-part-table-wrap">
-              <table class="work-part-table" id="adminModulesTable" data-studio-component-type="table" data-studio-library-id="lists--standard-tabelle" data-table-id="admin-modules">
-                <thead>
-                  <tr>
-                    <th>Seite</th><th>Route</th><th>Typ</th><th>Guest</th><th>Member</th><th>Manager</th><th>Admin</th><th>Superadmin</th><th>Aktion</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </article>
+          <div data-sub-panel="sichtbarkeit" data-sub-panel-group="modules">
+            <article class="admin-card">
+              <h2>Modul-Sichtbarkeit</h2>
+              <p class="small">Steuert, welche Module im Portal-Menü erscheinen und wie sie klassifiziert sind. Die Einstellungen werden im Browser gespeichert und von portal-quick.js beim nächsten Laden ausgewertet.</p>
+              <p class="small" id="adminModuleVisibilityMsg" aria-live="polite"></p>
+              <div class="admin-actions">
+                <button type="button" class="feed-btn feed-btn--ghost" id="adminModuleVisibilitySave">Sichtbarkeit speichern</button>
+                <button type="button" class="feed-btn feed-btn--ghost" id="adminModuleVisibilityReset">Auf Standard zurücksetzen</button>
+              </div>
+              <div class="work-part-table-wrap">
+                <table class="work-part-table" id="adminModuleVisibilityTable" data-table-id="admin-module-visibility">
+                  <thead>
+                    <tr>
+                      <th>Tier</th><th>Modul</th><th>ID</th><th>Sichtbar</th><th>Veraltet</th><th>Superadmin</th><th>FCP only</th><th>VDAN only</th><th>Notiz</th><th>Tabs</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </article>
+          </div>
 
-          <article class="admin-card">
-            <h3>Modul-Katalog (Superadmin)</h3>
-            <p class="small">Hier definierst du Modulpakete und welche Usecases jeweils enthalten sind.</p>
-            <p class="small" id="adminModuleCatalogMsg" aria-live="polite"></p>
-            <div class="admin-actions">
-              <button type="button" class="feed-btn feed-btn--ghost" id="adminModuleCatalogSave">Katalog speichern</button>
-              <button type="button" class="feed-btn feed-btn--ghost" id="adminModuleCatalogReset">Katalog reset</button>
-            </div>
-            <div class="work-part-table-wrap">
-              <table class="work-part-table" id="adminModuleCatalogTable" data-studio-component-type="table" data-studio-library-id="lists--standard-tabelle" data-table-id="admin-module-catalog">
-                <thead>
-                  <tr>
-                    <th>Modul-Key</th><th>Label</th><th>Usecases (kommagetrennt)</th><th>Aktiv</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </article>
+          <div data-sub-panel="portal" data-sub-panel-group="modules" hidden>
+            <article class="admin-card">
+              <h2>Module (Portal)</h2>
+              <div class="admin-actions">
+                <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixSavePortal">Portal speichern</button>
+                <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixResetPortal">Portal reset</button>
+                <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleMatrixCopyPortal">Portal JSON</button>
+              </div>
+              <div class="work-part-table-wrap">
+                <table class="work-part-table" id="adminModulesTable" data-studio-component-type="table" data-studio-library-id="lists--standard-tabelle" data-table-id="admin-modules">
+                  <thead>
+                    <tr>
+                      <th>Seite</th><th>Route</th><th>Typ</th><th>Guest</th><th>Member</th><th>Manager</th><th>Admin</th><th>Superadmin</th><th>Aktion</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </article>
+          </div>
 
-          <article class="admin-card">
-            <h3>Standard-Rollenrechte (Superadmin)</h3>
-            <p class="small">Diese Defaults gelten fÃ¼r Vereine und kÃ¶nnen dort nur innerhalb freigegebener Module feinjustiert werden.</p>
-            <p class="small" id="adminRoleDefaultsMsg" aria-live="polite"></p>
-            <div class="admin-actions">
-              <label class="small" style="display:flex;align-items:center;gap:8px;">
-                Rolle
-                <select id="adminRoleDefaultsRole">
-                  <option value="member">member</option>
-                  <option value="vorstand">vorstand</option>
-                  <option value="admin">admin</option>
-                </select>
-              </label>
-              <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleDefaultsSave">Defaults speichern</button>
-              <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleDefaultsReset">Defaults reset</button>
-            </div>
-            <div class="work-part-table-wrap">
-              <table class="work-part-table" id="adminRoleDefaultsTable" data-studio-component-type="table" data-studio-library-id="lists--standard-tabelle" data-table-id="admin-role-defaults">
-                <thead>
-                  <tr>
-                    <th>Modul</th><th>Usecase</th><th>Anzeigen</th><th>Lesen</th><th>Schreiben</th><th>Bearbeiten</th><th>LÃ¶schen</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </article>
+          <div data-sub-panel="katalog" data-sub-panel-group="modules" hidden>
+            <article class="admin-card">
+              <h3>Modul-Katalog (Superadmin)</h3>
+              <p class="small">Hier definierst du Modulpakete und welche Usecases jeweils enthalten sind.</p>
+              <p class="small" id="adminModuleCatalogMsg" aria-live="polite"></p>
+              <div class="admin-actions">
+                <button type="button" class="feed-btn feed-btn--ghost" id="adminModuleCatalogSave">Katalog speichern</button>
+                <button type="button" class="feed-btn feed-btn--ghost" id="adminModuleCatalogReset">Katalog reset</button>
+              </div>
+              <div class="work-part-table-wrap">
+                <table class="work-part-table" id="adminModuleCatalogTable" data-studio-component-type="table" data-studio-library-id="lists--standard-tabelle" data-table-id="admin-module-catalog">
+                  <thead>
+                    <tr>
+                      <th>Modul-Key</th><th>Label</th><th>Usecases (kommagetrennt)</th><th>Aktiv</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+
+          <div data-sub-panel="rollenrechte" data-sub-panel-group="modules" hidden>
+            <article class="admin-card">
+              <h3>Standard-Rollenrechte (Superadmin)</h3>
+              <p class="small">Diese Defaults gelten für Vereine und können dort nur innerhalb freigegebener Module feinjustiert werden.</p>
+              <p class="small" id="adminRoleDefaultsMsg" aria-live="polite"></p>
+              <div class="admin-actions">
+                <label class="small" style="display:flex;align-items:center;gap:8px;">
+                  Rolle
+                  <select id="adminRoleDefaultsRole">
+                    <option value="member">member</option>
+                    <option value="vorstand">vorstand</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </label>
+                <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleDefaultsSave">Defaults speichern</button>
+                <button type="button" class="feed-btn feed-btn--ghost" id="adminRoleDefaultsReset">Defaults reset</button>
+              </div>
+              <div class="work-part-table-wrap">
+                <table class="work-part-table" id="adminRoleDefaultsTable" data-studio-component-type="table" data-studio-library-id="lists--standard-tabelle" data-table-id="admin-role-defaults">
+                  <thead>
+                    <tr>
+                      <th>Modul</th><th>Usecase</th><th>Anzeigen</th><th>Lesen</th><th>Schreiben</th><th>Bearbeiten</th><th>Löschen</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </article>
+          </div>
         </section>
 
         <section class="admin-section" data-admin-panel="webmodules">

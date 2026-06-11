@@ -6,8 +6,13 @@
   "workspaceNav": {
     "enabled": true,
     "position": "left",
-    "defaultSectionId": "ma_pflichtstunden",
+    "defaultSectionId": "ma_beitragsarten",
     "items": [
+      {
+        "id": "nav_ma_beitragsarten",
+        "label": "Beitragsarten",
+        "targetSectionId": "ma_beitragsarten"
+      },
       {
         "id": "nav_ma_pflichtstunden",
         "label": "Pflichtstundenabrechnung",
@@ -41,6 +46,183 @@
     "empty": "Keine Daten verfügbar."
   },
   "sections": [
+    {
+      "id": "ma_beitragsarten",
+      "label": "Beitragsarten",
+      "title": "Beitragsarten — Konfiguration",
+      "description": "Beitragsarten des Vereins verwalten. Grundlage für die Mitgliederabrechnung (Verein → Mitglied). Kein Bezug zu FCP-Billing.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": true,
+        "update": true,
+        "delete": false,
+        "roles": ["admin", "vorstand", "superadmin"]
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": ["admin", "vorstand", "superadmin"],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "ma_beitragsarten_tabelle",
+          "title": "Beitragsarten",
+          "renderMode": "table",
+          "componentType": "inline-data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": true,
+            "delete": false,
+            "roles": ["admin", "vorstand", "superadmin"]
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": ["admin", "vorstand", "superadmin"],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.club_billing_positions",
+            "sourceKind": "rpc",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "expectedColumns": [
+                "id", "name", "period_from", "period_to",
+                "amount_default", "amount_youth", "amount_honorary",
+                "is_active", "sort_order"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein Vereinskontext verfügbar. Bitte als Admin einloggen.",
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              },
+              "savePayloadDefaults": {
+                "p_club_id": "{club_id}"
+              },
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.admin_get_billing_positions",
+            "path": "rpc:public.admin_get_billing_positions"
+          },
+          "saveBinding": {
+            "kind": "rpc",
+            "target": "public.admin_upsert_billing_position",
+            "path": "rpc:public.admin_upsert_billing_position"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            {
+              "key": "name",
+              "label": "Name",
+              "type": "text",
+              "editable": true,
+              "exportable": true,
+              "exportKey": "name",
+              "exportLabel": "Name"
+            },
+            {
+              "key": "period_from",
+              "label": "Gültig ab",
+              "type": "text",
+              "editable": true,
+              "exportable": true,
+              "exportKey": "period_from",
+              "exportLabel": "Gültig ab (MM-TT)"
+            },
+            {
+              "key": "period_to",
+              "label": "Gültig bis",
+              "type": "text",
+              "editable": true,
+              "exportable": true,
+              "exportKey": "period_to",
+              "exportLabel": "Gültig bis (MM-TT)"
+            },
+            {
+              "key": "amount_default",
+              "label": "Betrag (€)",
+              "type": "number",
+              "editable": true,
+              "exportable": true,
+              "exportKey": "amount_default",
+              "exportLabel": "Betrag Standard (€)"
+            },
+            {
+              "key": "amount_youth",
+              "label": "Jugend (€)",
+              "type": "number",
+              "editable": true,
+              "exportable": true,
+              "exportKey": "amount_youth",
+              "exportLabel": "Betrag Jugend (€)"
+            },
+            {
+              "key": "amount_honorary",
+              "label": "Ehren (€)",
+              "type": "number",
+              "editable": true,
+              "exportable": true,
+              "exportKey": "amount_honorary",
+              "exportLabel": "Betrag Ehrenmitglied (€)"
+            },
+            {
+              "key": "is_active",
+              "label": "Aktiv",
+              "type": "boolean",
+              "editable": true
+            },
+            {
+              "key": "sort_order",
+              "label": "Reihenfolge",
+              "type": "number",
+              "editable": true
+            }
+          ],
+          "rowsPath": "rows",
+          "tableConfig": {
+            "tableId": "adm-ma-beitragsarten",
+            "rowKeyField": "id",
+            "gridTemplateColumns": "",
+            "rowInteractionMode": "inline",
+            "selectionMode": "none",
+            "viewMode": "table",
+            "sortKey": "sort_order",
+            "sortDir": "asc",
+            "showCreateButton": true,
+            "createLabel": "Neue Beitragsart",
+            "rowActions": ["edit"],
+            "filterFields": [
+              {"key": "name", "label": "Name", "type": "text", "placeholder": "Beitragsart suchen"},
+              {"key": "is_active", "label": "Aktiv", "type": "text"}
+            ]
+          }
+        }
+      ]
+    },
     {
       "id": "ma_pflichtstunden",
       "label": "Pflichtstundenabrechnung",

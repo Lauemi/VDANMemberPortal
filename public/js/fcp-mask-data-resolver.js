@@ -1711,6 +1711,16 @@
         window.location.reload();
         return normalizeBindingResult(binding, { record: { action: "reload_app", ok: true }, rows: [] });
       }
+      if (target === "billing_run_defaults") {
+        const year = new Date().getFullYear();
+        return normalizeBindingResult(binding, {
+          record: {
+            run_year: year,
+            run_label: `Jahresabrechnung ${year}`,
+          },
+          rows: [],
+        });
+      }
       return normalizeBindingResult(binding, { record: { ok: true }, rows: [] });
     }
 

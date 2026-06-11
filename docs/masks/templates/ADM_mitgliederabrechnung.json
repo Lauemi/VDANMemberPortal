@@ -106,6 +106,7 @@
               "expectedColumns": [
                 "id", "name", "period_from", "period_to",
                 "amount_default", "amount_youth", "amount_honorary",
+                "only_if_delta_debt",
                 "is_active", "sort_order"
               ]
             },
@@ -193,6 +194,12 @@
               "exportable": true,
               "exportKey": "amount_honorary",
               "exportLabel": "Betrag Ehrenmitglied (€)"
+            },
+            {
+              "key": "only_if_delta_debt",
+              "label": "Nur bei Delta",
+              "type": "boolean",
+              "editable": true
             },
             {
               "key": "is_active",
@@ -407,8 +414,8 @@
     {
       "id": "ma_kassierer_uebersicht",
       "label": "Kassierer-Übersicht",
-      "title": "Kassierer-Übersicht — Abrechnungsvorschau",
-      "description": "Live-Vorschau der Mitgliederabrechnung. Zeigt berechnete Beträge, Preisstufen und SEPA-Status — noch kein Lauf, noch kein Export. Erfordert konfigurierte Beitragsarten in Tab 1.",
+      "title": "Kassierer-Übersicht — Vorschau & Abrechnungsläufe",
+      "description": "Live-Vorschau der Mitgliederabrechnung plus eingefrorene Abrechnungsläufe. Läufe erzeugen einen revisionssicheren Snapshot in billing_runs/billing_run_items. XML-Export bleibt eigener nächster Block.",
       "workspaceSlot": "main",
       "sectionLayout": "stack",
       "permissions": {
@@ -429,6 +436,108 @@
       "ownership": "club_override",
       "scope": "club_override",
       "panels": [
+        {
+          "id": "ma_billing_run_create",
+          "title": "Abrechnungslauf erzeugen",
+          "renderMode": "form",
+          "componentType": "FormPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": true,
+            "delete": false,
+            "roles": ["admin", "vorstand", "superadmin"]
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": ["admin", "vorstand", "superadmin"],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.billing_runs",
+            "sourceKind": "process",
+            "sourceOfTruth": "sql",
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein Vereinskontext verfügbar. Bitte als Admin einloggen.",
+              "savePayloadDefaults": {
+                "p_club_id": "{club_id}"
+              },
+              "successMessage": "Abrechnungslauf erzeugt und Snapshot eingefroren.",
+              "fieldDefs": [
+                {
+                  "name": "run_year",
+                  "label": "Abrechnungsjahr",
+                  "type": "number",
+                  "componentType": "number",
+                  "valuePath": "record.run_year",
+                  "payloadKey": "p_run_year",
+                  "group": "run",
+                  "order": 10,
+                  "readonly": false,
+                  "required": true,
+                  "defaultValue": 2026,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "run_label",
+                  "label": "Bezeichnung",
+                  "type": "text",
+                  "componentType": "input",
+                  "valuePath": "record.run_label",
+                  "payloadKey": "p_run_label",
+                  "group": "run",
+                  "displaySpan": "full",
+                  "order": 20,
+                  "placeholder": "Jahresabrechnung 2026",
+                  "helpText": "Bleibt die Bezeichnung leer, vergibt der Server automatisch eine Standardbezeichnung.",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                }
+              ],
+              "groupDefs": [
+                {
+                  "key": "run",
+                  "title": "Snapshot-Lauf",
+                  "hint": "Friert die aktuelle Vorschau als Forderungs-/Rechnungsposition je Mitglied ein.",
+                  "defaultOpen": true
+                }
+              ]
+            }
+          },
+          "loadBinding": {
+            "kind": "local_only",
+            "target": "billing_run_defaults",
+            "path": "local:billing_run_defaults"
+          },
+          "saveBinding": {
+            "kind": "rpc",
+            "target": "public.admin_create_billing_run",
+            "path": "rpc:public.admin_create_billing_run"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": [
+              {
+                "action": "submit",
+                "label": "Lauf erzeugen"
+              }
+            ]
+          }
+        },
         {
           "id": "ma_kassierer_tabelle",
           "title": "Abrechnungsvorschau je Mitglied",
@@ -458,7 +567,7 @@
             "sqlContract": {
               "expectedColumns": [
                 "member_id", "club_member_no", "last_name", "first_name",
-                "price_tier", "total_amount", "sepa_status",
+                "delta_minutes", "price_tier", "total_amount", "sepa_status",
                 "iban_last4", "sepa_mandate_ref", "positions_json"
               ]
             },
@@ -513,6 +622,14 @@
               "exportable": true,
               "exportKey": "first_name",
               "exportLabel": "Vorname"
+            },
+            {
+              "key": "delta_minutes",
+              "label": "Delta (min)",
+              "type": "number",
+              "exportable": true,
+              "exportKey": "delta_minutes",
+              "exportLabel": "Pflichtstunden-Delta (Minuten)"
             },
             {
               "key": "price_tier",
@@ -575,8 +692,216 @@
             "showCreateButton": false,
             "filterFields": [
               {"key": "last_name",   "label": "Name",        "type": "text", "placeholder": "Nachname"},
+              {"key": "delta_minutes", "label": "Delta",     "type": "text"},
               {"key": "price_tier",  "label": "Preisstufe",  "type": "text"},
               {"key": "sepa_status", "label": "SEPA-Status", "type": "text"}
+            ]
+          }
+        },
+        {
+          "id": "ma_billing_runs_table",
+          "title": "Abrechnungsläufe",
+          "renderMode": "table",
+          "componentType": "inline-data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": ["admin", "vorstand", "superadmin"],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.billing_runs",
+            "sourceKind": "rpc",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "expectedColumns": [
+                "id", "run_year", "run_label", "status",
+                "total_amount", "member_count", "created_at",
+                "exported_at", "submitted_at", "completed_at"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein Vereinskontext verfügbar. Bitte als Admin einloggen.",
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              },
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.admin_get_billing_runs",
+            "path": "rpc:public.admin_get_billing_runs"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            {"key": "run_year", "label": "Jahr", "type": "number"},
+            {"key": "run_label", "label": "Bezeichnung", "type": "text"},
+            {
+              "key": "status",
+              "label": "Status",
+              "type": "text",
+              "options": [
+                {"value": "draft", "label": "Entwurf"},
+                {"value": "exported", "label": "XML erzeugt"},
+                {"value": "submitted", "label": "Eingereicht"},
+                {"value": "completed", "label": "Erfolgreich"},
+                {"value": "failed", "label": "Fehlgeschlagen"}
+              ]
+            },
+            {"key": "member_count", "label": "Mitglieder", "type": "number"},
+            {"key": "total_amount", "label": "Gesamt (€)", "type": "number"},
+            {"key": "created_at", "label": "Erstellt", "type": "datetime"}
+          ],
+          "rowsPath": "rows",
+          "tableConfig": {
+            "tableId": "adm-ma-billing-runs",
+            "rowKeyField": "id",
+            "rowInteractionMode": "none",
+            "selectionMode": "none",
+            "viewMode": "table",
+            "sortKey": "created_at",
+            "sortDir": "desc",
+            "showCreateButton": false,
+            "filterFields": [
+              {"key": "run_label", "label": "Bezeichnung", "type": "text", "placeholder": "Lauf suchen"},
+              {"key": "status", "label": "Status", "type": "text"},
+              {"key": "run_year", "label": "Jahr", "type": "text"}
+            ]
+          }
+        },
+        {
+          "id": "ma_billing_run_items_table",
+          "title": "Snapshot-Positionen je Mitglied",
+          "renderMode": "table",
+          "componentType": "inline-data-table",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": false,
+            "update": false,
+            "delete": false,
+            "roles": []
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": ["admin", "vorstand", "superadmin"],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.billing_run_items",
+            "sourceKind": "rpc",
+            "sourceOfTruth": "sql",
+            "sqlContract": {
+              "expectedColumns": [
+                "id", "billing_run_id", "run_year", "run_label", "member_id",
+                "member_no_snapshot", "member_name_snapshot", "price_tier",
+                "total_amount", "sepa_included", "item_status",
+                "iban_last4_snapshot", "sepa_mandate_ref_snapshot",
+                "positions_json", "created_at"
+              ]
+            },
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein Vereinskontext verfügbar. Bitte als Admin einloggen.",
+              "loadPayloadDefaults": {
+                "p_club_id": "{club_id}"
+              },
+              "rowsPath": "rows"
+            }
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.admin_get_billing_run_items",
+            "path": "rpc:public.admin_get_billing_run_items"
+          },
+          "saveBinding": {
+            "kind": "none",
+            "target": null,
+            "path": "none"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": []
+          },
+          "columns": [
+            {"key": "run_year", "label": "Jahr", "type": "number"},
+            {"key": "run_label", "label": "Lauf", "type": "text"},
+            {"key": "member_no_snapshot", "label": "Nr.", "type": "text"},
+            {"key": "member_name_snapshot", "label": "Mitglied", "type": "text"},
+            {
+              "key": "price_tier",
+              "label": "Stufe",
+              "type": "text",
+              "options": [
+                {"value": "default", "label": "Standard"},
+                {"value": "youth", "label": "Jugend"},
+                {"value": "honorary", "label": "Ehren"},
+                {"value": "exempt", "label": "Befreit"}
+              ]
+            },
+            {"key": "total_amount", "label": "Gesamt (€)", "type": "number"},
+            {"key": "sepa_included", "label": "SEPA dabei", "type": "boolean"},
+            {
+              "key": "item_status",
+              "label": "Item-Status",
+              "type": "text",
+              "options": [
+                {"value": "calculated", "label": "Berechnet"},
+                {"value": "exported", "label": "Exportiert"},
+                {"value": "submitted", "label": "Eingereicht"},
+                {"value": "returned", "label": "Rückläufer"},
+                {"value": "failed", "label": "Fehlgeschlagen"}
+              ]
+            },
+            {"key": "positions_json", "label": "Positionen", "type": "json-display"}
+          ],
+          "rowsPath": "rows",
+          "tableConfig": {
+            "tableId": "adm-ma-billing-run-items",
+            "rowKeyField": "id",
+            "rowInteractionMode": "none",
+            "selectionMode": "none",
+            "viewMode": "table",
+            "sortKey": "created_at",
+            "sortDir": "desc",
+            "showCreateButton": false,
+            "filterFields": [
+              {"key": "run_label", "label": "Lauf", "type": "text", "placeholder": "Lauf suchen"},
+              {"key": "member_name_snapshot", "label": "Mitglied", "type": "text", "placeholder": "Mitglied suchen"},
+              {"key": "item_status", "label": "Status", "type": "text"}
             ]
           }
         }

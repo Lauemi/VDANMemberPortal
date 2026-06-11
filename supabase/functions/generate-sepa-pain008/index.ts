@@ -268,7 +268,6 @@ serve(async (req) => {
     const frstItems: typeof ibanRows = [];
     const rcurItems: typeof ibanRows = [];
     const itemSeqTypes: Array<{ item_id: string; sequence_type: string }> = [];
-    const frstMemberIds: string[] = [];
     const skipped: string[] = [];
 
     for (const row of ibanRows) {
@@ -282,7 +281,6 @@ serve(async (req) => {
       itemSeqTypes.push({ item_id: row.item_id, sequence_type: seqType });
       if (seqType === "FRST") {
         frstItems.push(row);
-        frstMemberIds.push(row.member_id);
       } else {
         rcurItems.push(row);
       }
@@ -308,13 +306,12 @@ serve(async (req) => {
     // 6. SHA-256 Hash
     const xmlHash = await sha256Hex(xmlString);
 
-    // 7. Atomic state write
+    // 7. Atomic state write — mandate lifecycle NOT transitioned here (happens at completed)
     const { error: finalErr } = await sb.rpc("admin_finalize_sepa_export", {
       p_billing_run_id:      billing_run_id,
       p_sepa_message_id:     msgIdStr,
       p_sepa_xml_hash:       xmlHash,
       p_item_sequence_types: itemSeqTypes,
-      p_frst_member_ids:     frstMemberIds,
     });
 
     if (finalErr) {

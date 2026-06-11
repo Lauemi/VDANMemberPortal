@@ -39,14 +39,14 @@ CREATE POLICY "portal_module_meta_select_authenticated"
   ON public.portal_module_meta FOR SELECT
   USING (auth.role() = 'authenticated');
 
--- Superadmin writes go through admin-board.js with auth token.
--- Superadmin identity is verified at the UI layer (data-superadmin-user-ids).
--- Same pattern as module_catalog table.
+-- Writes only for superadmin — server-side check via fcp_is_superadmin() (SECURITY DEFINER).
+-- fcp_is_superadmin() checks: system_superadmins table, user_roles.role, club_user_roles.role_key.
 DROP POLICY IF EXISTS "portal_module_meta_write_authenticated" ON public.portal_module_meta;
-CREATE POLICY "portal_module_meta_write_authenticated"
+DROP POLICY IF EXISTS "portal_module_meta_write_superadmin" ON public.portal_module_meta;
+CREATE POLICY "portal_module_meta_write_superadmin"
   ON public.portal_module_meta FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (public.fcp_is_superadmin())
+  WITH CHECK (public.fcp_is_superadmin());
 
 -- ─── Seed defaults ───────────────────────────────────────────────────────────
 -- is_visible=TRUE unless deprecated. eventplaner is off by default (replaced by v2).

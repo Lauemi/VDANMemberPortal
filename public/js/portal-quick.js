@@ -872,13 +872,16 @@
     }
 
     const mode = siteMode();
+    const isSuperadmin = canAccess("superadmin", state.roles);
     state.visibleModules = MODULES.filter((m) => {
       if (!canAccess(m.access, state.roles)) return false;
       const meta = portalMeta[m.id];
       if (meta) {
+        // is_visible=false is a hard global off — applies to everyone including superadmin
         if (meta.is_visible === false) return false;
-        if (meta.is_deprecated) return false;
-        if (meta.is_superadmin_only && !canAccess("superadmin", state.roles)) return false;
+        // deprecated: hidden for regular users, superadmin still sees it
+        if (meta.is_deprecated && !isSuperadmin) return false;
+        if (meta.is_superadmin_only && !isSuperadmin) return false;
         if (meta.vdan_only && mode !== "vdan") return false;
         if (meta.fcp_only && mode !== "fcp") return false;
         return true;

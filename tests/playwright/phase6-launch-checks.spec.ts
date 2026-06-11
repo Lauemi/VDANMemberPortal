@@ -49,12 +49,22 @@ const MOCK_SESSION_META = {
   expires_at: MOCK_SESSION.expires_at,
 };
 
-/** Inject Mock-Session in sessionStorage + localStorage, bevor die Seite Skripte lädt. */
+/** Inject Mock-Session in sessionStorage + localStorage, bevor die Seite Skripte lädt.
+ *  Injiziert auch den Consent-Status, damit das Consent-Banner nicht erscheint
+ *  (Banner verwendet position:fixed und kann im Playwright-Mobile-Kontext scrollWidth
+ *  aufblasen, da visualViewport ≠ layoutViewport bei isMobile:true + deviceScaleFactor:3).
+ */
 async function injectSession(page: Parameters<typeof test>[1]['page']) {
   await page.addInitScript(
     ({ session, meta }) => {
       try { sessionStorage.setItem('vdan_member_session_v1', JSON.stringify(session)); } catch {}
       try { localStorage.setItem('vdan_member_session_meta_v1', JSON.stringify(meta)); } catch {}
+      // Consent als gegeben markieren → Banner rendert nicht → kein Overflow-Artefakt
+      try {
+        localStorage.setItem('vdan_cookie_consent_v1', JSON.stringify({
+          essential: true, external_media: false, updated_at: '2024-01-01T00:00:00.000Z'
+        }));
+      } catch {}
     },
     { session: MOCK_SESSION, meta: MOCK_SESSION_META }
   );
@@ -83,9 +93,17 @@ async function mockSupabaseApi(page: Parameters<typeof test>[1]['page']) {
   });
 }
 
-/** Misst ob Seite horizontal scrollbar hat (scrollWidth > clientWidth). */
+/** Misst ob Seite echten horizontalen Layout-Overflow hat.
+ *
+ *  Vergleich gegen window.innerWidth statt clientWidth:
+ *  Im Playwright-Mobile-Emulationsmodus (isMobile:true + deviceScaleFactor:3)
+ *  ist der visuelle Viewport (window.innerWidth) breiter als der Layout-Viewport
+ *  (clientWidth). position:fixed-Elemente werden gegen den visuellen Viewport
+ *  positioniert und addieren sich zu scrollWidth auf — bis maximal window.innerWidth.
+ *  Echter Content-Overflow liegt immer über window.innerWidth hinaus.
+ */
 async function hasHorizontalOverflow(page: Parameters<typeof test>[1]['page']): Promise<boolean> {
-  return page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  return page.evaluate(() => document.documentElement.scrollWidth > Math.max(window.innerWidth, document.documentElement.clientWidth));
 }
 
 /** Gibt alle interaktiven Elemente zurück die kleiner als minPx sind. */
@@ -384,6 +402,344 @@ test.describe('CHECK-11 Console Errors — QFM Dashboard', () => {
 
     if (consoleErrors.length) console.warn('[CHECK-11] console.error-Calls QFM:', consoleErrors);
   });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHECK-13 — Console Errors: QFM Sub-Seiten + Rechtstexte  (Gate A)
+// ═══════════════════════════════════════════════════════════════════════════
+
+test.describe('CHECK-13 Console Errors — QFM Sub-Seiten + Rechtstexte', () => {
+  const QFM_PAGES = [
+    { label: 'Fangliste',     path: '/app/fangliste/' },
+    { label: 'Ausweis',       path: '/app/ausweis/' },
+    { label: 'Gewässerkarte', path: '/app/gewaesserkarte/' },
+    { label: 'Eventplaner',   path: '/app/eventplaner/' },
+  ];
+
+  const LEGAL_PAGES = [
+    { label: 'Datenschutz', path: '/datenschutz.html' },
+    { label: 'Impressum',   path: '/impressum.html' },
+    { label: 'AVV',         path: '/avv.html' },
+  ];
+
+  for (const { label, path } of QFM_PAGES) {
+    test(`QFM ${label}: keine unbehandelten JS-Exceptions`, async ({ page }) => {
+      const pageErrors: string[] = [];
+      page.on('pageerror', (err) => pageErrors.push(`[pageerror] ${err.message}`));
+
+      const consoleErrors: string[] = [];
+      page.on('console', (msg) => {
+        if (msg.type() === 'error') {
+          const text = msg.text();
+          const expected = ['Failed to load resource', 'net::ERR_', 'phase6-fake-access-token', 'Preflight'];
+          if (!expected.some((e) => text.includes(e))) {
+            consoleErrors.push(`[console.error] ${text.slice(0, 120)}`);
+          }
+        }
+      });
+
+      await injectSession(page);
+      await mockSupabaseApi(page);
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(1000);
+
+      if (pageErrors.length) console.error(`[CHECK-13] QFM ${label}: JS-Exceptions:`, pageErrors);
+      expect(pageErrors, `QFM ${label}: unbehandelte JS-Exceptions`).toHaveLength(0);
+
+      if (consoleErrors.length) console.warn(`[CHECK-13] QFM ${label}: console.error-Calls:`, consoleErrors);
+    });
+  }
+
+  for (const { label, path } of LEGAL_PAGES) {
+    test(`${label}: keine unbehandelten JS-Exceptions`, async ({ page }) => {
+      const pageErrors: string[] = [];
+      page.on('pageerror', (err) => pageErrors.push(`[pageerror] ${err.message}`));
+
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(500);
+
+      if (pageErrors.length) console.error(`[CHECK-13] ${label}: JS-Exceptions:`, pageErrors);
+      expect(pageErrors, `${label}: unbehandelte JS-Exceptions`).toHaveLength(0);
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHECK-14 — Horizontaler Overflow: ADM + QFM Sub-Seiten + Rechtstexte  (Gate B)
+// ═══════════════════════════════════════════════════════════════════════════
+
+test.describe('CHECK-14 Horizontaler Overflow — ADM + QFM + Rechtstexte', () => {
+  const ADM_SECTIONS = [
+    'Overview',
+    'Vereinsdaten',
+    'Einladungen',
+    'Mitgliederverwaltung',
+    'Ausweise',
+    'Freigaben',
+    'Rollen / Rechte',
+    'Gewässer',
+    'Regelwerke',
+    'Arbeitseinsätze',
+    'Einstellungen',
+  ];
+
+  test('ADM Shell + alle Sektionen: kein horizontaler Overflow bei 375px', async ({ page }) => {
+    await injectSession(page);
+    await mockSupabaseApi(page);
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/app/mitgliederverwaltung/', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
+
+    // ADM Shell initial
+    let overflow = await hasHorizontalOverflow(page);
+    expect(overflow, 'ADM Shell (initial): horizontaler Overflow bei 375px').toBe(false);
+
+    for (const section of ADM_SECTIONS) {
+      const btn = page.locator('.admin-nav-btn', { hasText: new RegExp(`^${section}$`) }).first();
+      if (await btn.count() === 0) {
+        console.warn(`[CHECK-14] Sektion "${section}" nicht gefunden — übersprungen`);
+        continue;
+      }
+      await btn.click();
+      await page.waitForTimeout(300);
+      overflow = await hasHorizontalOverflow(page);
+      expect(overflow, `ADM Sektion "${section}": horizontaler Overflow bei 375px`).toBe(false);
+    }
+  });
+
+  test('ADM Shell + alle Sektionen: kein horizontaler Overflow bei 1280px', async ({ page }) => {
+    await injectSession(page);
+    await mockSupabaseApi(page);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/app/mitgliederverwaltung/', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
+
+    let overflow = await hasHorizontalOverflow(page);
+    expect(overflow, 'ADM Shell (initial): horizontaler Overflow bei 1280px').toBe(false);
+
+    for (const section of ADM_SECTIONS) {
+      const btn = page.locator('.admin-nav-btn', { hasText: new RegExp(`^${section}$`) }).first();
+      if (await btn.count() === 0) continue;
+      await btn.click();
+      await page.waitForTimeout(300);
+      overflow = await hasHorizontalOverflow(page);
+      expect(overflow, `ADM Sektion "${section}": horizontaler Overflow bei 1280px`).toBe(false);
+    }
+  });
+
+  const QFM_PAGES = [
+    { label: 'QFM Dashboard', path: '/app/' },
+    { label: 'Fangliste',     path: '/app/fangliste/' },
+    { label: 'Ausweis',       path: '/app/ausweis/' },
+    { label: 'Gewässerkarte', path: '/app/gewaesserkarte/' },
+    { label: 'Eventplaner',   path: '/app/eventplaner/' },
+  ];
+
+  for (const { label, path } of QFM_PAGES) {
+    test(`${label}: kein horizontaler Overflow bei 375px`, async ({ page }) => {
+      await injectSession(page);
+      await mockSupabaseApi(page);
+      await page.setViewportSize({ width: 375, height: 812 });
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(500);
+      const overflow = await hasHorizontalOverflow(page);
+      expect(overflow, `${label}: horizontaler Overflow bei 375px`).toBe(false);
+    });
+
+    test(`${label}: kein horizontaler Overflow bei 1280px`, async ({ page }) => {
+      await injectSession(page);
+      await mockSupabaseApi(page);
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(500);
+      const overflow = await hasHorizontalOverflow(page);
+      expect(overflow, `${label}: horizontaler Overflow bei 1280px`).toBe(false);
+    });
+  }
+
+  const LEGAL_PAGES = [
+    { label: 'Datenschutz', path: '/datenschutz.html' },
+    { label: 'Impressum',   path: '/impressum.html' },
+    { label: 'AVV',         path: '/avv.html' },
+  ];
+
+  for (const { label, path } of LEGAL_PAGES) {
+    test(`${label}: kein horizontaler Overflow bei 375px`, async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 812 });
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      const overflow = await hasHorizontalOverflow(page);
+      expect(overflow, `${label}: horizontaler Overflow bei 375px`).toBe(false);
+    });
+
+    test(`${label}: kein horizontaler Overflow bei 1280px`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      const overflow = await hasHorizontalOverflow(page);
+      expect(overflow, `${label}: horizontaler Overflow bei 1280px`).toBe(false);
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHECK-15 — Touch Targets ≥ 44px: ADM + QFM Sub-Seiten + Rechtstexte  (Gate B)
+// ═══════════════════════════════════════════════════════════════════════════
+
+test.describe('CHECK-15 Touch Targets — ADM + QFM + Rechtstexte', () => {
+  const ADM_SECTIONS = [
+    'Overview',
+    'Vereinsdaten',
+    'Einladungen',
+    'Mitgliederverwaltung',
+    'Ausweise',
+    'Freigaben',
+    'Rollen / Rechte',
+    'Gewässer',
+    'Regelwerke',
+    'Arbeitseinsätze',
+    'Einstellungen',
+  ];
+
+  test('ADM Shell: Touch Targets ≥ 44px — Shell + alle Sektionen bei 375px', async ({ page }) => {
+    await injectSession(page);
+    await mockSupabaseApi(page);
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/app/mitgliederverwaltung/', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
+
+    // Prüfung der initialen Ansicht
+    let small = await smallInteractiveElements(page, 44);
+    let critical = small.filter(e => e.w < 32 || e.h < 32);
+    if (small.length) console.warn(`[CHECK-15] ADM Shell (initial): ${small.length} Elemente < 44px`);
+    expect(critical, 'ADM Shell (initial): kritisch kleine Targets (< 32px)').toHaveLength(0);
+
+    for (const section of ADM_SECTIONS) {
+      const btn = page.locator('.admin-nav-btn', { hasText: new RegExp(`^${section}$`) }).first();
+      if (await btn.count() === 0) {
+        console.warn(`[CHECK-15] Sektion "${section}" nicht gefunden — übersprungen`);
+        continue;
+      }
+      await btn.click();
+      await page.waitForTimeout(300);
+      small = await smallInteractiveElements(page, 44);
+      critical = small.filter(e => e.w < 32 || e.h < 32);
+      if (small.length) {
+        console.warn(`[CHECK-15] ADM "${section}": ${small.length} Elemente < 44px:`);
+        small.forEach(e => console.warn(`  ${e.selector} "${e.text}" — ${e.w}×${e.h}px`));
+      }
+      expect(critical, `ADM Sektion "${section}": kritisch kleine Targets (< 32px)`).toHaveLength(0);
+    }
+  });
+
+  const QFM_PAGES = [
+    { label: 'QFM Dashboard', path: '/app/' },
+    { label: 'Fangliste',     path: '/app/fangliste/' },
+    { label: 'Ausweis',       path: '/app/ausweis/' },
+    { label: 'Gewässerkarte', path: '/app/gewaesserkarte/' },
+    { label: 'Eventplaner',   path: '/app/eventplaner/' },
+  ];
+
+  for (const { label, path } of QFM_PAGES) {
+    test(`${label}: Touch Targets ≥ 44px bei 375px`, async ({ page }) => {
+      await injectSession(page);
+      await mockSupabaseApi(page);
+      await page.setViewportSize({ width: 375, height: 812 });
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(500);
+      const small = await smallInteractiveElements(page, 44);
+      if (small.length) {
+        console.warn(`[CHECK-15] ${label}: ${small.length} Elemente < 44px:`);
+        small.forEach(e => console.warn(`  ${e.selector} "${e.text}" — ${e.w}×${e.h}px`));
+      }
+      const critical = small.filter(e => e.w < 32 || e.h < 32);
+      expect(critical, `${label}: kritisch kleine Targets (< 32px)`).toHaveLength(0);
+    });
+  }
+
+  const LEGAL_PAGES = [
+    { label: 'Datenschutz', path: '/datenschutz.html' },
+    { label: 'Impressum',   path: '/impressum.html' },
+    { label: 'AVV',         path: '/avv.html' },
+  ];
+
+  for (const { label, path } of LEGAL_PAGES) {
+    test(`${label}: Touch Targets ≥ 44px bei 375px`, async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 812 });
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      const small = await smallInteractiveElements(page, 44);
+      if (small.length) {
+        console.warn(`[CHECK-15] ${label}: ${small.length} Elemente < 44px:`);
+        small.forEach(e => console.warn(`  ${e.selector} "${e.text}" — ${e.w}×${e.h}px`));
+      }
+      const critical = small.filter(e => e.w < 32 || e.h < 32);
+      expect(critical, `${label}: kritisch kleine Targets (< 32px)`).toHaveLength(0);
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHECK-16 — Loading / Error / Success States  (Gate C)
+// ═══════════════════════════════════════════════════════════════════════════
+
+test.describe('CHECK-16 Loading / Error / Success States', () => {
+  /** Seiten mit aria-live="polite" Feedback-Region laut Code-Scan */
+  const STATE_PAGES = [
+    { label: 'Fangliste',     path: '/app/fangliste/',     liveId: 'tripMsg' },
+    { label: 'Ausweis',       path: '/app/ausweis/',       liveId: 'memberCardMsg' },
+    { label: 'Gewässerkarte', path: '/app/gewaesserkarte/', liveId: 'waterMapMsg' },
+    { label: 'Eventplaner',   path: '/app/eventplaner/',   liveId: 'eventPlannerMsg' },
+  ];
+
+  test('ADM Shell hat aria-live Feedback-Region', async ({ page }) => {
+    await injectSession(page);
+    await mockSupabaseApi(page);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/app/mitgliederverwaltung/', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
+    const liveRegion = page.locator('[aria-live]').first();
+    await expect(liveRegion, 'ADM Shell: keine aria-live Region gefunden').toBeAttached();
+  });
+
+  for (const { label, path, liveId } of STATE_PAGES) {
+    test(`${label}: aria-live Feedback-Region vorhanden`, async ({ page }) => {
+      await injectSession(page);
+      await mockSupabaseApi(page);
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(500);
+      const liveEl = page.locator(`#${liveId}`);
+      await expect(liveEl, `${label}: #${liveId} nicht im DOM`).toBeAttached();
+    });
+
+    test(`${label}: kein Crash bei API-Fehler (Error State)`, async ({ page }) => {
+      const pageErrors: string[] = [];
+      page.on('pageerror', (err) => pageErrors.push(err.message));
+
+      await injectSession(page);
+      // REST → 500 simulieren (API-Fehler)
+      await page.route('**/rest/v1/**', async (route) => {
+        if (route.request().method() === 'OPTIONS') { await route.continue(); return; }
+        await route.fulfill({ status: 500, contentType: 'application/json',
+          body: JSON.stringify({ error: 'simulated-error' }) });
+      });
+      // club_request_gate_state + user_roles bleiben OK (Guard darf nicht blocken)
+      await page.route('**/rpc/club_request_gate_state', async (route) => {
+        await route.fulfill({ status: 200, contentType: 'application/json',
+          body: JSON.stringify([{ status: 'approved', club_id: 'mock-club' }]) });
+      });
+      await page.route('**/user_roles**', async (route) => {
+        await route.fulfill({ status: 200, contentType: 'application/json',
+          body: JSON.stringify([{ role: 'admin' }]) });
+      });
+
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(1500);
+
+      expect(pageErrors, `${label}: Crash bei API-Fehler — unbehandelte Exception`).toHaveLength(0);
+    });
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════

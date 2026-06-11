@@ -182,10 +182,16 @@
     const ownerDocument = root.ownerDocument || document;
 
     function configuredRowActions() {
-      const raw = Array.isArray(config?.rowActions) ? config.rowActions : ["edit", "duplicate", "delete"];
+      const raw = Array.isArray(config?.rowActions)
+        ? config.rowActions
+        : [
+            "edit",
+            ...(typeof config?.onDuplicate === "function" ? ["duplicate"] : []),
+            ...(typeof config?.onDelete === "function" ? ["delete"] : []),
+            ...(typeof config?.onInvite === "function" ? ["invite"] : []),
+          ];
       const allowed = new Set(["edit", "duplicate", "delete", "invite"]);
-      const filtered = raw.map((entry) => String(entry || "").trim().toLowerCase()).filter((entry) => allowed.has(entry));
-      return filtered.length ? filtered : ["edit", "duplicate", "delete"];
+      return raw.map((entry) => String(entry || "").trim().toLowerCase()).filter((entry) => allowed.has(entry));
     }
 
     function rowActionsHtml() {
@@ -976,7 +982,7 @@
                 return `<button type="button" class="${classes}" data-utility-action="${esc(key)}" ${titleAttr ? `title="${esc(titleAttr)}" aria-label="${esc(titleAttr)}"` : ""}>${icon ? `<span aria-hidden="true">${esc(icon)}</span>` : ""}${label ? `<span>${esc(label)}</span>` : ""}</button>`;
               }).join("")}
               ${config?.showColumnToggle !== false ? `<button type="button" class="feed-btn feed-btn--ghost${state.columnTogglePanelOpen ? " is-active" : ""}" data-inline-column-toggle="true" aria-label="Spalten ein-/ausblenden">⊞ Spalten</button>` : ""}
-              ${config.showFilterButton ? `<button type="button" class="icon-utility${isRedesign && state.rdFiltersOpen ? " is-active" : ""}" data-inline-filter-toggle="true" aria-label="Filter">☰</button>` : ""}
+              ${(filterFields.length > 0 ? config?.showFilterButton !== false : config?.showFilterButton === true) ? `<button type="button" class="icon-utility${isRedesign && state.rdFiltersOpen ? " is-active" : ""}" data-inline-filter-toggle="true" aria-label="Filter">☰</button>` : ""}
               ${showResetButton ? `<button type="button" class="icon-utility" data-inline-reset="true" aria-label="Reset">↺</button>` : ""}
             </div>
           </div>

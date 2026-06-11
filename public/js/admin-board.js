@@ -7,6 +7,7 @@
   const STATIC_WEB_MATRIX_STORAGE_KEY = "vdan_static_web_matrix_v1";
   const APP_MASK_BRAND_STORAGE_KEY = "vdan_app_mask_brand_matrix_v1";
   const PORTAL_MODULE_VISIBILITY_KEY = "vdan_portal_module_visibility_v1";
+  const PORTAL_TAB_VISIBILITY_KEY    = "vdan_portal_tab_visibility_v1";
   const CORE_ROLES = ["member", "vorstand", "admin"];
   const PAGE_INDEX_BASE = [
     { route: "/app/", kind: "PORTAL", label: "App Start" },
@@ -79,6 +80,21 @@
     { id: "template_studio",      label: "Template Studio",        short: "TS", group: "superadmin", fcp_only: false, vdan_only: false, deprecated: false, superadmin_only: false },
   ];
 
+  // Tab defs keyed by module_id — only modules with ADM masks that have tabs.
+  const PORTAL_MODULE_TAB_DEFS = {
+    natur_gewaesser: [
+      { id: "nav_ng_gewaesser",     label: "Gewässer" },
+      { id: "nav_ng_fangstatistik", label: "Fangstatistik" },
+      { id: "nav_ng_nacherfassung", label: "Nacherfassung" },
+    ],
+    mitgliederabrechnung: [
+      { id: "nav_ma_beitragsarten",      label: "Beitragsarten" },
+      { id: "nav_ma_pflichtstunden",     label: "Pflichtstundenabrechnung" },
+      { id: "nav_ma_kassierer",          label: "Kassierer-Übersicht" },
+      { id: "nav_ma_sepa_einstellungen", label: "SEPA / XML-Export" },
+    ],
+  };
+
   function siteMode() {
     return String(document.body?.getAttribute("data-site-mode") || window.__APP_SITE_MODE || "").trim().toLowerCase();
   }
@@ -117,6 +133,7 @@
     appMaskMatrix: {},
     clubRequests: [],
     moduleVisibility: {},
+    tabVisibility: {},
   };
   let rolePageMatrix = {};
 
@@ -294,6 +311,125 @@
     }, true);
   }
 
+  function defaultTabVisibility() {
+    const out = {};
+    Object.entries(PORTAL_MODULE_TAB_DEFS).forEach(([moduleId, tabs]) => {
+      out[moduleId] = {};
+      tabs.forEach((t) => {
+        out[moduleId][t.id] = { visible: true, deprecated: false, superadmin_only: false, note: "" };
+      });
+    });
+    return out;
+  }
+
+  function loadTabVisibilityLocal() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(PORTAL_TAB_VISIBILITY_KEY) || "null");
+      if (!raw || typeof raw !== "object") return defaultTabVisibility();
+      const def = defaultTabVisibility();
+      const out = {};
+      Object.entries(def).forEach(([moduleId, tabs]) => {
+        out[moduleId] = {};
+        Object.entries(tabs).forEach(([tabId, defTab]) => {
+          const s = raw[moduleId]?.[tabId] || {};
+          out[moduleId][tabId] = {
+            visible:         s.visible !== false,
+            deprecated:      Boolean(s.deprecated),
+            superadmin_only: Boolean(s.superadmin_only),
+            note:            String(s.note || "").substring(0, 80),
+          };
+        });
+      });
+      return out;
+    } catch {
+      return defaultTabVisibility();
+    }
+  }
+
+  async function loadTabVisibilityFromDb() {
+    const rows = await sb(
+      "/rest/v1/portal_tab_meta?select=module_id,tab_id,is_visible,is_deprecated,is_superadmin_only,note",
+      { method: "GET" }, true
+    );
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    const out = {};
+    rows.forEach((row) => {
+      const mid = String(row.module_id || "");
+      const tid = String(row.tab_id || "");
+      if (!mid || !tid) return;
+      if (!out[mid]) out[mid] = {};
+      out[mid][tid] = {
+        visible:         row.is_visible !== false,
+        deprecated:      Boolean(row.is_deprecated),
+        superadmin_only: Boolean(row.is_superadmin_only),
+        note:            String(row.note || "").substring(0, 80),
+      };
+    });
+    return out;
+  }
+
+  async function saveTabVisibility(vis) {
+    try { localStorage.setItem(PORTAL_TAB_VISIBILITY_KEY, JSON.stringify(vis)); } catch { /* ignore */ }
+    const payload = [];
+    Object.entries(PORTAL_MODULE_TAB_DEFS).forEach(([moduleId, tabs]) => {
+      tabs.forEach((t) => {
+        const cfg = vis[moduleId]?.[t.id] || defaultTabVisibility()[moduleId]?.[t.id] || {};
+        payload.push({
+          module_id:         moduleId,
+          tab_id:            t.id,
+          is_visible:        cfg.visible !== false,
+          is_deprecated:     Boolean(cfg.deprecated),
+          is_superadmin_only: Boolean(cfg.superadmin_only),
+          note:              String(cfg.note || "").substring(0, 80),
+        });
+      });
+    });
+    await sb("/rest/v1/portal_tab_meta?on_conflict=module_id,tab_id", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(payload),
+    }, true);
+  }
+
+  function toggleTabSubRows(moduleId, btn) {
+    const tbody = document.querySelector("#adminModuleVisibilityTable tbody");
+    if (!tbody) return;
+    const existing = tbody.querySelectorAll(`tr[data-mv-tab-module="${moduleId}"]`);
+    if (existing.length) {
+      existing.forEach((r) => r.remove());
+      btn.textContent = `▶ Tabs (${(PORTAL_MODULE_TAB_DEFS[moduleId] || []).length})`;
+      return;
+    }
+    const parentRow = btn.closest("tr");
+    if (!parentRow) return;
+    const tabs = PORTAL_MODULE_TAB_DEFS[moduleId] || [];
+    const vis = state.tabVisibility?.[moduleId] || {};
+    // Insert rows in reverse so insertAdjacentElement("afterend") order is preserved
+    [...tabs].reverse().forEach((tab) => {
+      const cfg = vis[tab.id] || {};
+      const visible        = cfg.visible !== false;
+      const deprecated     = Boolean(cfg.deprecated);
+      const superadmin_only = Boolean(cfg.superadmin_only);
+      const note           = String(cfg.note || "");
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-mv-tab-module", moduleId);
+      tr.style.cssText = "background:var(--bg-tinted,rgba(0,0,0,0.03))";
+      tr.innerHTML = [
+        `<td class="small" style="padding-left:1.5rem;color:var(--text-muted,#888);white-space:nowrap">↳ Tab</td>`,
+        `<td class="small">${esc(tab.label)}</td>`,
+        `<td><code class="small">${esc(tab.id)}</code></td>`,
+        `<td style="text-align:center"><input type="checkbox" data-tv-module="${esc(moduleId)}" data-tv-id="${esc(tab.id)}" data-tv-field="visible" ${visible ? "checked" : ""} /></td>`,
+        `<td style="text-align:center"><input type="checkbox" data-tv-module="${esc(moduleId)}" data-tv-id="${esc(tab.id)}" data-tv-field="deprecated" ${deprecated ? "checked" : ""} /></td>`,
+        `<td style="text-align:center"><input type="checkbox" data-tv-module="${esc(moduleId)}" data-tv-id="${esc(tab.id)}" data-tv-field="superadmin_only" ${superadmin_only ? "checked" : ""} /></td>`,
+        `<td></td><td></td>`,
+        `<td><input type="text" class="small" style="width:120px" value="${esc(note)}" data-tv-module="${esc(moduleId)}" data-tv-id="${esc(tab.id)}" data-tv-field="note" placeholder="Notiz…" /></td>`,
+        `<td></td>`,
+      ].join("");
+      parentRow.insertAdjacentElement("afterend", tr);
+    });
+    btn.textContent = `▼ Tabs (${tabs.length})`;
+  }
+
   function renderModuleVisibilityEditor() {
     const body = document.querySelector("#adminModuleVisibilityTable tbody");
     if (!body) return;
@@ -309,6 +445,10 @@
       const note           = String(cfg.note || "");
       const tierLabel      = GROUP_LABELS[m.group] || m.group;
       const visStyle       = visible ? "" : " style=\"opacity:0.45\"";
+      const tabDefs        = PORTAL_MODULE_TAB_DEFS[m.id];
+      const tabCell        = tabDefs
+        ? `<td><button type="button" class="small" data-mv-expand="${esc(m.id)}" style="cursor:pointer;background:none;border:1px solid var(--border-color,#ccc);border-radius:3px;padding:1px 5px;color:var(--link-color,#0066cc)">▶ Tabs (${tabDefs.length})</button></td>`
+        : `<td></td>`;
       return `
         <tr${visStyle}>
           <td class="small" style="white-space:nowrap;color:var(--text-muted,#888);text-transform:uppercase;font-size:0.72em">${esc(tierLabel)}</td>
@@ -320,6 +460,7 @@
           <td style="text-align:center"><input type="checkbox" data-mv-id="${esc(m.id)}" data-mv-field="fcp_only" ${fcp_only ? "checked" : ""} /></td>
           <td style="text-align:center"><input type="checkbox" data-mv-id="${esc(m.id)}" data-mv-field="vdan_only" ${vdan_only ? "checked" : ""} /></td>
           <td><input type="text" class="small" style="width:120px" value="${esc(note)}" data-mv-id="${esc(m.id)}" data-mv-field="note" placeholder="Notiz…" /></td>
+          ${tabCell}
         </tr>
       `;
     }).join("");
@@ -2239,6 +2380,7 @@
       setSmallMsg("adminModuleVisibilityMsg", "Wird gespeichert…");
       try {
         await saveModuleVisibility(state.moduleVisibility);
+        await saveTabVisibility(state.tabVisibility);
         setSmallMsg("adminModuleVisibilityMsg", "Sichtbarkeits-Konfiguration in Datenbank gespeichert.");
       } catch (err) {
         recordDiag("portal_module_meta/save", err);
@@ -2247,19 +2389,40 @@
     });
     document.getElementById("adminModuleVisibilityReset")?.addEventListener("click", async () => {
       state.moduleVisibility = defaultModuleVisibility();
+      state.tabVisibility    = defaultTabVisibility();
       renderModuleVisibilityEditor();
       setSmallMsg("adminModuleVisibilityMsg", "Wird zurückgesetzt…");
       try {
         await saveModuleVisibility(state.moduleVisibility);
+        await saveTabVisibility(state.tabVisibility);
         setSmallMsg("adminModuleVisibilityMsg", "Sichtbarkeits-Konfiguration auf Standard zurückgesetzt.");
       } catch (err) {
         recordDiag("portal_module_meta/reset", err);
         setSmallMsg("adminModuleVisibilityMsg", `Zurückgesetzt (lokal), DB-Fehler: ${err?.message || err}`, true);
       }
     });
+    // Expand/collapse tab sub-rows
+    document.querySelector("#adminModuleVisibilityTable tbody")?.addEventListener("click", (event) => {
+      const btn = event.target.closest("[data-mv-expand]");
+      if (!btn) return;
+      const moduleId = String(btn.getAttribute("data-mv-expand") || "").trim();
+      if (moduleId) toggleTabSubRows(moduleId, btn);
+    });
+    // Module checkbox changes
     document.querySelector("#adminModuleVisibilityTable tbody")?.addEventListener("change", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLInputElement) || target.type !== "checkbox") return;
+      // Tab checkbox
+      const tvModule = String(target.getAttribute("data-tv-module") || "").trim();
+      const tvId     = String(target.getAttribute("data-tv-id") || "").trim();
+      const tvField  = String(target.getAttribute("data-tv-field") || "").trim();
+      if (tvModule && tvId && ["visible", "deprecated", "superadmin_only"].includes(tvField)) {
+        if (!state.tabVisibility[tvModule]) state.tabVisibility[tvModule] = {};
+        if (!state.tabVisibility[tvModule][tvId]) state.tabVisibility[tvModule][tvId] = {};
+        state.tabVisibility[tvModule][tvId][tvField] = Boolean(target.checked);
+        return;
+      }
+      // Module checkbox
       const moduleId = String(target.getAttribute("data-mv-id") || "").trim();
       const field    = String(target.getAttribute("data-mv-field") || "").trim();
       if (!moduleId || !["visible", "deprecated", "superadmin_only", "fcp_only", "vdan_only"].includes(field)) return;
@@ -2268,9 +2431,20 @@
       const row = target.closest("tr");
       if (row) row.style.opacity = field === "visible" && !target.checked ? "0.45" : "";
     });
+    // Module + tab note input
     document.querySelector("#adminModuleVisibilityTable tbody")?.addEventListener("input", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLInputElement) || target.type !== "text") return;
+      // Tab note
+      const tvModule = String(target.getAttribute("data-tv-module") || "").trim();
+      const tvId     = String(target.getAttribute("data-tv-id") || "").trim();
+      if (tvModule && tvId) {
+        if (!state.tabVisibility[tvModule]) state.tabVisibility[tvModule] = {};
+        if (!state.tabVisibility[tvModule][tvId]) state.tabVisibility[tvModule][tvId] = {};
+        state.tabVisibility[tvModule][tvId].note = String(target.value || "").substring(0, 80);
+        return;
+      }
+      // Module note
       const moduleId = String(target.getAttribute("data-mv-id") || "").trim();
       if (!moduleId) return;
       if (!state.moduleVisibility[moduleId]) state.moduleVisibility[moduleId] = {};
@@ -2405,6 +2579,7 @@
 
     setMsg("Admin-Board lädt...");
     state.moduleVisibility = loadModuleVisibilityLocal();
+    state.tabVisibility    = loadTabVisibilityLocal();
     await loadCoreData();
     await loadGovernanceFromDb();
     await loadGovernanceHealth();
@@ -2416,6 +2591,15 @@
       }
     } catch (err) {
       recordDiag("portal_module_meta/load", err);
+    }
+    try {
+      const fromTabDb = await loadTabVisibilityFromDb();
+      if (fromTabDb) {
+        state.tabVisibility = fromTabDb;
+        try { localStorage.setItem(PORTAL_TAB_VISIBILITY_KEY, JSON.stringify(fromTabDb)); } catch { /* ignore */ }
+      }
+    } catch (err) {
+      recordDiag("portal_tab_meta/load", err);
     }
     renderModuleVisibilityEditor();
     renderModuleCatalogEditor();

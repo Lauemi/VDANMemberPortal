@@ -30,6 +30,44 @@
     },
   };
 
+  function maskIdToModuleId(maskId) {
+    // "ADM_NATUR_GEWAESSER" → "natur_gewaesser"
+    return String(maskId || "").replace(/^ADM_/i, "").toLowerCase() || null;
+  }
+
+  function checkIsSuperadminLocal() {
+    try {
+      const ids = String(document.body?.getAttribute("data-superadmin-user-ids") || "")
+        .split(",").map((s) => s.trim()).filter(Boolean);
+      if (!ids.length) return false;
+      const session = window.VDAN_AUTH?.loadSession?.();
+      const uid = String(session?.user?.id || "");
+      return uid ? ids.includes(uid) : false;
+    } catch {
+      return false;
+    }
+  }
+
+  function filterTabsByVisibility(items, maskId) {
+    try {
+      const tabVis = JSON.parse(localStorage.getItem("vdan_portal_tab_visibility_v1") || "null");
+      if (!tabVis || typeof tabVis !== "object") return items;
+      const moduleId = maskIdToModuleId(maskId);
+      if (!moduleId || !tabVis[moduleId]) return items;
+      const isSuperadmin = checkIsSuperadminLocal();
+      return items.filter((item) => {
+        const cfg = tabVis[moduleId]?.[item.id];
+        if (!cfg) return true;
+        if (cfg.visible === false) return false;
+        if (cfg.deprecated && !isSuperadmin) return false;
+        if (cfg.superadmin_only && !isSuperadmin) return false;
+        return true;
+      });
+    } catch {
+      return items;
+    }
+  }
+
   function createAdminPanelMask(config) {
     return new AdminPanelMask(config);
   }
@@ -339,7 +377,10 @@
         })
       );
 
-      const navItems = Array.isArray(this.config.workspaceNav?.items) ? this.config.workspaceNav.items : [];
+      const navItems = filterTabsByVisibility(
+        Array.isArray(this.config.workspaceNav?.items) ? this.config.workspaceNav.items : [],
+        this.config.maskId || ""
+      );
       navItems.forEach((item) => {
         const isActive = item.targetSectionId === this.state.activeSectionId;
         this.refs.nav.append(

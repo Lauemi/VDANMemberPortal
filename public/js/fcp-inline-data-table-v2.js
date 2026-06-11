@@ -68,6 +68,12 @@
       if (normalized === "admin") return "Admin";
       if (normalized === "vorstand") return "Vorstand";
     }
+    if (column?.displayDivisor != null && raw != null) {
+      const converted = Number(raw) / Number(column.displayDivisor);
+      const suffix = column.displaySuffix || "";
+      const formatted = Number.isInteger(converted) ? String(converted) : converted.toFixed(1);
+      return esc(formatted + suffix);
+    }
     if (typeof fieldContracts.formatFieldDisplayValue === "function") {
       return esc(fieldContracts.formatFieldDisplayValue(column, raw));
     }

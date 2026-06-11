@@ -10,7 +10,7 @@
     "items": [
       {
         "id": "nav_ma_pflichtstunden",
-        "label": "Pflichtstunden",
+        "label": "Pflichtstundenabrechnung",
         "targetSectionId": "ma_pflichtstunden"
       }
     ]
@@ -43,8 +43,8 @@
   "sections": [
     {
       "id": "ma_pflichtstunden",
-      "label": "Pflichtstunden",
-      "title": "Pflichtstunden — Soll / Ist / Delta",
+      "label": "Pflichtstundenabrechnung",
+      "title": "Pflichtstundenabrechnung — Soll / Ist / Delta",
       "description": "Jahresübersicht: Soll, geleistete Stunden und Delta je Mitglied.",
       "workspaceSlot": "main",
       "sectionLayout": "stack",
@@ -169,27 +169,33 @@
             },
             {
               "key": "soll_minutes",
-              "label": "Soll (min)",
+              "label": "Soll (h)",
               "type": "number",
+              "displayDivisor": 60,
+              "displaySuffix": " h",
               "exportable": true,
               "exportKey": "soll_minutes",
-              "exportLabel": "Soll (Minuten)"
+              "exportLabel": "Soll (Stunden)"
             },
             {
               "key": "ist_minutes",
-              "label": "Ist (min)",
+              "label": "Ist (h)",
               "type": "number",
+              "displayDivisor": 60,
+              "displaySuffix": " h",
               "exportable": true,
               "exportKey": "ist_minutes",
-              "exportLabel": "Ist (Minuten)"
+              "exportLabel": "Ist (Stunden)"
             },
             {
               "key": "delta_minutes",
-              "label": "Delta (min)",
+              "label": "Delta (h)",
               "type": "number",
+              "displayDivisor": 60,
+              "displaySuffix": " h",
               "exportable": true,
               "exportKey": "delta_minutes",
-              "exportLabel": "Delta (Minuten)"
+              "exportLabel": "Delta (Stunden)"
             }
           ],
           "rowsPath": "rows",

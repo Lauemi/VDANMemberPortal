@@ -1685,6 +1685,48 @@
       return normalizeBindingResult(binding, data);
     }
 
+    if (binding.kind === "edge_function_download") {
+      const functionName = String(binding.target || "").trim();
+      if (!functionName) throw new Error("Edge Function Ziel fehlt.");
+      const { url, key } = cfg();
+      if (!url || !key) throw new Error("Supabase-Konfiguration fehlt.");
+      const requestBody = JSON.stringify(payload && typeof payload === "object" ? payload : {});
+      const runDownloadRequest = async ({ forceRefresh = false, useCustomTokenHeader = false } = {}) => {
+        const token = await ensureAccessToken({ forceRefresh });
+        if (!token) throw new Error("Bitte zuerst einloggen.");
+        const headers = new Headers({
+          apikey: key,
+          "Content-Type": "application/json",
+          Authorization: useCustomTokenHeader ? `Bearer ${key}` : `Bearer ${token}`,
+        });
+        if (useCustomTokenHeader) headers.set("x-vdan-access-token", token);
+        const res = await fetch(`${url}/functions/v1/${functionName}`, { method: "POST", headers, body: requestBody });
+        return { res, token };
+      };
+      let { res, token } = await runDownloadRequest({ forceRefresh: false });
+      if (res.status === 401) ({ res, token } = await runDownloadRequest({ forceRefresh: true }));
+      if (res.status === 401) ({ res, token } = await runDownloadRequest({ forceRefresh: true, useCustomTokenHeader: true }));
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        let errMsg = `download_failed_${res.status}`;
+        try { errMsg = JSON.parse(errText)?.error || errMsg; } catch { /* ignore */ }
+        throw new Error(errMsg);
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get("content-disposition") || "";
+      const nameMatch = disposition.match(/filename="?([^";\n]+)"?/i);
+      const filename = nameMatch ? nameMatch[1] : `${functionName}-export.xml`;
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+      return normalizeBindingResult(binding, { ok: true, filename });
+    }
+
     if (binding.kind === "local_only") {
       const target = String(binding.target || "").trim();
       if (target === "app_status") {

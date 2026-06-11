@@ -22,6 +22,11 @@
         "id": "nav_ma_kassierer",
         "label": "Kassierer-Übersicht",
         "targetSectionId": "ma_kassierer_uebersicht"
+      },
+      {
+        "id": "nav_ma_sepa_einstellungen",
+        "label": "SEPA / XML-Export",
+        "targetSectionId": "ma_sepa_einstellungen"
       }
     ]
   },
@@ -505,6 +510,22 @@
                   "defaultValue": "",
                   "validationRules": [],
                   "options": []
+                },
+                {
+                  "name": "execution_date",
+                  "label": "Einzugsdatum (SEPA)",
+                  "type": "date",
+                  "componentType": "date",
+                  "valuePath": "record.execution_date",
+                  "payloadKey": "p_execution_date",
+                  "group": "run",
+                  "order": 30,
+                  "helpText": "Gewünschtes Ausführungsdatum des SEPA-Einzugs. Muss mindestens 2 Banktage in der Zukunft liegen.",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
                 }
               ],
               "groupDefs": [
@@ -659,6 +680,7 @@
               "type": "text",
               "options": [
                 {"value": "vollständig",          "label": "✓ Vollständig"},
+                {"value": "vollstaendig",          "label": "✓ Vollständig"},
                 {"value": "mandat_genehmigt",      "label": "Genehmigt"},
                 {"value": "genehmigt_keine_iban",  "label": "Genehmigt (keine IBAN)"},
                 {"value": "bankdaten_kein_mandat", "label": "Bankdaten (kein Mandat)"},
@@ -667,6 +689,19 @@
               "exportable": true,
               "exportKey": "sepa_status",
               "exportLabel": "SEPA-Status"
+            },
+            {
+              "key": "mandate_lifecycle_status",
+              "label": "Mandatsstatus",
+              "type": "text",
+              "options": [
+                {"value": "pending_first_collection", "label": "Ersteinzug (FRST)"},
+                {"value": "established",              "label": "Folgelastschrift (RCUR)"},
+                {"value": "revoked",                  "label": "Widerrufen"}
+              ],
+              "exportable": true,
+              "exportKey": "mandate_lifecycle_status",
+              "exportLabel": "Mandatsstatus"
             },
             {
               "key": "iban_last4",
@@ -902,6 +937,386 @@
               {"key": "run_label", "label": "Lauf", "type": "text", "placeholder": "Lauf suchen"},
               {"key": "member_name_snapshot", "label": "Mitglied", "type": "text", "placeholder": "Mitglied suchen"},
               {"key": "item_status", "label": "Status", "type": "text"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "ma_sepa_einstellungen",
+      "label": "SEPA / XML-Export",
+      "title": "SEPA-Konfiguration & XML-Export",
+      "description": "Gläubiger-ID, Vereins-IBAN und BIC pflegen. SEPA pain.008 XML erzeugen. Lauf-Status manuell nachziehen.",
+      "workspaceSlot": "main",
+      "sectionLayout": "stack",
+      "permissions": {
+        "view": true,
+        "write": true,
+        "update": true,
+        "delete": false,
+        "roles": ["admin", "vorstand", "superadmin"]
+      },
+      "securityContext": {
+        "rlsKey": "tenant_id",
+        "membershipKey": "canonical_membership_id",
+        "requiresTenantAccess": true,
+        "requiresRoleCheck": true,
+        "allowedRoles": ["admin", "vorstand", "superadmin"],
+        "serverValidated": true
+      },
+      "ownership": "club_override",
+      "scope": "club_override",
+      "panels": [
+        {
+          "id": "ma_sepa_config_form",
+          "title": "SEPA-Konfiguration",
+          "renderMode": "form",
+          "componentType": "FormPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": true,
+            "delete": false,
+            "roles": ["admin", "vorstand", "superadmin"]
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": ["admin", "vorstand", "superadmin"],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.club_sepa_config",
+            "sourceKind": "rpc",
+            "sourceOfTruth": "sql",
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein Vereinskontext verfügbar. Bitte als Admin einloggen.",
+              "loadPayloadDefaults": { "p_club_id": "{club_id}" },
+              "savePayloadDefaults": { "p_club_id": "{club_id}" },
+              "successMessage": "SEPA-Konfiguration gespeichert.",
+              "fieldDefs": [
+                {
+                  "name": "glaeubiger_id",
+                  "label": "Gläubiger-ID",
+                  "type": "text",
+                  "componentType": "input",
+                  "valuePath": "record.glaeubiger_id",
+                  "payloadKey": "p_glaeubiger_id",
+                  "group": "sepa",
+                  "order": 10,
+                  "placeholder": "DE98ZZZ09999999999",
+                  "helpText": "Gläubiger-ID aus dem SEPA-Mandat des Vereins.",
+                  "readonly": false,
+                  "required": true,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "club_iban",
+                  "label": "Vereins-IBAN",
+                  "type": "text",
+                  "componentType": "input",
+                  "valuePath": "record.club_iban_last4",
+                  "payloadKey": "p_club_iban",
+                  "group": "sepa",
+                  "order": 20,
+                  "placeholder": "DE12 3456 7890 1234 5678 90",
+                  "helpText": "IBAN des Vereinskontos. Wird verschlüsselt gespeichert — nur die letzten 4 Stellen werden angezeigt.",
+                  "readonly": false,
+                  "required": true,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "club_bic",
+                  "label": "BIC",
+                  "type": "text",
+                  "componentType": "input",
+                  "valuePath": "record.club_bic",
+                  "payloadKey": "p_club_bic",
+                  "group": "sepa",
+                  "order": 30,
+                  "placeholder": "SSKMDEMMXXX",
+                  "helpText": "BIC der Vereinsbank. Bei deutschen IBANs optional.",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "vorankuendigung_tage",
+                  "label": "Voranküdigungsfrist (Tage)",
+                  "type": "number",
+                  "componentType": "number",
+                  "valuePath": "record.vorankuendigung_tage",
+                  "payloadKey": "p_vorankuendigung_tage",
+                  "group": "sepa",
+                  "order": 40,
+                  "helpText": "Wie viele Tage vor Einzug wird der Kontoinhaber informiert? Standard: 14.",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": 14,
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "bank_portal_url",
+                  "label": "Bank-Portal URL",
+                  "type": "text",
+                  "componentType": "input",
+                  "valuePath": "record.bank_portal_url",
+                  "payloadKey": "p_bank_portal_url",
+                  "group": "sepa",
+                  "displaySpan": "full",
+                  "order": 50,
+                  "placeholder": "https://banking.meine-bank.de/upload",
+                  "helpText": "Upload-URL des Bank-Portals für SEPA-Lastschrift-Dateien.",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                }
+              ],
+              "groupDefs": [
+                {
+                  "key": "sepa",
+                  "title": "SEPA-Bankverbindung",
+                  "hint": "Vereinskonten-Daten für den SEPA-Lastschrifteinzug. IBAN wird AES-256 verschlüsselt.",
+                  "defaultOpen": true
+                }
+              ]
+            }
+          },
+          "loadBinding": {
+            "kind": "rpc",
+            "target": "public.admin_get_sepa_config",
+            "path": "rpc:public.admin_get_sepa_config"
+          },
+          "saveBinding": {
+            "kind": "rpc",
+            "target": "public.admin_upsert_sepa_config",
+            "path": "rpc:public.admin_upsert_sepa_config"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": [
+              { "action": "submit", "label": "Speichern" }
+            ]
+          }
+        },
+        {
+          "id": "ma_sepa_xml_export",
+          "title": "SEPA XML-Export",
+          "renderMode": "form",
+          "componentType": "FormPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": false,
+            "delete": false,
+            "roles": ["admin", "vorstand", "superadmin"]
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": ["admin", "vorstand", "superadmin"],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.billing_runs",
+            "sourceKind": "process",
+            "sourceOfTruth": "sql",
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein Vereinskontext verfügbar. Bitte als Admin einloggen.",
+              "savePayloadDefaults": {
+                "club_id": "{club_id}"
+              },
+              "successMessage": "SEPA XML erzeugt und als Datei heruntergeladen. Lauf-Status wurde auf 'exportiert' gesetzt.",
+              "fieldDefs": [
+                {
+                  "name": "billing_run_id",
+                  "label": "Abrechnungslauf-ID",
+                  "type": "text",
+                  "componentType": "input",
+                  "valuePath": "record.billing_run_id",
+                  "payloadKey": "billing_run_id",
+                  "group": "export",
+                  "displaySpan": "full",
+                  "order": 10,
+                  "placeholder": "UUID des Laufs",
+                  "helpText": "ID des Abrechnungslaufs aus der Tabelle oben. Muss Status 'Entwurf' haben.",
+                  "readonly": false,
+                  "required": true,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                }
+              ],
+              "groupDefs": [
+                {
+                  "key": "export",
+                  "title": "XML-Datei erzeugen",
+                  "hint": "Erzeugt eine pain.008.003.02 Datei und setzt den Lauf-Status auf 'exportiert'. Dieser Schritt kann pro Lauf nur einmal ausgeführt werden.",
+                  "defaultOpen": true
+                }
+              ]
+            }
+          },
+          "loadBinding": {
+            "kind": "local_only",
+            "target": "sepa_export_defaults",
+            "path": "local:sepa_export_defaults"
+          },
+          "saveBinding": {
+            "kind": "edge_function_download",
+            "target": "generate-sepa-pain008",
+            "path": "edge_function_download:generate-sepa-pain008"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": [
+              { "action": "submit", "label": "XML erzeugen & herunterladen" }
+            ]
+          }
+        },
+        {
+          "id": "ma_sepa_status_update",
+          "title": "Lauf-Status aktualisieren",
+          "renderMode": "form",
+          "componentType": "FormPanel",
+          "contentArea": "main",
+          "flowType": "standard",
+          "permissions": {
+            "view": true,
+            "write": true,
+            "update": true,
+            "delete": false,
+            "roles": ["admin", "vorstand", "superadmin"]
+          },
+          "securityContext": {
+            "rlsKey": "tenant_id",
+            "membershipKey": "canonical_membership_id",
+            "requiresTenantAccess": true,
+            "requiresRoleCheck": true,
+            "allowedRoles": ["admin", "vorstand", "superadmin"],
+            "serverValidated": true
+          },
+          "meta": {
+            "sourceTable": "public.billing_runs",
+            "sourceKind": "process",
+            "sourceOfTruth": "sql",
+            "scope": "club_override",
+            "ownership": "club_override",
+            "metaDisplay": "auto",
+            "resolver": {
+              "requiresClubContext": true,
+              "missingClubContextMessage": "Kein Vereinskontext verfügbar. Bitte als Admin einloggen.",
+              "savePayloadDefaults": {
+                "p_club_id": "{club_id}"
+              },
+              "successMessage": "Status aktualisiert.",
+              "fieldDefs": [
+                {
+                  "name": "billing_run_id",
+                  "label": "Abrechnungslauf-ID",
+                  "type": "text",
+                  "componentType": "input",
+                  "valuePath": "record.billing_run_id",
+                  "payloadKey": "p_billing_run_id",
+                  "group": "status",
+                  "displaySpan": "full",
+                  "order": 10,
+                  "placeholder": "UUID des Laufs",
+                  "readonly": false,
+                  "required": true,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                },
+                {
+                  "name": "new_status",
+                  "label": "Neuer Status",
+                  "type": "select",
+                  "componentType": "select",
+                  "valuePath": "record.new_status",
+                  "payloadKey": "p_new_status",
+                  "group": "status",
+                  "order": 20,
+                  "readonly": false,
+                  "required": true,
+                  "defaultValue": "submitted",
+                  "validationRules": [],
+                  "options": [
+                    {"value": "submitted",  "label": "Eingereicht"},
+                    {"value": "completed",  "label": "Erfolgreich abgeschlossen"},
+                    {"value": "failed",     "label": "Fehlgeschlagen"}
+                  ]
+                },
+                {
+                  "name": "note",
+                  "label": "Notiz (optional)",
+                  "type": "text",
+                  "componentType": "input",
+                  "valuePath": "record.note",
+                  "payloadKey": "p_note",
+                  "group": "status",
+                  "displaySpan": "full",
+                  "order": 30,
+                  "placeholder": "Eingereicht am 2026-06-15 via Volksbank-Portal",
+                  "readonly": false,
+                  "required": false,
+                  "defaultValue": "",
+                  "validationRules": [],
+                  "options": []
+                }
+              ],
+              "groupDefs": [
+                {
+                  "key": "status",
+                  "title": "Lauf-Status manuell setzen",
+                  "hint": "Nach dem Einreichen beim Bankportal den Status manuell aktualisieren.",
+                  "defaultOpen": true
+                }
+              ]
+            }
+          },
+          "loadBinding": {
+            "kind": "local_only",
+            "target": "sepa_status_defaults",
+            "path": "local:sepa_status_defaults"
+          },
+          "saveBinding": {
+            "kind": "rpc",
+            "target": "public.admin_update_billing_run_status",
+            "path": "rpc:public.admin_update_billing_run_status"
+          },
+          "content": {
+            "fields": [],
+            "rows": [],
+            "actions": [
+              { "action": "submit", "label": "Status setzen" }
             ]
           }
         }

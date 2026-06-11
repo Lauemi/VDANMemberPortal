@@ -152,7 +152,7 @@
       createLabel: runtimeOptions?.runtime?.createLabel,
       redesign: runtimeOptions?.runtime?.redesign,
       filterPanel,
-      rowActions: runtimeOptions?.runtime?.rowActions || [],
+      rowActions: runtimeOptions?.runtime?.rowActions,
       utilityActions: runtimeOptions?.runtime?.utilityActions || [],
       onUtilityAction: runtimeOptions?.runtime?.onUtilityAction,
       onRowClick: runtimeOptions?.runtime?.onRowClick,

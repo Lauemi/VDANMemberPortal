@@ -1426,7 +1426,7 @@
       searchPlaceholder: tableConfig?.searchPlaceholder || undefined,
       filterFields: Array.isArray(tableConfig?.filterFields) ? tableConfig.filterFields : [],
       showViewSwitch: tableConfig?.showViewSwitch !== false,
-      showFilterButton: tableConfig?.showFilterButton === true,
+      showFilterButton: tableConfig?.showFilterButton,
       showMetaBar: tableConfig?.showMetaBar === true,
       metaLabel: tableConfig?.metaLabel || undefined,
       metaHint: tableConfig?.metaHint || undefined,

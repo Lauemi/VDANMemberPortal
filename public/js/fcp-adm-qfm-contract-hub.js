@@ -911,24 +911,9 @@
     const deleteMemberRegistryRow = typeof _domainHandlers.deleteMemberRegistryRow === "function"
       ? _domainHandlers.deleteMemberRegistryRow
       : async () => { message("Domain-Adapter nicht geladen."); };
-    const saveRuleRow = typeof _domainHandlers.saveRuleRow === "function"
-      ? _domainHandlers.saveRuleRow
+    const _panelHandler = (typeof _domainHandlers?.panelHandlers === "object" && _domainHandlers.panelHandlers !== null)
+      ? (_domainHandlers.panelHandlers[panelId] || null)
       : null;
-    const deleteRuleRow = typeof _domainHandlers.deleteRuleRow === "function"
-      ? _domainHandlers.deleteRuleRow
-      : null;
-    const saveWaterRow = typeof _domainHandlers.saveWaterRow === "function"
-      ? _domainHandlers.saveWaterRow
-      : async () => { message("Domain-Adapter nicht geladen."); return false; };
-    const deleteWaterRow = typeof _domainHandlers.deleteWaterRow === "function"
-      ? _domainHandlers.deleteWaterRow
-      : async () => { message("Domain-Adapter nicht geladen."); };
-    const saveWaterBodyAdmRow = typeof _domainHandlers.saveWaterBodyAdmRow === "function"
-      ? _domainHandlers.saveWaterBodyAdmRow
-      : async () => { message("Domain-Adapter nicht geladen."); return false; };
-    const deleteWaterBodyAdmRow = typeof _domainHandlers.deleteWaterBodyAdmRow === "function"
-      ? _domainHandlers.deleteWaterBodyAdmRow
-      : async () => { message("Domain-Adapter nicht geladen."); };
 
     async function saveThroughPanel(payload) {
       if (!pattern || !section?.id || !panelId || typeof pattern.savePanel !== "function") {
@@ -936,10 +921,6 @@
         return false;
       }
       const normalizedPayload = payload && typeof payload === "object" ? { ...payload } : {};
-      if (panelId === "club_settings_waters_table") {
-        const waterId = String(normalizedPayload.water_id || normalizedPayload.id || "").trim();
-        if (waterId) normalizedPayload.water_id = waterId;
-      }
       const result = await pattern.savePanel(section.id, panelId, normalizedPayload);
       if (result?.ok === true && typeof pattern.loadPanel === "function") {
         await pattern.loadPanel(section.id, panelId).catch(() => null);
@@ -1105,20 +1086,8 @@
                 }
                 return ok;
               }
-              if (panelId === "adm-ng-gewaesser" || panelId === "ng_gewaesser_tabelle" || panelId === "club_settings_waters_table") {
-                const ok = await saveWaterBodyAdmRow({}, draft);
-                if (ok) {
-                  dispatchTableContractEvent("fcp-mask:table-row-create", {
-                    panelId,
-                    sectionId: section?.id || "",
-                    payload: draft,
-                  });
-                }
-                return ok;
-              }
-              if (panelId === "club_settings_rules_table") {
-                // Neuer Eintrag: row hat keine rule_id → saveRuleRow macht INSERT
-                const ok = await saveRuleRow({}, draft);
+              if (typeof _panelHandler?.onCreate === "function") {
+                const ok = await _panelHandler.onCreate(draft);
                 if (ok) {
                   dispatchTableContractEvent("fcp-mask:table-row-create", {
                     panelId,
@@ -1153,32 +1122,8 @@
                 }
                 return ok;
               }
-              if (panelId === "club_settings_rules_table") {
-                const ok = await saveRuleRow(row, draft);
-                if (ok) {
-                  dispatchTableContractEvent("fcp-mask:table-row-save", {
-                    panelId,
-                    sectionId: section?.id || "",
-                    row,
-                    payload: buildTableRowSavePayload(row, draft),
-                  });
-                }
-                return ok;
-              }
-              if (panelId === "adm-ng-gewaesser" || panelId === "ng_gewaesser_tabelle") {
-                const ok = await saveWaterBodyAdmRow(row, draft);
-                if (ok) {
-                  dispatchTableContractEvent("fcp-mask:table-row-save", {
-                    panelId,
-                    sectionId: section?.id || "",
-                    row,
-                    payload: buildTableRowSavePayload(row, draft),
-                  });
-                }
-                return ok;
-              }
-              if (panelId === "club_settings_waters_table") {
-                const ok = await saveWaterRow(row, draft);
+              if (typeof _panelHandler?.onEdit === "function") {
+                const ok = await _panelHandler.onEdit(row, draft);
                 if (ok) {
                   dispatchTableContractEvent("fcp-mask:table-row-save", {
                     panelId,
@@ -1243,16 +1188,8 @@
             await deleteMemberRegistryRow(row);
             return;
           }
-          if (panelId === "club_settings_rules_table") {
-            await deleteRuleRow(row);
-            return;
-          }
-          if (panelId === "adm-ng-gewaesser" || panelId === "ng_gewaesser_tabelle") {
-            await deleteWaterBodyAdmRow(row);
-            return;
-          }
-          if (panelId === "club_settings_waters_table") {
-            await deleteWaterRow(row);
+          if (typeof _panelHandler?.onDelete === "function") {
+            await _panelHandler.onDelete(row);
             return;
           }
           if (actionContract?.actionDefaults?.payloadDefaults && writable) {

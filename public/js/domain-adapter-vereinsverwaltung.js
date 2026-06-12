@@ -548,6 +548,31 @@
       return true;
     }
 
+    // Panel-Handler-Registry: panelId → { onCreate, onEdit, onDelete }
+    // Neue spezialisierte Panels hier eintragen — kein Hub-Branch mehr nötig.
+    const panelHandlers = {
+      "adm-ng-gewaesser": {
+        onCreate: (draft) => saveWaterBodyAdmRow({}, draft),
+        onEdit: (row, draft) => saveWaterBodyAdmRow(row, draft),
+        onDelete: (row) => deleteWaterBodyAdmRow(row),
+      },
+      "ng_gewaesser_tabelle": {
+        onCreate: (draft) => saveWaterBodyAdmRow({}, draft),
+        onEdit: (row, draft) => saveWaterBodyAdmRow(row, draft),
+        onDelete: (row) => deleteWaterBodyAdmRow(row),
+      },
+      "club_settings_waters_table": {
+        onCreate: (draft) => saveWaterBodyAdmRow({}, draft),
+        onEdit: (row, draft) => saveWaterRow(row, draft),
+        onDelete: (row) => deleteWaterRow(row),
+      },
+      "club_settings_rules_table": {
+        onCreate: (draft) => saveRuleRow({}, draft),
+        onEdit: (row, draft) => saveRuleRow(row, draft),
+        onDelete: (row) => deleteRuleRow(row),
+      },
+    };
+
     return {
       createMemberRegistryRow,
       updateMemberRegistryRow,
@@ -558,6 +583,7 @@
       deleteWaterBodyAdmRow,
       saveRuleRow,
       deleteRuleRow,
+      panelHandlers,
     };
   }
 

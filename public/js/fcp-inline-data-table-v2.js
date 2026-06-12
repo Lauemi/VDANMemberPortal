@@ -98,6 +98,8 @@
           persistWidth: column?.persistWidth !== false,
           draggable: column?.draggable !== false,
           ...column,
+          // Nach dem Spread: computed, nicht überschreibbar durch column-JSON
+          _optionsBindingUnsupported: hasOptionsBinding,
         };
       });
   }
@@ -653,6 +655,11 @@
     }
 
     function editorControl(column, draft, mode) {
+      // optionsBinding ist im Inline-Editor nicht unterstuetzt — kein Async-RPC-Pfad.
+      // Readonly-Anzeige statt leerem Textfeld, damit keine falsche Edit-Capability suggeriert wird.
+      if (column._optionsBindingUnsupported) {
+        return `<div class="data-table__editor-readonly data-table__editor--options-binding-unsupported" title="optionsBinding wird im Inline-Editor nicht unterstuetzt. Fuer dynamische Optionen Dialog-Modus verwenden.">${renderDisplayValue(column, draft)}</div>`;
+      }
       const current = draft?.[column.key];
       const enabled = isColumnEnabled(column, draft);
       const fallbackKey = String(column?.fallbackFromKey || "").trim();
@@ -1383,6 +1390,8 @@
               state.createOpen = false;
               state.draftCreate = typeof config?.getCreateDefaults === "function" ? cloneRow(config.getCreateDefaults()) : {};
               setFeedback("success", "Eintrag gespeichert.");
+            } else if (created === false) {
+              setFeedback("error", "Speichern fehlgeschlagen — Adapter oder Netzwerk prüfen.");
             }
           } else if (mode === "edit" && state.openEditorRowId) {
             const row = state.rows.find((entry) => rowKey(entry) === state.openEditorRowId);
@@ -1392,6 +1401,8 @@
               state.openEditorRowId = "";
               state.draftEdit = {};
               setFeedback("success", "Änderungen gespeichert.");
+            } else if (saved === false) {
+              setFeedback("error", "Speichern fehlgeschlagen — Adapter oder Netzwerk prüfen.");
             }
           }
         } catch (error) {
@@ -1427,6 +1438,12 @@
         const row = state.rows.find((entry) => rowKey(entry) === key);
         const action = String(actionBtn.getAttribute("data-row-action") || "");
         if (row && action) {
+          if (!key) {
+            // rowKeyField fehlt — alle Zeilen haben denselben leeren Key, Mutation wäre auf falscher Zeile
+            setFeedback("error", "Zeilenidentifikation fehlgeschlagen — rowKeyField nicht gesetzt. Aktion abgebrochen.");
+            render();
+            return;
+          }
           if (action === "edit") {
             if (String(config?.rowInteractionMode || "").trim() === "dialog") {
               config?.onRowClick?.(row, { type: "row-action-edit" });

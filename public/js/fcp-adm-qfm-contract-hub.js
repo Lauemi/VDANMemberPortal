@@ -829,6 +829,9 @@
       ...(row && typeof row === "object" ? row : {}),
       ...(draft && typeof draft === "object" ? draft : {}),
     };
+    if (!Object.keys(payload).length) {
+      console.warn("[FCPContractHub] buildTableRowSavePayload: Payload ist leer — Column-Keys und Draft-Felder prüfen (Mismatch?).");
+    }
     // Diagnostic: sichtbar in DevTools (Debug-Level) — zeigt was an den RPC geht
     console.debug("[FCPContractHub] Save-Payload Keys:", Object.keys(payload));
     return payload;

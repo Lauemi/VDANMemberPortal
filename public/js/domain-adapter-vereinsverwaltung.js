@@ -577,7 +577,6 @@
     // Beitragsarten-CRUD (P4 Mitgliederabrechnung, Verein → Mitglied)
     // Direkt via RPC admin_upsert_billing_position.
     // Parameter entsprechen 1:1 den column.key-Werten (kein p_-Präfix).
-    // only_if_delta_debt: Spalte im Panel, aber KEIN RPC-Parameter → warnUnconsumed fängt das auf.
     // KEIN Bezug zu P6/Stripe/Billing.
     // -------------------------------------------------------------------------
 
@@ -587,7 +586,7 @@
       warnUnconsumed("saveBillingPositionRow", draft, [
         "id", "name", "period_from", "period_to",
         "amount_default", "amount_youth", "amount_honorary",
-        "is_active", "sort_order",
+        "only_if_delta_debt", "is_active", "sort_order",
         "club_id", "club_code",
       ]);
       await rpcPost("/rest/v1/rpc/admin_upsert_billing_position", {
@@ -599,6 +598,7 @@
         amount_default: draft?.amount_default ?? row?.amount_default ?? null,
         amount_youth: draft?.amount_youth ?? row?.amount_youth ?? null,
         amount_honorary: draft?.amount_honorary ?? row?.amount_honorary ?? null,
+        only_if_delta_debt: Boolean(draft?.only_if_delta_debt ?? row?.only_if_delta_debt),
         is_active: (draft?.is_active ?? row?.is_active) !== false,
         sort_order: Number.isFinite(Number(draft?.sort_order ?? row?.sort_order))
           ? Number(draft?.sort_order ?? row?.sort_order)

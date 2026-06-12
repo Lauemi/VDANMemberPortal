@@ -1105,7 +1105,7 @@
                 }
                 return ok;
               }
-              if (panelId === "adm-ng-gewaesser" || panelId === "club_settings_waters_table") {
+              if (panelId === "adm-ng-gewaesser" || panelId === "ng_gewaesser_tabelle" || panelId === "club_settings_waters_table") {
                 const ok = await saveWaterBodyAdmRow({}, draft);
                 if (ok) {
                   dispatchTableContractEvent("fcp-mask:table-row-create", {
@@ -1165,7 +1165,7 @@
                 }
                 return ok;
               }
-              if (panelId === "adm-ng-gewaesser") {
+              if (panelId === "adm-ng-gewaesser" || panelId === "ng_gewaesser_tabelle") {
                 const ok = await saveWaterBodyAdmRow(row, draft);
                 if (ok) {
                   dispatchTableContractEvent("fcp-mask:table-row-save", {
@@ -1247,7 +1247,7 @@
             await deleteRuleRow(row);
             return;
           }
-          if (panelId === "adm-ng-gewaesser") {
+          if (panelId === "adm-ng-gewaesser" || panelId === "ng_gewaesser_tabelle") {
             await deleteWaterBodyAdmRow(row);
             return;
           }

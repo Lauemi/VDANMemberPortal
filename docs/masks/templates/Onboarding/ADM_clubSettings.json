@@ -2582,6 +2582,9 @@
             "rowInteractionMode": "inline",
             "selectionMode": "single",
             "viewMode": "table",
+            "showToolbar": true,
+            "showCreateButton": true,
+            "createLabel": "Gewässer anlegen",
             "sortKey": "name",
             "sortDir": "asc",
             "rowActions": [

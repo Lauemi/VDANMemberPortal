@@ -89,7 +89,7 @@
         if (hasOptionsBinding) {
           console.warn(`[FCPInlineDataTable] Spalte "${column.key}": optionsBinding wird im Inline-Editor nicht geladen (kein Async-RPC). Spalte wird als readonly gerendert. Für dynamische Optionen Dialog-Modus verwenden.`);
         }
-        const normalized = {
+        return {
           sortable: column?.sortable !== false,
           filterable: column?.filterable !== false,
           editable: column?.editable !== false,
@@ -99,11 +99,6 @@
           draggable: column?.draggable !== false,
           ...column,
         };
-        if (hasOptionsBinding) {
-          normalized.editable = false;
-          normalized.editorType = "text";
-        }
-        return normalized;
       });
   }
 

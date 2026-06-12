@@ -1098,7 +1098,7 @@
                 }
                 return ok;
               }
-              if (panelId === "adm-ng-gewaesser") {
+              if (panelId === "adm-ng-gewaesser" || panelId === "club_settings_waters_table") {
                 const ok = await saveWaterBodyAdmRow({}, draft);
                 if (ok) {
                   dispatchTableContractEvent("fcp-mask:table-row-create", {

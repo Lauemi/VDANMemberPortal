@@ -2584,7 +2584,6 @@
             "viewMode": "table",
             "sortKey": "name",
             "sortDir": "asc",
-            "showCreateButton": false,
             "rowActions": [
               "edit",
               "delete"

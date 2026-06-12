@@ -408,7 +408,6 @@
             "viewMode": "table",
             "sortKey": "delta_minutes",
             "sortDir": "desc",
-            "showCreateButton": false,
             "filterFields": [
               {"key": "last_name", "label": "Name", "type": "text", "placeholder": "Nachname"},
               {"key": "is_exempt", "label": "Befreit", "type": "text"}
@@ -726,7 +725,6 @@
             "viewMode": "table",
             "sortKey": "total_amount",
             "sortDir": "desc",
-            "showCreateButton": false,
             "filterFields": [
               {"key": "last_name",   "label": "Name",        "type": "text", "placeholder": "Nachname"},
               {"key": "delta_minutes", "label": "Delta",     "type": "text"},
@@ -823,7 +821,6 @@
             "viewMode": "table",
             "sortKey": "created_at",
             "sortDir": "desc",
-            "showCreateButton": false,
             "filterFields": [
               {"key": "run_label", "label": "Bezeichnung", "type": "text", "placeholder": "Lauf suchen"},
               {"key": "status", "label": "Status", "type": "text"},
@@ -934,7 +931,6 @@
             "viewMode": "table",
             "sortKey": "created_at",
             "sortDir": "desc",
-            "showCreateButton": false,
             "filterFields": [
               {"key": "run_label", "label": "Lauf", "type": "text", "placeholder": "Lauf suchen"},
               {"key": "member_name_snapshot", "label": "Mitglied", "type": "text", "placeholder": "Mitglied suchen"},

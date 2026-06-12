@@ -3507,9 +3507,7 @@
             "viewMode": "table",
             "sortKey": "club_member_no",
             "sortDir": "asc",
-            "showToolbar": true,
             "showFilterButton": true,
-            "showCreateButton": false,
             "showResetButton": false,
             "filterFields": [
               {

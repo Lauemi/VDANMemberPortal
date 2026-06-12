@@ -142,15 +142,11 @@
           "tableConfig": {
             "tableId": "adm-ng-gewaesser",
             "rowKeyField": "water_body_id",
-            "rowInteractionMode": "click",
             "selectionMode": "none",
             "viewMode": "table",
-            "showToolbar": true,
-            "showCreateButton": true,
             "createLabel": "Gewässer anlegen",
             "sortKey": "name",
             "sortDir": "asc",
-            "rowActions": ["edit", "delete"],
             "filterFields": [
               {"key": "name", "label": "Gewässer", "type": "text", "placeholder": "z. B. Angelweiher"}
             ]

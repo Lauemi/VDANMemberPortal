@@ -1001,9 +1001,13 @@
         redesignTheme: tableConfig?.redesignTheme || undefined,
         showCreateButton: tableConfig?.showCreateButton !== false,
         createLabel: tableConfig?.createLabel || undefined,
-        showToolbar: tableConfig?.showToolbar === true || utilityActions.length > 0,
-        showResetButton: tableConfig?.showResetButton === true,
-        rowActions: Array.isArray(tableConfig?.rowActions) ? tableConfig.rowActions : ["edit"],
+        showToolbar: tableConfig?.showToolbar !== false,
+        showResetButton: tableConfig?.showResetButton !== false,
+        rowActions: Array.isArray(tableConfig?.rowActions)
+          ? tableConfig.rowActions
+          : panel?.permissions?.delete === true
+            ? ["edit", "delete"]
+            : ["edit"],
         utilityActions,
         redesign: tableConfig?.redesign !== false,
         onUtilityAction: utilityHandler ? handleUtilityAction : undefined,

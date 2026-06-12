@@ -88,7 +88,7 @@
         filterable: column?.filterable !== false,
         editable: column?.editable !== false,
         align: column?.align || (column?.type === "numeric" || column?.type === "actions" ? "right" : "left"),
-        editorType: column?.editorType || "text",
+        editorType: column?.editorType || (column?.type === "select" && Array.isArray(column?.options) && column.options.length > 0 ? "select" : "text"),
         persistWidth: column?.persistWidth !== false,
         draggable: column?.draggable !== false,
         ...column,

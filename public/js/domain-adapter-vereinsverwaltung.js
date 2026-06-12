@@ -279,6 +279,17 @@
       return String(context?.club_id || "").trim();
     }
 
+    // Diagnose-Helfer: Keys im Draft, die der Adapter nicht konsumiert → potenzieller Column-Key-Mismatch.
+    // consumedKeys = alle Keys, die diese Funktion aus dem draft liest oder bewusst ignoriert.
+    function warnUnconsumed(fnName, draft, consumedKeys) {
+      if (!draft || typeof draft !== "object") return;
+      const known = new Set(consumedKeys);
+      const unconsumed = Object.keys(draft).filter((k) => !k.startsWith("_") && !known.has(k));
+      if (unconsumed.length) {
+        console.warn(`[DomainAdapter] panelId="${panelId}" ${fnName}: Draft-Keys ohne Adapter-Mapping: [${unconsumed.join(", ")}] — Column-Key-Mismatch prüfen.`);
+      }
+    }
+
     async function createMemberRegistryRow(draft) {
       const clubId = currentClubId(null, draft);
       const clubCode = currentClubCode(null, draft);
@@ -408,6 +419,11 @@
       const clubId = await currentClubIdAsync(row, draft);
       const waterId = String(draft?.water_id || row?.water_id || row?.id || "").trim();
       const name = String(draft?.name ?? row?.name ?? "").trim();
+      warnUnconsumed("saveWaterRow", draft, [
+        "water_id", "name", "water_type", "water_status",
+        "is_youth_allowed", "requires_board_approval", "water_cards",
+        "club_id", "club_code",
+      ]);
       if (!clubId) throw new Error("club_id fehlt fuer das Gewaesser.");
       if (!waterId) throw new Error("water_id fehlt fuer das Gewaesser.");
       if (!name) throw new Error("Name fehlt fuer das Gewaesser.");
@@ -457,6 +473,11 @@
       const name = String(draft?.name ?? row?.name ?? "").trim();
       const areaKind = String(draft?.area_kind ?? row?.area_kind ?? "vereins_gemeinschaftsgewaesser").trim();
       const isActive = draft?.is_active !== undefined ? Boolean(draft.is_active) : Boolean(row?.is_active ?? true);
+      warnUnconsumed("saveWaterBodyAdmRow", draft, [
+        "water_body_id", "name", "area_kind", "is_active",  // direkt konsumiert
+        "club_id", "club_code",                              // Club-Kontext
+        "card_keys",                                          // Display-Only-Spalte, nicht persistiert hier
+      ]);
       if (!name) throw new Error("Name darf nicht leer sein.");
       if (waterId) {
         await authJson(`/rest/v1/water_bodies?id=eq.${encodeURIComponent(waterId)}`, {
@@ -495,7 +516,11 @@
     async function saveRuleRow(row, draft) {
       const clubId = await currentClubIdAsync(row, draft);
       if (!clubId) throw new Error("club_id fehlt.");
-
+      warnUnconsumed("saveRuleRow", draft, [
+        "card_type_id", "rule_text", "sort_order", "water_body_id",
+        "rule_id",        // row-Feld, aber taucht manchmal auch im draft auf
+        "club_id", "club_code",
+      ]);
       const cardTypeId = String(draft?.card_type_id ?? row?.card_type_id ?? "").trim();
       if (!cardTypeId) throw new Error("Karte (card_type_id) muss gewählt werden.");
 

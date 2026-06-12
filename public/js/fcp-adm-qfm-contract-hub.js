@@ -1102,6 +1102,7 @@
                 return ok;
               }
               if (typeof _panelHandler?.onCreate === "function") {
+                console.debug(`[FCPContractHub] panelId="${panelId}" onCreate — Draft-Keys: [${Object.keys(draft || {}).join(", ")}]`);
                 const ok = await _panelHandler.onCreate(draft);
                 if (ok) {
                   dispatchTableContractEvent("fcp-mask:table-row-create", {
@@ -1138,6 +1139,7 @@
                 return ok;
               }
               if (typeof _panelHandler?.onEdit === "function") {
+                console.debug(`[FCPContractHub] panelId="${panelId}" onEdit — Draft-Keys: [${Object.keys(draft || {}).join(", ")}]`);
                 const ok = await _panelHandler.onEdit(row, draft);
                 if (ok) {
                   dispatchTableContractEvent("fcp-mask:table-row-save", {

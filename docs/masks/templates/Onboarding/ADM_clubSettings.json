@@ -3205,7 +3205,7 @@
           "permissions": {
             "view": true,
             "write": false,
-            "update": true,
+            "update": false,
             "delete": false,
             "roles": []
           },
@@ -3261,9 +3261,9 @@
             "path": "edge:club-onboarding-workspace"
           },
           "saveBinding": {
-            "kind": "edge_function",
-            "target": "club-onboarding-workspace",
-            "path": "edge:club-onboarding-workspace"
+            "kind": "none",
+            "target": null,
+            "path": "none"
           },
           "content": {
             "fields": [],

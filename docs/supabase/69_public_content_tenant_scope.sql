@@ -68,6 +68,8 @@ create or replace function public.can_access_club_content(p_club_id uuid)
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select
     case

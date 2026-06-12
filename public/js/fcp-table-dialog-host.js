@@ -189,14 +189,15 @@
         if (isStandardTable && instance && typeof instance.setRows === "function") {
           instance.setRows(Array.isArray(resolvedRows) ? resolvedRows : []);
         }
-        emitTableRendererSnapshot(root, {
+        const _snapshotMeta = {
           componentType,
           factoryName: componentType === "inline-data-table" ? "FCPInlineDataTable.createStandardV2" : "FCPDataTable.createStandardV1",
           panelId: panel?.id || "",
           sectionId: section?.id || "",
           maskId: pattern?.config?.maskId || "",
           runtimeProps: tableRuntimeProps,
-        });
+        };
+        setTimeout(() => { if (root.isConnected) emitTableRendererSnapshot(root, _snapshotMeta); }, 0);
       } catch (error) {
         root.innerHTML = "";
         const msg = (error instanceof Error && error.message) ? error.message : "Table runtime Fehler.";

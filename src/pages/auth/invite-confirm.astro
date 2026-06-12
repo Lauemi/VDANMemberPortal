@@ -110,13 +110,6 @@ const hasToken = token.length > 0;
         if (!res.ok) throw new Error((Array.isArray(j) ? j[0]?.message : j?.message) || ("HTTP " + res.status));
         return Array.isArray(j) ? j[0] : j;
       }
-      function maskEmail(e: string) {
-        const [u, d] = String(e || "").split("@");
-        if (!d) return "deiner hinterlegten Adresse";
-        const um = u.length <= 2 ? u[0] + "*" : u[0] + "***" + u[u.length - 1];
-        return um + "@" + d;
-      }
-
       // Kontext laden
       let pv: any;
       try { pv = await rpc("member_invite_preview", { p_token: __token }); }
@@ -207,7 +200,7 @@ const hasToken = token.length > 0;
         setClaimStatus("warning", "Für dich ist keine E-Mail hinterlegt. Bitte beim Vorstand melden, dann wird dein Zugang freigeschaltet.");
         return;
       }
-      if (hint) hint.textContent = `Zur Bestätigung senden wir einen Link an deine hinterlegte Adresse (${maskEmail(pv.member_email)}). Nur über diesen Link wird dein Zugang aktiviert.`;
+      if (hint) hint.textContent = "Zur Bestätigung senden wir einen Link an deine hinterlegte Adresse. Nur über diesen Link wird dein Zugang aktiviert.";
       if (verifyBtn) {
         verifyBtn.hidden = false;
         verifyBtn.addEventListener("click", async () => {
@@ -232,7 +225,7 @@ const hasToken = token.length > 0;
               }),
             });
             if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.msg || e?.error_description || ("HTTP " + res.status)); }
-            setClaimStatus("success", `Bestätigungs-Mail an ${maskEmail(pv.member_email)} gesendet. Öffne den Link in der Mail, um deinen Zugang zu aktivieren.`);
+            setClaimStatus("success", "Bestätigungs-Mail an deine hinterlegte Adresse gesendet. Öffne den Link in der Mail, um deinen Zugang zu aktivieren.");
             msg("");
           } catch (err: any) {
             msg(String(err?.message || "Senden fehlgeschlagen."));

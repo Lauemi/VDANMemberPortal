@@ -447,6 +447,48 @@
     }
 
     // -------------------------------------------------------------------------
+    // Gewässer-CRUD direkt via REST (adm-ng-gewaesser — RLS schützt)
+    // -------------------------------------------------------------------------
+
+    async function saveWaterBodyAdmRow(row, draft) {
+      const clubId = await currentClubIdAsync(row, draft);
+      if (!clubId) throw new Error("Kein Vereinskontext gefunden.");
+      const waterId = String(draft?.water_body_id || row?.water_body_id || "").trim();
+      const name = String(draft?.name ?? row?.name ?? "").trim();
+      const areaKind = String(draft?.area_kind ?? row?.area_kind ?? "vereins_gemeinschaftsgewaesser").trim();
+      const isActive = draft?.is_active !== undefined ? Boolean(draft.is_active) : Boolean(row?.is_active ?? true);
+      if (!name) throw new Error("Name darf nicht leer sein.");
+      if (waterId) {
+        await authJson(`/rest/v1/water_bodies?id=eq.${encodeURIComponent(waterId)}`, {
+          method: "PATCH",
+          body: { name, area_kind: areaKind, is_active: isActive },
+        });
+      } else {
+        await authJson("/rest/v1/water_bodies", {
+          method: "POST",
+          body: { name, area_kind: areaKind, is_active: isActive, club_id: clubId },
+        });
+      }
+      if (typeof pattern?.loadPanel === "function") {
+        await pattern.loadPanel(section.id, panelId).catch(() => null);
+      }
+      message("Gewaesser gespeichert.");
+      return true;
+    }
+
+    async function deleteWaterBodyAdmRow(row) {
+      const waterId = String(row?.water_body_id || row?.id || "").trim();
+      if (!waterId) throw new Error("water_body_id fehlt.");
+      await authJson(`/rest/v1/water_bodies?id=eq.${encodeURIComponent(waterId)}`, {
+        method: "DELETE",
+      });
+      if (typeof pattern?.loadPanel === "function") {
+        await pattern.loadPanel(section.id, panelId).catch(() => null);
+      }
+      message("Gewaesser geloescht.");
+    }
+
+    // -------------------------------------------------------------------------
     // Regelwerk-Handlers (permit_rules via Supabase RPC)
     // -------------------------------------------------------------------------
 
@@ -512,6 +554,8 @@
       deleteMemberRegistryRow,
       saveWaterRow,
       deleteWaterRow,
+      saveWaterBodyAdmRow,
+      deleteWaterBodyAdmRow,
       saveRuleRow,
       deleteRuleRow,
     };

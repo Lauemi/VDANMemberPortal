@@ -920,6 +920,12 @@
     const deleteWaterRow = typeof _domainHandlers.deleteWaterRow === "function"
       ? _domainHandlers.deleteWaterRow
       : async () => { message("Domain-Adapter nicht geladen."); };
+    const saveWaterBodyAdmRow = typeof _domainHandlers.saveWaterBodyAdmRow === "function"
+      ? _domainHandlers.saveWaterBodyAdmRow
+      : async () => { message("Domain-Adapter nicht geladen."); return false; };
+    const deleteWaterBodyAdmRow = typeof _domainHandlers.deleteWaterBodyAdmRow === "function"
+      ? _domainHandlers.deleteWaterBodyAdmRow
+      : async () => { message("Domain-Adapter nicht geladen."); };
 
     async function saveThroughPanel(payload) {
       if (!pattern || !section?.id || !panelId || typeof pattern.savePanel !== "function") {
@@ -1092,6 +1098,17 @@
                 }
                 return ok;
               }
+              if (panelId === "adm-ng-gewaesser") {
+                const ok = await saveWaterBodyAdmRow({}, draft);
+                if (ok) {
+                  dispatchTableContractEvent("fcp-mask:table-row-create", {
+                    panelId,
+                    sectionId: section?.id || "",
+                    payload: draft,
+                  });
+                }
+                return ok;
+              }
               if (panelId === "club_settings_rules_table") {
                 // Neuer Eintrag: row hat keine rule_id → saveRuleRow macht INSERT
                 const ok = await saveRuleRow({}, draft);
@@ -1131,6 +1148,18 @@
               }
               if (panelId === "club_settings_rules_table") {
                 const ok = await saveRuleRow(row, draft);
+                if (ok) {
+                  dispatchTableContractEvent("fcp-mask:table-row-save", {
+                    panelId,
+                    sectionId: section?.id || "",
+                    row,
+                    payload: buildTableRowSavePayload(row, draft),
+                  });
+                }
+                return ok;
+              }
+              if (panelId === "adm-ng-gewaesser") {
+                const ok = await saveWaterBodyAdmRow(row, draft);
                 if (ok) {
                   dispatchTableContractEvent("fcp-mask:table-row-save", {
                     panelId,
@@ -1209,6 +1238,10 @@
           }
           if (panelId === "club_settings_rules_table") {
             await deleteRuleRow(row);
+            return;
+          }
+          if (panelId === "adm-ng-gewaesser") {
+            await deleteWaterBodyAdmRow(row);
             return;
           }
           if (panelId === "club_settings_waters_table") {

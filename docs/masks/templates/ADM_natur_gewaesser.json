@@ -85,9 +85,9 @@
           "flowType": "standard",
           "permissions": {
             "view": true,
-            "write": false,
-            "update": false,
-            "delete": false,
+            "write": true,
+            "update": true,
+            "delete": true,
             "roles": []
           },
           "securityContext": {
@@ -123,9 +123,9 @@
             "path": "rpc:public.admin_water_bodies_with_cards"
           },
           "saveBinding": {
-            "kind": "none",
-            "target": null,
-            "path": "none"
+            "kind": "domain",
+            "target": "adm-ng-gewaesser",
+            "path": "domain:adm-ng-gewaesser"
           },
           "content": {
             "fields": [],
@@ -133,21 +133,21 @@
             "actions": []
           },
           "columns": [
-            {"key": "name", "label": "Gewässer", "type": "text", "editable": false},
-            {"key": "area_kind", "label": "Art", "type": "text", "editable": false},
-            {"key": "is_active", "label": "Aktiv", "type": "boolean", "editable": false},
+            {"key": "name", "label": "Gewässer", "type": "text", "editable": true, "required": true, "placeholder": "z. B. Angelweiher"},
+            {"key": "area_kind", "label": "Art", "type": "text", "editable": true, "placeholder": "vereins_gemeinschaftsgewaesser | rheinlos39"},
+            {"key": "is_active", "label": "Aktiv", "type": "boolean", "editable": true},
             {"key": "card_keys", "label": "Angelkarten", "type": "json-display", "editable": false}
           ],
           "rowsPath": "rows",
           "tableConfig": {
             "tableId": "adm-ng-gewaesser",
             "rowKeyField": "water_body_id",
-            "rowInteractionMode": "none",
+            "rowInteractionMode": "click",
             "selectionMode": "none",
             "viewMode": "table",
             "sortKey": "name",
             "sortDir": "asc",
-            "showCreateButton": false,
+            "rowActions": ["edit", "delete"],
             "filterFields": [
               {"key": "name", "label": "Gewässer", "type": "text", "placeholder": "z. B. Angelweiher"}
             ]

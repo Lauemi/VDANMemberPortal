@@ -61,6 +61,7 @@ function buildCsp(): string {
     "frame-ancestors 'self'",
     "form-action 'self'",
     "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://unpkg.com",
+    "script-src-attr 'none'",
     "style-src 'self' 'unsafe-inline' https://unpkg.com",
     `img-src ${imgSources.join(" ")}`,
     "font-src 'self' data:",

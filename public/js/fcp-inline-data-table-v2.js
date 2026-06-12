@@ -83,16 +83,28 @@
   function normalizeColumns(columns = []) {
     return columns
       .filter((column) => column?.key && column?.label)
-      .map((column) => ({
-        sortable: column?.sortable !== false,
-        filterable: column?.filterable !== false,
-        editable: column?.editable !== false,
-        align: column?.align || (column?.type === "numeric" || column?.type === "actions" ? "right" : "left"),
-        editorType: column?.editorType || (column?.type === "select" && Array.isArray(column?.options) && column.options.length > 0 ? "select" : "text"),
-        persistWidth: column?.persistWidth !== false,
-        draggable: column?.draggable !== false,
-        ...column,
-      }));
+      .map((column) => {
+        const hasStaticOptions = column?.type === "select" && Array.isArray(column?.options) && column.options.length > 0;
+        const hasOptionsBinding = column?.type === "select" && column?.optionsBinding && !hasStaticOptions;
+        if (hasOptionsBinding) {
+          console.warn(`[FCPInlineDataTable] Spalte "${column.key}": optionsBinding wird im Inline-Editor nicht geladen (kein Async-RPC). Spalte wird als readonly gerendert. Für dynamische Optionen Dialog-Modus verwenden.`);
+        }
+        const normalized = {
+          sortable: column?.sortable !== false,
+          filterable: column?.filterable !== false,
+          editable: column?.editable !== false,
+          align: column?.align || (column?.type === "numeric" || column?.type === "actions" ? "right" : "left"),
+          editorType: column?.editorType || (hasStaticOptions ? "select" : "text"),
+          persistWidth: column?.persistWidth !== false,
+          draggable: column?.draggable !== false,
+          ...column,
+        };
+        if (hasOptionsBinding) {
+          normalized.editable = false;
+          normalized.editorType = "text";
+        }
+        return normalized;
+      });
   }
 
   function clamp(value, min, max) {
@@ -112,11 +124,15 @@
 
     const tableId = String(config?.tableId || "default").trim() || "default";
     const layoutVersion = String(config?.layoutVersion || "v1").trim() || "v1";
+
+    if (!config?.rowKeyField && typeof config?.rowKey !== "function") {
+      console.warn(`[FCPInlineDataTable] tableId="${tableId}": rowKeyField nicht gesetzt. Fallback auf id/row_id/member_no — kann bei mehrdeutigen Schemas die falsche Zeile treffen. Empfehlung: rowKeyField explizit setzen.`);
+    }
     const storageKey = `fcp-inline-table-layout-v2::${tableId}::${layoutVersion}`;
     const filterFields = Array.isArray(config?.filterFields) ? config.filterFields : [];
     const initialRows = Array.isArray(config?.rows) ? config.rows : [];
     const configuredViewMode = String(config?.viewMode || "table").trim().toLowerCase() || "table";
-    const allowCards = configuredViewMode === "cards" || configuredViewMode === "both" || configuredViewMode === "table" || !configuredViewMode;
+    const allowCards = configuredViewMode === "cards" || configuredViewMode === "both";
     const initialViewMode = configuredViewMode === "cards" ? "cards" : "table";
     const initialColumns = columns.map((column) => column.key);
     const initialSortKey = String(config?.sortKey || columns.find((column) => column.type !== "actions")?.key || columns[0].key);
@@ -253,10 +269,15 @@
       }
       if (persisted?.columnWidths && typeof persisted.columnWidths === "object") {
         const sanitizedPersistedWidths = Object.fromEntries(
-          Object.entries(persisted.columnWidths).map(([key, value]) => {
-            const column = columns.find((entry) => entry.key === key);
-            return [key, sanitizeWidthValue(value, column)];
-          })
+          Object.entries(persisted.columnWidths)
+            .filter(([key]) => {
+              const column = columns.find((entry) => entry.key === key);
+              return column?.persistWidth !== false;
+            })
+            .map(([key, value]) => {
+              const column = columns.find((entry) => entry.key === key);
+              return [key, sanitizeWidthValue(value, column)];
+            })
         );
         state.columnWidths = { ...state.columnWidths, ...sanitizedPersistedWidths };
       }
@@ -352,7 +373,7 @@
         feedbackTimer = window.setTimeout(() => {
           state.feedback = null;
           render();
-        }, 2400);
+        }, 5000);
       }
     }
 

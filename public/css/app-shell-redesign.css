@@ -1657,6 +1657,13 @@ body[data-app-theme="fcp_tactical"] .data-table-shell__toolbar .icon-utility {
   min-height: 120px;
 }
 
+/* Breite Tabellen (z.B. Eventplaner 1480px) dürfen nicht auf Page-Ebene überlaufen.
+   clip statt hidden: erstellt keinen Scroll-Container → position:sticky und child-overflow-x:auto bleiben funktional. */
+.fcp-adm-shell .admin-board__content {
+  overflow-x: clip;
+  min-width: 0;
+}
+
 /* Breadcrumb Section-Segment — gleicher Stil wie bestehende Crumbs */
 .adm-topbar__crumb--section {
   color: var(--rd-muted, rgba(61,64,45,.55));

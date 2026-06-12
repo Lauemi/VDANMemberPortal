@@ -48,7 +48,6 @@
     const n = document.createElement(tag);
     if (opts.className) n.className = opts.className;
     if (opts.text != null) n.textContent = String(opts.text);
-    if (opts.html != null) n.innerHTML = opts.html;
     Object.entries(opts.attrs || {}).forEach(([k, v]) => {
       if (v == null || v === false) return;
       n.setAttribute(k, v === true ? "" : String(v));

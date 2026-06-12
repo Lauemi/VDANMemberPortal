@@ -822,6 +822,8 @@
     window.dispatchEvent(new CustomEvent(type, { detail }));
   }
 
+  // Column-Key-Contract: column.key === RPC-Parameter-Name (1:1) ODER explizites Mapping im Domain-Adapter.
+  // Der Contract Hub transformiert niemals implizit — er gibt den Payload unverändert weiter.
   function buildTableRowSavePayload(row, draft) {
     const payload = {
       ...(row && typeof row === "object" ? row : {}),
@@ -893,6 +895,15 @@
       ? runtimeContext.confirmAction
       : null;
     const panelId = String(panel?.id || "").trim();
+
+    // Contract-Guards V1 — fehlende Pflichtfelder sichtbar machen, bevor Runtime aufgebaut wird.
+    if (!panelId) {
+      console.warn("[FCPContractHub] panel.id fehlt. Pflichtfeld fuer registrierte Panels — panelId-Registry-Lookup schlaegt fehl.");
+    }
+    if (!tableConfig?.rowKeyField) {
+      console.warn(`[FCPContractHub] panelId="${panelId}": rowKeyField nicht gesetzt. Pflichtfeld im offiziellen Contract — Fallback auf id/row_id/member_no kann die falsche Zeile treffen.`);
+    }
+
     const utilityActions = Array.isArray(tableConfig?.utilityActions) ? tableConfig.utilityActions : [];
     const utilityHandler = String(tableConfig?.utilityHandler || "").trim();
 
@@ -983,15 +994,16 @@
         metaHint: tableConfig?.metaHint || undefined,
         primaryColumnKey: tableConfig?.primaryColumnKey || undefined,
         redesignTheme: tableConfig?.redesignTheme || undefined,
-        showCreateButton: tableConfig?.showCreateButton !== false,
+        showCreateButton: writable && tableConfig?.showCreateButton !== false,
         createLabel: tableConfig?.createLabel || undefined,
         showToolbar: tableConfig?.showToolbar !== false,
         showResetButton: tableConfig?.showResetButton !== false,
-        rowActions: Array.isArray(tableConfig?.rowActions)
-          ? tableConfig.rowActions
-          : panel?.permissions?.delete === true
-            ? ["edit", "delete"]
-            : ["edit"],
+        // Read-only-Panels: keine Mutations-Actions. Delete bleibt an permissions.delete (orthogonal zu writable).
+        rowActions: writable
+          ? (Array.isArray(tableConfig?.rowActions)
+              ? tableConfig.rowActions
+              : panel?.permissions?.delete === true ? ["edit", "delete"] : ["edit"])
+          : (panel?.permissions?.delete === true ? ["delete"] : []),
         utilityActions,
         redesign: tableConfig?.redesign !== false,
         onUtilityAction: utilityHandler ? handleUtilityAction : undefined,

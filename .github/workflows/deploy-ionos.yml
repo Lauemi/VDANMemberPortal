@@ -50,6 +50,8 @@ jobs:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          CONTACT_FROM_EMAIL: ${{ secrets.CONTACT_FROM_EMAIL }}
         run: |
           if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_PROJECT_REF" ] || [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
             echo "SUPABASE_ACCESS_TOKEN/SUPABASE_PROJECT_REF/SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY fehlt - Secrets-Sync wird übersprungen."
@@ -58,6 +60,8 @@ jobs:
           npx --yes supabase secrets set \
             SUPABASE_URL="$SUPABASE_URL" \
             SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY" \
+            RESEND_API_KEY="$RESEND_API_KEY" \
+            CONTACT_FROM_EMAIL="$CONTACT_FROM_EMAIL" \
             --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Deploy Supabase edge functions

@@ -25,7 +25,7 @@ const hasToken = token.length > 0;
         <div class="register-flow__form form-shell__section">
           <p id="inviteVerifyHint" class="small register-flow__lede"></p>
           <div class="register-flow__actions">
-            <button id="inviteVerifyBtn" class="feed-btn fcp-brand-btn--primary" type="button" hidden>Per E-Mail verifizieren</button>
+            <button id="inviteVerifyBtn" class="feed-btn fcp-brand-btn--primary" type="button" style="display:none">Per E-Mail verifizieren</button>
             <span id="inviteClaimMsg" class="small" aria-live="polite"></span>
           </div>
         </div>
@@ -124,7 +124,7 @@ const hasToken = token.length > 0;
       const bearer = String(auth.loadSession?.()?.access_token || "").trim();
       const justVerified = new URLSearchParams(window.location.search).get("verified") === "1";
       if (bearer && justVerified) {
-        if (verifyBtn) verifyBtn.hidden = true;
+        if (verifyBtn) verifyBtn.style.display = "none";
         setClaimStatus("success", "E-Mail bestätigt. Bitte lege jetzt dein Passwort fest.");
         if (hint) hint.textContent = "Dein Zugang ist fast aktiv. Vergib ein Passwort — danach wird dein Vereinszugang sofort aktiviert.";
 
@@ -202,29 +202,20 @@ const hasToken = token.length > 0;
       }
       if (hint) hint.textContent = "Zur Bestätigung senden wir einen Link an deine hinterlegte Adresse. Nur über diesen Link wird dein Zugang aktiviert.";
       if (verifyBtn) {
-        verifyBtn.hidden = false;
+        verifyBtn.style.display = "";
         verifyBtn.addEventListener("click", async () => {
           verifyBtn.disabled = true;
           msg("Sende Bestätigung …");
           try {
-            const redirectTo = window.location.origin + "/auth/invite-confirm?token=" + encodeURIComponent(__token) + "&verified=1";
-            const res = await fetch(url + "/auth/v1/otp?redirect_to=" + encodeURIComponent(redirectTo), {
+            // Magic-Link über eigene Edge Function erzeugen und via Resend versenden.
+            // Umgeht Supabase's internen E-Mail-Provider (unzuverlässig / rate-limitiert).
+            const res = await fetch(url + "/functions/v1/member-invite-otp-send", {
               method: "POST",
               headers: { apikey: key, "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: pv.member_email,
-                create_user: true,
-                // signup_guard verlangt registration_mode; Claim-Flow = join_club.
-                // Felder aus dem Token abgeleitet (nicht User-Eingabe) -> Sicherheitsanker bleibt.
-                data: {
-                  registration_mode: "join_club",
-                  invite_token: __token,
-                  member_no: pv.member_no || "",
-                  club_code: pv.club_code || "",
-                },
-              }),
+              body: JSON.stringify({ token: __token, origin: window.location.origin }),
             });
-            if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.msg || e?.error_description || ("HTTP " + res.status)); }
+            const rj = await res.json().catch(() => ({}));
+            if (!res.ok || (rj as any)?.ok === false) { throw new Error((rj as any)?.error || (rj as any)?.message || ("HTTP " + res.status)); }
             setClaimStatus("success", "Bestätigungs-Mail an deine hinterlegte Adresse gesendet. Öffne den Link in der Mail, um deinen Zugang zu aktivieren.");
             msg("");
           } catch (err: any) {

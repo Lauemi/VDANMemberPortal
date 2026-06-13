@@ -18,19 +18,33 @@
     return window.VDAN_AUTH?.loadSession?.() || null;
   }
 
+  // Cache: token string → Promise<boolean>. Keyed by JWT value so a refreshed
+  // token (different string) gets a fresh validation. Failed results are evicted
+  // so the next call can retry. Cleared never — tokens are JWTs valid for the
+  // session lifetime; after logout the session token changes anyway.
+  const _tokenValidityCache = new Map();
+
   async function isUsableAccessToken(token) {
     const value = String(token || "").trim();
     if (!value) return false;
     const { url, key } = cfg();
     if (!url || !key) return false;
-    const res = await fetch(`${url}/auth/v1/user`, {
+
+    if (_tokenValidityCache.has(value)) return _tokenValidityCache.get(value);
+
+    const promise = fetch(`${url}/auth/v1/user`, {
       method: "GET",
       headers: {
         apikey: key,
         Authorization: `Bearer ${value}`,
       },
-    }).catch(() => null);
-    return Boolean(res?.ok);
+    }).catch(() => null).then((res) => Boolean(res?.ok));
+
+    _tokenValidityCache.set(value, promise);
+    // Evict on failure so the next call retries (e.g. network error, not 401).
+    promise.then((valid) => { if (!valid) _tokenValidityCache.delete(value); });
+
+    return promise;
   }
 
   async function ensureAccessToken({ forceRefresh = false } = {}) {
@@ -2188,6 +2202,11 @@
       if (!activeSection) return;
       const openPanels = toArray(activeSection.panels).filter((panel) => panel.open);
       for (const panel of openPanels) {
+        // Skip panels already in "ready" state — prevents redundant Supabase
+        // requests on section switches and repeated boot calls. Post-action
+        // reloads (domain adapters, contract hub, sibling invalidation) call
+        // pattern.loadPanel() directly and bypass this guard intentionally.
+        if (panel.state?.loadState === "ready") continue;
         await pattern.loadPanel(activeSection.id, panel.id);
       }
       // pattern.loadPanel writes to state but does not call render() — without an

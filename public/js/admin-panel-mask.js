@@ -214,6 +214,10 @@
       const section = this.getActiveSection();
       if (!section) return;
       for (const panel of section.panels || []) {
+        // Skip panels already loaded — prevents redundant Supabase requests on
+        // tab switches. Post-action reloads (domain adapters, contract hub) call
+        // loadPanel() directly and bypass this guard intentionally.
+        if (panel._loaded) continue;
         await this.loadPanel(section.id, panel.id);
       }
       this.render();
@@ -232,11 +236,17 @@
         if (result) {
           this.applyPanelPayload(section.id, panel.id, result);
         }
+        // Mark as successfully loaded so hydrateActiveSection can skip this
+        // panel on subsequent tab switches. Explicit loadPanel() calls
+        // (post-action reloads in domain adapters / contract hub) always run
+        // regardless, because they bypass hydrateActiveSection entirely.
+        panel._loaded = true;
       } catch (error) {
         panel.state = {
           ...(panel.state || {}),
           error: normalizeErrorMessage(error, this.config.texts.loadError),
         };
+        // Do NOT set panel._loaded on error — allow retry on next activation.
       } finally {
         this.state.loading.delete(key);
       }

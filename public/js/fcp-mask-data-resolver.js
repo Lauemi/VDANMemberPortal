@@ -102,24 +102,37 @@
     return String(await res.text().catch(() => "")).trim();
   }
 
+  // Deduplicates identical concurrent sb() calls. Keyed by path + method + body + auth
+  // so only bit-identical in-flight requests share a Promise. Cleared on settle.
+  const _inflightRequests = new Map();
+
   async function sb(path, init = {}, withAuth = false) {
-    await waitForAuthReady();
-    const { url, key } = cfg();
-    if (!url || !key) throw new Error("Supabase-Konfiguration fehlt.");
+    const cacheKey = `${path}:${String(withAuth)}:${String(init.method || "GET")}:${String(init.body || "")}`;
+    if (_inflightRequests.has(cacheKey)) return _inflightRequests.get(cacheKey);
 
-    const headers = new Headers(init.headers || {});
-    headers.set("apikey", key);
-    headers.set("Content-Type", "application/json");
+    const promise = (async () => {
+      await waitForAuthReady();
+      const { url, key } = cfg();
+      if (!url || !key) throw new Error("Supabase-Konfiguration fehlt.");
 
-    const token = withAuth ? await ensureAccessToken() : "";
-    if (withAuth && !token) throw new Error("Bitte zuerst einloggen.");
-    if (withAuth && token) headers.set("Authorization", `Bearer ${token}`);
+      const headers = new Headers(init.headers || {});
+      headers.set("apikey", key);
+      headers.set("Content-Type", "application/json");
 
-    const res = await fetch(`${url}${path}`, { ...init, headers });
-    if (!res.ok) {
-      throw new Error((await readErrorPayload(res)) || `Request failed (${res.status})`);
-    }
-    return res.json().catch(() => []);
+      const token = withAuth ? await ensureAccessToken() : "";
+      if (withAuth && !token) throw new Error("Bitte zuerst einloggen.");
+      if (withAuth && token) headers.set("Authorization", `Bearer ${token}`);
+
+      const res = await fetch(`${url}${path}`, { ...init, headers });
+      if (!res.ok) {
+        throw new Error((await readErrorPayload(res)) || `Request failed (${res.status})`);
+      }
+      return res.json().catch(() => []);
+    })();
+
+    _inflightRequests.set(cacheKey, promise);
+    promise.finally(() => _inflightRequests.delete(cacheKey));
+    return promise;
   }
 
   function structuredCloneSafe(value) {

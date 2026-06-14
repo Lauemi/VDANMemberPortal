@@ -1887,7 +1887,7 @@
       return clubContextPromise;
     }
 
-    async function loadRoleOnlyRows(baseRows, clubContext) {
+    async function loadRoleOnlyRows(baseRows, clubContext, preloadedRoleRows = null) {
       const currentClubId = String(clubContext?.club_id || "").trim();
       if (!currentClubId) return [];
 
@@ -1896,7 +1896,10 @@
       );
 
       const [roleRows, profileRows, signinRows, identityRows] = await Promise.all([
-        sb(`/rest/v1/club_user_roles?select=club_id,user_id,role_key&club_id=eq.${encodeURIComponent(currentClubId)}`, { method: "GET" }, true).catch(() => []),
+        // If caller already fetched club_user_roles (all clubs), filter instead of re-fetching.
+        preloadedRoleRows !== null
+          ? Promise.resolve(toArray(preloadedRoleRows).filter((r) => String(r?.club_id || "") === currentClubId))
+          : sb(`/rest/v1/club_user_roles?select=club_id,user_id,role_key&club_id=eq.${encodeURIComponent(currentClubId)}`, { method: "GET" }, true).catch(() => []),
         sb("/rest/v1/profiles?select=id,first_name,last_name,member_no", { method: "GET" }, true).catch(() => []),
         sb("/rest/v1/rpc/admin_user_last_signins", { method: "POST", body: "{}" }, true).catch(() => []),
         sb("/rest/v1/rpc/get_club_identity_map", { method: "POST", body: "{}" }, true).catch(() => []),
@@ -2119,7 +2122,8 @@
           const roleRows = await sb("/rest/v1/club_user_roles?select=club_id,user_id,role_key", { method: "GET" }, true).catch(() => []);
           const effectiveRoleByClubUser = buildEffectiveRoleMap(roleRows);
           rows = applyEffectiveRolesToRows(rows, effectiveRoleByClubUser);
-          const roleOnlyRows = await loadRoleOnlyRows(rows, clubContext);
+          // Pass preloaded roleRows so loadRoleOnlyRows skips the duplicate club_user_roles fetch.
+          const roleOnlyRows = await loadRoleOnlyRows(rows, clubContext, roleRows);
           rows = [...rows, ...roleOnlyRows];
         }
         const readDebug = buildReadDebugSnapshot({

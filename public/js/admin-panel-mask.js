@@ -213,13 +213,10 @@
     async hydrateActiveSection() {
       const section = this.getActiveSection();
       if (!section) return;
-      for (const panel of section.panels || []) {
-        // Skip panels already loaded — prevents redundant Supabase requests on
-        // tab switches. Post-action reloads (domain adapters, contract hub) call
-        // loadPanel() directly and bypass this guard intentionally.
-        if (panel._loaded) continue;
-        await this.loadPanel(section.id, panel.id);
-      }
+      // Load all unloaded panels in parallel — independent reads, no cross-panel deps.
+      // Post-action reloads bypass this path entirely (direct loadPanel() calls).
+      const unloaded = (section.panels || []).filter((panel) => !panel._loaded);
+      await Promise.all(unloaded.map((panel) => this.loadPanel(section.id, panel.id)));
       this.render();
     }
 
